@@ -82,11 +82,11 @@ export interface SearchResponse {
 export type Claims = Claim[];
 
 /**
- * A person, unit, project or infrastructure built from stored pages. Every value is a claim with a verbatim span from a stored page; a field the pages do not support is an empty list, never a guess. No email or phone is stored: contact goes through the source page link.
+ * A person, unit, project or infrastructure built from stored pages. Every value is a claim with a verbatim span from a stored page; a field the pages do not support is an empty list, never a guess. No email or phone is stored: contact goes through the source page link. Calls, services and spaces (opportunities) use the optional fields funder, deadline, amount, eligibility, location and size; dates and amounts are verbatim text from the page, never parsed or computed.
  */
 export interface Profile {
   id: string;
-  kind: "person" | "unit" | "project" | "infrastructure";
+  kind: "person" | "unit" | "project" | "infrastructure" | "call" | "service" | "space";
   source_id: string;
   name: Claim;
   /**
@@ -100,6 +100,12 @@ export interface Profile {
     projects: Claims;
     infrastructure: Claims;
     services: Claims;
+    funder?: Claims;
+    deadline?: Claims;
+    amount?: Claims;
+    eligibility?: Claims;
+    location?: Claims;
+    size?: Claims;
   };
 }
 export interface Claim {

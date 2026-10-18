@@ -13,6 +13,12 @@ export const fieldOrder: readonly ProfileField[] = [
   "projects",
   "infrastructure",
   "services",
+  "funder",
+  "deadline",
+  "amount",
+  "eligibility",
+  "location",
+  "size",
 ];
 
 export const fieldLabels: Record<ProfileField, string> = {
@@ -22,6 +28,12 @@ export const fieldLabels: Record<ProfileField, string> = {
   projects: "Projects",
   infrastructure: "Infrastructure",
   services: "Services",
+  funder: "Funder",
+  deadline: "Deadline",
+  amount: "Amount",
+  eligibility: "Eligibility",
+  location: "Location",
+  size: "Size",
 };
 
 function isField(name: string): name is ProfileField {
@@ -33,7 +45,7 @@ export function claimAt(profile: Profile, pointer: string): Claim | null {
   if (pointer === "/name") return profile.name;
   const [, root, field, index] = pointer.split("/");
   if (root !== "fields" || field === undefined || !isField(field)) return null;
-  return profile.fields[field][Number(index)] ?? null;
+  return profile.fields[field]?.[Number(index)] ?? null;
 }
 
 export function citedClaims(result: SearchResult): ClaimRef[] {
@@ -47,7 +59,7 @@ export function presentFields(profile: Profile): { field: ProfileField; claims: 
   return fieldOrder
     .map((field) => ({
       field,
-      claims: profile.fields[field].map((claim, index) => ({
+      claims: (profile.fields[field] ?? []).map((claim, index) => ({
         pointer: `/fields/${field}/${index}`,
         claim,
       })),
