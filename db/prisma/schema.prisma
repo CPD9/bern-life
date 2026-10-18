@@ -1,0 +1,254 @@
+// The one schema for every lane. Names are snake_case in the database so the engine's raw SQL
+// reads naturally. What Prisma cannot express (the vector extension, the HNSW index, the sha256
+// check and the evidence-span trigger) is written by hand in the migration SQL; see db/README.md.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProfileKind {
+  person
+  unit
+  project
+  infrastructure
+
+  @@map("profile_kind")
+}
+
+enum PageKind {
+  person
+  unit
+  project
+  infrastructure
+  listing
+  other
+
+  @@map("page_kind")
+}
+
+enum Lang {
+  de
+  en
+  fr
+  it
+  unknown
+
+  @@map("lang")
+}
+
+enum ClaimField {
+  name
+  role
+  unit
+  expertise
+  projects
+  infrastructure
+  services
+
+  @@map("claim_field")
+}
+
+enum ClaimMethod {
+  selector
+  model
+
+  @@map("claim_method")
+}
+
+enum TermKind {
+  synonym
+  lay
+  translation
+  acronym
+
+  @@map("term_kind")
+}
+
+enum RelationKind {
+  member_of
+  leads
+  part_of
+  works_on
+  operates
+
+  @@map("relation_kind")
+}
+
+enum PlaceKind {
+  institute
+  platform
+  centre
+
+  @@map("place_kind")
+}
+
+enum PositionMethod {
+  address
+  district
+
+  @@map("position_method")
+}
+
+model Source {
+  id       String    @id
+  name     String
+  sites    Site[]
+  pages    Page[]
+  profiles Profile[]
+  places   Place[]
+
+  @@map("source")
+}
+
+model Site {
+  host     String @id
+  sourceId String @map("source_id")
+  unit     String
+  source   Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId])
+  @@map("site")
+}
+
+model Page {
+  url       String           @id
+  sourceId  String           @map("source_id")
+  unit      String
+  fetchedAt DateTime         @map("fetched_at") @db.Timestamptz(3)
+  sha256    String           @db.Char(64)
+  status    Int
+  lang      Lang?
+  kind      PageKind?
+  title     String?
+  text      String
+  source    Source           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  claims    Claim[]
+  relations EntityRelation[]
+  chunks    Chunk[]
+
+  // Evidence points at a page version, not just a URL: a re-crawl that changes the text
+  // must not silently re-label old spans as coming from the new text.
+  @@unique([url, sha256])
+  @@index([sourceId])
+  @@map("page")
+}
+
+model Profile {
+  id            String           @id
+  kind          ProfileKind
+  sourceId      String           @map("source_id")
+  name          String
+  sourceUrl     String           @map("source_url")
+  source        Source           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  claims        Claim[]
+  relationsFrom EntityRelation[] @relation("relation_from")
+  relationsTo   EntityRelation[] @relation("relation_to")
+  chunks        Chunk[]
+
+  @@index([sourceId])
+  @@map("profile")
+}
+
+model Claim {
+  id         BigInt      @id @default(autoincrement())
+  profileId  String      @map("profile_id")
+  field      ClaimField
+  position   Int
+  value      String      @db.VarChar(200)
+  method     ClaimMethod
+  pageUrl    String      @map("page_url")
+  pageSha256 String      @map("page_sha256") @db.Char(64)
+  span       String      @db.VarChar(300)
+  start      Int?
+  profile    Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  page       Page        @relation(fields: [pageUrl, pageSha256], references: [url, sha256], onDelete: Cascade, onUpdate: Restrict)
+
+  @@unique([profileId, field, position])
+  @@index([pageUrl, pageSha256])
+  @@map("claim")
+}
+
+model EntityRelation {
+  id            BigInt       @id @default(autoincrement())
+  fromProfileId String       @map("from_profile_id")
+  toProfileId   String       @map("to_profile_id")
+  kind          RelationKind
+  method        ClaimMethod
+  pageUrl       String       @map("page_url")
+  pageSha256    String       @map("page_sha256") @db.Char(64)
+  span          String       @db.VarChar(300)
+  start         Int?
+  fromProfile   Profile      @relation("relation_from", fields: [fromProfileId], references: [id], onDelete: Cascade)
+  toProfile     Profile      @relation("relation_to", fields: [toProfileId], references: [id], onDelete: Cascade)
+  page          Page         @relation(fields: [pageUrl, pageSha256], references: [url, sha256], onDelete: Cascade, onUpdate: Restrict)
+
+  @@unique([fromProfileId, toProfileId, kind])
+  @@index([toProfileId])
+  @@index([pageUrl, pageSha256])
+  @@map("entity_relation")
+}
+
+model Place {
+  id                String         @id
+  name              String
+  sourceId          String         @map("source_id")
+  host              String
+  kind              PlaceKind
+  address           String?
+  addressUrl        String?        @map("address_url")
+  addressSpan       String?        @map("address_span") @db.VarChar(300)
+  addressFetchedAt  DateTime?      @map("address_fetched_at") @db.Timestamptz(3)
+  addressPageSha256 String?        @map("address_page_sha256") @db.Char(64)
+  x                 Float
+  z                 Float
+  positionMethod    PositionMethod @map("position_method")
+  source            Source         @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId])
+  @@index([host])
+  @@map("place")
+}
+
+model Term {
+  id            BigInt   @id @default(autoincrement())
+  value         String
+  term          String
+  kind          TermKind
+  lang          Lang?
+  model         String
+  promptVersion String   @map("prompt_version")
+
+  @@unique([value, term, kind])
+  @@map("term")
+}
+
+model Chunk {
+  id        String                      @id
+  profileId String?                     @map("profile_id")
+  pageUrl   String                      @map("page_url")
+  text      String
+  embedding Unsupported("vector(384)")?
+  tsv       Unsupported("tsvector")?
+  profile   Profile?                    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  page      Page                        @relation(fields: [pageUrl], references: [url], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([pageUrl])
+  @@index([tsv], map: "chunk_tsv_gin_idx", type: Gin)
+  @@map("chunk")
+}
+
+model BundleLoad {
+  id       BigInt   @id @default(autoincrement())
+  version  String
+  sha256   String   @db.Char(64)
+  loadedAt DateTime @default(now()) @map("loaded_at") @db.Timestamptz(3)
+  counts   Json
+
+  @@map("bundle_load")
+}
