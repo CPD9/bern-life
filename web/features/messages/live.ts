@@ -2,7 +2,7 @@
 // signed-in users who are members of the conversation a notice names. Notices carry ids only, so
 // a client fetches the message itself through the membership-checked route.
 import { db } from "@/infrastructure/db";
-import { parseNotice } from "./input";
+import { parseNotice } from "./notice";
 import { CHANNEL, membersOf } from "./store";
 import type { Notice } from "./types";
 

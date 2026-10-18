@@ -1,6 +1,6 @@
 import { crossSite, requestUser } from "@/features/accounts/http";
 import { done, failure } from "@/features/messages/http";
-import { isId } from "@/features/messages/input";
+import { isId } from "@/features/messages/notice";
 import { markRead } from "@/features/messages/store";
 import { db } from "@/infrastructure/db";
 

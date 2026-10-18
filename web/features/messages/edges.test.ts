@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { decodeCursor, encodeCursor, parseLimit, parseNotice, parseStart } from "./input";
+import { decodeCursor, encodeCursor, parseLimit, parseStart } from "./input";
+import { parseNotice } from "./notice";
 import { Hub, eventStream } from "./live";
 import type { Notice } from "./types";
 

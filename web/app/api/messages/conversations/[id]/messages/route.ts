@@ -1,6 +1,7 @@
 import { crossSite, jsonBody, requestUser } from "@/features/accounts/http";
 import { failure } from "@/features/messages/http";
-import { decodeCursor, isId, parseBody, parseLimit } from "@/features/messages/input";
+import { decodeCursor, parseBody, parseLimit } from "@/features/messages/input";
+import { isId } from "@/features/messages/notice";
 import { messagesIn, post } from "@/features/messages/store";
 import { db } from "@/infrastructure/db";
 

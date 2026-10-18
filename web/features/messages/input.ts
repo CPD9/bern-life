@@ -1,20 +1,15 @@
 // Request bodies and query parameters for /api/messages/*, parsed into exact shapes or refused.
-import type { Notice } from "./types";
+import { isId } from "./notice";
 
 export const BODY_MAX = 4000;
 export const PAGE_MAX = 50;
 const TITLE_MAX = 80;
 const GROUP_HANDLES_MAX = 20;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const HANDLE = /^[a-z0-9_]{3,20}$/;
 
 export type Start =
   { kind: "direct"; handle: string } | { kind: "group"; title: string; handles: string[] };
 export type Cursor = { at: Date; id: string };
-
-export function isId(value: string): boolean {
-  return UUID.test(value);
-}
 
 function handle(value: unknown): string | null {
   const lowered = typeof value === "string" ? value.trim().toLowerCase() : "";
@@ -68,16 +63,4 @@ export function parseLimit(value: string | null): number | null {
   if (value === null || value === "") return PAGE_MAX;
   const limit = Number(value);
   return Number.isInteger(limit) && limit >= 1 && limit <= PAGE_MAX ? limit : null;
-}
-
-export function parseNotice(payload: string): Notice | null {
-  try {
-    const notice = JSON.parse(payload) as Partial<Notice>;
-    const kindOk = notice.kind === "posted" || notice.kind === "deleted";
-    if (kindOk && isId(notice.conversationId ?? "") && isId(notice.messageId ?? ""))
-      return notice as Notice;
-  } catch {
-    // A payload we did not write is ignored.
-  }
-  return null;
 }
