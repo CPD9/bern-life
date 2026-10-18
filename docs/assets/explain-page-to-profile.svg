@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" width="800" height="380" role="img" aria-labelledby="t d">
+  <title id="t">From page to profile</title>
+  <desc id="d">A sentence on a public page is highlighted, passes the verifier because it is on the page word for word, and becomes a claim with its evidence. A model proposal that is not on the page bounces off the verifier and is dropped. Example data is invented.</desc>
+  <style>
+    text { font-family: ui-rounded, "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .bg { fill: #eef4fa; }
+    .card { fill: #ffffff; stroke: #dfe6ee; }
+    .ink { fill: #14202b; }
+    .muted { fill: #5b6773; }
+    .bar { fill: #d9e1ea; }
+    .mark { fill: #fff3b0; }
+    .green { fill: #13804a; }
+    .on-green { fill: #ffffff; }
+    .red { fill: #b42318; }
+    .red-line { stroke: #b42318; }
+    .gate-ring { fill: none; stroke: #5b6773; }
+    .mark-stroke { stroke: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1b2a; }
+      .card { fill: #17212d; stroke: #2a3a4d; }
+      .ink { fill: #eef3f8; }
+      .muted { fill: #a3b0bd; }
+      .bar { fill: #2a3a4d; }
+      .mark { fill: #4a4120; }
+      .green { fill: #2fb36b; }
+      .on-green { fill: #08130d; }
+      .red { fill: #ff8a80; }
+      .red-line { stroke: #ff8a80; }
+      .gate-ring { stroke: #a3b0bd; }
+      .mark-stroke { stroke: #08130d; }
+    }
+
+    /* Every element's resting style is the last frame, so with motion reduced the picture is complete. */
+    .highlight { animation: highlight 12s infinite; }
+    .traveller { opacity: 0; animation: travel 12s infinite; }
+    .claim { animation: claim 12s infinite; }
+    .ok-flash { opacity: 0; animation: ok-flash 12s infinite; }
+    .no-flash { opacity: 0; animation: no-flash 12s infinite; }
+    .proposal { animation: proposal 12s infinite; }
+    .dropped { animation: dropped 12s infinite; }
+
+    @keyframes highlight { 0%, 6% { opacity: 0; } 12%, 100% { opacity: 1; } }
+    @keyframes travel {
+      0%, 14% { opacity: 0; transform: translate(0, 0); }
+      16% { opacity: 1; transform: translate(0, 0); }
+      30%, 38% { opacity: 1; transform: translate(300px, 0); }
+      50% { opacity: 1; transform: translate(502px, 24px); }
+      53%, 100% { opacity: 0; transform: translate(502px, 24px); }
+    }
+    @keyframes claim { 0%, 50% { opacity: 0; } 54%, 100% { opacity: 1; } }
+    @keyframes ok-flash { 0%, 32% { opacity: 0; } 36%, 42% { opacity: 1; } 46%, 100% { opacity: 0; } }
+    @keyframes no-flash { 0%, 66% { opacity: 0; } 69%, 74% { opacity: 1; } 78%, 100% { opacity: 0; } }
+    @keyframes proposal {
+      0%, 56% { opacity: 0; transform: translate(-150px, -84px); }
+      59% { opacity: 1; transform: translate(-150px, -84px); }
+      67% { opacity: 1; transform: translate(-62px, -84px); }
+      73% { opacity: 1; transform: translate(-120px, -84px); }
+      82%, 100% { opacity: 1; transform: translate(0, 0); }
+    }
+    @keyframes dropped { 0%, 80% { opacity: 0; } 86%, 100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+    }
+  </style>
+
+  <rect class="bg" width="800" height="380" rx="24"/>
+  <text class="ink" x="32" y="42" font-size="20" font-weight="800">From page to profile</text>
+  <text class="muted" x="32" y="64" font-size="13">The model may propose. Only a sentence found on the page, word for word, becomes a claim.</text>
+
+  <!-- The public page -->
+  <rect class="card" x="32" y="88" width="240" height="220" rx="14"/>
+  <text class="muted" x="46" y="110" font-size="11">example-institute.test/team/ada-muster</text>
+  <rect class="bar" x="32" y="120" width="240" height="1"/>
+  <text class="ink" x="46" y="148" font-size="15" font-weight="800">Dr. Ada Muster</text>
+  <rect class="mark highlight" x="40" y="158" width="176" height="24" rx="5"/>
+  <text class="ink" x="46" y="175" font-size="13">Group Leader, Sensor Lab</text>
+  <rect class="bar" x="46" y="198" width="200" height="8" rx="4"/>
+  <rect class="bar" x="46" y="216" width="168" height="8" rx="4"/>
+  <rect class="bar" x="46" y="234" width="188" height="8" rx="4"/>
+  <rect class="bar" x="46" y="262" width="150" height="8" rx="4"/>
+  <rect class="bar" x="46" y="280" width="120" height="8" rx="4"/>
+
+  <!-- The verifier -->
+  <rect class="card" x="360" y="100" width="80" height="200" rx="40"/>
+  <circle class="gate-ring" cx="400" cy="134" r="20" stroke-width="2"/>
+  <circle class="green ok-flash" cx="400" cy="134" r="20"/>
+  <path class="mark-stroke ok-flash" d="M391 134l6 6 12-13" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle class="red no-flash" cx="400" cy="134" r="20"/>
+  <path class="mark-stroke no-flash" d="M393 127l14 14m0-14-14 14" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <text class="ink" x="400" y="204" font-size="13" font-weight="800" text-anchor="middle">Verifier</text>
+  <text class="muted" x="400" y="222" font-size="11" text-anchor="middle">word for word</text>
+  <text class="muted" x="400" y="238" font-size="11" text-anchor="middle">on the page?</text>
+  <text class="muted" x="400" y="264" font-size="11" text-anchor="middle">checked</text>
+  <text class="muted" x="400" y="280" font-size="11" text-anchor="middle">in code</text>
+
+  <!-- The sentence on its way -->
+  <g class="traveller">
+    <rect class="mark" x="40" y="158" width="176" height="24" rx="12"/>
+    <text class="ink" x="54" y="175" font-size="12" font-weight="700">Group Leader, Sensor Lab</text>
+  </g>
+
+  <!-- The profile -->
+  <rect class="card" x="528" y="88" width="240" height="220" rx="14"/>
+  <text class="muted" x="544" y="112" font-size="11" font-weight="700" letter-spacing="1">PROFILE</text>
+  <text class="ink" x="544" y="140" font-size="17" font-weight="800">Ada Muster</text>
+  <text class="muted" x="544" y="172" font-size="11">Role</text>
+  <g class="claim">
+    <rect class="green" x="544" y="182" width="208" height="30" rx="15"/>
+    <text class="on-green" x="560" y="202" font-size="13" font-weight="800">Group Leader</text>
+    <text class="on-green" x="738" y="202" font-size="11" font-weight="700" text-anchor="end">page ↗</text>
+    <text class="muted" x="544" y="236" font-size="11">Evidence: “Group Leader, Sensor Lab”</text>
+    <text class="muted" x="544" y="254" font-size="11">with the page link, hash and date</text>
+  </g>
+
+  <!-- A proposal that is not on the page -->
+  <g class="proposal">
+    <rect class="card red-line" x="250" y="318" width="300" height="28" rx="14" stroke-dasharray="5 4"/>
+    <text class="red" x="400" y="337" font-size="12" font-weight="700" text-anchor="middle">Model proposal: “Professor of Robotics”</text>
+  </g>
+  <text class="red dropped" x="400" y="364" font-size="11" text-anchor="middle">✕ not on the page, so it is dropped</text>
+
+  <text class="muted" x="768" y="364" font-size="10" text-anchor="end">Example data is invented.</text>
+</svg>
