@@ -42,6 +42,7 @@ make db-drop-throwaway NAME=l3    # after your PR merges
 | `term` | enrichment terms for an expertise value; retrieval only, never shown as a fact |
 | `chunk` | searchable text with a 384-dimension embedding and a `tsvector` the engine fills |
 | `bundle_load` | which snapshot bundle was loaded, when, with row counts |
+| `document` | an uploaded PDF: owner, name, sha256, size, pages, visibility. The file itself sits at `$BERNLIFE_DATA_DIR/uploads/<sha256>`, never in the database, git or the bundle |
 
 ## Guards in the database
 
@@ -59,6 +60,8 @@ stored by any writer:
   text (at `start` when given; offsets count characters, as Python does) with
   `ERROR: evidence span not found in page` (SQLSTATE `23514`). It reads the whole page text,
   because a slice of a compressed long page can cut a UTF-8 character in half.
+- `document` accepts only `application/pdf`, a lowercase hex sha256, 1 byte to 10 MB, at least one
+  page and a name of 1–255 characters, whatever the web app sends.
 
 Postgres puts the failing row into the error detail of the sha256 check. Log it on the server;
 never show it to a user.
