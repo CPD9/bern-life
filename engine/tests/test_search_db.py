@@ -210,6 +210,23 @@ class SearchDbTest(unittest.TestCase):
             (True, "no_verifiable_source", "mock", []),
         )
 
+    def test_a_team_member_named_only_on_a_matching_project_page_is_shown_through_it(self):
+        response = search("carbohydrate estimation", None, self.store, fake_embedder())
+        by_id = {r["profile"]["id"]: r for r in response["results"]}
+        self.assertEqual(sorted(by_id), ["person-demo-emil-exempel", "project-demo-carb-counter"])
+        emil = by_id["person-demo-emil-exempel"]
+        self.assertEqual(emil["reason"], {"text": "Name: Emil Exempel", "cites": ["/name"]})
+        self.assertEqual(
+            (emil["via"]["kind"], emil["via"]["span"], emil["via"]["related_name"]),
+            ("works_on", "Project team: Emil Exempel", "Carb Counter"),
+        )
+        self.assertEqual(
+            [c["value"] for c in emil["via"]["related_claims"]],
+            ["carbohydrate estimation from meal photos"],
+        )
+        self.assertNotIn("via", by_id["project-demo-carb-counter"])
+        self.assertEqual(list(result_validator().iter_errors(response)), [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -21,6 +21,7 @@ class EnrichTest(unittest.TestCase):
         self.assertEqual(
             values,
             [
+                "carbohydrate estimation from meal photos",
                 "continuous glucose monitoring",
                 "cryogenic electron microscopy of membrane proteins",
                 "glucose metabolism in mice",
