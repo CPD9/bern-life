@@ -3,7 +3,7 @@
 // partly covered when some do. Words match as substrings, so "sensor" finds "biosensors".
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { contentWords, foldText } from "@/infrastructure/text-match";
-import { citedClaims } from "./claims";
+import { citedClaims } from "@/infrastructure/claims";
 
 export type BriefNeed = NonNullable<SearchResponse["brief_terms"]>[number];
 
