@@ -1,5 +1,5 @@
 import type { Claim } from "@/infrastructure/contract-types.generated";
-import { fragmentUrl } from "./text-fragment";
+import { fragmentUrl } from "@/infrastructure/text-fragment";
 
 const fetchedFormat = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
