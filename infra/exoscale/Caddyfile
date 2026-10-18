@@ -1,0 +1,15 @@
+{
+	# Port 80 stays closed; certificates come through the TLS-ALPN challenge on 443.
+	auto_https disable_redirects
+}
+
+{$SITE_HOST} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	reverse_proxy web:3000
+}
