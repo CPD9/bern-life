@@ -6,7 +6,16 @@ import { MAP_BOUNDS } from "./geography";
 import { InvalidPlaceError, PLACES, parsePlaces, type Place, type PlaceKind } from "./places";
 
 type SourceSite = { host: string; unit: string };
-type SourceFile = { id: string; sites: SourceSite[] };
+type SourceFile = { id: string; sites: SourceSite[]; page_types?: { kind: string }[] };
+
+// Opportunity sources (funders, coworking and rental spaces) name only these page kinds. They are
+// not research places yet: the world lane places them in a follow-up.
+const OPPORTUNITY_PAGE_KINDS = new Set(["call", "service", "space", "listing"]);
+
+function isOpportunitySource(source: SourceFile): boolean {
+  const kinds = (source.page_types ?? []).map((pageType) => pageType.kind);
+  return kinds.length > 0 && kinds.every((kind) => OPPORTUNITY_PAGE_KINDS.has(kind));
+}
 
 const SOURCES_DIR = join(import.meta.dir, "..", "..", "..", "sources");
 
@@ -60,9 +69,9 @@ function invented(
 }
 
 describe("places.json against sources/", () => {
-  const sites = readSources().flatMap((source) =>
-    source.sites.map((site) => ({ ...site, sourceId: source.id })),
-  );
+  const sites = readSources()
+    .filter((source) => !isOpportunitySource(source))
+    .flatMap((source) => source.sites.map((site) => ({ ...site, sourceId: source.id })));
 
   test("every source host has exactly one place and no place lacks a host", () => {
     const placeHosts = PLACES.map((place) => place.host).sort();
