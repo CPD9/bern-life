@@ -7,6 +7,7 @@ import importlib
 import sys
 
 COMMANDS: dict[str, tuple[str, str]] = {
+    "crawl": ("bernlife.crawl_command", "fetch allowed pages of sources/*.json into the bundle"),
     "health": ("bernlife.health", "model mode, model per role, recorded calls"),
 }
 
