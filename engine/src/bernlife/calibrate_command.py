@@ -15,7 +15,8 @@ from bernlife.abstain import unmatched_person
 from bernlife.database import connect
 from bernlife.embed import e5_embedder
 from bernlife.jsonl import read_jsonl
-from bernlife.search import PostgresStore, assess
+from bernlife.search import assess
+from bernlife.store import PostgresStore
 
 HEADER = "| id | variant | expect abstain | best coverage | best similarity | unmatched name |"
 
