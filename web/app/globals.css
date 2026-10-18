@@ -49,6 +49,7 @@
   --color-warn-bg: var(--warn-bg);
   --color-warn-ink: var(--warn-ink);
   --color-mark: var(--mark);
+  --color-device: #0f1720;
   --radius-panel: 1.75rem;
   --radius-pill: 999px;
   --shadow-panel: 0 8px 24px var(--shadow-color);

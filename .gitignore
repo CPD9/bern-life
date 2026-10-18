@@ -11,3 +11,5 @@ __pycache__/
 .DS_Store
 out/
 *.egg-info/
+.claude/settings.local.json
+.claude/launch.json

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
+import { settingsBootScript } from "@/infrastructure/settings";
 import "./globals.css";
 
 const rounded = Nunito({
@@ -22,7 +23,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={rounded.variable}>
+    // The boot script sets theme attributes before React hydrates, so they may differ from the
+    // server's markup on purpose.
+    <html lang="en" className={rounded.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: settingsBootScript }} />
+      </head>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );
