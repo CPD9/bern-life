@@ -25,6 +25,8 @@ class Extraction:
     profiles: tuple[dict[str, object], ...]
     relations: tuple[dict[str, object], ...]
     dropped: Counter[str]
+    verdicts: Counter[tuple[str, str, str]]
+    adjusted: Counter[str]
     model_pages: int
     model_calls: int
     model_cached: int
@@ -47,6 +49,7 @@ def extract(
         candidates += found
         relation_candidates += related
     dropped = Counter[str]()
+    failures = Counter[tuple[str, str, str]]()
     outcomes: list[ModelOutcome] = []
     if model is not None:
         outcomes = list(map_pages(lambda page: model(page, own[page.url]), model_pages))
@@ -54,6 +57,7 @@ def extract(
         candidates += outcome.candidates
         relation_candidates += outcome.relations
         dropped.update(outcome.failures)
+        failures.update({("model", "(reply)", f): n for f, n in outcome.failures.items()})
     verified = verify_all(candidates, relation_candidates, by_url, own)
     dropped.update(verified.dropped)
     merged = merge(verified.claims, by_url, own)
@@ -63,6 +67,8 @@ def extract(
         profiles=merged.profiles,
         relations=tuple(relations),
         dropped=dropped,
+        verdicts=verified.verdicts + failures,
+        adjusted=verified.adjusted,
         model_pages=len(outcomes),
         model_calls=sum(outcome.calls for outcome in outcomes),
         model_cached=sum(outcome.cached for outcome in outcomes),

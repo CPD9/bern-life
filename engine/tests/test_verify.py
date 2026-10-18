@@ -3,7 +3,7 @@ import unittest
 from bernlife.extract_records import Candidate, RelationCandidate, Subject
 from bernlife.extract_selectors import person_subject
 from bernlife.verify import recheck, verify_all, verify_claim, verify_relation
-from extract_fakes import ADA_PAGE, LAB, LAB_PAGE, TEAM_PAGE
+from extract_fakes import ADA_PAGE, LAB, LAB_PAGE, TEAM_PAGE, page
 
 ADA = person_subject("example", "Ada Muster")
 CARA = person_subject("example", "Cara Probst")
@@ -50,9 +50,43 @@ class VerifyClaimTest(unittest.TestCase):
         naming = claim(
             CARA, "Lab Manager", "Cara Probst, PhD\nFunktion\nLab Manager", TEAM_PAGE.url
         )
-        bare = claim(CARA, "Lab Manager", "Lab Manager", TEAM_PAGE.url, "role")
+        bare = claim(CARA, "Lab Manager", "Lab Manager", TEAM_PAGE.url, "expertise")
         self.assertEqual(self.outcome(naming, TEAM_PAGE, None), "kept at 52")
         self.assertEqual(self.outcome(bare, TEAM_PAGE, None), "wrong_page")
+
+    def test_a_list_role_is_widened_back_to_the_line_naming_the_person(self):
+        bare = claim(CARA, "Lab Manager", "Lab Manager", TEAM_PAGE.url, "role")
+        kept = verify_claim(bare, TEAM_PAGE, None)
+        self.assertEqual(
+            (kept.evidence.span, kept.evidence.start),
+            ("Cara Probst, PhD\nFunktion\nLab Manager", 52),
+        )
+
+    def test_widening_finds_the_role_under_the_right_person_and_no_further(self):
+        text = (
+            "Team\nAda Muster\nPhD Student\nCara Probst\nPhD Student\nBen Beispiel\nA\nB\nPostdoc"
+        )
+        listing = page(TEAM_PAGE.url, TEAM_PAGE.title, text, "listing")
+        role = claim(CARA, "PhD Student", "PhD Student", listing.url, "role")
+        kept = verify_claim(role, listing, None)
+        self.assertEqual(
+            (kept.evidence.span, kept.evidence.start), ("Cara Probst\nPhD Student", 28)
+        )
+        ben = person_subject("example", "Ben Beispiel")
+        too_far = claim(ben, "Postdoc", "Postdoc", listing.url, "role")
+        self.assertEqual(verify_claim(too_far, listing, None), "wrong_page")
+        crowded_text = f"Cara Probst {'x' * 290}\nLab Manager"
+        crowded = page(TEAM_PAGE.url, TEAM_PAGE.title, crowded_text, "listing")
+        role = claim(CARA, "Lab Manager", "Lab Manager", crowded.url, "role")
+        self.assertEqual(verify_claim(role, crowded, None), "wrong_page")
+
+    def test_a_case_only_difference_stores_the_page_text_when_unique(self):
+        candidate = claim(ADA, "University of Bern", "university of bern", ADA_PAGE.url)
+        kept = verify_claim(candidate, ADA_PAGE, ADA)
+        self.assertEqual((kept.evidence.span, kept.evidence.start), ("University of Bern", 75))
+        twice = page(ADA_PAGE.url, ADA_PAGE.title, "Sensor Lab\nsensor lab", "person")
+        candidate = claim(ADA, "sensor lab", "SENSOR LAB", twice.url)
+        self.assertEqual(verify_claim(candidate, twice, ADA), "span_not_in_page")
 
     def test_an_invented_person_is_not_a_name(self):
         company = person_subject("example", "Sensor Lab")
@@ -95,10 +129,21 @@ class VerifyAllTest(unittest.TestCase):
             claim(ADA, "wearable biosensors", "wearable biosensors", ADA_PAGE.url),
             claim(ADA, "insulin pumps", "insulin pumps", ADA_PAGE.url),
             claim(ADA, "cleanroom", "We operate a cleanroom", LAB_PAGE.url),
+            claim(ADA, "group leader", "group leader", ADA_PAGE.url, "role"),
         ]
         result = verify_all(candidates, [], pages, {ADA_PAGE.url: ADA, LAB_PAGE.url: LAB_UNIT})
-        self.assertEqual([c.value for c in result.claims], ["wearable biosensors"])
+        self.assertEqual([c.value for c in result.claims], ["wearable biosensors", "group leader"])
         self.assertEqual(dict(result.dropped), {"span_not_in_page": 1, "wrong_page": 1})
+        self.assertEqual(
+            dict(result.verdicts),
+            {
+                ("model", "expertise", "kept"): 1,
+                ("model", "expertise", "span_not_in_page"): 1,
+                ("model", "expertise", "wrong_page"): 1,
+                ("model", "role", "kept"): 1,
+            },
+        )
+        self.assertEqual(dict(result.adjusted), {"case_only": 1})
 
 
 class RecheckTest(unittest.TestCase):

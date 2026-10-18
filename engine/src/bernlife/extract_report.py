@@ -6,6 +6,8 @@ from collections.abc import Mapping
 from bernlife.extract import Extraction
 from bernlife.extract_records import FIELDS, PROFILE_KINDS, Page
 
+NOT_FOUND = "span_not_in_page"
+
 
 def summary(result: Extraction, pages: Mapping[str, Page], model_label: str) -> str:
     profiles = result.profiles
@@ -25,6 +27,11 @@ def summary(result: Extraction, pages: Mapping[str, Page], model_label: str) -> 
     )
     lines += _table("claims by field and method", _claims(profiles))
     lines += _table("dropped by reason", Counter({(r,): n for r, n in result.dropped.items()}))
+    lines += _by_field(result.verdicts)
+    not_found = sum(n for (m, _, v), n in result.verdicts.items() if (m, v) == ("model", NOT_FOUND))
+    lines.append(f"model proposals not found on the page: {not_found}, all dropped")
+    adjusted = ", ".join(f"{kind} {n}" for kind, n in sorted(result.adjusted.items()))
+    lines.append(f"kept spans replaced by the page's own text: {adjusted or 'none'}")
     lines.append("field completeness (share of profiles with at least one value)")
     for kind in PROFILE_KINDS:
         of_kind = [p for p in profiles if p["kind"] == kind]
@@ -35,6 +42,18 @@ def summary(result: Extraction, pages: Mapping[str, Page], model_label: str) -> 
     without = ", ".join(f"{k} {n}" for k, n in sorted(result.pages_without_subject.items()))
     lines.append(f"pages without a readable subject: {without or 'none'}")
     return "\n".join(lines)
+
+
+def _by_field(verdicts: Counter[tuple[str, str, str]]) -> list[str]:
+    """Model proposals per field: kept, then each drop reason, before profiles are merged."""
+    model = Counter(
+        {(field, verdict): n for (m, field, verdict), n in verdicts.items() if m == "model"}
+    )
+    columns = sorted({verdict for _, verdict in model}, key=lambda v: (v != "kept", v))
+    fields = sorted({field for field, _ in model})
+    head = f"  {'field':<20}" + "".join(f"{column:>18}" for column in columns)
+    rows = [f"  {f:<20}" + "".join(f"{model[f, c] or '':>18}" for c in columns) for f in fields]
+    return ["model proposals by field", *([head, *rows] if fields else ["  none"])]
 
 
 def _claims(profiles: tuple[dict, ...]) -> Counter[tuple[str, ...]]:
