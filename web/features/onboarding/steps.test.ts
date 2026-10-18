@@ -17,16 +17,16 @@ function run(state: OnboardingState, ...types: Move[]): OnboardingState {
 }
 
 describe("onboardingReducer", () => {
-  test("Continue walks role, look, goal, visibility, then finishes", () => {
-    expect(onboardingSteps).toEqual(["role", "look", "goal", "visibility"]);
+  test("Continue walks role, look, goal, visibility, agent, then finishes", () => {
+    expect(onboardingSteps).toEqual(["role", "look", "goal", "visibility", "agent"]);
     const seen: string[] = [];
     let state = initialOnboarding;
     while (!state.done) {
       seen.push(stepAt(state));
       state = run(state, "next");
     }
-    expect(seen).toEqual(["role", "look", "goal", "visibility"]);
-    expect(state.step).toBe(3);
+    expect(seen).toEqual(["role", "look", "goal", "visibility", "agent"]);
+    expect(state.step).toBe(4);
   });
 
   test("Back on the first step stays put; Back after two steps returns one", () => {
@@ -62,7 +62,7 @@ describe("onboardingReducer", () => {
 
 describe("finishes", () => {
   test("only Skip, or Continue on the last step, ends the journey", () => {
-    const last = { ...initialOnboarding, step: 3 };
+    const last = { ...initialOnboarding, step: 4 };
     expect(finishes(initialOnboarding, { type: "skip" })).toBe(true);
     expect(finishes(last, { type: "next" })).toBe(true);
     expect(finishes(initialOnboarding, { type: "next" })).toBe(false);
@@ -77,7 +77,7 @@ describe("parseOnboarding", () => {
   });
 
   test("a step out of range is clamped, a broken one starts over", () => {
-    expect(parseOnboarding({ step: 9, profile: {}, done: false }).step).toBe(3);
+    expect(parseOnboarding({ step: 9, profile: {}, done: false }).step).toBe(4);
     expect(parseOnboarding({ step: -1 }).step).toBe(0);
     expect(parseOnboarding({ step: "2" }).step).toBe(0);
     expect(parseOnboarding("resume")).toEqual(initialOnboarding);
