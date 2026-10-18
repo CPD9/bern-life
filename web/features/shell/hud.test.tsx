@@ -16,14 +16,21 @@ describe("hudCounts", () => {
 
 describe("Hud", () => {
   test("shows no number at all when neither the clock nor health has answered", () => {
-    const { container } = render(<Hud now={null} health={null} goal="Explore" />);
+    const { container } = render(
+      <Hud now={null} health={null} goal="Explore" account={{ status: "checking" }} />,
+    );
     expect(container.textContent).toBe("Bern LifeGoal Explore");
     expect(container.textContent).not.toMatch(/\d/);
   });
 
   test("shows Bern time, the goal, the counts and the mode from health", () => {
     const { container } = render(
-      <Hud now={new Date("2026-10-18T12:05:00Z")} health={healthFixture} goal="Explore" />,
+      <Hud
+        now={new Date("2026-10-18T12:05:00Z")}
+        health={healthFixture}
+        goal="Explore"
+        account={{ status: "checking" }}
+      />,
     );
     expect(container.textContent).toBe(
       "Bern LifeSun 18 Oct · 14:05Goal Explore2 profiles indexed · 1 sourceMOCK",
