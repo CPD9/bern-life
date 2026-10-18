@@ -35,6 +35,7 @@ class ParseExpansionTest(unittest.TestCase):
             term("Muster lab"),
             term("sensor", "guess"),
             term("capteur", "translation", "xx"),
+            term("glu\x00cose"),
             "not an object",
         ]
         reply = {"topics": [{"topic": "Glukosesensoren", "terms": terms}, {"topic": "Ada Muster"}]}

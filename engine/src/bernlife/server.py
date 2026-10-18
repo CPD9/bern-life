@@ -54,6 +54,8 @@ def parse_search(body: bytes, source_ids: set[str]) -> SearchRequest:
     query, lang, sources = payload.get("query"), payload.get("lang"), payload.get("sources")
     if not isinstance(query, str) or not 0 < len(query.strip()) <= MAX_QUERY:
         raise BadRequest("query")
+    if "\x00" in query:
+        raise BadRequest("query")
     if lang is not None and lang not in LANGS:
         raise BadRequest("lang")
     if sources is not None and (

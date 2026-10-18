@@ -1,10 +1,12 @@
 """Retrieval terms a model proposes (synonyms, lay terms, translations, acronyms), checked in code.
 
 Terms only help search find pages; they are never shown as a fact about anyone. Code keeps a term
-only if it has a known kind and language, is a short phrase, says something other than what it
-expands, and carries no word of a person's name the question gave: a premise is not passed on.
+only if it has a known kind and language, is a short phrase with no control characters, says
+something other than what it expands, and carries no word of a person's name the question gave:
+a premise is not passed on.
 """
 
+import unicodedata
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -34,6 +36,10 @@ def enrichment_by_value(rows: Iterable[Mapping[str, Any]]) -> dict[str, list[str
     return found
 
 
+def has_control_characters(text: str) -> bool:
+    return any(unicodedata.category(char) == "Cc" for char in text)
+
+
 def checked_terms(items: Any, expands: str, banned: Iterable[str] = ()) -> list[Term]:
     """The valid terms of a model's list, in its order, without repeats."""
     if not isinstance(items, list):
@@ -46,6 +52,8 @@ def checked_terms(items: Any, expands: str, banned: Iterable[str] = ()) -> list[
             continue
         term, kind, lang = item.get("term"), item.get("kind"), item.get("lang")
         if not isinstance(term, str) or kind not in KINDS or lang not in LANGS:
+            continue
+        if has_control_characters(term):
             continue
         term = " ".join(term.split())
         folded = fold(term)
