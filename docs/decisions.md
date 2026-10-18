@@ -2,6 +2,15 @@
 
 Newest first. Each entry: date, decision, why, who.
 
+## 2026-10-18 20:00 — The world you live in (Peter, conductor)
+- Walking (W5): kinematic movement with collision and click-to-walk, no physics engine unless Peter
+  approves one; enter places through doors; your office plot on the map.
+- Office (W6): furnish your office on a grid; documents on the desk open with their trace (sha256,
+  size, pages, uploader, date, visibility); uploads private by default, stored outside git (S4a).
+- Labs and people (W7, S4b): a real person becomes an avatar only after joining and accepting;
+  before that a card with public profile and sources; demo members only in fixture mode.
+- Hosting S3 on Exoscale (Swiss zone, Peter's credits), invite-only.
+
 ## 2026-10-18 14:30 — Platform features during the hackathon, and who merges (Peter)
 - **Built overnight, not after:** the agent with tools (the Navigator character drives the map), the
   match report (PDF + live map link), the inquiry inbox, the sources admin (add a source by URL,

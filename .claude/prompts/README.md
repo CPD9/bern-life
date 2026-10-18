@@ -45,16 +45,21 @@ Postgres at a time.
 | `X1-agent.md` (X1a engine, X1b web) | engine, then world shell | E3a merged; W1 PR 3 merged |
 | `W4-world-live.md` | world | W1 PR 3 and W2 B2 merged; E3a serving |
 
-## Round D (≈03:00 → 08:00)
-X2 match report: PDF plus a live link that opens the same lit-up map · X3 inquiry inbox: a web form
-and invented inquiries are split into needs, matched, and answered with a cited draft that staff
-approve (no real mailbox) · X4 sources admin: add a source by pasting a URL (preview, save), re-crawl
-of changed pages, source health · X5 spaces and talent as ordinary sources, every figure sourced and
-dated · X6 feedback labels on results, tuned only on a separate dev query set, never the gold set ·
-I4 live batch on CSCS and the bundle release.
+## Round D (tonight and overnight): the world you live in
+
+| File | Lane | Depends on |
+| --- | --- | --- |
+| `X2-match-report.md` | world shell (W1) | README merged |
+| `W5-walk.md` | world 3D (W2) | W4 merged |
+| `W6-office.md` (W6a furniture, W6b documents) | world home (Nik) | W3c merged; W6b needs S4a |
+| `W7-lab-people.md` | world shell (W1) | X2 merged; S4b |
+| `S4-docs-labs-hosting.md` (S4a, S4b, S3 Exoscale) | backend (Yaseen) | trigger migration, `make run` |
+
+Rule for people: a real person appears as an avatar only after joining and accepting; before that, a
+card with public profile and sources. Demo members only in fixture mode, labelled DEMO.
 
 ## Monday morning
-D1 README with animated explainers · P1 pitch in BEDA's template (file stays out of git) · final
-eval run · rehearsal. Anything not merged by 08:00 goes on the roadmap slide.
+P1 pitch in BEDA's template (file stays out of git) · final evaluator run · labelling session ·
+rehearsal. Anything not merged by 08:00 goes on the roadmap slide.
 
 When a session reports back, paste its plan or PR link into the conductor session.
