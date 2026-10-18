@@ -1,5 +1,6 @@
 import unittest
 
+from bernlife.matching import asked
 from bernlife.reason import reason
 from search_fakes import PROFILES
 
@@ -9,7 +10,7 @@ ADA, BEN = PROFILES[1], PROFILES[2]
 class ReasonTest(unittest.TestCase):
     def test_claims_sharing_a_query_word_are_listed_and_cited(self):
         self.assertEqual(
-            reason("Glucose sensors in the Sensor Lab", ADA),
+            reason(asked("Glucose sensors in the Sensor Lab"), ADA),
             {
                 "text": "Expertise: continuous glucose monitoring; Unit: Sensor Lab",
                 "cites": ["/fields/expertise/0", "/fields/unit/0"],
@@ -18,7 +19,7 @@ class ReasonTest(unittest.TestCase):
 
     def test_a_meaning_only_match_describes_the_profile(self):
         self.assertEqual(
-            reason("blood sugar", ADA),
+            reason(asked("blood sugar"), ADA),
             {
                 "text": "Role: Group Leader; Unit: Sensor Lab;"
                 " Expertise: continuous glucose monitoring",
@@ -27,12 +28,14 @@ class ReasonTest(unittest.TestCase):
         )
 
     def test_a_profile_with_no_fields_cites_its_name(self):
-        self.assertEqual(reason("patch", BEN), {"text": "Name: Ben Beispiel", "cites": ["/name"]})
+        self.assertEqual(
+            reason(asked("patch"), BEN), {"text": "Name: Ben Beispiel", "cites": ["/name"]}
+        )
 
     def test_text_stays_within_400_characters_by_dropping_claims(self):
         long_value = {**ADA["fields"]["expertise"][0], "value": "glucose " + "x" * 190}
         many = {**ADA, "fields": {**ADA["fields"], "expertise": [long_value] * 4}}
-        result = reason("glucose", many)
+        result = reason(asked("glucose"), many)
         self.assertEqual(result["cites"], ["/fields/expertise/0"])
         self.assertLessEqual(len(result["text"]), 400)
 
