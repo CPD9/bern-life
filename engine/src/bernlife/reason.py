@@ -6,10 +6,10 @@ is, from its role, unit and first expertise, and still cites every value it show
 says more than the cited values.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
-from bernlife.matching import matched_claims
+from bernlife.matching import Asked, matched_claims
 
 Profile = Mapping[str, Any]
 LABELS = {
@@ -36,8 +36,11 @@ def render(profile: Profile, chosen: list[tuple[str, int]]) -> str:
     return "; ".join(f"{LABELS[field]}: {', '.join(values)}" for field, values in groups.items())
 
 
-def reason(query: str, profile: Profile) -> dict[str, object]:
-    chosen = (matched_claims(query, profile) or describing_claims(profile))[:MAX_CLAIMS]
+def reason(
+    question: Asked, profile: Profile, enrichment: Mapping[str, Sequence[str]] | None = None
+) -> dict[str, object]:
+    matched = matched_claims(question, profile, enrichment)
+    chosen = (matched or describing_claims(profile))[:MAX_CLAIMS]
     while chosen and len(render(profile, chosen)) > MAX_TEXT:
         chosen = chosen[:-1]
     if not chosen:
