@@ -62,11 +62,13 @@ export function AvatarTurntable({ config, lite }: { config: AvatarConfig; lite: 
           shadows={!lite}
           dpr={lite ? 1 : [1, 2]}
           gl={{ alpha: true }}
-          camera={{ position: [0, 1.1, 4.4], fov: 28 }}
-          onCreated={({ camera }) => camera.lookAt(0, 0.78, 0)}
+          camera={{ position: [0, 0.85, 3.6], fov: 28 }}
+          onCreated={({ camera }) => camera.lookAt(0, 0.68, 0)}
         >
           <hemisphereLight color="#fff8ee" groundColor="#b9c4cf" intensity={1.6} />
           <directionalLight position={[2, 4, 3]} intensity={1.8} castShadow={!lite} />
+          {/* A soft fill from the viewer's side, so a face is never left in shadow. */}
+          <directionalLight position={[0, 1.4, 4]} intensity={0.7} />
           <mesh rotation-x={-Math.PI / 2} receiveShadow={!lite}>
             <circleGeometry args={[0.7, 32]} />
             <meshLambertMaterial color={PLATE_COLOUR} />
