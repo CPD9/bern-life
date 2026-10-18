@@ -79,6 +79,14 @@ enum RelationKind {
   @@map("relation_kind")
 }
 
+enum PlaceKind {
+  institute
+  platform
+  centre
+
+  @@map("place_kind")
+}
+
 enum PositionMethod {
   address
   district
@@ -186,19 +194,23 @@ model EntityRelation {
 }
 
 model Place {
-  id             String         @id
-  name           String
-  sourceId       String         @map("source_id")
-  units          String[]
-  address        String
-  addressUrl     String         @map("address_url")
-  addressSpan    String         @map("address_span") @db.VarChar(300)
-  x              Float
-  y              Float
-  positionMethod PositionMethod @map("position_method")
-  source         Source         @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  id                String         @id
+  name              String
+  sourceId          String         @map("source_id")
+  host              String
+  kind              PlaceKind
+  address           String?
+  addressUrl        String?        @map("address_url")
+  addressSpan       String?        @map("address_span") @db.VarChar(300)
+  addressFetchedAt  DateTime?      @map("address_fetched_at") @db.Timestamptz(3)
+  addressPageSha256 String?        @map("address_page_sha256") @db.Char(64)
+  x                 Float
+  z                 Float
+  positionMethod    PositionMethod @map("position_method")
+  source            Source         @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 
   @@index([sourceId])
+  @@index([host])
   @@map("place")
 }
 

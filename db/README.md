@@ -38,7 +38,7 @@ make db-drop-throwaway NAME=l3    # after your PR merges
 | `profile` | a person, unit, project or infrastructure |
 | `claim` | one value of a profile field (`name`, `role`, `unit`, `expertise`, `projects`, `infrastructure`, `services`) with its evidence span |
 | `entity_relation` | person → group → institute, project and infrastructure links, each with an evidence span |
-| `place` | an institution as a place on the world map, with the address span that places it |
+| `place` | a unit as a place on the stylised map (`x`, `z`), positioned by its address (with the span) or by district |
 | `term` | enrichment terms for an expertise value; retrieval only, never shown as a fact |
 | `chunk` | searchable text with a 384-dimension embedding and a `tsvector` the engine fills |
 | `bundle_load` | which snapshot bundle was loaded, when, with row counts |
@@ -53,6 +53,8 @@ stored by any writer:
   claims cite it (`ON UPDATE RESTRICT`); delete the claims first, or delete the page and they go
   with it.
 - `page_sha256_matches_text` requires `sha256` to be the sha256 of `text` as UTF-8.
+- `place_address_has_evidence` requires the address, its page URL, span and page sha256 when
+  `position_method` is `address`.
 - The `verify_evidence_span` trigger rejects a claim or relation whose `span` is not in the page
   text (at `start` when given; offsets count characters, as Python does) with
   `ERROR: evidence span not found in page` (SQLSTATE `23514`).
@@ -73,7 +75,7 @@ bunx prisma migrate diff --from-config-datasource --to-schema prisma/schema.pris
 
 Prisma has no HNSW index type, so it does not know about `chunk_embedding_hnsw_idx` (raw SQL at the
 end of the first migration) and every diff proposes `DROP INDEX "chunk_embedding_hnsw_idx"`. Delete
-that line from any migration you write. Prisma also does not model the extension, the sha256 check
+that line from any migration you write. Prisma also does not model the extension, the two checks
 or the trigger. It leaves them alone and does not report them.
 
 The same command, run without schema edits, is the drift check: on a migrated database its only

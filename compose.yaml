@@ -30,7 +30,7 @@ services:
     ports:
       - "127.0.0.1:${ENGINE_PORT:-8100}:8100"
     volumes:
-      - ./data:/app/data
+      - ${BERNLIFE_DATA_DIR:-./data}:/app/data
     depends_on:
       db:
         condition: service_healthy

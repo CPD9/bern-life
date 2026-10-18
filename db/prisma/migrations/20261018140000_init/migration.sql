@@ -26,6 +26,9 @@ CREATE TYPE "term_kind" AS ENUM ('synonym', 'lay', 'translation', 'acronym');
 CREATE TYPE "relation_kind" AS ENUM ('member_of', 'leads', 'part_of', 'works_on', 'operates');
 
 -- CreateEnum
+CREATE TYPE "place_kind" AS ENUM ('institute', 'platform', 'centre');
+
+-- CreateEnum
 CREATE TYPE "position_method" AS ENUM ('address', 'district');
 
 -- CreateTable
@@ -108,12 +111,15 @@ CREATE TABLE "place" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "source_id" TEXT NOT NULL,
-    "units" TEXT[],
-    "address" TEXT NOT NULL,
-    "address_url" TEXT NOT NULL,
-    "address_span" VARCHAR(300) NOT NULL,
+    "host" TEXT NOT NULL,
+    "kind" "place_kind" NOT NULL,
+    "address" TEXT,
+    "address_url" TEXT,
+    "address_span" VARCHAR(300),
+    "address_fetched_at" TIMESTAMPTZ(3),
+    "address_page_sha256" CHAR(64),
     "x" DOUBLE PRECISION NOT NULL,
-    "y" DOUBLE PRECISION NOT NULL,
+    "z" DOUBLE PRECISION NOT NULL,
     "position_method" "position_method" NOT NULL,
 
     CONSTRAINT "place_pkey" PRIMARY KEY ("id")
@@ -186,6 +192,9 @@ CREATE UNIQUE INDEX "entity_relation_from_profile_id_to_profile_id_kind_key" ON 
 CREATE INDEX "place_source_id_idx" ON "place"("source_id");
 
 -- CreateIndex
+CREATE INDEX "place_host_idx" ON "place"("host");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "term_value_term_kind_key" ON "term"("value", "term", "kind");
 
 -- CreateIndex
@@ -230,13 +239,18 @@ ALTER TABLE "chunk" ADD CONSTRAINT "chunk_profile_id_fkey" FOREIGN KEY ("profile
 -- AddForeignKey
 ALTER TABLE "chunk" ADD CONSTRAINT "chunk_page_url_fkey" FOREIGN KEY ("page_url") REFERENCES "page"("url") ON DELETE CASCADE ON UPDATE CASCADE;
 
-
 -- Below: what Prisma cannot express in schema.prisma.
 
 -- A page's sha256 is the hash of its stored text, so evidence pinned to (url, sha256) is pinned
 -- to exactly the text it was checked against.
 ALTER TABLE "page" ADD CONSTRAINT "page_sha256_matches_text"
     CHECK ("sha256" = encode(sha256(convert_to("text", 'UTF8')), 'hex'));
+
+-- A place positioned by its address must carry the address evidence; one placed by district
+-- need not.
+ALTER TABLE "place" ADD CONSTRAINT "place_address_has_evidence"
+    CHECK ("position_method" <> 'address' OR ("address" IS NOT NULL AND "address_url" IS NOT NULL
+        AND "address_span" IS NOT NULL AND "address_page_sha256" IS NOT NULL));
 
 -- Nearest neighbours by cosine distance for the vector half of hybrid search. Prisma has no HNSW
 -- index type, so `prisma migrate diff` always proposes dropping this one; db/README.md explains.
