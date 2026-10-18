@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { StandaloneNavigator } from "@/features/navigator/standalone-navigator";
 import { env } from "@/infrastructure/env";
+import { NavigatorApp } from "./navigator-app";
 
 export const metadata: Metadata = {
   title: "Navigator · Bern Life",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 async function NavigatorForRequest() {
   // DEMO_FIXTURES is read per request, so one build serves both fixture and engine mode.
   await connection();
-  return <StandaloneNavigator fixtureMode={env().demoFixtures} />;
+  return <NavigatorApp fixtureMode={env().demoFixtures} />;
 }
 
 export default function NavigatorPage() {

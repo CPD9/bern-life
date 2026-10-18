@@ -16,7 +16,7 @@ from search_fakes import PROFILES, SOURCES, truncate_all, write_bundle
 
 from db import connect
 
-COUNTS = {"page": 4, "profile": 5, "claim": 12, "entity_relation": 1, "chunk": 9}
+COUNTS = {"page": 4, "profile": 5, "claim": 12, "entity_relation": 1, "chunk": 9, "term": 0}
 
 
 class LoadTest(unittest.TestCase):

@@ -8,6 +8,7 @@ import { AppIcon } from "@/features/phone/app-icons";
 import { ComingNext, comingNextText } from "@/features/phone/coming-next";
 import { type PhoneApp, Phone } from "@/features/phone/phone";
 import { SettingsApp } from "@/features/phone/settings-app";
+import { openReport } from "@/features/report/open-report";
 import { GameShell, type WorldView } from "@/features/shell/game-shell";
 import { Hud } from "@/features/shell/hud";
 import { useHealth } from "@/features/shell/use-health";
@@ -36,7 +37,13 @@ export function WorldApp({ fixtureMode, demoSearch }: WorldAppProps) {
       label: "Ask",
       icon: <AppIcon app="ask" />,
       tile: "#13804a",
-      content: <Navigator controller={navigator} fixtureMode={fixtureMode} />,
+      content: (
+        <Navigator
+          controller={navigator}
+          fixtureMode={fixtureMode}
+          onMakeReport={(response) => openReport(response, fixtureMode)}
+        />
+      ),
     },
     {
       id: "messages",

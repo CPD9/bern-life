@@ -66,6 +66,19 @@ body {
   outline-offset: 3px;
 }
 
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  :root {
+    color-scheme: light;
+  }
+  body {
+    background: #ffffff;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -7,8 +7,20 @@ import type { NavigatorApi, NavigatorOutcome } from "./navigator-api";
 import { Navigator } from "./navigator";
 import { useNavigator } from "./use-navigator";
 
-function Harness({ api, fixtureMode = false }: { api: NavigatorApi; fixtureMode?: boolean }) {
-  return <Navigator controller={useNavigator(api)} fixtureMode={fixtureMode} />;
+type HarnessProps = {
+  api: NavigatorApi;
+  fixtureMode?: boolean;
+  onMakeReport?: (response: SearchResponse) => boolean;
+};
+
+function Harness({ api, fixtureMode = false, onMakeReport }: HarnessProps) {
+  return (
+    <Navigator
+      controller={useNavigator(api)}
+      fixtureMode={fixtureMode}
+      {...(onMakeReport ? { onMakeReport } : {})}
+    />
+  );
 }
 
 function answering(response: SearchResponse): NavigatorApi {
@@ -100,5 +112,34 @@ describe("Navigator", () => {
     unmount();
     render(<Harness api={answering(resultFixture)} />);
     expect(screen.queryByText("FIXTURE data")).toBeNull();
+  });
+
+  test("Make a report hands over the answer on screen, and says so when storage is blocked", async () => {
+    const reported: SearchResponse[] = [];
+    render(
+      <Harness
+        api={answering(resultFixture)}
+        onMakeReport={(response) => {
+          reported.push(response);
+          return false;
+        }}
+      />,
+    );
+    await ask("glucose sensors");
+    fireEvent.click(screen.getByRole("button", { name: "Make a report" }));
+    expect(reported).toEqual([resultFixture]);
+    expect(screen.getByRole("alert").textContent).toBe(
+      "This browser blocks storage, so the report could not be kept.",
+    );
+  });
+
+  test("no Make a report without a handler or for an abstained answer", async () => {
+    const { unmount } = render(<Harness api={answering(resultFixture)} />);
+    await ask("glucose sensors");
+    expect(screen.queryByRole("button", { name: "Make a report" })).toBeNull();
+    unmount();
+    render(<Harness api={answering(abstainedFixture)} onMakeReport={() => true} />);
+    await ask("quantum origami");
+    expect(screen.queryByRole("button", { name: "Make a report" })).toBeNull();
   });
 });
