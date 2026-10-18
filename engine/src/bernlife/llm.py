@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
 
-from . import config
+from . import config, paths
 from .cache import (
     MODELS,
     CacheMiss,
@@ -164,7 +164,7 @@ def connect(
     mode = config.backend(env)
     if mode == "mock":
         return MockLLM()
-    roots = cache_roots(config.data_dir(env))
+    roots = cache_roots(paths.data_dir(env))
     concurrency = config.max_concurrency(env)
     if mode != "replay":
         live = _live_router(env, roots, concurrency, transport, sleep, required=mode == "live")

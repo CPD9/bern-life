@@ -5,9 +5,10 @@ import urllib.error
 from pathlib import Path
 
 from bernlife.cache import CacheMiss, cache_roots, write_json
-from bernlife.config import ConfigError, data_dir, llm_endpoint, max_concurrency
+from bernlife.config import ConfigError, llm_endpoint, max_concurrency
 from bernlife.llm import ROLES, MockLLM, Router, connect
 from bernlife.llm_http import ModelUnavailable
+from bernlife.paths import data_dir, repo_root
 from fake_llm import FakeTransport, models_body
 
 LARGE = "swiss-ai/Apertus-v1.5-70B"
@@ -96,11 +97,10 @@ class ConfigTest(unittest.TestCase):
             f"Endpoint(base_url='https://large.example/v1', model='{LARGE}')",
         )
 
-    def test_data_dir_is_the_setting_else_data_under_the_working_directory(self) -> None:
-        self.assertEqual(data_dir({}), Path.cwd() / "data")
-        self.assertEqual(
-            data_dir({"BERNLIFE_DATA_DIR": "~/bern-life-data"}), Path.home() / "bern-life-data"
-        )
+    def test_data_dir_is_the_setting_else_data_under_the_repo(self) -> None:
+        self.assertEqual(data_dir({}), repo_root() / "data")
+        shared = {"BERNLIFE_DATA_DIR": "~/bern-life-data"}
+        self.assertEqual(data_dir(shared), Path.home() / "bern-life-data")
 
     def test_bad_values_are_refused_by_name(self) -> None:
         with self.assertRaisesRegex(ConfigError, "BERNLIFE_BACKEND"):

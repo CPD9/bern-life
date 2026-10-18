@@ -8,7 +8,7 @@ import os
 import sys
 from collections.abc import Mapping, Sequence
 
-from . import config
+from . import config, paths
 from .cache import CacheMiss, cache_roots, count_entries
 from .llm import connect
 from .llm_http import ModelUnavailable, Transport, urlopen_transport
@@ -16,7 +16,7 @@ from .llm_http import ModelUnavailable, Transport, urlopen_transport
 
 def report(env: Mapping[str, str], transport: Transport) -> dict[str, object]:
     llm = connect(env, transport)
-    roots = cache_roots(config.data_dir(env))
+    roots = cache_roots(paths.data_dir(env))
     return {"mode": llm.backend, "models": llm.models(), "cache": count_entries(roots)}
 
 

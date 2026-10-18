@@ -6,6 +6,7 @@ BERNLIFE_DATA_DIR moves the data out of the worktree, which lets every worktree 
 """
 
 import os
+from collections.abc import Mapping
 from functools import cache
 from pathlib import Path
 
@@ -23,8 +24,8 @@ def repo_root() -> Path:
     raise RepoRootNotFound("no folder with contracts/ above the engine or the working directory")
 
 
-def data_dir() -> Path:
-    configured = os.environ.get("BERNLIFE_DATA_DIR")
+def data_dir(env: Mapping[str, str] = os.environ) -> Path:
+    configured = env.get("BERNLIFE_DATA_DIR")
     return Path(configured).expanduser() if configured else repo_root() / "data"
 
 

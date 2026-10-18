@@ -6,7 +6,6 @@ Importing the engine never needs a `.env`; a bad value fails where it is used, b
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from pathlib import Path
 
 BACKENDS = ("live", "replay", "mock")
 DEFAULT_MAX_CONCURRENCY = 4
@@ -21,14 +20,6 @@ class Endpoint:
     base_url: str
     api_key: str = field(repr=False)
     model: str
-
-
-def data_dir(env: Mapping[str, str] = os.environ) -> Path:
-    """BERNLIFE_DATA_DIR, else `data/` under the working directory: the repo root for make
-    targets, and /app in the engine image, which installs the package into site-packages and
-    mounts the data at /app/data, so the package's own location says nothing about it."""
-    raw = env.get("BERNLIFE_DATA_DIR", "")
-    return Path(raw).expanduser() if raw else Path.cwd() / "data"
 
 
 def llm_endpoint(env: Mapping[str, str] = os.environ) -> Endpoint | None:
