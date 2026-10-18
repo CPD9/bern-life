@@ -8,14 +8,17 @@ export type Motion = "still" | "idle" | "walk";
 export type BearPose = {
   /** Lift of the whole bear, in metres. */
   readonly lift: number;
-  /** Side-to-side rock around the feet, in radians (positive leans to the bear's left). */
+  /** Side-to-side rock around the feet, in radians (positive leans to the bear's right, -x). */
   readonly rock: number;
   /** Forward lean, in radians. */
   readonly lean: number;
   /** Vertical scale of the whole bear: below 1 squishes, above 1 stretches. */
   readonly squash: number;
   readonly headTilt: number;
-  /** Forward and back swing of each leg and arm, in radians, as [left, right]. */
+  /**
+   * Forward and back swing of each leg and arm, in radians, as [right, left]. The bear faces +z,
+   * so its right side is -x.
+   */
   readonly legs: readonly [number, number];
   readonly arms: readonly [number, number];
   readonly tail: number;
@@ -98,7 +101,13 @@ export function poseAt(motion: Motion, seconds: number): BearPose {
   return STILL;
 }
 
-/** Reduced motion keeps the bear standing still, whatever it was asked to do. */
-export function motionFor(wanted: Motion, reducedMotion: boolean): Motion {
-  return reducedMotion ? "still" : wanted;
+/**
+ * Reduced motion keeps the bear standing still, whatever it was asked to do. Lite graphics drops
+ * the idle breathing, which would redraw every frame for ever, but still walks when asked.
+ */
+export function motionFor(
+  wanted: Motion,
+  { reducedMotion, lite }: { reducedMotion: boolean; lite: boolean },
+): Motion {
+  return reducedMotion || (lite && wanted === "idle") ? "still" : wanted;
 }
