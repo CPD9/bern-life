@@ -20,16 +20,26 @@ Postgres at a time.
 | `W2-bern-map.md` | world 3D | 3014 | W1 PR 1 merged before coding |
 | `I1-plumbing.md` (two PRs) | infra (Yaseen, or Peter as a 4th session when one ends) | 3013 | — |
 
-## Round B (≈19:30 → 23:00, briefs written when round A reports)
-E2 extraction + verifier (relations, place addresses checked against the snapshot) · I2 model
-router + CSCS · W3 onboarding (Role → Look → Expertise → Goal → Visibility), your avatar, home room ·
-W2 follow-up: walk the map with your avatar.
+## Round B (now → 23:00)
 
-## Round C (23:00 → ≈03:00)
-E3 enrichment + hybrid search + explain + brief API · I3 evaluator · W4 the world and phone on the
-real engine (map lights up from live search) · X1 the agent: the Navigator character in Ask uses
-tools (search, light up and fly to places, open a profile, start a match report); it never sends
-anything outside the app without a click.
+| File | Lane | Port | Depends on |
+| --- | --- | --- | --- |
+| `E2-extract.md` | engine | 3011 | E1 merged (#14); live model run after I2 and Peter's go-ahead |
+| `I2-router.md` (PR #17; CSCS probe and RunPod scripts as a follow-up) | infra (Yaseen) | 3013 | I1 merged; CSCS base URL for the probe |
+| `I3-evaluator.md` | infra (Yaseen) | 3013 | gold set merged; runs on fixtures until E3 |
+| W1 PR 2 (Ask) then PR 3 (phone), from `W1-world-shell.md` | world shell | 3012 | PR 1 merged |
+| W2 PR B (scene, light-up, panel), from `W2-bern-map.md` | world 3D | 3014 | PR A merged |
+| `W3-onboarding-home.md` | world home | 3015 | a free world session (after W1 PR 3 or W2 PR B) |
+
+## Round C (tonight)
+
+| File | Lane | Depends on |
+| --- | --- | --- |
+| `E3a-search.md` | engine | E2 merged; I1 schema; baseline numbers with I3 |
+| `E3b-expand-explain-brief.md` | engine | E3a merged; CSCS key in `.env` |
+| `I3-evaluator.md` | infra (Yaseen) | running now |
+| `I4-bundle-run.md` | infra (Yaseen) | I3 merged; E3a `predict`; Peter runs `gh release` |
+| W4 (world on the real engine) and X1 (the agent) | world | briefs follow when W1/W2 report |
 
 ## Round D (≈03:00 → 08:00)
 X2 match report: PDF plus a live link that opens the same lit-up map · X3 inquiry inbox: a web form
