@@ -15,10 +15,12 @@ define require_lane_name
 endef
 
 .PHONY: help fetch db-up db-migrate db-reset-throwaway db-drop-throwaway test live eval eval-fixture
-.PHONY: pack-cache bundle
+.PHONY: pack-cache bundle run stop
 
 help:
 	@echo "make fetch                    download and verify the snapshot bundle into data/bundle/"
+	@echo "make run                      Postgres, engine and web replaying the bundle on 127.0.0.1:3000"
+	@echo "make stop                     stop what make run started (the shared database keeps running)"
 	@echo "make db-up                    start Postgres + pgvector on 127.0.0.1:5433"
 	@echo "make db-migrate               apply migrations to DATABASE_URL"
 	@echo "make db-reset-throwaway NAME=l3   drop and create bernlife_l3"
@@ -94,3 +96,19 @@ pack-cache:
 
 bundle: pack-cache
 	PYTHONPATH=engine/src $(PYTHON) -m infra.build_bundle --version $(BUNDLE_VERSION)
+
+# The judge's path: make fetch && make run. Compose migrates, loads the bundle, serves it and starts
+# the production web app; the bundle folder is passed in so a .env cannot point compose elsewhere.
+WEB_PORT ?= 3000
+RUN_COMPOSE = BERNLIFE_BUNDLE_DIR=$(abspath $(BUNDLE)) WEB_PORT=$(WEB_PORT) $(COMPOSE) --profile run
+RUN_SERVICES = migrate load serve web
+
+run:
+	@[ -f $(BUNDLE)/pages.jsonl ] || { echo "No snapshot bundle in $(BUNDLE); run make fetch first." >&2; exit 1; }
+	@$(RUN_COMPOSE) up -d --build --wait $(RUN_SERVICES) || { \
+	  $(RUN_COMPOSE) logs --no-log-prefix load; exit 1; }
+	@$(PYTHON) -m infra.wait_ready --url http://127.0.0.1:$(WEB_PORT)
+
+# Only the run services: the database is shared by every worktree's lane.
+stop:
+	$(RUN_COMPOSE) rm --stop --force $(RUN_SERVICES)

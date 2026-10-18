@@ -12,6 +12,8 @@ type NavigatorProps = {
   controller: NavigatorController;
   fixtureMode: boolean;
   onShowOnMap?: (response: SearchResponse) => void;
+  /** Saves the answer as a match report; false when the browser blocks storage. */
+  onMakeReport?: (response: SearchResponse) => boolean;
 };
 
 type InputMode = "search" | "brief";
@@ -21,7 +23,7 @@ const inputModes: { mode: InputMode; label: string }[] = [
   { mode: "brief", label: "Project brief" },
 ];
 
-export function Navigator({ controller, fixtureMode, onShowOnMap }: NavigatorProps) {
+export function Navigator({ controller, fixtureMode, onShowOnMap, onMakeReport }: NavigatorProps) {
   const [inputMode, setInputMode] = useState<InputMode>("search");
 
   return (
@@ -49,7 +51,12 @@ export function Navigator({ controller, fixtureMode, onShowOnMap }: NavigatorPro
       ) : (
         <BriefInput controller={controller} />
       )}
-      <ResultsView state={controller.state} onRetry={controller.retry} onShowOnMap={onShowOnMap} />
+      <ResultsView
+        state={controller.state}
+        onRetry={controller.retry}
+        onShowOnMap={onShowOnMap}
+        onMakeReport={onMakeReport}
+      />
     </div>
   );
 }
