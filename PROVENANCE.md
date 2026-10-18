@@ -18,7 +18,7 @@ Where code, data and models come from. Update this file in the same PR that adds
 | `swiss-ai/Apertus-v1.5-70B`, served by the event gateway as `apertus-v1-5-70b` | as served by CSCS on the day (`infra/cscs.md`) | every model role: query expansion, enrichment terms, extraction proposals, "why it matches", brief needs | CSCS API (Swiss) through the event gateway, for the demo |
 | `onprem-ai/Apertus-v1.5-70B-FP8` | `70378c8df951c9f932e0a28f72e0148d868b5f6b` | as above, for smoke tests | vLLM on RunPod (`infra/runpod/serve_70b.sh`) |
 | `swiss-ai/Apertus-v1.5-8B` | `ef4bbc54d6fe658bc782280ff9f3b53a10a9758f` on RunPod | fallback only while no 70B route is set, never for facts about people | the event gateway as `apertus-v1-5-8b`, or vLLM on RunPod (`infra/runpod/serve_8b.sh`) |
-| `intfloat/multilingual-e5-small` | pinned in brief E3 | query and passage embeddings, 384-d | CPU, inside the engine container |
+| `intfloat/multilingual-e5-small` (MIT) | `614241f622f53c4eeff9890bdc4f31cfecc418b3`; `onnx/model.onnx` sha256 `ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665` | query and passage embeddings, 384-d (`engine/src/bernlife/embed.py`) | CPU via fastembed/ONNX, inside the engine |
 
 No profile field comes from a model's memory. Every field carries a verbatim span from a stored page.
 
