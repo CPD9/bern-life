@@ -43,6 +43,7 @@ make db-drop-throwaway NAME=l3    # after your PR merges
 | `chunk` | searchable text with a 384-dimension embedding and a `tsvector` the engine fills |
 | `bundle_load` | which snapshot bundle was loaded, when, with row counts |
 | `document` | an uploaded PDF: owner, name, sha256, size, pages, visibility. The file itself sits at `$BERNLIFE_DATA_DIR/uploads/<sha256>`, never in the database, git or the bundle |
+| `lab`, `lab_member`, `lab_invite`, `lab_listing` | a lab with one lead, its members (joined only by accepting a one-time invite, stored as a hash) and linked public profiles; a listing has no foreign key to `profile`, because bundle loads replace profile rows, and it never creates a user |
 
 ## Guards in the database
 

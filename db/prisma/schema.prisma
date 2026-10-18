@@ -277,6 +277,9 @@ model User {
   memberships Member[]
   messages    Message[]
   documents   Document[]
+  labLed      Lab?
+  labs        LabMember[]
+  labListings LabListing[]
 
   // "user" is a reserved word in Postgres; every raw query would have to quote it.
   @@map("app_user")
@@ -317,14 +320,19 @@ model Invite {
 }
 
 model UserProfile {
-  userId     String            @id @map("user_id") @db.Uuid
-  role       String?
-  goal       String?
-  expertise  String[]          @default([])
-  visibility ProfileVisibility @default(private)
-  avatar     Json?
-  updatedAt  DateTime          @default(now()) @map("updated_at") @db.Timestamptz(3)
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String            @id @map("user_id") @db.Uuid
+  role            String?
+  goal            String?
+  expertise       String[]          @default([])
+  visibility      ProfileVisibility @default(private)
+  avatar          Json?
+  // Where your office stands on the map and how it is furnished (shapes owned by W5 and W6a), and
+  // who may visit it: `members` is any signed-in account, `public` anyone.
+  officePlot      Json?             @map("office_plot")
+  officeLayout    Json?             @map("office_layout")
+  visitVisibility ProfileVisibility @default(private) @map("visit_visibility")
+  updatedAt       DateTime          @default(now()) @map("updated_at") @db.Timestamptz(3)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_profile")
 }
@@ -412,4 +420,65 @@ model Document {
   @@index([ownerId, createdAt])
   @@index([sha256])
   @@map("document")
+}
+
+// Labs (S4b). A lab has one lead, who invites and removes; people join only by accepting an
+// invite. A listing links a public profile from the engine as a card: it never creates a user,
+// and it has no foreign key because bundle loads replace profile rows.
+enum LabRole {
+  lead
+  member
+}
+
+model Lab {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  unit        String?
+  description String?
+  leadId      String       @unique @map("lead_id") @db.Uuid
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  lead        User         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  members     LabMember[]
+  invites     LabInvite[]
+  listings    LabListing[]
+
+  @@map("lab")
+}
+
+model LabMember {
+  labId      String   @map("lab_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  role       LabRole  @default(member)
+  acceptedAt DateTime @default(now()) @map("accepted_at") @db.Timestamptz(3)
+  lab        Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([labId, userId])
+  @@index([userId])
+  @@map("lab_member")
+}
+
+model LabInvite {
+  codeHash  String    @id @map("code_hash") @db.Char(64)
+  labId     String    @map("lab_id") @db.Uuid
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lab       Lab       @relation(fields: [labId], references: [id], onDelete: Cascade)
+
+  @@index([labId])
+  @@map("lab_invite")
+}
+
+model LabListing {
+  labId     String   @map("lab_id") @db.Uuid
+  profileId String   @map("profile_id")
+  addedBy   String   @map("added_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  lab       Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+  adder     User     @relation(fields: [addedBy], references: [id], onDelete: Cascade)
+
+  @@id([labId, profileId])
+  @@index([addedBy])
+  @@map("lab_listing")
 }
