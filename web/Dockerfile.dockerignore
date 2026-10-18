@@ -1,0 +1,8 @@
+# Allow-list: the web image gets the app and the contracts it imports; never .env, builds or modules.
+*
+!web
+!contracts
+web/node_modules
+web/.next
+web/**/.env*
+web/**/*.tsbuildinfo
