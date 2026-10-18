@@ -59,6 +59,26 @@ infrastructure, 194 listing, 1,554 other; 7 UniBE hosts hit the 150-page cap.
   push. Collaborators `yaseenmohamd`, `nik-milcevs` (write).
 - `web` added to the required checks (2026-10-18, after #11).
 
+## Answers to I3 (2026-10-18)
+- Predictions come from E3a's `python -m bernlife predict` →
+  `$BERNLIFE_DATA_DIR/eval/predictions.jsonl`; the bundle carries a frozen `predictions.jsonl`, so
+  `make eval` defaults to `data/bundle/predictions.jsonl` (`PRED=` overrides).
+- Field completeness: the evaluator writes a blind 30-result labelling sheet; Peter and Nik label it
+  Monday morning with an overlap for agreement. Until then counts and shares only, marked
+  "human check pending".
+- A person's `unit` field does not count as a unit hit; only `unit` profiles do.
+- Package name `evaluator` (in `eval/src/evaluator/`).
+- Live model: CSCS via the Keera gateway (`https://gateway.keera.ch/api/v1`, `apertus-v1-5-70b`);
+  ask Sabine where Keera runs for the sovereignty section.
+
+## World integration (agreed 2026-10-18)
+- Lite graphics is `data-graphics="lite"` on `<html>`, written by W1's Settings; the world reads it.
+- The world exports a search store (`begin`, `showResults`, `clear`); `app/` wires the Navigator's
+  `onShowOnMap` to it (W4). `ResultCard` moves to `web/infrastructure/ui/` in W4 so the place panel
+  can reuse it.
+- Agent contract `contracts/agent.schema.json`: replies grounded in tool results, on-screen actions
+  only.
+
 ## Findings that change the build
 - 2026-10-18 Stacked PR #12 closed when its base branch was deleted on merge; reopened as #13.
   Rule added to `docs/git-workflow.md`.

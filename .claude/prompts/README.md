@@ -31,11 +31,16 @@ Postgres at a time.
 | W2 PR B (scene, light-up, panel), from `W2-bern-map.md` | world 3D | 3014 | PR A merged |
 | `W3-onboarding-home.md` | world home | 3015 | a free world session (after W1 PR 3 or W2 PR B) |
 
-## Round C (23:00 → ≈03:00)
-E3 enrichment + hybrid search + explain + brief API · I3 evaluator · W4 the world and phone on the
-real engine (map lights up from live search) · X1 the agent: the Navigator character in Ask uses
-tools (search, light up and fly to places, open a profile, start a match report); it never sends
-anything outside the app without a click.
+## Round C (tonight)
+
+| File | Lane | Depends on |
+| --- | --- | --- |
+| `E3a-search.md` | engine | E2 merged; I1 schema; baseline numbers with I3 |
+| `E3b-expand-explain-brief.md` | engine | E3a merged; CSCS key in `.env` |
+| `I3-evaluator.md` | infra (Yaseen) | running now |
+| `I4-bundle-run.md` | infra (Yaseen) | I3 merged; E3a `predict`; Peter runs `gh release` |
+| `X1-agent.md` (X1a engine, X1b web) | engine, then world shell | E3a merged; W1 PR 3 merged |
+| `W4-world-live.md` | world | W1 PR 3 and W2 B2 merged; E3a serving |
 
 ## Round D (≈03:00 → 08:00)
 X2 match report: PDF plus a live link that opens the same lit-up map · X3 inquiry inbox: a web form
