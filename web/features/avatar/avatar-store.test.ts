@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { defaultAvatar } from "./avatar-config";
+import { defaultBear } from "./bear-config";
 import { avatarKey, createAvatarStore } from "./avatar-store";
 
 function memoryStorage(initial: Record<string, string> = {}) {
@@ -20,11 +20,11 @@ const throwing = {
 };
 
 const chosen = {
-  body: "slim",
-  skin: "tone-7",
-  hair: "curly",
+  kind: "red-panda",
+  fur: "ginger",
+  face: "wink",
   outfit: "field-work",
-  accent: "teal",
+  accessory: "backpack",
 } as const;
 
 describe("createAvatarStore", () => {
@@ -37,17 +37,19 @@ describe("createAvatarStore", () => {
 
   test("a corrupted or outdated value is ignored and the default avatar shown", () => {
     const corrupted = memoryStorage({ [avatarKey]: "{not json" });
-    expect(createAvatarStore(() => corrupted).get()).toEqual(defaultAvatar);
+    expect(createAvatarStore(() => corrupted).get()).toEqual(defaultBear);
 
-    const outdated = memoryStorage({ [avatarKey]: JSON.stringify({ ...chosen, hair: "mohawk" }) });
-    expect(createAvatarStore(() => outdated).get()).toEqual(defaultAvatar);
+    const outdated = memoryStorage({
+      [avatarKey]: JSON.stringify({ body: "slim", skin: "tone-7", hair: "curly" }),
+    });
+    expect(createAvatarStore(() => outdated).get()).toEqual(defaultBear);
   });
 
   test("blocked storage keeps the avatar in memory and still notifies", () => {
     const store = createAvatarStore(() => throwing);
     let notified = 0;
     store.subscribe(() => notified++);
-    expect(store.get()).toEqual(defaultAvatar);
+    expect(store.get()).toEqual(defaultBear);
     store.set(chosen);
     expect(store.get()).toEqual(chosen);
     expect(notified).toBe(1);

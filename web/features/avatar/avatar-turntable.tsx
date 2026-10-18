@@ -5,13 +5,13 @@
 
 import { Canvas } from "@react-three/fiber";
 import { type KeyboardEvent, type PointerEvent, useRef, useState } from "react";
-import { type AvatarConfig } from "./avatar-config";
-import { AvatarFigure } from "./avatar-figure";
+import { type BearConfig } from "./bear-config";
+import { BearFigure } from "./bear-figure";
 import { RADIANS_PER_PIXEL, angleAfterKey, degreesOf, turnLabel } from "./turntable-turn";
 
 const PLATE_COLOUR = "#d9e2ea";
 
-export function AvatarTurntable({ config, lite }: { config: AvatarConfig; lite: boolean }) {
+export function AvatarTurntable({ config, lite }: { config: BearConfig; lite: boolean }) {
   const [angle, setAngle] = useState(0);
   const dragX = useRef<number | null>(null);
   const degrees = degreesOf(angle);
@@ -62,8 +62,8 @@ export function AvatarTurntable({ config, lite }: { config: AvatarConfig; lite: 
           shadows={!lite}
           dpr={lite ? 1 : [1, 2]}
           gl={{ alpha: true }}
-          camera={{ position: [0, 0.85, 3.6], fov: 28 }}
-          onCreated={({ camera }) => camera.lookAt(0, 0.68, 0)}
+          camera={{ position: [0, 0.9, 3.4], fov: 28 }}
+          onCreated={({ camera }) => camera.lookAt(0, 0.62, 0)}
         >
           <hemisphereLight color="#fff8ee" groundColor="#b9c4cf" intensity={1.6} />
           <directionalLight position={[2, 4, 3]} intensity={1.8} castShadow={!lite} />
@@ -74,7 +74,7 @@ export function AvatarTurntable({ config, lite }: { config: AvatarConfig; lite: 
             <meshLambertMaterial color={PLATE_COLOUR} />
           </mesh>
           <group rotation-y={angle}>
-            <AvatarFigure config={config} shadows={!lite} />
+            <BearFigure config={config} lite={lite} />
           </group>
         </Canvas>
       </div>
