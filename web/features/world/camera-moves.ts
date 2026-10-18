@@ -63,3 +63,11 @@ export function startPosition(aspect: number): [number, number, number] {
     tz + distance * Math.sin(polar) * Math.cos(azimuth),
   ];
 }
+
+/** On a portrait screen the panel covers the lower half, so the camera stops short of the place
+ * and the place sits in the upper half, above the panel. */
+export function focusTarget(x: number, z: number, azimuth: number, portrait: boolean): MapPoint {
+  if (!portrait) return [x, z];
+  const [dx, dz] = panOffset(azimuth, 0, -1.5);
+  return [x + dx, z + dz];
+}

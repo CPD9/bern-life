@@ -35,8 +35,9 @@ Units at one street address share a building and one marker with a count (`build
 
 `world-canvas.tsx` fills the shell's canvas slot: ground, district plates, roads and the Aare from
 `geography.ts`, a seeded city (`city-plan.ts`, the same layout on every load) and one building of
-the same size per building in `buildings.ts`. The square in front of the city hall is kept open for
-the agents. Primitives only; `public/world/manifest.json` pins any asset file added later
+the same size per building in `buildings.ts`, each with a marker of the same size, and the three
+agents in front of the city hall. People from public pages never appear as figures; they are
+entries with sources in a place's panel. Primitives only; `public/world/manifest.json` pins any asset file added later
 (`assets.test.ts`).
 
 Settings are read from `<html>`, so the world imports no other feature:
@@ -48,4 +49,7 @@ Settings are read from `<html>`, so the world imports no other feature:
 
 Light follows the hour in Bern (`sky.ts`). The camera stays between a steep and a shallow view,
 within the map; arrows or WASD pan, Q and E turn by 45°, + and - zoom, and mouse or touch drag,
-turn and pinch within the same limits.
+turn and pinch within the same limits. Tab reaches each marker; opening a place eases the camera to
+it, and Escape closes the panel. Markers and agent buttons are page buttons placed over the canvas
+each frame (`markers/anchor-projector.tsx`). `WorldCanvas` takes `onAgentSelect(id)` for the agents
+(`navigator`, `scout`, `matchmaker`).
