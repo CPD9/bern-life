@@ -3,31 +3,37 @@
 To continue on another account or machine: open the repo and say "You are the conductor. Read
 CLAUDE.md, docs/conductor/STATE.md and .claude/prompts/README.md, then tell me the next step."
 
-Updated: 2026-10-18 15:10 (conductor)
+Updated: 2026-10-18 19:30 (conductor)
 
 ## Deadline
 - Planned feature freeze Sun 18 Oct 23:00; Peter builds through the night. Submission and finals
   Mon 19 Oct (Yaseen's plan says finals 17:00; exact submission time to confirm).
 
 ## Wave
-**Round A merged:** gold set (#2), lanes v2 (#8), W1 scaffold (#11), I1 schema + compose (#9).
-**Open:** I1 bundle fetch + CI database #13 (replaces #12), E1 crawler #14, W2 places PR A (commit
-28a7054, push pending). **Round B** briefs: E2, W3; I2 waits for the CSCS URL.
+Merged: crawl (#14), extraction (#23, #29, #32, #44), router (#17, #22), evaluator (#33), bundle
+tools (#38), metrics (#46), search + API + predict (#58), web shell / Ask / phone (#11, #30, #51),
+world city / markers / light-up (#24, #39, #54, #64), accounts (#52, #55), messages backend (#63).
+Running: E3b (expansion and enrichment, then explanations and briefs), W4 (world on real data), D1
+(README), Yaseen: trigger migration → `make run` → Messages app → S3 Exoscale, Nik: avatar (#62) →
+onboarding and home.
 
 ## Lanes and sessions
-| Lane | Brief | Port | Branch / PR | Status |
-|---|---|---|---|---|
-| engine | E1 → E2 | 3011 | #14 | E1 green, reviewed; E2 next |
-| world shell | W1 PR 2 Ask, PR 3 phone | 3012 | — | split approved; contracts added in #15 |
-| world 3D | W2 PR A → PR B | 3014 | `5-bern-map` | PR A committed, push pending |
-| world home | W3 | 3015 | — | waits for a free session |
-| infra | I1 PR 2 → I2 | 3013 | #13 | green except GitGuardian (false positive) |
-| conductor | round B | — | `15-round-b` (#15) | PR to open |
+| Lane | Who | Now | Next |
+|---|---|---|---|
+| engine | Peter's session | E3b PR 1 expansion + enrichment | E3b PR 2 explain + briefs, X1a agent |
+| world shell | Peter's session (W1) | D1 README | X1b agent UI |
+| world 3D | Peter's session (W2) | W4 world on real data | walk the map |
+| backend / infra | Yaseen | span-trigger migration | `make run`, Messages app, S3 Exoscale |
+| world home | Nik | avatar #62 | onboarding steps, home room; X2 match report UI |
 
-## E1 crawl (2026-10-18)
-3,013 pages, 22 hosts, 18.8 min, none blocked; 22/22 gold proof URLs; 40/40 spans verbatim; 4,033
-emails and 2,585 phone numbers redacted; kinds: 795 person, 183 unit, 114 project, 173
-infrastructure, 194 listing, 1,554 other; 7 UniBE hosts hit the 150-page cap.
+## Search baseline (E3a, bundle `local-8f34ab8c1fba`, no model help)
+| Run | recall@10 | MRR | traceable | invented | invented abstained | false abstentions | en / de / fr |
+|---|---|---|---|---|---|---|---|
+| without the claim rule | 0.31 [0.18, 0.48] | 0.29 | 1674/1674 | 0 | 8/10 | 0/38 | 0.42 / 0.16 / 0.18 |
+| with the claim rule (current) | 0.22 [0.10, 0.35] | 0.27 | 3086/3086 | 0 | 8/10 | 4/38 | 0.34 / 0.05 / 0.05 |
+Thresholds set on `eval/dev.jsonl` and committed before the gold run (3b8b98e). Latency p50 125 ms.
+The claim rule needs a cited non-name claim matching the query; its cross-language cost is what E3b's
+expansion targets. Any change to the rule is decided on the dev set only.
 
 ## Decisions (dated; details in docs/decisions.md)
 - 2026-10-18 Name Bern Life; repo `CPD9/bern-life`, private.
@@ -59,17 +65,14 @@ infrastructure, 194 listing, 1,554 other; 7 UniBE hosts hit the 150-page cap.
   push. Collaborators `yaseenmohamd`, `nik-milcevs` (write).
 - `web` added to the required checks (2026-10-18, after #11).
 
-## E2 full extraction (2026-10-18, apertus-v1-5-70b via Keera/CSCS)
-- 1,459 pages, 1,546 live calls (28 gateway 504s refilled); replay rebuilds both files byte for
-  byte (`profiles.jsonl` 1560dd40…, `relations.jsonl` ef1b61e2…).
-- **648 model proposals were not found on their page (6.4% of ~10,180), all dropped**; 888 more
-  dropped because the value was not in its span (rewording).
-- 2,005 profiles: 1,556 people (UniBE 1,185, ARTORG 273, DCB 98), 188 units, 103 projects, 158
-  infrastructure; 1,897 relations.
-- Completeness: people role 71%, unit 45%, expertise 14%; units expertise 71%; projects expertise
-  75%; infrastructure expertise 56%.
-- Coverage gap: 4 of 29 gold people are named only on pages classed "other", which the model did not
-  read. Reading "other" pages is a general coverage step (1,554 pages), decided by Peter.
+## E2 extraction, final (2026-10-18, apertus-v1-5-70b via Keera/CSCS)
+- 3,234 model calls (all cached), all six page kinds; replay rebuilds `profiles.jsonl` (fe02324a…)
+  and `relations.jsonl` (ef1b61e2…) byte for byte.
+- **1,151 model proposals were not found on their page (6.9% of ~16,700), all dropped.**
+- 3,371 profiles: 2,922 people (UniBE 2,353, ARTORG 369, DCB 200), 188 units, 103 projects, 158
+  infrastructure; 1,897 relations. All 29 gold people present (25 before the "other" pages).
+- 1,241 people are a bare name from a news or partner page; the search's claim rule keeps them out of
+  topical results.
 
 ## Answers to I3 (2026-10-18)
 - Predictions come from E3a's `python -m bernlife predict` →
@@ -98,6 +101,8 @@ infrastructure, 194 listing, 1,554 other; 7 UniBE hosts hit the 150-page cap.
   only.
 
 ## Findings that change the build
+- 2026-10-18 Postgres 17.8: `substr()` on compressed long page text fails with an encoding error, so
+  the span trigger wrongly refuses 7 claims and 1 relation; fix `"text" || ''` (Yaseen, migration).
 - 2026-10-18 Stacked PR #12 closed when its base branch was deleted on merge; reopened as #13.
   Rule added to `docs/git-workflow.md`.
 - 2026-10-18 E1 found staff emails and phone numbers in page text; redacted at crawl time.
@@ -110,7 +115,6 @@ infrastructure, 194 listing, 1,554 other; 7 UniBE hosts hit the 150-page cap.
 
 ## Blockers / open questions
 - Does the event require a template repo?
-- CSCS base URL and served model ids (needed by I2; key stays in `.env`).
 - Exact submission time on Monday.
 
 ## Next briefs
