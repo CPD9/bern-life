@@ -2,8 +2,10 @@
 
 `python -m bernlife serve` answers `POST /api/search` (contract `contracts/result.schema.json`)
 from Postgres. With a model connected (live or replay), the question is expanded first; without
-one the mode is `mock` and `expanded_terms` is empty. The reason lists the profile's own claim
-values; Apertus' explanations come in the next step of E3b.
+one the mode is `mock` and `expanded_terms` is empty. The top 5 results get Apertus' "why it
+matches", checked in code. Every other result, and any explanation that fails a check, keeps the
+plain reason listing the profile's own claim values. `POST /api/brief` turns a project brief into
+needs and searches each one.
 
 ## Commands
 ```bash
@@ -42,6 +44,37 @@ Terms help search find pages and are never shown as a fact. Code keeps a term on
   statement, the signals the thresholds were set on. The thresholds did not change.
 - A failed call (marker, cache miss, unreadable JSON) means no expansion: search runs plain and
   the mode says `mock`. `versions.prompts` names `expand-v1` when an expansion was used.
+
+## Why it matches (role `explain`, prompt `explain-v2`)
+For each of the top 5 results the model sees, as data, only:
+- the question;
+- the result's name;
+- the claims the plain reason cites (pointer, value and verbatim span).
+
+The claims are numbered, and the model returns at most two English sentences and the numbers it
+used; code maps the numbers back to JSON pointers. Asked for pointers directly (prompt
+`explain-v1`), the model copied whole claim lines into them and only 33% of explanations passed. Code keeps the text only if:
+- every pointer was offered and exists;
+- the text is 1 to 400 characters with no control characters;
+- every capitalised word inside a sentence occurs in the cited claims, the name or the question.
+
+The last check is what stops a name or place from the model's memory. Otherwise the plain reason
+stays. The calls run in parallel, are cached per question and claims, and replay byte for byte.
+Explanations are English only: German capitalises every noun, which the name check cannot tell
+from a name.
+
+`mode` is `live` or `replay` when any model text was used (expansion or explanation), and
+`versions.prompts` lists the prompt versions used (`expand-v1+explain-v2`).
+
+## Project briefs (`POST /api/brief`, role `brief`, prompt `brief-v1`)
+`{"text": "..."}` (1 to 20,000 characters; the web app extracts it from the PDF and keeps no file)
+goes to the model as data and gives up to 6 needs, each a short term with a span copied from the
+brief. A need is kept only if its span occurs in the brief word for word, whitespace aside. Each
+kept need is expanded and searched like a question. A profile found by several needs keeps its
+best rank (then the higher fused score, then its id), and the unit cap applies to the merged list.
+A result's reason and explanation answer the need that ranked it best. `brief_terms` lists the
+kept needs with their spans, and `query` is the need terms joined by "; ". No kept need, or no
+need with a result, abstains with `no_verifiable_source`.
 
 ## Chunks
 - **Profile chunk**, one per profile: the name, then every claim value in contract order.

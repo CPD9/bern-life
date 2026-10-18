@@ -12,19 +12,19 @@ OFFERED = ["/fields/expertise/0", "/fields/unit/0"]
 PLAIN = {"text": "Expertise: continuous glucose monitoring; Unit: Sensor Lab", "cites": OFFERED}
 
 
-def reply(text: str, cites: list[str] | None = None) -> dict[str, object]:
-    return {"text": text, "cites": cites if cites is not None else ["/fields/expertise/0"]}
+def reply(text: str, claims: list[object] | None = None) -> dict[str, object]:
+    return {"text": text, "claims": claims if claims is not None else [1]}
 
 
 class CheckTest(unittest.TestCase):
     def test_a_grounded_reply_is_kept(self):
         text = "Ada Muster works on continuous glucose monitoring. The Sensor Lab is her unit."
-        self.assertEqual(check(reply(text, OFFERED), QUESTION, ADA, OFFERED), "kept")
+        self.assertEqual(check(reply(text, [1, 2]), QUESTION, ADA, OFFERED), "kept")
 
     def test_each_failed_check_is_named(self):
         cases = {
-            "shape": [reply("ok", []), {"text": 3, "cites": OFFERED}, "text"],
-            "cites": [reply("Works on glucose.", ["/fields/role/0"]), reply("x", ["/fields/x/9"])],
+            "shape": [reply("ok", []), {"text": 3, "claims": [1]}, {"text": "ok"}, "text"],
+            "cites": [reply("Works on glucose.", [3]), reply("x", ["1"]), reply("x", [0])],
             "length": [reply("x" * 401), reply("   "), reply("glu\x00cose")],
             "names": [reply("Works with Dr. Hugo Brandtner on glucose monitoring.")],
         }
@@ -39,10 +39,8 @@ class CheckTest(unittest.TestCase):
 
     def test_the_prompt_carries_only_the_offered_claims_as_data(self):
         text = prompt(QUESTION, ADA, OFFERED)
-        self.assertIn(
-            '/fields/expertise/0: continuous glucose monitoring (page says: "continuous', text
-        )
-        self.assertIn("/fields/unit/0: Sensor Lab", text)
+        self.assertIn('[1] continuous glucose monitoring (page says: "continuous', text)
+        self.assertIn("[2] Sensor Lab", text)
         self.assertNotIn("wearable", text)
         self.assertIn("<result>Ada Muster</result>", text)
 

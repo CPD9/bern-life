@@ -174,7 +174,7 @@ class SearchDbTest(unittest.TestCase):
                 },
                 "explain": {
                     "text": "Works on what the need asks.",
-                    "cites": ["/fields/expertise/0"],
+                    "claims": [1],
                 },
             }
         )
@@ -193,7 +193,7 @@ class SearchDbTest(unittest.TestCase):
         )
         self.assertEqual(first["results"][0]["reason"]["text"], "Works on what the need asks.")
         self.assertEqual(
-            (first["mode"], first["versions"]["prompts"]), ("replay", "brief-v1+explain-v1")
+            (first["mode"], first["versions"]["prompts"]), ("replay", "brief-v1+explain-v2")
         )
 
     def test_a_brief_with_no_model_abstains_and_says_mock(self):
