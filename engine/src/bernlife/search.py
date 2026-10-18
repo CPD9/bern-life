@@ -15,9 +15,11 @@ from importlib.metadata import version
 from typing import Any
 
 from bernlife.abstain import NO_SOURCE, abstain_reason
+from bernlife.brief import BRIEF_PROMPT_VERSION
 from bernlife.chunks import claims_of
 from bernlife.embed import MODEL_ID, Embedder
 from bernlife.expand import EXPAND_PROMPT_VERSION, Expansion, expand, expanded_text
+from bernlife.explain import EXPLAIN_PROMPT_VERSION, explain_top
 from bernlife.llm import Chat
 from bernlife.matching import Asked, asked, can_explain
 from bernlife.metrics import query_topics, with_metrics
@@ -91,26 +93,45 @@ def search(
     if assessment.abstain_reason is None:
         shown = assessment.ranked[:RESULTS]
         results = [result(rank, c, assessment) for rank, c in enumerate(shown, 1)]
-    models = {"embed": MODEL_ID}
-    if expansion and llm is not None:
-        models["expand"] = llm.models()["expand"]
+    outcomes: list[str] = []
+    if llm is not None:
+        results, outcomes = explain_top(llm, results, [query] * len(results))
+    used = {"expand": bool(expansion), "explain": "kept" in outcomes}
     response = {
         "query": query,
-        "mode": llm.backend if expansion and llm is not None else NO_MODEL,
         "abstained": assessment.abstain_reason is not None,
         "abstain_reason": assessment.abstain_reason,
         "expanded_terms": [term.as_record() for term in expansion.terms()] if expansion else [],
         "results": results,
-        "versions": {
-            "engine": version("bernlife"),
-            "snapshot": store.snapshot(),
-            "prompts": EXPAND_PROMPT_VERSION if expansion else NO_PROMPTS,
-            "models": models,
-        },
+        **model_use(llm, used, store.snapshot()),
     }
     topics = query_topics(query, expansion.by_topic() if expansion else None)
     page_by_url = store.pages(sorted(cited_pages(results))).get
     return with_metrics(response, topics, page_by_url)
+
+
+PROMPT_VERSIONS = {
+    "brief": BRIEF_PROMPT_VERSION,
+    "expand": EXPAND_PROMPT_VERSION,
+    "explain": EXPLAIN_PROMPT_VERSION,
+}
+
+
+def model_use(llm: Chat | None, used: dict[str, bool], snapshot: str) -> dict[str, Any]:
+    """`mode` and `versions` as they really were: a role counts only if its text was used."""
+    roles = [role for role, yes in used.items() if yes]
+    models = {"embed": MODEL_ID}
+    if llm is not None:
+        models |= {role: llm.models()[role] for role in roles}
+    return {
+        "mode": llm.backend if llm is not None and roles else NO_MODEL,
+        "versions": {
+            "engine": version("bernlife"),
+            "snapshot": snapshot,
+            "prompts": "+".join(PROMPT_VERSIONS[role] for role in roles) or NO_PROMPTS,
+            "models": models,
+        },
+    }
 
 
 def cited_pages(results: Sequence[dict[str, Any]]) -> set[str]:

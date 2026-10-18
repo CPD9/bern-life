@@ -245,6 +245,28 @@
         "fused": 0.0161,
         "lexical_rank": 3,
         "vector_rank": 2
+      },
+      "via": {
+        "kind": "works_on",
+        "span": "Prof. Beat Beispiel",
+        "page_url": "https://www.example-institute.test/team/beat-beispiel",
+        "page_sha256": "f9bdcaf67813f29c53c78bb2c2618f6bfe721525a9e79fc29cd4d6234132e8a7",
+        "start": 0,
+        "related_profile_id": "project-example-clinical-data",
+        "related_name": "Clinical data project",
+        "related_claims": [
+          {
+            "value": "time-series analysis",
+            "method": "model",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/team/beat-beispiel",
+              "page_sha256": "f9bdcaf67813f29c53c78bb2c2618f6bfe721525a9e79fc29cd4d6234132e8a7",
+              "span": "time-series analysis",
+              "start": 130,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          }
+        ]
       }
     }
   ],

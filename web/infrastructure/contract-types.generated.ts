@@ -65,6 +65,23 @@ export interface SearchResponse {
         adds: string[];
       };
     };
+    /**
+     * When the result's own claims do not match the question but a related project or unit does: the relation (its verbatim span on its page) and the related profile's matching claims, inline, so both sentences are shown and checked.
+     */
+    via?: {
+      kind: "leads" | "works_on" | "member_of";
+      span: string;
+      page_url: string;
+      page_sha256: string;
+      start?: number;
+      fetched_at?: string;
+      related_profile_id: string;
+      related_name: string;
+      /**
+       * @minItems 1
+       */
+      related_claims: [Claim, ...Claim[]];
+    };
   }[];
   timings_ms?: {
     [k: string]: number;

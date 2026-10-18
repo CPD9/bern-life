@@ -30,6 +30,9 @@ class FakeApi:
             raise RuntimeError("database gone: secret detail")
         return {"query": request.query}
 
+    def brief(self, text):
+        return {"brief": text}
+
     def profile(self, profile_id):
         return {"id": profile_id} if profile_id == "person-example-ada-muster" else None
 
@@ -104,6 +107,17 @@ class ServerTest(unittest.TestCase):
             self.call("/api/profile/person-example-ada-muster"),
             (200, {"id": "person-example-ada-muster"}),
         )
+
+    def test_brief(self):
+        self.assertEqual(
+            self.call("/api/brief", b'{"text": "We need sensors."}'),
+            (200, {"brief": "We need sensors."}),
+        )
+        self.assertEqual(
+            self.call("/api/brief", b'{"query": "x"}'), (400, {"error": "bad_request"})
+        )
+        long_brief = b'{"text": "' + b"x" * 70_000 + b'"}'
+        self.assertEqual(self.call("/api/brief", long_brief), (400, {"error": "bad_request"}))
 
     def test_error_markers(self):
         self.assertEqual(self.call("/api/search", b"{oops"), (400, {"error": "bad_request"}))
