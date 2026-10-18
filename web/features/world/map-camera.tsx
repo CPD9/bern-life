@@ -8,6 +8,7 @@ import { type ComponentRef, type RefObject, useEffect, useRef } from "react";
 import { Box3, Vector3 } from "three";
 import {
   type CameraCommand,
+  focusTarget,
   MAX_DISTANCE,
   panOffset,
   ROTATE_STEP,
@@ -17,7 +18,10 @@ import {
 } from "./camera-moves";
 import { MAP_BOUNDS } from "./geography";
 
-export type CameraHandle = { run: (command: CameraCommand) => void };
+export type CameraHandle = {
+  run: (command: CameraCommand) => void;
+  focus: (x: number, z: number) => void;
+};
 
 type Controls = ComponentRef<typeof CameraControls>;
 
@@ -70,6 +74,7 @@ export function MapCamera({
 }) {
   const controls = useRef<Controls>(null);
   const invalidate = useThree((state) => state.invalidate);
+  const size = useThree((state) => state.size);
 
   useEffect(() => {
     const current = controls.current;
@@ -85,11 +90,19 @@ export function MapCamera({
         run(controls.current, command, !reducedMotion);
         invalidate();
       },
+      focus: (x, z) => {
+        const current = controls.current;
+        if (current === null) return;
+        const portrait = size.height > size.width;
+        const [tx, tz] = focusTarget(x, z, current.azimuthAngle, portrait);
+        void current.moveTo(tx, 0, tz, !reducedMotion);
+        invalidate();
+      },
     };
     return () => {
       handleRef.current = null;
     };
-  }, [handleRef, invalidate, reducedMotion]);
+  }, [handleRef, invalidate, reducedMotion, size]);
 
   return <CameraControls ref={controls} makeDefault smoothTime={reducedMotion ? 0 : 0.25} />;
 }
