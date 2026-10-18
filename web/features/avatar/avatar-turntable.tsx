@@ -7,29 +7,20 @@ import { Canvas } from "@react-three/fiber";
 import { type KeyboardEvent, type PointerEvent, useRef, useState } from "react";
 import { type AvatarConfig } from "./avatar-config";
 import { AvatarFigure } from "./avatar-figure";
+import { RADIANS_PER_PIXEL, angleAfterKey, degreesOf, turnLabel } from "./turntable-turn";
 
-const RADIANS_PER_PIXEL = 0.012;
-const KEY_STEP_DEGREES = 15;
 const PLATE_COLOUR = "#d9e2ea";
-
-function degreesOf(radians: number): number {
-  const degrees = Math.round((radians * 180) / Math.PI) % 360;
-  return degrees < 0 ? degrees + 360 : degrees;
-}
 
 export function AvatarTurntable({ config, lite }: { config: AvatarConfig; lite: boolean }) {
   const [angle, setAngle] = useState(0);
   const dragX = useRef<number | null>(null);
   const degrees = degreesOf(angle);
 
-  const turnBy = (deltaDegrees: number) => setAngle((a) => a + (deltaDegrees * Math.PI) / 180);
-
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "ArrowLeft") turnBy(-KEY_STEP_DEGREES);
-    else if (event.key === "ArrowRight") turnBy(KEY_STEP_DEGREES);
-    else if (event.key === "Home") setAngle(0);
-    else return;
+    const next = angleAfterKey(angle, event.key);
+    if (next === null) return;
     event.preventDefault();
+    setAngle(next);
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -57,7 +48,7 @@ export function AvatarTurntable({ config, lite }: { config: AvatarConfig; lite: 
         aria-valuemin={0}
         aria-valuemax={359}
         aria-valuenow={degrees}
-        aria-valuetext={degrees === 0 ? "Facing you" : `Turned ${degrees} degrees`}
+        aria-valuetext={turnLabel(degrees)}
         onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

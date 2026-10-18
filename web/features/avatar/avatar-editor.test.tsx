@@ -9,7 +9,7 @@ function renderEditor(random = () => 0) {
     <AvatarEditor
       value={defaultAvatar}
       onChange={(next) => changes.push(next)}
-      lite
+      preview={<p>3D preview</p>}
       random={random}
     />,
   );
@@ -29,20 +29,16 @@ describe("AvatarEditor", () => {
     expect(changes).toEqual([{ ...defaultAvatar, skin: "tone-10" }]);
   });
 
+  test("the 3D view is whatever the caller passes in", () => {
+    renderEditor();
+    expect(screen.getByText("3D preview")).toBeTruthy();
+  });
+
   test("Shuffle draws a whole new avatar from the injected source", () => {
     const changes = renderEditor(() => 0.99);
     fireEvent.click(screen.getByRole("button", { name: "Shuffle" }));
     expect(changes).toEqual([
       { body: "broad", skin: "tone-10", hair: "covered", outfit: "field-work", accent: "slate" },
     ]);
-  });
-
-  test("the arrow keys turn the figure in 15 degree steps", () => {
-    renderEditor();
-    const turntable = screen.getByRole("slider", { name: "Turn your avatar" });
-    fireEvent.keyDown(turntable, { key: "ArrowLeft" });
-    expect(turntable.getAttribute("aria-valuenow")).toBe("345");
-    fireEvent.keyDown(turntable, { key: "Home" });
-    expect(turntable.getAttribute("aria-valuetext")).toBe("Facing you");
   });
 });

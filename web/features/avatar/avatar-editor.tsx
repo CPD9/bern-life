@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { type ReactNode, useId } from "react";
 import {
   type AvatarConfig,
   accentOptions,
@@ -10,7 +10,6 @@ import {
   shuffleAvatar,
   skinOptions,
 } from "./avatar-config";
-import { AvatarTurntable } from "./avatar-turntable";
 
 type Choice = { readonly id: string; readonly label: string; readonly colour?: string };
 
@@ -57,18 +56,24 @@ function ChoiceGroup<Id extends string>({ title, choices, value, onChange }: Cho
 type AvatarEditorProps = {
   value: AvatarConfig;
   onChange: (next: AvatarConfig) => void;
-  lite: boolean;
+  /** The 3D view, usually `<AvatarTurntable>`; passed in so this form never loads three.js. */
+  preview: ReactNode;
   random?: () => number;
 };
 
-export function AvatarEditor({ value, onChange, lite, random = Math.random }: AvatarEditorProps) {
+export function AvatarEditor({
+  value,
+  onChange,
+  preview,
+  random = Math.random,
+}: AvatarEditorProps) {
   const set = <K extends keyof AvatarConfig>(key: K) => {
     return (id: AvatarConfig[K]) => onChange({ ...value, [key]: id });
   };
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 md:grid-cols-2">
-      <AvatarTurntable config={value} lite={lite} />
+      {preview}
       <div className="flex min-w-0 flex-col gap-5">
         <ChoiceGroup title="Body" choices={bodyOptions} value={value.body} onChange={set("body")} />
         <ChoiceGroup
