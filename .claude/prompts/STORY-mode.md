@@ -18,7 +18,7 @@ Read first: `CLAUDE.md`, `CONTRIBUTING.md`, `docs/coding-standards.md`, `docs/ca
 # STORY — Story mode: moving your business to Bern (world shell lane, W1; top priority)
 
 The jury sees the case met inside the game. The story is data: `contracts/fixtures/story.json`
-(schema `contracts/quest.schema.json`): quests, each naming the case criterion it demonstrates, and
+(schema `contracts/quest.schema.json`): quests, each naming the case criterion it demonstrates (all eight are required, including "Grow in Bern"), and
 steps that complete only on **app events**, never by a tick box.
 
 ## Scope (paths: `web/features/story/`, `web/app/` composition, a tiny event bus in

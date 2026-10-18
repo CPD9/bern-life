@@ -119,9 +119,8 @@
     {
       "id": "grow",
       "title": "Grow in Bern",
-      "goal": "Find opportunities, connections and partners.",
+      "goal": "Find opportunities, connections and partners for your business in Bern.",
       "criterion": "stretch",
-      "optional": true,
       "steps": [
         {
           "id": "opportunity",
@@ -132,6 +131,16 @@
           "id": "connection",
           "text": "Add a lab or an expert to your network.",
           "done_when": "connection_saved"
+        },
+        {
+          "id": "library",
+          "text": "Keep a source or a document in your office library.",
+          "done_when": "library_item_saved"
+        },
+        {
+          "id": "message",
+          "text": "Send a message to a member of your lab or network.",
+          "done_when": "message_sent"
         },
         {
           "id": "garage",
