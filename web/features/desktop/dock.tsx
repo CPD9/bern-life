@@ -1,0 +1,77 @@
+"use client";
+
+import { type KeyboardEvent, useRef, useState } from "react";
+import { AppIcon } from "@/infrastructure/ui/app-icons";
+import type { DesktopApp } from "./desktop-apps";
+
+type DockProps = {
+  apps: readonly DesktopApp[];
+  openIds: readonly string[];
+  onOpen: (appId: string) => void;
+};
+
+// One tab stop for the whole dock; arrows, Home and End move between apps (WAI-ARIA toolbar).
+export function Dock({ apps, openIds, onOpen }: DockProps) {
+  const [active, setActive] = useState(0);
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function moveTo(index: number) {
+    const next = (index + apps.length) % apps.length;
+    setActive(next);
+    buttons.current[next]?.focus();
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const targets: Record<string, number> = {
+      ArrowRight: active + 1,
+      ArrowLeft: active - 1,
+      Home: 0,
+      End: apps.length - 1,
+    };
+    const target = targets[event.key];
+    if (target === undefined) return;
+    event.preventDefault();
+    moveTo(target);
+  }
+
+  return (
+    <div
+      role="toolbar"
+      aria-label="Apps"
+      onKeyDown={onKeyDown}
+      className="bg-panel/85 shadow-panel mx-auto flex max-w-full flex-wrap justify-center gap-1 rounded-3xl p-2 backdrop-blur sm:flex-nowrap"
+    >
+      {apps.map((app, index) => {
+        const isOpen = openIds.includes(app.id);
+        return (
+          <button
+            key={app.id}
+            ref={(element) => {
+              buttons.current[index] = element;
+            }}
+            type="button"
+            data-dock-app={app.id}
+            tabIndex={index === active ? 0 : -1}
+            onFocus={() => setActive(index)}
+            onClick={() => onOpen(app.id)}
+            className="flex w-[4.5rem] flex-col items-center gap-1 rounded-2xl p-1 text-[0.7rem] font-bold"
+          >
+            <span
+              aria-hidden="true"
+              style={{ backgroundColor: app.tile }}
+              className="shadow-panel flex size-11 items-center justify-center rounded-2xl text-white"
+            >
+              <AppIcon app={app.icon} />
+            </span>
+            {app.label}
+            <span
+              aria-hidden="true"
+              className={`size-1.5 rounded-full ${isOpen ? "bg-ink" : "bg-transparent"}`}
+            />
+            {isOpen && <span className="sr-only">, open</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
