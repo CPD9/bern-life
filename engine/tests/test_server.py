@@ -54,6 +54,7 @@ class ParseSearchTest(unittest.TestCase):
             b'{"query": "x", "lang": "it"}',
             b'{"query": "x", "sources": ["other"]}',
             b'{"query": "x", "sources": []}',
+            b'{"query": "x\\u0000y"}',
             b'{"query": "' + b"x" * 501 + b'"}',
         ):
             with self.subTest(body=body[:40]), self.assertRaises(BadRequest):

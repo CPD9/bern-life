@@ -1,14 +1,15 @@
 """The searchable texts: one chunk per profile, and passages of the pages that evidence cites.
 
 A profile chunk holds the profile's own claim values, so a query in the profile's words finds it
-directly. A passage is a run of whole lines cut from a page, so every claim or relation span that
-lies inside it is still a verbatim substring; search uses that to credit the profiles whose
-evidence a matching passage holds. Only cited pages are cut: a passage that no profile's evidence
-touches could never become a result.
+directly, followed by the enrichment terms of its expertise values (retrieval help only), so a lay
+or translated query finds it without a live model call. A passage is a run of whole lines cut
+from a page, so every claim or relation span that lies inside it is still a verbatim substring;
+search uses that to credit the profiles whose evidence a matching passage holds. Only cited
+pages are cut: a passage that no profile's evidence touches could never become a result.
 """
 
 import hashlib
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -28,8 +29,12 @@ class Chunk:
     text: str
 
 
-def profile_chunk(profile: Record) -> Chunk:
+def profile_chunk(profile: Record, enrichment: Mapping[str, Sequence[str]] | None = None) -> Chunk:
     values = [str(claim["value"]) for claim in claims_of(profile)]
+    terms = enrichment or {}
+    values += [
+        term for claim in profile["fields"]["expertise"] for term in terms.get(claim["value"], [])
+    ]
     return Chunk(
         id=str(profile["id"]),
         kind="profile",
@@ -98,10 +103,13 @@ def claims_of(profile: Record) -> list[Record]:
 
 
 def build_chunks(
-    pages: Iterable[Record], profiles: list[Record], relations: list[Record]
+    pages: Iterable[Record],
+    profiles: list[Record],
+    relations: list[Record],
+    enrichment: Mapping[str, Sequence[str]] | None = None,
 ) -> list[Chunk]:
     cited = cited_urls(profiles, relations)
-    chunks = [profile_chunk(profile) for profile in profiles]
+    chunks = [profile_chunk(profile, enrichment) for profile in profiles]
     chunks += [chunk for page in pages if page["url"] in cited for chunk in page_passages(page)]
     return sorted(chunks, key=lambda chunk: chunk.id)
 

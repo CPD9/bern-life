@@ -22,8 +22,10 @@ from bernlife.chunks import build_chunks
 from bernlife.database import connect
 from bernlife.load_rows import chunk_row, claim_rows, page_row, profile_row, relation_row
 from bernlife.sources import Source, load_sources
+from bernlife.terms import enrichment_by_value
 
-COUNTED_TABLES = ("page", "profile", "claim", "entity_relation", "chunk")
+COUNTED_TABLES = ("page", "profile", "claim", "entity_relation", "chunk", "term")
+TERM_COLUMNS = ("value", "term", "kind", "lang", "model", "prompt_version")
 
 
 class LoadRefused(RuntimeError):
@@ -55,7 +57,7 @@ def source_rows(
         Labelled(f"relation {relation_label(r)}", "entity_relation", relation_row(r))
         for r in relations
     ]
-    for chunk in build_chunks(pages, profiles, relations):
+    for chunk in build_chunks(pages, profiles, relations, enrichment_by_value(bundle.terms)):
         try:
             rows.append(Labelled(f"chunk {chunk.id}", "chunk", chunk_row(chunk, vectors)))
         except KeyError:
@@ -106,6 +108,14 @@ def load_source(conn: psycopg.Connection, source: Source, rows: Sequence[Labelle
                 raise LoadRefused(f"{source.id}: {item.label} refused ({message})") from None
 
 
+def load_terms(conn: psycopg.Connection, terms: Sequence[Mapping[str, object]]) -> None:
+    """Enrichment terms belong to no source: replaced as a whole, in one transaction."""
+    statement = insert_statement("term", dict.fromkeys(TERM_COLUMNS))
+    with conn.transaction(), conn.cursor() as cur:
+        cur.execute("DELETE FROM term")
+        cur.executemany(statement, [[row.get(c) for c in TERM_COLUMNS] for row in terms])
+
+
 def table_counts(conn: psycopg.Connection) -> dict[str, int]:
     counts = {}
     for table in COUNTED_TABLES:
@@ -129,6 +139,7 @@ def load(conn: psycopg.Connection, bundle_dir: Path, sources: Sequence[Source]) 
             refusals.append(str(refusal))
     if refusals:
         return refusals
+    load_terms(conn, bundle.terms)
     bundle_id = identity(bundle_dir)
     counts = table_counts(conn)
     with conn.transaction():

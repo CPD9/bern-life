@@ -1,11 +1,13 @@
 # Search: load, index, hybrid ranking, abstention
 
 `python -m bernlife serve` answers `POST /api/search` (contract `contracts/result.schema.json`)
-from Postgres. No model is called yet: the mode is `mock`, `expanded_terms` is empty and the
-reason lists the profile's own claim values. E3b adds expansion and explanations on top.
+from Postgres. With a model connected (live or replay), the question is expanded first; without
+one the mode is `mock` and `expanded_terms` is empty. The reason lists the profile's own claim
+values; Apertus' explanations come in the next step of E3b.
 
 ## Commands
 ```bash
+python -m bernlife enrich      # retrieval terms for every expertise value into terms.jsonl
 python -m bernlife embed       # vectors for every chunk text into data/bundle/vectors.jsonl
 python -m bernlife load        # the bundle into Postgres, one transaction per source
 python -m bernlife serve       # the API on 127.0.0.1:$ENGINE_PORT
@@ -16,6 +18,30 @@ python -m bernlife calibrate   # abstention signals per dev query (eval/dev.json
 clean clone never embeds the corpus. The model is `intfloat/multilingual-e5-small` at a pinned
 revision (PROVENANCE.md), downloaded once into `$BERNLIFE_DATA_DIR/models/` and checked by the
 sha256 of its ONNX file.
+
+## Expansion and enrichment (retrieval only)
+Every model call goes through the cached router (`llm.py`); a rerun or `replay` costs nothing.
+Terms help search find pages and are never shown as a fact. Code keeps a term only if:
+- its kind is synonym, lay, translation or acronym, and its language is de, en, fr or it;
+- it is at most 80 characters with no control characters;
+- it differs from what it expands;
+- it carries no word of a name the question gives after a title.
+
+- **Enrichment** (role `enrich`, prompt `enrich-v1`): the distinct expertise values, sorted, go to
+  the model 25 per call, and each gets up to 4 terms. A reply item counts only if it repeats a
+  value of its batch exactly. The terms go to `terms.jsonl` and the `term` table. They are
+  appended to the profile chunk, so full text and vectors see them. A claim also matches a
+  question through its own terms (rule 5), and the claim value is what gets cited.
+- **Query expansion** (role `expand`, prompt `expand-v1`): the question, as data, gives up to 12
+  terms grouped under topics copied word for word from the question. A topic that is not words
+  of the question is dropped with its terms. The grouping is what `metrics.query_topics` reads.
+  The same statement then runs twice, on the question and on the question plus its terms, and
+  the four rank lists are fused by RRF. A profile's rank per signal is its best of the two.
+  Rule 5 matches claims against the question's words and its terms.
+- **Abstention reads the plain question only:** the coverage and similarity of the first
+  statement, the signals the thresholds were set on. The thresholds did not change.
+- A failed call (marker, cache miss, unreadable JSON) means no expansion: search runs plain and
+  the mode says `mock`. `versions.prompts` names `expand-v1` when an expansion was used.
 
 ## Chunks
 - **Profile chunk**, one per profile: the name, then every claim value in contract order.
@@ -99,6 +125,26 @@ answerable one (0.826). Coverage 0.332 is the midpoint between the highest off-t
 abstentions. The similarity margin is 0.004 wide: e5 similarities crowd together, and two
 off-topic queries are thin evidence.
 
+## Plain, enrichment, expansion (bundle with 4,669 terms on 1,352 of 1,362 expertise values)
+Thresholds as committed in E3a. Dev first, then gold once. Row (a) on gold is the E3a run below;
+with no terms and no model this code reproduced E3a's dev numbers exactly.
+
+| Set | Row | recall@10 | MRR | false abstentions | invented abstained | en / de / fr recall |
+|---|---|---|---|---|---|---|
+| dev | (a) plain | 0.67 | 0.61 | 1/12 | 5/5 | 0.89 / 0.00 / 0.00 |
+| dev | (b) + enrichment | 1.00 | 0.77 | 0/12 | 5/5 | 1.00 / 1.00 / 1.00 |
+| dev | (c) + expansion | 1.00 | 0.89 | 0/12 | 5/5 | 1.00 / 1.00 / 1.00 |
+| gold | (a) plain | 0.22 [0.10, 0.35] | 0.27 | 4/38 | 8/10 | 0.34 / 0.05 / 0.05 |
+| gold | (b) + enrichment | 0.24 [0.12, 0.38] | 0.32 | 1/38 | 8/10 | 0.38 / 0.05 / 0.05 |
+| gold | (c) + expansion | 0.27 [0.13, 0.42] | 0.32 | 0/38 | 8/10 | 0.41 / 0.09 / 0.05 |
+
+Traceability stayed 100% and invented entities 0 in every row. The dev language slices are tiny
+(2 German and 1 French answerable query), so gold is where German and French are judged, and
+there they stay low. Top-10 overlap of translations with their base question rose from 0.09 to
+0.36 (Jaccard), so the same people are found more often, but mostly not the expected ones.
+Latency with a live expansion call: p50 4.1 s, p95 7.6 s; replayed from the cache it is about
+the plain latency, p50 165 ms.
+
 ## Baseline (no model help), bundle `local-8f34ab8c1fba`
 `make eval` on the gold predictions, before and after rule 5:
 
@@ -119,12 +165,12 @@ p95 177 ms, max 219 ms with rule 5, which reads every candidate's profile (p50 6
 
 ## Limits
 - No stemming: "sensor" does not match "sensors" in full text; the vectors cover some of it.
-- Cross-language recall is low (dev translations 0 of 3; gold de 0.16, fr 0.18): e5-small alone
-  does not bridge German or French questions to English pages. Query expansion (E3b) targets this.
+- Cross-language recall stays low after enrichment and expansion (gold de 0.09, fr 0.05).
 - An invented name without a title, or an invented project, is caught only by weak support.
 - Passages credit profiles only through spans that lie fully inside them, and since rule 5 a
   credited profile still needs a matching claim of its own to be shown.
 - Rule 5 matches whole words: "sensors" does not match "biosensors", "psychotropes" does not
   match "psychotroper".
 - The API contract has no unit filter, so only `sources` filters. `lang` is accepted and unused.
+- 10 expertise values have no enrichment terms (no valid term in the reply).
 - Query vectors are computed where the search runs; another CPU can move the last digits.
