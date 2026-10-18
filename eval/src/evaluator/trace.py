@@ -1,0 +1,71 @@
+"""Snapshot checks: is every claim on its page, and is every profile in the snapshot?
+
+A claim is traceable when its page is in the snapshot, the page text hashes to the claim's
+`page_sha256`, and the span appears in that text after whitespace normalisation. The hash is
+recomputed from the text rather than read from the page record, so a stale record cannot vouch
+for a span.
+"""
+
+import hashlib
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from typing import Any
+
+from .match import claims, normalise_whitespace
+
+Record = dict[str, Any]
+
+
+@dataclass(frozen=True)
+class Miss:
+    query: str
+    profile: str
+    claim: str
+    reason: str
+
+
+class PageIndex:
+    """Page hash and normalised text, computed once per page and only for pages a claim cites."""
+
+    def __init__(self, pages: Mapping[str, Record]) -> None:
+        self.pages = pages
+        self._seen: dict[str, tuple[str, str]] = {}
+
+    def lookup(self, url: str) -> tuple[str, str] | None:
+        if url not in self._seen:
+            if url not in self.pages:
+                return None
+            text = self.pages[url]["text"]
+            digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+            self._seen[url] = (digest, normalise_whitespace(text))
+        return self._seen[url]
+
+
+def check_claims(query: str, results: Sequence[Record], index: PageIndex) -> tuple[int, list[Miss]]:
+    """How many claims the results make, and each one that is not on its page."""
+    checked, misses = 0, []
+    for result in results:
+        profile = result["profile"]
+        for pointer, claim in claims(profile):
+            checked += 1
+            reason = untraceable(claim["evidence"], index)
+            if reason is not None:
+                misses.append(Miss(query, profile["id"], pointer, reason))
+    return checked, misses
+
+
+def untraceable(evidence: Record, index: PageIndex) -> str | None:
+    page = index.lookup(evidence["page_url"])
+    if page is None:
+        return "page_not_in_snapshot"
+    digest, text = page
+    if digest != evidence["page_sha256"]:
+        return "page_sha256_differs"
+    if normalise_whitespace(evidence["span"]) not in text:
+        return "span_not_on_page"
+    return None
+
+
+def invented(results: Sequence[Record], snapshot_ids: Mapping[str, Record]) -> tuple[str, ...]:
+    """Profile ids that the results show but the snapshot does not hold."""
+    return tuple(r["profile"]["id"] for r in results if r["profile"]["id"] not in snapshot_ids)
