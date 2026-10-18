@@ -19,6 +19,7 @@ CHECKS = [
     ("page.schema.json", ["contracts/fixtures/page.json"]),
     ("profile.schema.json", ["contracts/fixtures/profile.json"]),
     ("result.schema.json", ["contracts/fixtures/result*.json"]),
+    ("health.schema.json", ["contracts/fixtures/health.json"]),
     ("gold.schema.json", ["contracts/fixtures/gold.jsonl", "eval/gold.jsonl"]),
 ]
 

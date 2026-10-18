@@ -20,10 +20,15 @@ Postgres at a time.
 | `W2-bern-map.md` | world 3D | 3014 | W1 PR 1 merged before coding |
 | `I1-plumbing.md` (two PRs) | infra (Yaseen, or Peter as a 4th session when one ends) | 3013 | — |
 
-## Round B (≈19:30 → 23:00, briefs written when round A reports)
-E2 extraction + verifier (relations, place addresses checked against the snapshot) · I2 model
-router + CSCS · W3 onboarding (Role → Look → Expertise → Goal → Visibility), your avatar, home room ·
-W2 follow-up: walk the map with your avatar.
+## Round B (now → 23:00)
+
+| File | Lane | Port | Depends on |
+| --- | --- | --- | --- |
+| `E2-extract.md` | engine | 3011 | E1 merged (#14); live model run after I2 and Peter's go-ahead |
+| `I2-router.md` | infra (Yaseen) | 3013 | I1 merged; **CSCS base URL from Peter** |
+| W1 PR 2 (Ask) then PR 3 (phone), from `W1-world-shell.md` | world shell | 3012 | PR 1 merged |
+| W2 PR B (scene, light-up, panel), from `W2-bern-map.md` | world 3D | 3014 | PR A merged |
+| `W3-onboarding-home.md` | world home | 3015 | a free world session (after W1 PR 3 or W2 PR B) |
 
 ## Round C (23:00 → ≈03:00)
 E3 enrichment + hybrid search + explain + brief API · I3 evaluator · W4 the world and phone on the
