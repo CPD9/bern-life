@@ -25,7 +25,8 @@ Postgres at a time.
 | File | Lane | Port | Depends on |
 | --- | --- | --- | --- |
 | `E2-extract.md` | engine | 3011 | E1 merged (#14); live model run after I2 and Peter's go-ahead |
-| `I2-router.md` | infra (Yaseen) | 3013 | I1 merged; **CSCS base URL from Peter** |
+| `I2-router.md` (PR #17; CSCS probe and RunPod scripts as a follow-up) | infra (Yaseen) | 3013 | I1 merged; CSCS base URL for the probe |
+| `I3-evaluator.md` | infra (Yaseen) | 3013 | gold set merged; runs on fixtures until E3 |
 | W1 PR 2 (Ask) then PR 3 (phone), from `W1-world-shell.md` | world shell | 3012 | PR 1 merged |
 | W2 PR B (scene, light-up, panel), from `W2-bern-map.md` | world 3D | 3014 | PR A merged |
 | `W3-onboarding-home.md` | world home | 3015 | a free world session (after W1 PR 3 or W2 PR B) |
