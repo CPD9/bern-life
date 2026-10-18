@@ -8,6 +8,7 @@ import { AgentEditor } from "@/features/avatar/agent-editor";
 import { shownAgentName } from "@/features/avatar/agent-name";
 import { AvatarEditor } from "@/features/avatar/avatar-editor";
 import { AvatarTurntable } from "@/features/avatar/avatar-turntable";
+import { BearFigure } from "@/features/avatar/bear-figure";
 import { useAvatar } from "@/features/avatar/use-avatar";
 import { PersonEditor } from "@/features/avatar/person-editor";
 import { PersonTurntable } from "@/features/avatar/person-turntable";
@@ -20,9 +21,10 @@ import { useSettings } from "@/infrastructure/use-settings";
 import { saveToAccount } from "./save-to-account";
 
 // Composes onboarding with the avatar editors and Lumi's greeting, which are other features: your
-// look is a person, and your first agent is a bear. A player who finished before starts again at
-// the first step with their answers kept. Finishing while signed in also saves them and both looks
-// to the account.
+// look is a person, and your first agent is a bear. Lumi wears the agent's bear, the default one
+// until the player makes theirs in the last step. A player who finished before starts again at the
+// first step with their answers kept. Finishing while signed in also saves them and both looks to
+// the account.
 export function StartApp() {
   const router = useRouter();
   const [state, dispatch] = useOnboarding();
@@ -50,7 +52,21 @@ export function StartApp() {
       }
       greeting={
         <FloatieGreeting
-          figure={(onSelect) => <Floatie onSelect={onSelect} lite={settings.lite} />}
+          name={shownAgentName(agentName)}
+          figure={(onSelect) => (
+            <Floatie
+              name={shownAgentName(agentName)}
+              figure={(reducedMotion) => (
+                <BearFigure
+                  config={bear}
+                  lite={settings.lite}
+                  motion={reducedMotion ? "still" : "idle"}
+                />
+              )}
+              onSelect={onSelect}
+              lite={settings.lite}
+            />
+          )}
         />
       }
       agentStep={

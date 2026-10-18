@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { RESTING, blinkAt, idlePose, listeningPose, poseAt, shownState } from "./floatie-motion";
+import { RESTING, idlePose, listeningPose, poseAt, shownState } from "./floatie-motion";
 
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
@@ -12,9 +12,9 @@ describe("idlePose", () => {
 });
 
 describe("listeningPose", () => {
-  test("it leans in, glows brighter and opens its eyes wide", () => {
+  test("it leans in and glows brighter", () => {
     const pose = listeningPose(1);
-    expect([pose.lean, pose.glow, pose.halo, pose.eyes]).toEqual([0.18, 1.6, 1.25, 1.2]);
+    expect([pose.lean, pose.glow, pose.halo]).toEqual([0.18, 1.6, 1.25]);
   });
 
   test("the ripple grows from the core and fades out every 1.2 seconds", () => {
@@ -25,14 +25,6 @@ describe("listeningPose", () => {
     expect(rippleAt(1.2)).toEqual([1, 0.5]);
     expect(rippleAt(1.8)).toEqual([1.5, 0.25]);
     expect(rippleAt(2.34)).toEqual([1.95, 0.025]);
-  });
-});
-
-describe("blinkAt", () => {
-  test("the eyes close briefly every 3.6 seconds and are open in between", () => {
-    expect(round(blinkAt(0.08))).toBe(0.1);
-    expect(blinkAt(1)).toBe(1);
-    expect(round(blinkAt(3.6 + 0.08))).toBe(0.1);
   });
 });
 

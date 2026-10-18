@@ -1,23 +1,29 @@
 "use client";
 
 // Lumi in its own small canvas inside a real button, so a tap, Enter or Space all reach `onSelect`
-// and the focus ring is the page's own. A soft radial glow behind the canvas lets the light spill
-// past the 3D figure onto whatever Lumi floats over.
+// and the focus ring is the page's own. Lumi wears the figure passed in (the agent's bear, from
+// app/). A soft radial glow behind the canvas lets the light spill onto whatever Lumi floats over.
 
 import { Canvas } from "@react-three/fiber";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
+import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { FloatieFigure } from "./floatie-figure";
 import { type FloatieState, shownState } from "./floatie-motion";
-import { FLOATIE_NAME } from "./lumi-lines";
-import { useReducedMotion } from "./use-reduced-motion";
 
 type FloatieProps = {
+  /** The agent's name, which a player may change from Lumi. */
+  name: string;
+  /**
+   * The 3D figure Lumi wears, feet on y = 0 and about 1.4 m tall. It is told when the player asks
+   * for reduced motion, so it can stand still too.
+   */
+  figure: (reducedMotion: boolean) => ReactNode;
   onSelect: () => void;
   state?: FloatieState;
   lite?: boolean;
 };
 
-export function Floatie({ onSelect, state = "idle", lite = false }: FloatieProps) {
+export function Floatie({ name, figure, onSelect, state = "idle", lite = false }: FloatieProps) {
   const reducedMotion = useReducedMotion();
   const [pointedAt, setPointedAt] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -26,7 +32,7 @@ export function Floatie({ onSelect, state = "idle", lite = false }: FloatieProps
   return (
     <button
       type="button"
-      aria-label={`${FLOATIE_NAME}, your Navigator`}
+      aria-label={`${name}, your Navigator`}
       onClick={onSelect}
       onPointerEnter={() => setPointedAt(true)}
       onPointerLeave={() => setPointedAt(false)}
@@ -44,7 +50,9 @@ export function Floatie({ onSelect, state = "idle", lite = false }: FloatieProps
       >
         <hemisphereLight color="#fff8ee" groundColor="#e8d8c0" intensity={1.4} />
         <directionalLight position={[1, 2, 3]} intensity={0.8} />
-        <FloatieFigure state={shown} reducedMotion={reducedMotion} lite={lite} />
+        <FloatieFigure state={shown} reducedMotion={reducedMotion} lite={lite}>
+          {figure(reducedMotion)}
+        </FloatieFigure>
       </Canvas>
     </button>
   );
