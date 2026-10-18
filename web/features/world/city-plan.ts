@@ -1,6 +1,7 @@
-// Fills the districts with generic buildings and the open ground with trees. The layout is seeded,
-// so it never changes between loads, and it keeps clear of the river, the roads, the square where
-// the agents stand and every place site, so a place's own building is never hidden in a block.
+// Fills the districts outside the Old Town with generic buildings and the open ground with trees.
+// The layout is seeded, so it never changes between loads, and it keeps clear of the river, the
+// roads, the square where the agents stand and every place site, so a place's own building is
+// never hidden in a block.
 
 import { type DistrictId, type MapPoint } from "./geography";
 import { distanceToPolyline, pointInPolygon, polygonBounds } from "./geometry";
@@ -32,9 +33,11 @@ export const BLOCK_TONES = 4;
 const BLOCK_STEP = 3;
 const TREE_STEP = 5;
 
-/** Old Town roofs stay low and even; the outer districts mix low housing with taller blocks. */
-const HEIGHTS: Readonly<Record<DistrictId, readonly [number, number]>> = {
-  "old-town": [1.4, 2],
+/** The Old Town is built as house rows instead (scene/old-town-plan.ts). */
+type OuterDistrict = { id: Exclude<DistrictId, "old-town">; outline: readonly MapPoint[] };
+
+/** The outer districts mix low housing with taller blocks. */
+const HEIGHTS: Readonly<Record<OuterDistrict["id"], readonly [number, number]>> = {
   "grosse-schanze": [1, 2.2],
   insel: [1.2, 3.4],
   laenggasse: [0.9, 2.4],
@@ -52,7 +55,7 @@ function isClear(point: MapPoint, input: CityInput): boolean {
 }
 
 function districtBlocks(
-  district: CityInput["districts"][number],
+  district: OuterDistrict,
   input: CityInput,
   random: () => number,
 ): { blocks: Block[]; trees: MapPoint[] } {
@@ -98,7 +101,9 @@ function openGroundTrees(input: CityInput, random: () => number): MapPoint[] {
 
 export function planCity(input: CityInput): CityPlan {
   const random = seededRandom(input.seed);
-  const parts = input.districts.map((district) => districtBlocks(district, input, random));
+  const parts = input.districts
+    .filter((district): district is OuterDistrict => district.id !== "old-town")
+    .map((district) => districtBlocks(district, input, random));
   return {
     blocks: parts.flatMap((part) => part.blocks),
     trees: [...parts.flatMap((part) => part.trees), ...openGroundTrees(input, random)],
