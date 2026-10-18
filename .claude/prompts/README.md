@@ -62,6 +62,8 @@ card with public profile and sources. Demo members only in fixture mode, labelle
 
 | File | Lane | Depends on |
 | --- | --- | --- |
+| `W12-real-bern.md` (the map from swisstopo open data) | world 3D (W2) | W4 merged; **first priority** |
+| `W13-first-run.md` (map → interact → join → onboarding) | world shell (W1) | STORY merged |
 | `STORY-mode.md` (quest engine, panel, events) | world shell (W1) | X2 merged; **top priority** |
 | `W11-settle.md` (choose where to settle, sourced facts) | world 3D (W2) | W4 merged |
 | `W5-walk.md` (walk Bern, enter places) | world 3D (W2) | W11 |
