@@ -13,6 +13,15 @@ export type ReadPdf = (bytes: Uint8Array, maxPages: number) => Promise<PdfText>;
 
 export type BriefText = { ok: true; text: string } | { ok: false; reason: BriefRejection };
 
+// Multipart boundaries, part headers and a pasted text field fit easily in this margin.
+const formOverheadBytes = 64 * 1024;
+
+/** True when the declared body is too big to hold a 5 MB PDF form, so it is refused unread. */
+export function uploadTooLarge(headers: Headers): boolean {
+  const declared = Number(headers.get("content-length"));
+  return Number.isFinite(declared) && declared > briefLimits.maxBytes + formOverheadBytes;
+}
+
 const pdfMagic = [0x25, 0x50, 0x44, 0x46, 0x2d]; // "%PDF-"
 
 function isPdf(bytes: Uint8Array): boolean {
