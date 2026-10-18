@@ -19,21 +19,36 @@ def reply(text: str, claims: list[object] | None = None) -> dict[str, object]:
 class CheckTest(unittest.TestCase):
     def test_a_grounded_reply_is_kept(self):
         text = "Ada Muster works on continuous glucose monitoring. The Sensor Lab is her unit."
-        self.assertEqual(check(reply(text, [1, 2]), QUESTION, ADA, OFFERED), "kept")
+        self.assertEqual(check(reply(text, [1, 2]), ADA, OFFERED), "kept")
 
     def test_each_failed_check_is_named(self):
         cases = {
             "shape": [reply("ok", []), {"text": 3, "claims": [1]}, {"text": "ok"}, "text"],
             "cites": [reply("Works on glucose.", [3]), reply("x", ["1"]), reply("x", [0])],
             "length": [reply("x" * 401), reply("   "), reply("glu\x00cose")],
+            "non_answer": [
+                reply("The claims do not contain anything about glucose sensors."),
+                reply("Ada Muster's page does not mention sensors."),
+                reply("There is no information on sensors in the claims."),
+            ],
             "names": [reply("Works with Dr. Hugo Brandtner on glucose monitoring.")],
         }
         for outcome, replies in cases.items():
             for bad in replies:
                 with self.subTest(outcome=outcome, reply=str(bad)[:40]):
-                    self.assertEqual(check(bad, QUESTION, ADA, OFFERED), outcome)
+                    self.assertEqual(check(bad, ADA, OFFERED), outcome)
 
-    def test_capitals_that_start_a_sentence_or_come_from_the_question_pass(self):
+    def test_a_capital_copied_from_the_question_is_not_evidence(self):
+        # The question asked about time-of-death estimation at the IRM; the cited claim is about
+        # glucose monitoring, so the reply must not place the result there.
+        text = "Ada Muster is the researcher at the IRM who works on Time-of-death estimation."
+        self.assertEqual(check(reply(text), ADA, OFFERED), "names")
+
+    def test_a_negative_word_alone_is_not_a_non_answer(self):
+        text = "Ada Muster works on continuous glucose monitoring, not on insulin pumps."
+        self.assertEqual(check(reply(text), ADA, OFFERED), "kept")
+
+    def test_capitals_that_start_a_sentence_or_come_from_the_allowed_text_pass(self):
         self.assertEqual(unknown_capitals("Works on CGM. Also Glucose.", "cgm glucose"), [])
         self.assertEqual(unknown_capitals("Works with Hugo on CGM.", "cgm"), ["hugo"])
 

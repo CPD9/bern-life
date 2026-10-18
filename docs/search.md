@@ -56,10 +56,14 @@ used; code maps the numbers back to JSON pointers. Asked for pointers directly (
 `explain-v1`), the model copied whole claim lines into them and only 33% of explanations passed. Code keeps the text only if:
 - every pointer was offered and exists;
 - the text is 1 to 400 characters with no control characters;
-- every capitalised word inside a sentence occurs in the cited claims, the name or the question.
+- the text is not a non-answer: it contains none of the phrases "do not contain", "does not
+  contain", "do not mention", "does not mention", "no information" (whole phrases, not single
+  words);
+- every capitalised word inside a sentence occurs in the cited claims (value or span) or the name.
 
-The last check is what stops a name or place from the model's memory. Otherwise the plain reason
-stays. The calls run in parallel, are cached per question and claims, and replay byte for byte.
+The last check is what stops a name or place from the model's memory. The question is not allowed
+text: a reply that copied "IRM" from the question about a person whose cited claim is on gene
+regulation used to pass. Otherwise the plain reason stays. The calls run in parallel, are cached per question and claims, and replay byte for byte.
 Explanations are English only: German capitalises every noun, which the name check cannot tell
 from a name.
 
