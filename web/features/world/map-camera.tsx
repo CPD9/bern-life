@@ -9,6 +9,7 @@ import { Box3, Vector3 } from "three";
 import {
   type CameraCommand,
   focusTarget,
+  frameBox,
   MAX_DISTANCE,
   panOffset,
   ROTATE_STEP,
@@ -16,7 +17,7 @@ import {
   startPosition,
   ZOOM_STEP,
 } from "./camera-moves";
-import { MAP_BOUNDS } from "./geography";
+import { MAP_BOUNDS, type MapPoint } from "./geography";
 
 export type CameraHandle = {
   run: (command: CameraCommand) => void;
@@ -26,6 +27,8 @@ export type CameraHandle = {
 type Controls = ComponentRef<typeof CameraControls>;
 
 const target = new Vector3();
+const FRAME_MARGIN = 12;
+const FRAME_MIN_SPAN = 60;
 
 function configure(controls: Controls) {
   const { ACTION } = CameraControlsImpl;
@@ -65,12 +68,18 @@ function run(controls: Controls, command: CameraCommand, animate: boolean) {
   }
 }
 
+/**
+ * `framePoints` is a prop, not a handle call: the canvas mounts its scene after the page's own
+ * effects run, so a search shown at load would otherwise reach a camera that does not exist yet.
+ */
 export function MapCamera({
   handleRef,
   reducedMotion,
+  framePoints,
 }: {
   handleRef: RefObject<CameraHandle | null>;
   reducedMotion: boolean;
+  framePoints: readonly MapPoint[];
 }) {
   const controls = useRef<Controls>(null);
   const invalidate = useThree((state) => state.invalidate);
@@ -82,6 +91,17 @@ export function MapCamera({
     configure(current);
     invalidate();
   }, [invalidate]);
+
+  useEffect(() => {
+    const current = controls.current;
+    if (current === null || framePoints.length === 0) return;
+    const box = frameBox(framePoints, FRAME_MARGIN, FRAME_MIN_SPAN);
+    void current.fitToBox(
+      new Box3(new Vector3(box.minX, 0, box.minZ), new Vector3(box.maxX, 4, box.maxZ)),
+      !reducedMotion,
+    );
+    invalidate();
+  }, [framePoints, invalidate, reducedMotion]);
 
   useEffect(() => {
     handleRef.current = {
