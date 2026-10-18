@@ -1,8 +1,8 @@
 # Shared context — paste this first into every new chat
 
 You are joining **Bern Life** for HackApertus Liebefeld, case **Research & Expertise Navigator**
-(Bern Economic Development Agency). **Feature freeze Sun 18 Oct 23:00. Submission Mon 19 Oct.**
-Work continues after the freeze toward the research-commons world.
+(Bern Economic Development Agency). Planned feature freeze Sun 18 Oct 23:00; Peter keeps building
+overnight; submission and finals Mon 19 Oct (exact times in `docs/conductor/STATE.md`).
 
 ## The project in one paragraph
 Public UniBE (20 institutes from the case inventory), ARTORG and Diabetes Center Berne pages are
@@ -12,6 +12,16 @@ de/en/fr translations (for retrieval only), and searched with hybrid full-text +
 Postgres/pgvector. Apertus 70B expands queries and writes "why it matches" **only from the cited
 evidence**. A company can also upload a project brief (PDF) and get matched Bern experts with
 sources. Every model call is cached, so `make run` replays everything with no GPU.
+
+The engine lives inside **a life-sim world of Bern** built in three.js: a friendly game shell with a
+HUD, a phone whose **Ask** app is the Navigator, and a stylised 3D Bern where every institution is a
+place that lights up when it matches your search. Later: onboarding with your own avatar, a home,
+agents as characters, messages, projects and calls. The feel comes from a life-sim web game Peter
+admires (screenshots outside the repo); we borrow the feel only, never its name, art, text or assets.
+
+World rules: people found on public pages are never avatars or characters, only entries with their
+sources (avatars are for people who join and claim a profile); no invented activity numbers, no
+money, no fake "online" counts; settings for night mode, lite graphics and data saver.
 
 USP: **"Ask in your words. Get the right Bern experts, each with the sentence that proves it."**
 

@@ -1,7 +1,7 @@
 You are a worker session for Bern Life. Paste `handoff/00-shared-context.md` first, then this brief. The conductor wrote it; Peter merges.
 
 ## Rules (every worker brief)
-- Plan first; wait for "approved". One issue, one branch `<issue>-<slug>`, one git worktree, one dev port per lane (3011 data/agents, 3012 world/UX, 3013 infra).
+- Plan first; wait for "approved". One issue, one branch `<issue>-<slug>`, one git worktree, one dev port per lane (3011 engine, 3012 world shell, 3014 world 3D, 3013 infra).
 - `git commit -S -s`, short conventional messages, run git as its own command or `git -C <worktree>`. No `Co-authored-by`, no "Generated with", no mention of AI in commits, PRs, code or docs.
 - PR body: one line, 3–6 bullets, Checked and Limits lines, under ~120 words, plain and human.
 - Code like a careful human wrote it: small modules, names over comments, comments only for why, no dead code or placeholders, strict types.
@@ -30,15 +30,18 @@ which belong to I2; `engine/tests/`; `engine/pyproject.toml` dependencies; `sour
 `page_types` and `allow_paths`/`deny_paths`; `docs/playbooks/add-a-source.md`)
 1. `sources.py`: load every `sources/*.json`, validate against `contracts/source.schema.json`
    (`jsonschema` is agreed), fail with a named error.
-2. `frontier.py` (pure): URL normalisation (scheme, host case, fragment and tracking parameters
+2. `frontier.py` (pure), seeded from each site's `sitemap.xml` when robots.txt or the root offers one, plus the seeds: URL normalisation (scheme, host case, fragment and tracking parameters
    dropped, trailing slash rule), same-host and allow/deny path checks, depth, de-duplication,
    skip non-HTML (PDF, images, office files, `mailto:`, `tel:`).
 3. `robots.py`: `urllib.robotparser` with an injected fetcher; delay = max(source `delay_s`,
    robots `Crawl-delay`). A disallowed URL is logged as skipped, never fetched.
-4. `html_text.py` (stdlib `html.parser`): title and clean text; drop `script`, `style`, `nav`,
+4. `html_text.py` (stdlib `html.parser`, or `trafilatura` pinned if it clearly beats it on real pages; say which and why in the PR): title and clean text; drop `script`, `style`, `nav`,
    `header`, `footer`, cookie banners; keep headings, list items and table cells on their own
    lines; collapse whitespace. This text is what evidence spans are checked against later, so it
-   must be deterministic.
+   must be deterministic. **Normalise all Unicode whitespace** (U+00A0 non-breaking space, U+202F,
+   tabs, other spaces) to a plain space and collapse runs: 14 of the 22 gold proof pages contain
+   non-breaking spaces, and evidence spans and the gold set are matched under exactly this rule
+   (`eval/PREREGISTRATION.md`, "Text matching").
 5. `lang.py`: word-list language profile (de, en, fr, it, unknown). Port the idea of
    `apertus-redteam-graph/track_1a/src/redteam/lang_profile.py` + `lang_markers.json` with
    attribution in `PROVENANCE.md`.
@@ -57,7 +60,7 @@ which belong to I2; `engine/tests/`; `engine/pyproject.toml` dependencies; `sour
 
 ## Tests (unittest, invented HTML only)
 Normalisation table; allow/deny/depth; robots disallow + crawl-delay with a fake fetcher;
-html_text on a synthetic page (exact output string); language on four short texts; classify;
+html_text on a synthetic page with `&nbsp;` and U+202F inside a sentence (exact output string); sitemap parsing; language on four short texts; classify;
 the crawl loop with a fake fetcher asserting the exact visit order and recorded sleeps; every
 emitted page validates against the schema and its sha256 matches.
 
