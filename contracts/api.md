@@ -10,6 +10,7 @@ against a schema in this folder. POST is accepted from loopback only.
 | `POST /api/search` | `{ "query": string, "lang"?: "de" \| "en" \| "fr", "sources"?: ["unibe" \| "artorg" \| "dcb"] }` | `result.schema.json` |
 | `POST /api/brief` | `{ "text": string }` (plain text; the web app extracts it from an uploaded PDF and does not keep the file) | `result.schema.json` with `brief_terms` |
 | `GET /api/profile/{id}` | — | `profile.schema.json` |
+| `POST /api/agent` | `{ "messages": [{ "role": "user" \| "assistant", "content": string }] }` (at most 12, newest last) | `agent.schema.json` |
 
 Errors: HTTP 4xx/5xx with `{ "error": "<marker>" }`, where the marker is one of `bad_request`,
 `not_found`, `engine_error`. No exception text, no provider message.

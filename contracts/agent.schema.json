@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent.schema.json",
+  "title": "AgentReply",
+  "description": "POST /api/agent. The Navigator agent answers only from its tool results: every person it names appears in `mentions`, and every mention is a profile in one of `results`. Actions are things the app does on screen; the agent never contacts anyone.",
+  "type": "object",
+  "required": [
+    "reply",
+    "mode",
+    "actions",
+    "results",
+    "mentions",
+    "versions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "reply": {
+      "type": "string",
+      "maxLength": 800
+    },
+    "mode": {
+      "enum": [
+        "live",
+        "replay",
+        "mock"
+      ]
+    },
+    "abstained": {
+      "type": "boolean"
+    },
+    "actions": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "result"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "show_on_map"
+              },
+              "result": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "profile_id"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "open_profile"
+              },
+              "profile_id": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "type",
+              "result"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "start_match_report"
+              },
+              "result": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    "results": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "$ref": "result.schema.json"
+      }
+    },
+    "mentions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "profile_id",
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "profile_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tool_calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "tool"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "tool": {
+            "enum": [
+              "search",
+              "brief",
+              "profile"
+            ]
+          },
+          "query": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "versions": {
+      "type": "object",
+      "required": [
+        "engine",
+        "snapshot",
+        "prompts"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "engine": {
+          "type": "string"
+        },
+        "snapshot": {
+          "type": "string"
+        },
+        "prompts": {
+          "type": "string"
+        },
+        "models": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
