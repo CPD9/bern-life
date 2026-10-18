@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { AskInput } from "./ask-input";
 import { BriefInput } from "./brief-input";
 import { FixtureLabel } from "./mode-notices";
 import { ResultsView } from "./results-view";
-import type { NavigatorController } from "./use-navigator";
+import type { InputMode, NavigatorController } from "./use-navigator";
 
 type NavigatorProps = {
   controller: NavigatorController;
@@ -16,16 +15,13 @@ type NavigatorProps = {
   onMakeReport?: (response: SearchResponse) => boolean;
 };
 
-type InputMode = "search" | "brief";
-
 const inputModes: { mode: InputMode; label: string }[] = [
   { mode: "search", label: "Question" },
   { mode: "brief", label: "Project brief" },
 ];
 
 export function Navigator({ controller, fixtureMode, onShowOnMap, onMakeReport }: NavigatorProps) {
-  const [inputMode, setInputMode] = useState<InputMode>("search");
-
+  const { inputMode, setInputMode } = controller;
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-2">

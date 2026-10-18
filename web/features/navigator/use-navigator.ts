@@ -18,10 +18,15 @@ export type NavigatorState =
   | { status: "done"; request: NavigatorRequest; response: SearchResponse }
   | { status: "failed"; request: NavigatorRequest; failure: NavigatorFailure };
 
+/** Which input shows: a question, or a project brief. Lumi's skills switch it too. */
+export type InputMode = "search" | "brief";
+
 export type NavigatorController = {
   readonly state: NavigatorState;
   readonly draft: string;
   setDraft(query: string): void;
+  readonly inputMode: InputMode;
+  setInputMode(mode: InputMode): void;
   search(request: SearchRequest): void;
   submitBrief(input: BriefInput): void;
   retry(): void;
@@ -33,6 +38,7 @@ export function useNavigator(
 ): NavigatorController {
   const [state, setState] = useState<NavigatorState>({ status: "idle" });
   const [draft, setDraft] = useState("");
+  const [inputMode, setInputMode] = useState<InputMode>("search");
   const latest = useRef(0);
 
   const run = useCallback(
@@ -58,6 +64,8 @@ export function useNavigator(
     state,
     draft,
     setDraft,
+    inputMode,
+    setInputMode,
     search: (request) => {
       setDraft(request.query);
       void run({ kind: "search", search: request });
