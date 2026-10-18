@@ -88,16 +88,22 @@ class SchemaTest(unittest.TestCase):
             tables,
             [
                 "_prisma_migrations",
+                "app_user",
                 "bundle_load",
                 "chunk",
                 "claim",
+                "credential",
                 "entity_relation",
+                "invite",
                 "page",
                 "place",
                 "profile",
+                "rate_limit",
+                "session",
                 "site",
                 "source",
                 "term",
+                "user_profile",
             ],
         )
 
