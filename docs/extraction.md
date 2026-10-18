@@ -33,6 +33,14 @@ by string matching. The model proposes; the verifier decides.
    | `bad_json` | the reply parses and each item has the `{value, span}` shape |
    | `no_profile` | both ends of a relation are profiles |
 
+   A stored span is always cut from the page text, never taken from the model, and code may adjust
+   it in only two ways (`spans.py`). A span that differs from the page only in case is stored as the
+   page's own text, and only when that case-insensitive match is unique on the page. A person's role
+   whose span does not name them is kept only if its line lies at most two lines after a line naming
+   the person. Its evidence then runs from the start of that name line to the end of the role line
+   (≤ 300 characters), so it still names the person. This covers team lists that put the role under
+   the name.
+
    Model failures are counted by their marker (`model_timeout`, `cache_miss`, ...); the run goes
    on. A `leads` relation needs a leadership word in its span (head, lead, Leiter, director, ...);
    otherwise it is kept as `member_of` or `works_on`.
@@ -44,6 +52,10 @@ by string matching. The model proposes; the verifier decides.
 5. **Relations** (`relations.py`) are `member_of`, `leads`, `works_on`, `operates` and `part_of`,
    each with its own verified span. An end known only by name (a unit in a staff line) is looked up
    among the profiles' names.
+
+The report counts model proposals by field and verdict (kept or the drop reason), states "model
+proposals not found on the page: N, all dropped", and counts the kept spans that the page's own text
+replaced.
 
 Before writing, the command checks every stored span against its page again and validates every
 profile against the contract. It writes nothing if one fails.
