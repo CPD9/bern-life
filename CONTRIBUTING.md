@@ -1,6 +1,8 @@
 # Contributing
 
 ## Issue, branch, worktree
+The full flow, versions and releases are in `docs/git-workflow.md`.
+
 Open or claim an issue first. One concern per PR, 150–400 lines where possible. Branch from current
 `origin/main` as `<issue>-<slug>`, in your own worktree, on your lane's port:
 
@@ -11,7 +13,8 @@ git worktree add ../bern-life-<issue> -b <issue>-<slug> origin/main
 | Lane | Owns | Dev port | Engine port | Database |
 |---|---|---|---|---|
 | 1 data / engine / agents | `engine/`, `sources/` | 3011 | 8101 | `bernlife_l1` |
-| 2 world / UX (Nik) | `web/` | 3012 | 8102 | `bernlife_l2` |
+| 2a world shell | `web/` except `web/features/world/` | 3012 | 8102 | `bernlife_l2` |
+| 2b world 3D | `web/features/world/`, `web/public/world/` | 3014 | 8104 | `bernlife_l2` |
 | 3 infra / hosting (Yaseen) | `db/`, `infra/`, `Makefile`, `Dockerfile*`, `compose.yaml`, `.github/workflows/`, `eval/src/` | 3013 | 8103 | `bernlife_l3` |
 | conductor | `contracts/`, `eval/gold.jsonl`, `eval/PREREGISTRATION.md`, `docs/`, `handoff/`, `.claude/prompts/` | — | — | — |
 
@@ -30,7 +33,10 @@ Start in plan mode, read the files your brief lists, and implement only after Pe
 - Run git as its own command or as `git -C <worktree> …`, never `cd … && git …`.
 - No `Co-authored-by`, no "Generated with", no mention of AI in commits, PRs, code or docs.
 - Workers may `gh issue create`, push their own branch and `gh pr create`. Workers never merge,
-  force-push, rebase shared branches, delete branches or change repo settings. Peter merges.
+  force-push, rebase shared branches, delete branches or change repo settings.
+- **Only Peter merges.** The `main` ruleset restricts updates to the repo admin (via a PR), and
+  every PR needs Peter's approval as code owner after its last push. Yaseen and Nik push branches
+  and open PRs; Peter reviews and merges with `gh pr merge <n> --squash --admin`.
 
 ## Pull requests
 Body: one line saying what and why, 3–6 bullets, then a `Checked:` line and a `Limits:` line.

@@ -1,7 +1,7 @@
 # Bern Life
 
-Research & Expertise Navigator for Bern (HackApertus Liebefeld case), and later a game-like
-research commons built on top of it. Public UniBE, ARTORG and Diabetes Center Berne pages →
+Research & Expertise Navigator for Bern (HackApertus Liebefeld case), inside a life-sim world of
+Bern built in three.js: the phone's Ask app is the Navigator, institutions are places on the map. Public UniBE, ARTORG and Diabetes Center Berne pages →
 crawl → extract with evidence → enrich → hybrid search → source-backed results, on Apertus v1.5.
 The case text and its acceptance bar are in `docs/case.md`.
 
@@ -14,7 +14,7 @@ sources/     one JSON per institution (contracts/source.schema.json); a new site
 contracts/   JSON Schemas + invented fixtures: the source of truth between engine and web
 engine/      Python 3.12: crawl, extract, verify, enrich, index, search, explain, HTTP API (lane 1)
 db/          Prisma schema and migrations for every table, Postgres 17 + pgvector (lane 3)
-web/         Next 16 / React 19 / TypeScript strict / bun: the UI (lane 2)
+web/         Next 16 / React 19 / TypeScript strict / bun / React Three Fiber: shell, phone, world
 eval/        gold set, pre-registration, evaluator (separate code from search)
 infra/       vLLM serve scripts, CSCS notes, Docker
 docs/        coding standards, decisions, playbooks, conductor state
