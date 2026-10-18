@@ -5,7 +5,7 @@ import { BriefNeeds } from "./brief-needs";
 import { ExpandedTerms } from "./expanded-terms";
 import { abstainMessage, canRetry, failureMessage } from "./messages";
 import { ModeNotice } from "./mode-notices";
-import { ResultCard } from "./result-card";
+import { ResultCard } from "@/infrastructure/ui/result-card";
 import type { NavigatorState } from "./use-navigator";
 
 type ResultsViewProps = {
