@@ -111,3 +111,21 @@ jobs:
       - run: bun run build
         env:
           DEMO_FIXTURES: "1"
+
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install jsonschema==4.26.0 referencing==0.37.0
+      - run: PYTHONPATH=eval/src python -m unittest discover -s eval/tests -v
+      - name: Evaluator on the invented fixture
+        run: make eval-fixture
+      - name: Evaluator on the snapshot bundle
+        if: hashFiles('bundle.lock') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: make fetch && make eval
