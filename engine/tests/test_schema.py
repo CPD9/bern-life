@@ -110,8 +110,13 @@ class SchemaTest(unittest.TestCase):
                 "claim",
                 "conversation",
                 "credential",
+                "document",
                 "entity_relation",
                 "invite",
+                "lab",
+                "lab_invite",
+                "lab_listing",
+                "lab_member",
                 "member",
                 "message",
                 "page",
@@ -124,6 +129,22 @@ class SchemaTest(unittest.TestCase):
                 "term",
                 "user_profile",
             ],
+        )
+
+    def test_opportunity_kinds_and_fields(self):
+        values = {}
+        for enum in ("profile_kind", "page_kind", "claim_field"):
+            self.cur.execute(
+                "SELECT enumlabel FROM pg_enum JOIN pg_type t ON t.oid = enumtypid"
+                " WHERE t.typname = %s ORDER BY enumsortorder",
+                (enum,),
+            )
+            values[enum] = [row[0] for row in self.cur.fetchall()]
+        self.assertEqual(values["profile_kind"][-3:], ["call", "service", "space"])
+        self.assertEqual(values["page_kind"][-3:], ["call", "service", "space"])
+        self.assertEqual(
+            values["claim_field"][-6:],
+            ["funder", "deadline", "amount", "eligibility", "location", "size"],
         )
 
     def test_search_indexes(self):

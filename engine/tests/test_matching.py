@@ -3,7 +3,7 @@ import unittest
 from bernlife.matching import asked, can_explain, matched_claims, names_profile, words
 from search_fakes import PROFILES
 
-CLEO, ADA, BEN, DORA, PATCH = PROFILES
+CLEO, ADA, BEN, DORA, PATCH = PROFILES[:5]
 
 
 class WordsTest(unittest.TestCase):

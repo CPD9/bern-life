@@ -2,14 +2,15 @@
 
 import { type ReactNode, useId } from "react";
 import {
-  type AvatarConfig,
-  accentOptions,
-  bodyOptions,
-  hairOptions,
+  type BearConfig,
+  accessoryOptions,
+  faceOptions,
+  furOptions,
+  kindOptions,
   outfitOptions,
-  shuffleAvatar,
-  skinOptions,
-} from "./avatar-config";
+  shuffleBear,
+  withKind,
+} from "./bear-config";
 
 type Choice = { readonly id: string; readonly label: string; readonly colour?: string };
 
@@ -54,8 +55,8 @@ function ChoiceGroup<Id extends string>({ title, choices, value, onChange }: Cho
 }
 
 type AvatarEditorProps = {
-  value: AvatarConfig;
-  onChange: (next: AvatarConfig) => void;
+  value: BearConfig;
+  onChange: (next: BearConfig) => void;
   /** The 3D view, usually `<AvatarTurntable>`; passed in so this form never loads three.js. */
   preview: ReactNode;
   random?: () => number;
@@ -67,22 +68,27 @@ export function AvatarEditor({
   preview,
   random = Math.random,
 }: AvatarEditorProps) {
-  const set = <K extends keyof AvatarConfig>(key: K) => {
-    return (id: AvatarConfig[K]) => onChange({ ...value, [key]: id });
+  const set = <K extends Exclude<keyof BearConfig, "kind">>(key: K) => {
+    return (id: BearConfig[K]) => onChange({ ...value, [key]: id });
   };
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 md:grid-cols-2">
       {preview}
       <div className="flex min-w-0 flex-col gap-5">
-        <ChoiceGroup title="Body" choices={bodyOptions} value={value.body} onChange={set("body")} />
         <ChoiceGroup
-          title="Skin tone"
-          choices={skinOptions}
-          value={value.skin}
-          onChange={set("skin")}
+          title="Who you are"
+          choices={kindOptions}
+          value={value.kind}
+          onChange={(kind) => onChange(withKind(value, kind))}
         />
-        <ChoiceGroup title="Hair" choices={hairOptions} value={value.hair} onChange={set("hair")} />
+        <ChoiceGroup
+          title="Fur"
+          choices={furOptions(value.kind)}
+          value={value.fur}
+          onChange={set("fur")}
+        />
+        <ChoiceGroup title="Face" choices={faceOptions} value={value.face} onChange={set("face")} />
         <ChoiceGroup
           title="Outfit"
           choices={outfitOptions}
@@ -90,14 +96,14 @@ export function AvatarEditor({
           onChange={set("outfit")}
         />
         <ChoiceGroup
-          title="Accent colour"
-          choices={accentOptions}
-          value={value.accent}
-          onChange={set("accent")}
+          title="Accessory"
+          choices={accessoryOptions}
+          value={value.accessory}
+          onChange={set("accessory")}
         />
         <button
           type="button"
-          onClick={() => onChange(shuffleAvatar(random))}
+          onClick={() => onChange(shuffleBear(random))}
           className="bg-chip rounded-pill hover:bg-chip-selected hover:text-chip-selected-ink self-start px-5 py-2 text-sm font-bold"
         >
           Shuffle

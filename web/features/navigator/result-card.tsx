@@ -17,6 +17,9 @@ const kindLabels: Record<Profile["kind"], string> = {
   unit: "Unit",
   project: "Project",
   infrastructure: "Infrastructure",
+  call: "Funding call",
+  service: "Service",
+  space: "Space",
 };
 
 // A claim can appear twice (in its field and under "Why it matches"); the open evidence panel

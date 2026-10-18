@@ -2,8 +2,10 @@
 
 `python -m bernlife serve` answers `POST /api/search` (contract `contracts/result.schema.json`)
 from Postgres. With a model connected (live or replay), the question is expanded first; without
-one the mode is `mock` and `expanded_terms` is empty. The reason lists the profile's own claim
-values; Apertus' explanations come in the next step of E3b.
+one the mode is `mock` and `expanded_terms` is empty. The top 5 results get Apertus' "why it
+matches", checked in code. Every other result, and any explanation that fails a check, keeps the
+plain reason listing the profile's own claim values. `POST /api/brief` turns a project brief into
+needs and searches each one.
 
 ## Commands
 ```bash
@@ -43,6 +45,37 @@ Terms help search find pages and are never shown as a fact. Code keeps a term on
 - A failed call (marker, cache miss, unreadable JSON) means no expansion: search runs plain and
   the mode says `mock`. `versions.prompts` names `expand-v1` when an expansion was used.
 
+## Why it matches (role `explain`, prompt `explain-v2`)
+For each of the top 5 results the model sees, as data, only:
+- the question;
+- the result's name;
+- the claims the plain reason cites (pointer, value and verbatim span).
+
+The claims are numbered, and the model returns at most two English sentences and the numbers it
+used; code maps the numbers back to JSON pointers. Asked for pointers directly (prompt
+`explain-v1`), the model copied whole claim lines into them and only 33% of explanations passed. Code keeps the text only if:
+- every pointer was offered and exists;
+- the text is 1 to 400 characters with no control characters;
+- every capitalised word inside a sentence occurs in the cited claims, the name or the question.
+
+The last check is what stops a name or place from the model's memory. Otherwise the plain reason
+stays. The calls run in parallel, are cached per question and claims, and replay byte for byte.
+Explanations are English only: German capitalises every noun, which the name check cannot tell
+from a name.
+
+`mode` is `live` or `replay` when any model text was used (expansion or explanation), and
+`versions.prompts` lists the prompt versions used (`expand-v1+explain-v2`).
+
+## Project briefs (`POST /api/brief`, role `brief`, prompt `brief-v1`)
+`{"text": "..."}` (1 to 20,000 characters; the web app extracts it from the PDF and keeps no file)
+goes to the model as data and gives up to 6 needs, each a short term with a span copied from the
+brief. A need is kept only if its span occurs in the brief word for word, whitespace aside. Each
+kept need is expanded and searched like a question. A profile found by several needs keeps its
+best rank (then the higher fused score, then its id), and the unit cap applies to the merged list.
+A result's reason and explanation answer the need that ranked it best. `brief_terms` lists the
+kept needs with their spans, and `query` is the need terms joined by "; ". No kept need, or no
+need with a result, abstains with `no_verifiable_source`.
+
 ## Chunks
 - **Profile chunk**, one per profile: the name, then every claim value in contract order.
 - **Passages** of every page a profile names as its source or a claim or relation cites: the page
@@ -75,6 +108,14 @@ Terms help search find pages and are never shown as a fact. Code keeps a term on
    appear in credits them, and without the rule they would fill the top ten with nothing to show.
    The rule asks whether a result can show its reason, not how prominent it is, so it adds no
    prominence signal.
+   **Through a project (`via`):** a candidate with no matching claim of its own is still shown
+   when it works on or leads a project (relation `works_on` or `leads`) that has a matching
+   claim. The result then carries `via`: the relation with its verbatim span and page, and the
+   project's matching claims inline with their evidence. So the card shows both sentences
+   ("Project team: …" and the project's topic), and both can be checked. Its `reason` stays the
+   plain one from its own claims, and it is not sent to the explainer. Unit membership
+   (`member_of`) does not count: on the dev set it added nothing, and a broad unit would vouch
+   for everyone in it.
 6. **Unit cap:** at most 4 profiles of one unit in the top 10, where a profile's unit is the unit
    of its source page (the evaluator's exposure definition). A capped profile waits until after
    the top ten. The cap relaxes only when no other unit has a candidate left. There is no
@@ -145,6 +186,31 @@ there they stay low. Top-10 overlap of translations with their base question ros
 Latency with a live expansion call: p50 4.1 s, p95 7.6 s; replayed from the cache it is about
 the plain latency, p50 165 ms.
 
+## Reasons through a project (dev extension of 2026-10-18)
+`eval/dev.jsonl` gained 10 German and French questions (q918–q927), again from pages and people
+no gold query uses:
+- six are answered by a person tied to the topic only through a project page or team line;
+- four are answered by the person's or unit's own claims.
+
+Thresholds unchanged.
+
+| Set | Row | recall@10 | MRR | false abstentions | invented abstained | en / de / fr recall |
+|---|---|---|---|---|---|---|
+| dev (27) | (c) expansion | 0.73 | 0.61 | 1/22 | 5/5 | 1.00 / 0.57 / 0.50 |
+| dev (27) | + reasons through a project | 0.86 | 0.66 | 1/22 | 5/5 | 1.00 / 0.71 / 0.83 |
+| gold | (c) expansion | 0.27 [0.13, 0.42] | 0.32 | 0/38 | 8/10 | 0.41 / 0.09 / 0.05 |
+| gold | + reasons through a project | 0.36 [0.20, 0.53] | 0.43 | 0/38 | 8/10 | 0.51 / 0.18 / 0.12 |
+
+On dev, the four questions answered by the person's own claims were found before the change.
+None of the six relation-only questions were found before; three are found after. The 12
+earlier answerable dev questions keep their ranks. Traceability stayed 100% with 0 invented
+entities. All 563 `via` spans and related claims in the dev and gold runs are verbatim on their
+stored pages.
+
+Tried on dev and not adopted: abstaining only when both the plain and the expanded signals fall
+below the thresholds. It answered q918 (rank 5), but the two off-topic questions stopped
+abstaining (3/5 instead of 5/5), so the rule reading the plain signals stays.
+
 ## Baseline (no model help), bundle `local-8f34ab8c1fba`
 `make eval` on the gold predictions, before and after rule 5:
 
@@ -165,7 +231,13 @@ p95 177 ms, max 219 ms with rule 5, which reads every candidate's profile (p50 6
 
 ## Limits
 - No stemming: "sensor" does not match "sensors" in full text; the vectors cover some of it.
-- Cross-language recall stays low after enrichment and expansion (gold de 0.09, fr 0.05).
+- Cross-language recall stays low (gold de 0.18, fr 0.12 with reasons through a project).
+- Known misses on dev: a German question below both thresholds on its plain signals abstains
+  although expansion finds the answer (q918); a person credited through a project ranks 11
+  (q919); a project whose claims share no word with the question cannot vouch, and a word form
+  ("Kohlenhydrate" vs "Kohlenhydraten") does not match (q920).
+- The evaluator's traceability check reads profile claims, not `via`; the `via` spans are checked
+  here instead (563 of 563).
 - An invented name without a title, or an invented project, is caught only by weak support.
 - Passages credit profiles only through spans that lie fully inside them, and since rule 5 a
   credited profile still needs a matching claim of its own to be shown.

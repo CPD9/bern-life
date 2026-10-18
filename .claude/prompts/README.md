@@ -58,6 +58,28 @@ Postgres at a time.
 Rule for people: a real person appears as an avatar only after joining and accepting; before that, a
 card with public profile and sources. Demo members only in fixture mode, labelled DEMO.
 
+## Story mode wave (from Sun 21:00)
+
+| File | Lane | Depends on |
+| --- | --- | --- |
+| `W12-real-bern.md` (the map from swisstopo open data) | world 3D (W2) | W4 merged; **first priority** |
+| `W13-first-run.md` (map → interact → join → onboarding) | world shell (W1) | STORY merged |
+| `STORY-mode.md` (quest engine, panel, events) | world shell (W1) | X2 merged; **top priority** |
+| `W11-settle.md` (choose where to settle, sourced facts) | world 3D (W2) | W4 merged |
+| `W5-walk.md` (walk Bern, enter places) | world 3D (W2) | W11 |
+| `W3-bear-floatie.md` (your bear, the floatie) | world home (Nik) | onboarding #81 |
+| `W6-office.md` (furnish the office, documents on the desk) | world home (Nik) | bear; W6b after S4a |
+| `W9-library.md` | world home (Nik) | W6a; S4a for documents |
+| `W8-office-desktop.md` | world shell (W1) | STORY |
+| `W10-market.md` (Buy becomes Market) | world shell (W1) | W8 |
+| `W7-lab-people.md` | world shell (W1) | S4b |
+| `E4-opportunities.md` (calls, services, spaces as sources) | engine | E3b dev work |
+| `S4-docs-labs-hosting.md` | backend (Yaseen) | `make run` |
+| `G1-garage.md` (Apertus models, real numbers) | world (stretch) | evaluator rows |
+
+Rules for this wave: real, sourced facts only (no money, no invented prices or counts); Apertus only
+in the garage; a real person is an avatar only after joining; quests complete on app events only.
+
 ## Monday morning
 P1 pitch in BEDA's template (file stays out of git) · final evaluator run · labelling session ·
 rehearsal. Anything not merged by 08:00 goes on the roadmap slide.

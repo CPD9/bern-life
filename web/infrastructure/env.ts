@@ -1,3 +1,5 @@
+import path from "node:path";
+
 // The only module that reads process.env. Parsing is a pure function so tests pass their own
 // source; env() parses lazily on first use so a build that never calls the engine needs no values.
 
@@ -90,6 +92,20 @@ let cachedAccounts: AccountsEnv | undefined;
 export function accountsEnv(): AccountsEnv {
   cachedAccounts ??= parseAccountsEnv(process.env);
   return cachedAccounts;
+}
+
+// Uploaded documents live in the data directory the engine also uses; a relative value and the
+// default (<repo>/data) resolve from web/, where the app runs.
+export function parseDataDir(source: EnvSource, cwd: string): string {
+  const value = source.BERNLIFE_DATA_DIR;
+  return path.resolve(cwd, value === undefined || value === "" ? "../data" : value);
+}
+
+let cachedDataDir: string | undefined;
+
+export function dataDir(): string {
+  cachedDataDir ??= parseDataDir(process.env, process.cwd());
+  return cachedDataDir;
 }
 
 // Database tests run against a throwaway database when one is given, and say so when skipped.

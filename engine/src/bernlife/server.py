@@ -17,7 +17,9 @@ from typing import Any, Protocol
 
 LANGS = ("de", "en", "fr")
 MAX_BODY = 16_384
+MAX_BRIEF_BODY = 65_536
 MAX_QUERY = 500
+MAX_BRIEF = 20_000
 PROFILE_PATH = re.compile(r"^/api/profile/([a-z0-9-]+)$")
 log = logging.getLogger("bernlife.server")
 
@@ -40,6 +42,7 @@ class SearchRequest:
 class Api(Protocol):
     def health(self) -> dict[str, Any]: ...
     def search(self, request: SearchRequest) -> dict[str, Any]: ...
+    def brief(self, text: str) -> dict[str, Any]: ...
     def profile(self, profile_id: str) -> dict[str, Any] | None: ...
     def source_ids(self) -> set[str]: ...
 
@@ -63,6 +66,19 @@ def parse_search(body: bytes, source_ids: set[str]) -> SearchRequest:
     ):
         raise BadRequest("sources")
     return SearchRequest(query.strip(), lang, sorted(set(sources)) if sources else None)
+
+
+def parse_brief(body: bytes) -> str:
+    try:
+        payload = json.loads(body)
+    except ValueError:
+        raise BadRequest("not JSON") from None
+    if not isinstance(payload, dict) or set(payload) != {"text"}:
+        raise BadRequest("fields")
+    text = payload["text"]
+    if not isinstance(text, str) or not 0 < len(text.strip()) <= MAX_BRIEF or "\x00" in text:
+        raise BadRequest("text")
+    return text
 
 
 def is_loopback(host: str) -> bool:
@@ -92,12 +108,18 @@ def handler_class(api: Api) -> type[BaseHTTPRequestHandler]:
             self._answer(self._post)
 
         def _post(self) -> dict[str, Any]:
-            if self.path != "/api/search":
-                raise NotFound(self.path)
+            if self.path == "/api/search":
+                body = self._body(MAX_BODY)
+                return api.search(parse_search(body, api.source_ids()))
+            if self.path == "/api/brief":
+                return api.brief(parse_brief(self._body(MAX_BRIEF_BODY)))
+            raise NotFound(self.path)
+
+        def _body(self, limit: int) -> bytes:
             length = int(self.headers.get("Content-Length") or 0)
-            if not 0 < length <= MAX_BODY:
+            if not 0 < length <= limit:
                 raise BadRequest("body size")
-            return api.search(parse_search(self.rfile.read(length), api.source_ids()))
+            return self.rfile.read(length)
 
         def _answer(self, respond: Callable[[], Mapping[str, Any]]) -> None:
             if self.command == "POST" and not is_loopback(self.client_address[0]):

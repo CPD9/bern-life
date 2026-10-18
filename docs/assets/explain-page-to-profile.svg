@@ -1,6 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" width="800" height="380" role="img" aria-labelledby="t d">
   <title id="t">From page to profile</title>
-  <desc id="d">A sentence on a public page is highlighted, passes the verifier because it is on the page word for word, and becomes a claim with its evidence. A model proposal that is not on the page bounces off the verifier and is dropped. Example data is invented.</desc>
+  <desc id="d">A sentence on a public page is marked, carried to the verifier, checked word for word against the page and accepted, then lands in the profile as a claim with its evidence. A model proposal that is not on the page hits the verifier, is rejected and falls away. Example data is invented.</desc>
+  <defs>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2fb36b" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#2fb36b" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#2fb36b" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="gate-shape"><rect x="360" y="100" width="80" height="200" rx="40"/></clipPath>
+  </defs>
   <style>
     text { font-family: ui-rounded, "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; }
     .bg { fill: #eef4fa; }
@@ -13,8 +21,9 @@
     .on-green { fill: #ffffff; }
     .red { fill: #b42318; }
     .red-line { stroke: #b42318; }
-    .gate-ring { fill: none; stroke: #5b6773; }
-    .mark-stroke { stroke: #ffffff; }
+    .ring { fill: none; stroke: #5b6773; }
+    .glyph { fill: none; stroke: #ffffff; }
+    .shadow { fill: #14202b; opacity: 0.07; }
     @media (prefers-color-scheme: dark) {
       .bg { fill: #0d1b2a; }
       .card { fill: #17212d; stroke: #2a3a4d; }
@@ -26,38 +35,61 @@
       .on-green { fill: #08130d; }
       .red { fill: #ff8a80; }
       .red-line { stroke: #ff8a80; }
-      .gate-ring { stroke: #a3b0bd; }
-      .mark-stroke { stroke: #08130d; }
+      .ring { stroke: #a3b0bd; }
+      .glyph { stroke: #08130d; }
+      .shadow { fill: #000000; opacity: 0.3; }
     }
 
-    /* Every element's resting style is the last frame, so with motion reduced the picture is complete. */
-    .highlight { animation: highlight 12s infinite; }
-    .traveller { opacity: 0; animation: travel 12s infinite; }
-    .claim { animation: claim 12s infinite; }
-    .ok-flash { opacity: 0; animation: ok-flash 12s infinite; }
-    .no-flash { opacity: 0; animation: no-flash 12s infinite; }
-    .proposal { animation: proposal 12s infinite; }
-    .dropped { animation: dropped 12s infinite; }
+    /* Resting styles are the last frame, so with motion reduced the picture is complete. */
+    .sweep { transform-box: fill-box; transform-origin: left center; animation: sweep 12s cubic-bezier(.65, 0, .35, 1) infinite; }
+    .traveller { opacity: 0; animation: travel 12s cubic-bezier(.45, 0, .25, 1) infinite; }
+    .beam { opacity: 0; animation: beam 12s ease-in-out infinite; }
+    .ok { opacity: 0; animation: ok 12s ease-out infinite; }
+    .ok .draw { stroke-dasharray: 1; animation: tick 12s ease-out infinite; }
+    .no { opacity: 0; animation: no 12s ease-out infinite; }
+    .no .draw { stroke-dasharray: 1; animation: cross 12s ease-out infinite; }
+    .claim { animation: claim 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
+    .evidence { animation: evidence 12s ease-out infinite; }
+    .proposal { transform-box: fill-box; transform-origin: center; animation: proposal 12s cubic-bezier(.45, 0, .25, 1) infinite; }
+    .dropped { animation: dropped 12s ease-out infinite; }
 
-    @keyframes highlight { 0%, 6% { opacity: 0; } 12%, 100% { opacity: 1; } }
+    @keyframes sweep { 0%, 3% { transform: scaleX(0); } 12%, 100% { transform: scaleX(1); } }
     @keyframes travel {
-      0%, 14% { opacity: 0; transform: translate(0, 0); }
-      16% { opacity: 1; transform: translate(0, 0); }
-      30%, 38% { opacity: 1; transform: translate(300px, 0); }
-      50% { opacity: 1; transform: translate(502px, 24px); }
-      53%, 100% { opacity: 0; transform: translate(502px, 24px); }
+      0%, 13% { opacity: 0; transform: translate(0, 0); }
+      15% { opacity: 1; transform: translate(0, -8px); }
+      21% { opacity: 1; transform: translate(150px, -46px); }
+      27%, 35% { opacity: 1; transform: translate(300px, -6px); }
+      41% { opacity: 1; transform: translate(400px, -40px); }
+      47% { opacity: 1; transform: translate(502px, 24px); }
+      49%, 100% { opacity: 0; transform: translate(502px, 24px); }
     }
-    @keyframes claim { 0%, 50% { opacity: 0; } 54%, 100% { opacity: 1; } }
-    @keyframes ok-flash { 0%, 32% { opacity: 0; } 36%, 42% { opacity: 1; } 46%, 100% { opacity: 0; } }
-    @keyframes no-flash { 0%, 66% { opacity: 0; } 69%, 74% { opacity: 1; } 78%, 100% { opacity: 0; } }
+    @keyframes beam {
+      0%, 26% { opacity: 0; transform: translateY(-120px); }
+      27% { opacity: 1; transform: translateY(-120px); }
+      33% { opacity: 1; transform: translateY(150px); }
+      34%, 100% { opacity: 0; transform: translateY(150px); }
+    }
+    @keyframes ok { 0%, 32% { opacity: 0; } 34%, 52% { opacity: 1; } 56%, 100% { opacity: 0; } }
+    @keyframes tick { 0%, 33% { stroke-dashoffset: 1; } 38%, 100% { stroke-dashoffset: 0; } }
+    @keyframes claim {
+      0%, 46% { opacity: 0; transform: translateY(-18px); }
+      50%, 100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes evidence { 0%, 50% { opacity: 0; } 55%, 100% { opacity: 1; } }
+    @keyframes no { 0%, 66% { opacity: 0; } 67%, 80% { opacity: 1; } 86%, 100% { opacity: 0; } }
+    @keyframes cross { 0%, 67% { stroke-dashoffset: 1; } 71%, 100% { stroke-dashoffset: 0; } }
     @keyframes proposal {
-      0%, 56% { opacity: 0; transform: translate(-150px, -84px); }
-      59% { opacity: 1; transform: translate(-150px, -84px); }
-      67% { opacity: 1; transform: translate(-62px, -84px); }
-      73% { opacity: 1; transform: translate(-120px, -84px); }
-      82%, 100% { opacity: 1; transform: translate(0, 0); }
+      0%, 57% { opacity: 0; transform: translate(-190px, -84px); }
+      59% { opacity: 1; transform: translate(-190px, -84px); }
+      66% { transform: translate(-62px, -84px); }
+      67.5% { transform: translate(-74px, -84px) rotate(-2deg); }
+      69% { transform: translate(-64px, -84px) rotate(2deg); }
+      70.5% { transform: translate(-72px, -84px) rotate(-1deg); }
+      72% { transform: translate(-68px, -84px) rotate(0deg); }
+      79% { opacity: 1; transform: translate(-20px, -10px) rotate(-4deg); }
+      84%, 100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
     }
-    @keyframes dropped { 0%, 80% { opacity: 0; } 86%, 100% { opacity: 1; } }
+    @keyframes dropped { 0%, 82% { opacity: 0; } 88%, 100% { opacity: 1; } }
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; }
     }
@@ -68,11 +100,12 @@
   <text class="muted" x="32" y="64" font-size="13">The model may propose. Only a sentence found on the page, word for word, becomes a claim.</text>
 
   <!-- The public page -->
+  <rect class="shadow" x="34" y="94" width="240" height="220" rx="14"/>
   <rect class="card" x="32" y="88" width="240" height="220" rx="14"/>
   <text class="muted" x="46" y="110" font-size="11">example-institute.test/team/ada-muster</text>
   <rect class="bar" x="32" y="120" width="240" height="1"/>
   <text class="ink" x="46" y="148" font-size="15" font-weight="800">Dr. Ada Muster</text>
-  <rect class="mark highlight" x="40" y="158" width="176" height="24" rx="5"/>
+  <rect class="mark sweep" x="40" y="158" width="176" height="24" rx="5"/>
   <text class="ink" x="46" y="175" font-size="13">Group Leader, Sensor Lab</text>
   <rect class="bar" x="46" y="198" width="200" height="8" rx="4"/>
   <rect class="bar" x="46" y="216" width="168" height="8" rx="4"/>
@@ -81,12 +114,20 @@
   <rect class="bar" x="46" y="280" width="120" height="8" rx="4"/>
 
   <!-- The verifier -->
+  <rect class="shadow" x="362" y="106" width="80" height="200" rx="40"/>
   <rect class="card" x="360" y="100" width="80" height="200" rx="40"/>
-  <circle class="gate-ring" cx="400" cy="134" r="20" stroke-width="2"/>
-  <circle class="green ok-flash" cx="400" cy="134" r="20"/>
-  <path class="mark-stroke ok-flash" d="M391 134l6 6 12-13" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle class="red no-flash" cx="400" cy="134" r="20"/>
-  <path class="mark-stroke no-flash" d="M393 127l14 14m0-14-14 14" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <g clip-path="url(#gate-shape)">
+    <rect class="beam" x="360" y="160" width="80" height="60" fill="url(#beam)"/>
+  </g>
+  <circle class="ring" cx="400" cy="134" r="20" stroke-width="2"/>
+  <g class="ok">
+    <circle class="green" cx="400" cy="134" r="20"/>
+    <path class="glyph draw" d="M391 134l6 6 12-13" pathLength="1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g class="no">
+    <circle class="red" cx="400" cy="134" r="20"/>
+    <path class="glyph draw" d="M393 127l14 14m0-14-14 14" pathLength="1" stroke-width="3" stroke-linecap="round"/>
+  </g>
   <text class="ink" x="400" y="204" font-size="13" font-weight="800" text-anchor="middle">Verifier</text>
   <text class="muted" x="400" y="222" font-size="11" text-anchor="middle">word for word</text>
   <text class="muted" x="400" y="238" font-size="11" text-anchor="middle">on the page?</text>
@@ -95,11 +136,13 @@
 
   <!-- The sentence on its way -->
   <g class="traveller">
+    <rect class="shadow" x="42" y="164" width="176" height="24" rx="12"/>
     <rect class="mark" x="40" y="158" width="176" height="24" rx="12"/>
     <text class="ink" x="54" y="175" font-size="12" font-weight="700">Group Leader, Sensor Lab</text>
   </g>
 
   <!-- The profile -->
+  <rect class="shadow" x="530" y="94" width="240" height="220" rx="14"/>
   <rect class="card" x="528" y="88" width="240" height="220" rx="14"/>
   <text class="muted" x="544" y="112" font-size="11" font-weight="700" letter-spacing="1">PROFILE</text>
   <text class="ink" x="544" y="140" font-size="17" font-weight="800">Ada Muster</text>
@@ -108,6 +151,8 @@
     <rect class="green" x="544" y="182" width="208" height="30" rx="15"/>
     <text class="on-green" x="560" y="202" font-size="13" font-weight="800">Group Leader</text>
     <text class="on-green" x="738" y="202" font-size="11" font-weight="700" text-anchor="end">page ↗</text>
+  </g>
+  <g class="evidence">
     <text class="muted" x="544" y="236" font-size="11">Evidence: “Group Leader, Sensor Lab”</text>
     <text class="muted" x="544" y="254" font-size="11">with the page link, hash and date</text>
   </g>

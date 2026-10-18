@@ -19,6 +19,13 @@ place that lights up when it matches your search. Later: onboarding with your ow
 agents as characters, messages, projects and calls. The feel comes from a life-sim web game Peter
 admires (screenshots outside the repo); we borrow the feel only, never its name, art, text or assets.
 
+Story mode ("Moving your business to Bern") walks a newcomer through settling, setting up an office,
+finding experts, bringing a project brief, visiting institutes and growing in Bern; each quest shows
+one of the case's criteria on real data. Players are little Bern bears; the Navigator agent is a
+floatie that follows you. The office is the work hub (a desktop with Navigator, Library,
+Opportunities, Connections, Reports, Messages, Garage); the Buy tab is the Market of connections and
+knowledge. Real, sourced facts only: no money, no invented prices.
+
 World rules: people found on public pages are never avatars or characters, only entries with their
 sources (avatars are for people who join and claim a profile); no invented activity numbers, no
 money, no fake "online" counts; settings for night mode, lite graphics and data saver.

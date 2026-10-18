@@ -16,7 +16,7 @@ from search_fakes import PROFILES, SOURCES, truncate_all, write_bundle
 
 from db import connect
 
-COUNTS = {"page": 4, "profile": 5, "claim": 12, "entity_relation": 1, "chunk": 9, "term": 0}
+COUNTS = {"page": 5, "profile": 7, "claim": 15, "entity_relation": 2, "chunk": 12, "term": 0}
 
 
 class LoadTest(unittest.TestCase):
@@ -68,7 +68,7 @@ class LoadTest(unittest.TestCase):
         rows = self.conn.execute(
             "SELECT source_id, count(*) FROM profile GROUP BY 1 ORDER BY 1"
         ).fetchall()
-        self.assertEqual(rows, [("demo", 1)])
+        self.assertEqual(rows, [("demo", 3)])
         self.assertEqual(self.conn.execute("SELECT count(*) FROM bundle_load").fetchone(), (0,))
 
     def test_a_chunk_without_a_vector_is_refused(self):

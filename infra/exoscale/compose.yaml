@@ -1,0 +1,70 @@
+# The hosted Bern Life on one Exoscale VM (infra/exoscale.md). Only Caddy publishes a port (443);
+# Postgres and the web app are reachable on the compose network alone. Values come from .env next
+# to this file on the VM (never in git): SITE_HOST, POSTGRES_PASSWORD, and DEMO_FIXTURES until the
+# bundle is released.
+name: bernlife-prod
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bernlife
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: bernlife
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bernlife -d bernlife"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    build:
+      context: ../..
+      dockerfile: db/Dockerfile
+    environment: &database
+      DATABASE_URL: postgresql://bernlife:${POSTGRES_PASSWORD}@db:5432/bernlife
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../..
+      dockerfile: web/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *database
+      APP_ORIGIN: https://${SITE_HOST:?set SITE_HOST in .env}
+      DEMO_FIXTURES: ${DEMO_FIXTURES:-0}
+      ENGINE_URL: ${ENGINE_URL:-}
+      BERNLIFE_DATA_DIR: /data
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # HTTPS with an automatic certificate. With port 80 closed, Caddy proves the name over 443
+  # (TLS-ALPN challenge).
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    environment:
+      SITE_HOST: ${SITE_HOST}
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  uploads:
+  caddy-data:
+  caddy-config:

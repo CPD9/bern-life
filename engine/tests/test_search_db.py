@@ -11,6 +11,7 @@ import urllib.request
 from pathlib import Path
 
 from bernlife.abstain import NO_SOURCE
+from bernlife.brief_search import brief_search
 from bernlife.database import connect
 from bernlife.llm import MockLLM
 from bernlife.load_command import load
@@ -153,6 +154,78 @@ class SearchDbTest(unittest.TestCase):
             ("mock", [], "none"),
         )
         self.assertEqual(response["results"][0]["profile"]["id"], "person-example-ada-muster")
+
+    def test_a_brief_finds_an_expert_per_verified_need_and_repeats_byte_for_byte(self):
+        brief = (
+            "Invented Demo AG builds a skin-worn patch. We need wearable sensors for continuous"
+            " glucose monitoring. We also need cryogenic electron microscopy of membrane proteins."
+        )
+        llm = FakeChat(
+            {
+                "brief": {
+                    "needs": [
+                        {"term": "wearable glucose sensors", "span": "We need wearable sensors"},
+                        {
+                            "term": "cryo electron microscopy",
+                            "span": "cryogenic electron microscopy",
+                        },
+                        {"term": "mass spectrometry", "span": "We need mass spectrometry."},
+                    ]
+                },
+                "explain": {
+                    "text": "Works on what the need asks.",
+                    "claims": [1],
+                },
+            }
+        )
+        first = brief_search(brief, None, self.store, fake_embedder(), llm)
+        second = brief_search(brief, None, self.store, fake_embedder(), llm)
+        self.assertEqual(json.dumps(first), json.dumps(second))
+        self.assertEqual(list(result_validator().iter_errors(first)), [])
+        self.assertEqual(first["query"], "wearable glucose sensors; cryo electron microscopy")
+        self.assertEqual(
+            [t["span"] for t in first["brief_terms"]],
+            ["We need wearable sensors", "cryogenic electron microscopy"],
+        )
+        self.assertEqual(
+            [r["profile"]["id"] for r in first["results"]],
+            ["person-example-ada-muster", "person-example-dora-demo", "person-demo-cleo-beispiel"],
+        )
+        self.assertEqual(first["results"][0]["reason"]["text"], "Works on what the need asks.")
+        self.assertEqual(
+            (first["mode"], first["versions"]["prompts"]), ("replay", "brief-v1+explain-v2")
+        )
+
+    def test_a_brief_with_no_model_abstains_and_says_mock(self):
+        response = brief_search(
+            "We need glucose sensors.", None, self.store, fake_embedder(), MockLLM()
+        )
+        self.assertEqual(
+            (
+                response["abstained"],
+                response["abstain_reason"],
+                response["mode"],
+                response["brief_terms"],
+            ),
+            (True, "no_verifiable_source", "mock", []),
+        )
+
+    def test_a_team_member_named_only_on_a_matching_project_page_is_shown_through_it(self):
+        response = search("carbohydrate estimation", None, self.store, fake_embedder())
+        by_id = {r["profile"]["id"]: r for r in response["results"]}
+        self.assertEqual(sorted(by_id), ["person-demo-emil-exempel", "project-demo-carb-counter"])
+        emil = by_id["person-demo-emil-exempel"]
+        self.assertEqual(emil["reason"], {"text": "Name: Emil Exempel", "cites": ["/name"]})
+        self.assertEqual(
+            (emil["via"]["kind"], emil["via"]["span"], emil["via"]["related_name"]),
+            ("works_on", "Project team: Emil Exempel", "Carb Counter"),
+        )
+        self.assertEqual(
+            [c["value"] for c in emil["via"]["related_claims"]],
+            ["carbohydrate estimation from meal photos"],
+        )
+        self.assertNotIn("via", by_id["project-demo-carb-counter"])
+        self.assertEqual(list(result_validator().iter_errors(response)), [])
 
 
 if __name__ == "__main__":
