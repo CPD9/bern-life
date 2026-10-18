@@ -9,7 +9,7 @@ type OfficeViewProps = {
 // takes its place behind the same two actions.
 export function OfficeView({ onUseDesk, onGoOutside }: OfficeViewProps) {
   return (
-    <div className="from-sky-top to-sky-bottom absolute inset-0 flex items-center justify-center bg-linear-to-b px-4">
+    <div className="from-sky-top to-sky-bottom absolute inset-0 flex items-end justify-center bg-linear-to-b px-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:items-center sm:pb-0">
       <section
         aria-labelledby="office-title"
         className="bg-panel shadow-panel flex w-full max-w-md flex-col gap-4 rounded-3xl p-6"

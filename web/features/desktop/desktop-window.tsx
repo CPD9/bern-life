@@ -77,7 +77,12 @@ export function DesktopWindow({
           style={{ backgroundColor: app.tile }}
           className="size-3 shrink-0 rounded-full"
         />
-        <h2 ref={heading} id={headingId} tabIndex={-1} className="flex-1 text-lg font-extrabold">
+        <h2
+          ref={heading}
+          id={headingId}
+          tabIndex={-1}
+          className="flex-1 text-lg font-extrabold outline-none"
+        >
           {app.label}
         </h2>
         <button
