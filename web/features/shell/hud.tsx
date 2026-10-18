@@ -1,14 +1,16 @@
 import type { Health } from "@/infrastructure/contract-types.generated";
 import { formatBernShortDate, formatBernTime } from "@/infrastructure/bern-time";
+import { AccountBadge, type HudAccount } from "./account-badge";
 import { hudCounts } from "./hud-items";
 
 type HudProps = {
   now: Date | null;
   health: Health | null;
   goal: string;
+  account: HudAccount;
 };
 
-export function Hud({ now, health, goal }: HudProps) {
+export function Hud({ now, health, goal, account }: HudProps) {
   const counts = hudCounts(health);
   return (
     <div className="rounded-pill bg-panel shadow-panel border-panel-border flex min-h-12 max-w-[calc(100vw-2rem)] flex-wrap items-center justify-center gap-x-4 gap-y-1 border px-5 py-2 text-sm">
@@ -39,6 +41,7 @@ export function Hud({ now, health, goal }: HudProps) {
           Replay
         </span>
       )}
+      <AccountBadge account={account} />
     </div>
   );
 }
