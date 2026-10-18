@@ -61,7 +61,7 @@ class VectorRowsTest(unittest.TestCase):
         ]
         self.assertEqual(ids, sorted(ids))
         self.assertNotIn("unused", ids)
-        self.assertEqual(len(ids), 9)
+        self.assertEqual(len(ids), 12)
 
 
 if __name__ == "__main__":

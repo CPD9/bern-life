@@ -104,7 +104,15 @@ CLEO_PAGE = page(
     "Cleo Beispiel - Demo Centre",
     "Cleo Beispiel\nResearch: glucose metabolism in mice.",
 )
-PAGES = [CLEO_PAGE, ADA_PAGE, PATCH_PAGE, DORA_PAGE]
+APP_PAGE = page(
+    "https://www.demo-centre.test/projects/carb-counter",
+    "demo",
+    DEMO_UNIT,
+    "Carb Counter - Demo Centre",
+    "Carb Counter\nA phone app for carbohydrate estimation from meal photos.\n"
+    "Project team: Emil Exempel",
+)
+PAGES = [CLEO_PAGE, ADA_PAGE, PATCH_PAGE, DORA_PAGE, APP_PAGE]
 
 PROFILES = [
     profile(
@@ -133,6 +141,13 @@ PROFILES = [
         expertise=[claim(DORA_PAGE, "cryogenic electron microscopy of membrane proteins")],
     ),
     profile("project-example-glucopatch", PATCH_PAGE, "GlucoPatch"),
+    profile("person-demo-emil-exempel", APP_PAGE, "Emil Exempel"),
+    profile(
+        "project-demo-carb-counter",
+        APP_PAGE,
+        "Carb Counter",
+        expertise=[claim(APP_PAGE, "carbohydrate estimation from meal photos")],
+    ),
 ]
 RELATIONS = [
     {
@@ -144,7 +159,17 @@ RELATIONS = [
         "page_sha256": PATCH_PAGE["sha256"],
         "span": "Project team: Dr. Ada Muster (lead)",
         "start": str(PATCH_PAGE["text"]).index("Project team"),
-    }
+    },
+    {
+        "from_profile_id": "person-demo-emil-exempel",
+        "to_profile_id": "project-demo-carb-counter",
+        "kind": "works_on",
+        "method": "selector",
+        "page_url": APP_PAGE["url"],
+        "page_sha256": APP_PAGE["sha256"],
+        "span": "Project team: Emil Exempel",
+        "start": str(APP_PAGE["text"]).index("Project team"),
+    },
 ]
 
 

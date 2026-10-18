@@ -25,7 +25,8 @@ from bernlife.matching import Asked, asked, can_explain
 from bernlife.metrics import query_topics, with_metrics
 from bernlife.ranking import Candidate, candidates, cap_units
 from bernlife.reason import reason
-from bernlife.store import Store
+from bernlife.store import Relation, Store
+from bernlife.via import relation_reasons, via_record
 
 RESULTS = 20
 NO_MODEL = "mock"
@@ -40,6 +41,7 @@ class Assessment:
     enrichment: dict[str, list[str]]
     question: Asked
     abstain_reason: str | None
+    vias: dict[str, tuple[Relation, list[tuple[str, int]]]]
 
 
 def assess(
@@ -61,14 +63,21 @@ def assess(
     values = sorted({c["value"] for p in profiles.values() for c in p["fields"]["expertise"]})
     enrichment = store.enrichment(values)
     question = asked(query, terms)
-    shown = [c for c in found if can_explain(question, profiles[c.profile_id], enrichment)]
+    own = {c.profile_id for c in found if can_explain(question, profiles[c.profile_id], enrichment)}
+    unexplained = [c.profile_id for c in found if c.profile_id not in own]
+    vias = relation_reasons(question, unexplained, store, profiles, enrichment)
+    shown = [c for c in found if c.profile_id in own or c.profile_id in vias]
     reason_to_abstain = abstain_reason(query, found) or (None if shown else NO_SOURCE)
-    return Assessment(found, cap_units(shown), profiles, enrichment, question, reason_to_abstain)
+    return Assessment(
+        found, cap_units(shown), profiles, enrichment, question, reason_to_abstain, vias
+    )
 
 
 def result(rank: int, candidate: Candidate, assessment: Assessment) -> dict[str, Any]:
+    """A result shown through a project keeps its plain reason (its own claims are what it can
+    cite) and carries `via`, the relation and the project's matching claims."""
     profile = assessment.profiles[candidate.profile_id]
-    return {
+    item = {
         "rank": rank,
         "profile": profile,
         "reason": reason(assessment.question, profile, assessment.enrichment),
@@ -78,6 +87,10 @@ def result(rank: int, candidate: Candidate, assessment: Assessment) -> dict[str,
             "vector_rank": candidate.vector_rank,
         },
     }
+    if candidate.profile_id in assessment.vias:
+        relation, matched = assessment.vias[candidate.profile_id]
+        item["via"] = via_record(relation, assessment.profiles[relation.to_profile_id], matched)
+    return item
 
 
 def search(
