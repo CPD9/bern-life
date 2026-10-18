@@ -14,5 +14,23 @@
     "max_pages_per_site": 400,
     "delay_s": 1.0,
     "max_depth": 4
-  }
+  },
+  "page_types": [
+    {
+      "kind": "listing",
+      "url_pattern": "^https://www\\.dcberne\\.com/(?:en|de)/(?:projects?|projekte)/(?:page/\\d+/)?(?:\\?.*)?$"
+    },
+    {
+      "kind": "project",
+      "url_pattern": "^https://www\\.dcberne\\.com/(?:en|de)/project/[a-z0-9-]+/$"
+    },
+    {
+      "kind": "unit",
+      "url_pattern": "^https://www\\.dcberne\\.com/(?:en|de)/(?:focus-area-|fokus-|schwerpunktbereich-)[a-z0-9-]+/$"
+    },
+    {
+      "kind": "listing",
+      "url_pattern": "^https://www\\.dcberne\\.com/(?:en|de)/(?:team|focus-areas)/?$"
+    }
+  ]
 }

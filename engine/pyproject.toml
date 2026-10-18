@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Research & Expertise Navigator engine: crawl, extract with evidence, enrich, search"
 requires-python = ">=3.12"
 license = "Apache-2.0"
-dependencies = []
+dependencies = ["jsonschema==4.26.0"]
 
 [project.optional-dependencies]
 dev = ["ruff==0.14.0"]
@@ -18,3 +18,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+bernlife = ["lang_markers.json"]
