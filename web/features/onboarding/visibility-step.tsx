@@ -17,7 +17,8 @@ export function VisibilityStep({
         onChange={onChange}
       />
       <p className="text-sm">
-        <strong>Uploads are always private.</strong> Files you add at home are for you only.
+        <strong>Uploads are private unless you choose to share one.</strong> Nothing you add at home
+        is shown to anyone by default.
       </p>
       <p className="text-muted text-sm">
         Everything you enter here stays in this browser and is not sent to a server. Without an

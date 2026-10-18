@@ -54,6 +54,7 @@ describe("Onboarding", () => {
     fireEvent.click(screen.getByLabelText(/Find funding or a call/));
     proceed();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Who sees what");
+    expect(screen.getByText("Uploads are private unless you choose to share one.")).toBeTruthy();
     expect(done).toEqual([]);
     proceed();
     expect(store.get()).toMatchObject({ done: true, profile: { goal: "funding" } });
