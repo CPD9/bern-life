@@ -1,7 +1,7 @@
 "use client";
 
 // The first-run frame: a dash per step for progress, Back, Skip and one green Continue. The Look
-// step is a slot because the avatar editor is another feature; app/ passes it in.
+// step and the greeting above the first step are slots, filled by app/ from other features.
 
 import { type ReactNode, useEffect, useRef } from "react";
 import { ChoiceCards } from "./choice-cards";
@@ -20,6 +20,7 @@ type OnboardingProps = {
   state: OnboardingState;
   dispatch: (action: OnboardingAction) => void;
   lookStep: ReactNode;
+  greeting: ReactNode;
   onDone: () => void;
 };
 
@@ -40,7 +41,7 @@ function ProgressDashes({ step }: { step: number }) {
   );
 }
 
-export function Onboarding({ state, dispatch, lookStep, onDone }: OnboardingProps) {
+export function Onboarding({ state, dispatch, lookStep, greeting, onDone }: OnboardingProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const step = stepAt(state);
   const answer = (change: Partial<Profile>) => dispatch({ type: "answer", change });
@@ -98,6 +99,7 @@ export function Onboarding({ state, dispatch, lookStep, onDone }: OnboardingProp
             Skip
           </button>
         </header>
+        {state.step === 0 && greeting}
         <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-extrabold tracking-tight">
           {stepTitles[step]}
         </h1>

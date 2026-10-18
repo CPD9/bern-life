@@ -5,11 +5,13 @@ import { useEffect } from "react";
 import { AvatarEditor } from "@/features/avatar/avatar-editor";
 import { AvatarTurntable } from "@/features/avatar/avatar-turntable";
 import { useAvatar } from "@/features/avatar/use-avatar";
+import { Floatie } from "@/features/floatie/floatie";
+import { FloatieGreeting } from "@/features/floatie/floatie-greeting";
 import { Onboarding } from "@/features/onboarding/onboarding";
 import { browserOnboardingStore, useOnboarding } from "@/features/onboarding/use-onboarding";
 import { useSettings } from "@/infrastructure/use-settings";
 
-// Composes onboarding with the avatar editor, which is another feature. A player who finished
+// Composes onboarding with the avatar editor and Lumi's greeting, which are other features. A player who finished
 // before starts again at the first step with their answers kept.
 export function StartApp() {
   const router = useRouter();
@@ -31,6 +33,11 @@ export function StartApp() {
           value={avatar}
           onChange={setAvatar}
           preview={<AvatarTurntable config={avatar} lite={settings.lite} />}
+        />
+      }
+      greeting={
+        <FloatieGreeting
+          figure={(onSelect) => <Floatie onSelect={onSelect} lite={settings.lite} />}
         />
       }
       onDone={() => router.push("/")}
