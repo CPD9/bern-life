@@ -71,3 +71,21 @@ export function focusTarget(x: number, z: number, azimuth: number, portrait: boo
   const [dx, dz] = panOffset(azimuth, 0, -1.5);
   return [x + dx, z + dz];
 }
+
+export type FrameBox = { minX: number; maxX: number; minZ: number; maxZ: number };
+
+/** The ground box the camera fits after a search: the lit places plus a margin, never so small that
+ * one lit place fills the screen. */
+export function frameBox(points: readonly MapPoint[], margin: number, minSpan: number): FrameBox {
+  const xs = points.map(([x]) => x);
+  const zs = points.map(([, z]) => z);
+  const widen = (low: number, high: number): [number, number] => {
+    const lowEdge = low - margin;
+    const highEdge = high + margin;
+    const missing = Math.max(0, minSpan - (highEdge - lowEdge)) / 2;
+    return [lowEdge - missing, highEdge + missing];
+  };
+  const [minX, maxX] = widen(Math.min(...xs), Math.max(...xs));
+  const [minZ, maxZ] = widen(Math.min(...zs), Math.max(...zs));
+  return { minX, maxX, minZ, maxZ };
+}
