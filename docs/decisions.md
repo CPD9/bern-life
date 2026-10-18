@@ -2,6 +2,18 @@
 
 Newest first. Each entry: date, decision, why, who.
 
+## 2026-10-18 21:00 — Story mode, the office as hub, bears (Peter)
+- **Story mode** ("Moving your business to Bern") meets the case inside the game: each quest names a
+  case criterion and completes only on an app event (`contracts/quest.schema.json`).
+- **Real, sourced facts only:** no money or play currency; settling shows real Bern facts with source
+  and date; furniture is free; progress comes from verifiable actions.
+- **The office is the work hub:** a desktop with Navigator, Library, Opportunities, Connections,
+  Reports, Messages and Garage; the phone is quick access. The Buy tab becomes the Market of
+  connections and knowledge.
+- **Bear theme:** players are Bern bears; the Navigator agent is a floatie companion.
+- **Garage: Apertus only tonight**, with measured numbers; other models (Qwen, TwinLLM arena) are
+  roadmap.
+
 ## 2026-10-18 20:00 — The world you live in (Peter, conductor)
 - Walking (W5): kinematic movement with collision and click-to-walk, no physics engine unless Peter
   approves one; enter places through doors; your office plot on the map.

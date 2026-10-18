@@ -110,6 +110,7 @@ class SchemaTest(unittest.TestCase):
                 "claim",
                 "conversation",
                 "credential",
+                "document",
                 "entity_relation",
                 "invite",
                 "member",
