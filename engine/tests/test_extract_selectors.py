@@ -69,6 +69,18 @@ class SelectorTest(unittest.TestCase):
         self.assertIsNone(page_subject(hidden))
         self.assertIsNone(page_subject(TEAM_PAGE))
 
+    def test_a_page_named_after_a_listing_heading_has_no_subject(self):
+        text = f"{INSTITUTE}\nResearch\nThesis Projects\nGlucoPatch\nSensor Lab"
+        listing = page(f"{LAB}t", f"Research: Thesis Projects - {INSTITUTE}", text, "project")
+        self.assertIsNone(page_subject(listing))
+        institute = "host:www.example-institute.test"
+        self.assertEqual(
+            rows(selector_candidates(listing)), ([(institute, "name", INSTITUTE, INSTITUTE)], [])
+        )
+        text = f"{INSTITUTE}\nServices\nIT Services\nWe run the network."
+        named = page(f"{LAB}s", f"Services: IT Services - {INSTITUTE}", text, "infrastructure")
+        self.assertEqual(page_subject(named).name, "IT Services")
+
     def test_pages_of_other_sites_pair_by_host_and_name(self):
         en = page(
             "https://dcb.example.test/en/focus-area-sleep/",
