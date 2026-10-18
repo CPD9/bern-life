@@ -148,9 +148,16 @@ describe("isAppPath", () => {
   test("only paths on this site pass", () => {
     expect(["/", "/navigator", "/start?step=2"].map(isAppPath)).toEqual([true, true, true]);
     expect(
-      ["//evil.example", "/\\evil.example", "https://evil.example", "javascript:alert(1)", ""].map(
-        isAppPath,
-      ),
-    ).toEqual([false, false, false, false, false]);
+      [
+        "//evil.example",
+        "/\\evil.example",
+        "/\t/evil.example",
+        "/\n/evil.example",
+        "/\r/evil.example",
+        "https://evil.example",
+        "javascript:alert(1)",
+        "",
+      ].map(isAppPath),
+    ).toEqual([false, false, false, false, false, false, false, false]);
   });
 });

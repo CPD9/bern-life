@@ -43,9 +43,15 @@ type Options = {
 };
 
 // A path on this site: starts with one slash, and no second slash or backslash that a browser
-// would read as another host.
+// would read as another host. Browsers drop tab, CR and LF anywhere in a URL, so "/\t/evil.example"
+// would become "//evil.example": whitespace and control characters are refused too.
 export function isAppPath(href: string): boolean {
-  return /^\/(?![/\\])/.test(href) && !href.includes("\\");
+  return /^\/(?![/\\])/.test(href) && ![...href].some(isUnsafeChar);
+}
+
+function isUnsafeChar(char: string): boolean {
+  const code = char.codePointAt(0) ?? 0;
+  return char === "\\" || code <= 0x20 || code === 0x7f || /\s/.test(char);
 }
 
 function parseOne(value: unknown): AppNotification | null {
