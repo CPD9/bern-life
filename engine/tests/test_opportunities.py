@@ -1,9 +1,13 @@
 import unittest
+from dataclasses import replace
 
 from bernlife.chunks import build_chunks, chunk_prefixes
+from bernlife.extract_command import opportunity_sources
 from bernlife.extract_model import read_reply
 from bernlife.extract_prompt import instruction
 from bernlife.extract_records import Candidate, Page, Subject, fields_for
+from bernlife.extract_selectors import page_name, selector_candidates
+from bernlife.sources import PageType, Site, Source
 from bernlife.verify import verify_claim
 
 TEXT = (
@@ -124,3 +128,58 @@ class ChunkPrefixTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+SITE = "Invented Coworking"
+ROOM = Page(
+    url="https://www.example-cowork.test/raeume/aquarium/",
+    source_id="cowork",
+    unit=SITE,
+    fetched_at="2026-10-18T12:00:00Z",
+    sha256="1" * 64,
+    kind="space",
+    lang="de",
+    title=f"Aquarium | Räume | {SITE}",
+    text=f"{SITE}\nRaumvermietung\nRaum «Aquarium»\nGrösse\n47m2",
+)
+
+
+class OpportunitySelectorsTest(unittest.TestCase):
+    def test_an_opportunity_source_names_no_institute(self):
+        page = replace(ROOM, title=f"Raum «Aquarium» - {SITE}")
+        people_site, _ = selector_candidates(page)
+        opportunity_site, _ = selector_candidates(page, institutes=False)
+        self.assertIn("unit", {c.subject.kind for c in people_site})
+        self.assertEqual({c.subject.kind for c in opportunity_site}, {"space"})
+
+    def test_a_room_title_finds_the_room_line(self):
+        self.assertEqual(page_name(ROOM), "Raum «Aquarium»")
+
+    def test_a_sentence_title_finds_the_heading_that_shares_its_words(self):
+        page = replace(
+            ROOM,
+            kind="service",
+            title="Bring your research findings to market with BRIDGE",
+            text="BRIDGE Projects\nThe BRIDGE programme helps researchers.",
+        )
+        self.assertEqual(page_name(page), "BRIDGE Projects")
+
+    def test_people_pages_keep_the_title_rule(self):
+        self.assertIsNone(page_name(replace(ROOM, kind="person")))
+
+    def test_sources_with_only_opportunity_and_listing_types_are_opportunity_sources(self):
+        def source(source_id, kinds):
+            types = tuple(PageType(kind, "^x") for kind in kinds)
+            site = Site(
+                source_id, f"{source_id}.test", "U", ("https://x/",), (), (), 1, 1.0, None, types
+            )
+            return Source(source_id, source_id, (site,))
+
+        found = opportunity_sources(
+            [
+                source("funder", ["call", "listing"]),
+                source("lab", ["person", "listing"]),
+                source("mixed", ["unit", "service"]),
+            ]
+        )
+        self.assertEqual(found, frozenset({"funder"}))
