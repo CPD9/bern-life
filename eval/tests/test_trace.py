@@ -5,13 +5,17 @@ from records import claim, page, profile, result
 
 URL = "https://www.example.test/team/ada"
 TEXT = "Prof. Dr. Ada Muster leads the Sensor Lab and builds glucose patches."
+LAB_URL = "https://www.example.test/projects/sensor-lab"
+LAB_TEXT = "The Sensor Lab develops wearable sweat sensors for athletes."
 
 
 class TraceTest(unittest.TestCase):
     def setUp(self) -> None:
         self.page = page(URL, TEXT)
-        self.index = PageIndex({URL: self.page})
+        self.lab_page = page(LAB_URL, LAB_TEXT)
+        self.index = PageIndex({URL: self.page, LAB_URL: self.lab_page})
         self.sha = self.page["sha256"]
+        self.lab_sha = self.lab_page["sha256"]
 
     def ada(self) -> dict:
         ada = profile("person-ada", "person", "Ada Muster", URL, sha=self.sha)
@@ -37,6 +41,44 @@ class TraceTest(unittest.TestCase):
                 Miss("q100", "person-ada", "/fields/expertise/1", "page_sha256_differs"),
                 Miss("q100", "person-ada", "/fields/expertise/2", "page_not_in_snapshot"),
             ],
+        )
+
+    def via(
+        self, span: str = "leads the Sensor Lab", related: str = "wearable sweat sensors"
+    ) -> dict:
+        return {
+            "kind": "leads",
+            "span": span,
+            "page_url": URL,
+            "page_sha256": self.sha,
+            "related_profile_id": "project-sensor-lab",
+            "related_name": "Sensor Lab",
+            "related_claims": [claim("sweat sensors", LAB_URL, self.lab_sha, span=related)],
+        }
+
+    def test_a_via_relation_and_its_related_claims_are_checked_too(self) -> None:
+        shown = result(1, self.ada())
+        shown["via"] = self.via()
+        self.assertEqual(check_claims("q100", [shown], self.index), (3, []))
+
+        shown["via"] = self.via(span="co-leads the Sensor Lab", related="sweat plasters")
+        self.assertEqual(
+            check_claims("q100", [shown], self.index),
+            (
+                3,
+                [
+                    Miss("q100", "person-ada", "/via", "span_not_on_page"),
+                    Miss("q100", "person-ada", "/via/related_claims/0", "span_not_on_page"),
+                ],
+            ),
+        )
+
+    def test_a_related_profile_missing_from_snapshot_is_invented(self) -> None:
+        shown = result(1, self.ada())
+        shown["via"] = self.via()
+        self.assertEqual(invented([shown], {"person-ada": self.ada()}), ("project-sensor-lab",))
+        self.assertEqual(
+            invented([shown], {"person-ada": self.ada(), "project-sensor-lab": {}}), ()
         )
 
     def test_profile_missing_from_snapshot_is_invented(self) -> None:
