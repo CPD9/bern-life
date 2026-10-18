@@ -11,6 +11,7 @@ import urllib.request
 from pathlib import Path
 
 from bernlife.abstain import NO_SOURCE
+from bernlife.brief_search import brief_search
 from bernlife.database import connect
 from bernlife.llm import MockLLM
 from bernlife.load_command import load
@@ -153,6 +154,61 @@ class SearchDbTest(unittest.TestCase):
             ("mock", [], "none"),
         )
         self.assertEqual(response["results"][0]["profile"]["id"], "person-example-ada-muster")
+
+    def test_a_brief_finds_an_expert_per_verified_need_and_repeats_byte_for_byte(self):
+        brief = (
+            "Invented Demo AG builds a skin-worn patch. We need wearable sensors for continuous"
+            " glucose monitoring. We also need cryogenic electron microscopy of membrane proteins."
+        )
+        llm = FakeChat(
+            {
+                "brief": {
+                    "needs": [
+                        {"term": "wearable glucose sensors", "span": "We need wearable sensors"},
+                        {
+                            "term": "cryo electron microscopy",
+                            "span": "cryogenic electron microscopy",
+                        },
+                        {"term": "mass spectrometry", "span": "We need mass spectrometry."},
+                    ]
+                },
+                "explain": {
+                    "text": "Works on what the need asks.",
+                    "cites": ["/fields/expertise/0"],
+                },
+            }
+        )
+        first = brief_search(brief, None, self.store, fake_embedder(), llm)
+        second = brief_search(brief, None, self.store, fake_embedder(), llm)
+        self.assertEqual(json.dumps(first), json.dumps(second))
+        self.assertEqual(list(result_validator().iter_errors(first)), [])
+        self.assertEqual(first["query"], "wearable glucose sensors; cryo electron microscopy")
+        self.assertEqual(
+            [t["span"] for t in first["brief_terms"]],
+            ["We need wearable sensors", "cryogenic electron microscopy"],
+        )
+        self.assertEqual(
+            [r["profile"]["id"] for r in first["results"]],
+            ["person-example-ada-muster", "person-example-dora-demo", "person-demo-cleo-beispiel"],
+        )
+        self.assertEqual(first["results"][0]["reason"]["text"], "Works on what the need asks.")
+        self.assertEqual(
+            (first["mode"], first["versions"]["prompts"]), ("replay", "brief-v1+explain-v1")
+        )
+
+    def test_a_brief_with_no_model_abstains_and_says_mock(self):
+        response = brief_search(
+            "We need glucose sensors.", None, self.store, fake_embedder(), MockLLM()
+        )
+        self.assertEqual(
+            (
+                response["abstained"],
+                response["abstain_reason"],
+                response["mode"],
+                response["brief_terms"],
+            ),
+            (True, "no_verifiable_source", "mock", []),
+        )
 
 
 if __name__ == "__main__":
