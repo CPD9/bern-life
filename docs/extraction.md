@@ -13,7 +13,8 @@ by string matching. The model proposes; the verifier decides.
    instead. A `University of Bern, <centre>, <group>` line gives one unit per part. The header line
    that repeats the title's site suffix names the institute.
 2. **Model pass** (`extract_prompt.py`, `extract_model.py`) reads person, unit, project,
-   infrastructure and listing pages by default (`--kinds` changes this). One call per window of
+   infrastructure, listing and other pages by default (`--kinds` changes this). On listing and other
+   pages it is asked only for the people the page names. One call per window of
    at most 8,000 characters of whole lines, at most 4 windows per page, role `extract`,
    temperature 0, prompt `extract-v1`, all through the cached router. The page is sent as
    delimited data. The prompt names the kind of page and the fields wanted, never a person. The

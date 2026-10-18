@@ -29,7 +29,7 @@ from bernlife.llm import Router, connect
 from bernlife.llm_http import ModelUnavailable, Transport, urlopen_transport
 from bernlife.verify import recheck
 
-MODEL_KINDS = ("person", "unit", "project", "infrastructure", "listing")
+MODEL_KINDS = ("person", "unit", "project", "infrastructure", "listing", "other")
 
 
 def main(
