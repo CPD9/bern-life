@@ -12,6 +12,7 @@ from pathlib import Path
 from bernlife.embed import DIMENSIONS, Embedder
 from bernlife.embed_command import run
 from bernlife.extract_records import FIELDS
+from bernlife.llm_http import ModelUnavailable
 from bernlife.sources import Site, Source
 
 FETCHED = "2026-10-18T12:00:00Z"
@@ -165,7 +166,8 @@ def fake_embedder() -> Embedder:
 
 
 class FakeChat:
-    """A connected model with canned replies per role, counting what it was asked."""
+    """A connected model with canned replies per role, counting what it was asked. A role with no
+    reply fails like an unreachable model."""
 
     def __init__(self, replies: dict[str, object], backend: str = "replay"):
         self.replies, self.backend = replies, backend
@@ -173,7 +175,7 @@ class FakeChat:
 
     def chat(self, messages, *, role, prompt_version, temperature=0.0, seed=None, max_tokens=700):
         self.asked.append(role)
-        reply = self.replies[role]
+        reply = self.replies.get(role, ModelUnavailable("unreachable"))
         if isinstance(reply, Exception):
             raise reply
         return reply if isinstance(reply, str) else json.dumps(reply)
