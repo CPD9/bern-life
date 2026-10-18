@@ -5,7 +5,17 @@ from collections.abc import Iterable
 
 from bernlife.crawl_records import Event
 
-KINDS = ("person", "unit", "project", "infrastructure", "listing", "other")
+KINDS = (
+    "person",
+    "unit",
+    "project",
+    "infrastructure",
+    "call",
+    "service",
+    "space",
+    "listing",
+    "other",
+)
 LANGS = ("de", "en", "fr", "it", "unknown")
 NETWORK_ERRORS = frozenset(
     {"timeout", "network", "too_large", "rate_limited", "robots_unreachable"}

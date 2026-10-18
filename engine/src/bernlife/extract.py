@@ -39,13 +39,15 @@ def extract(
     model_pages: Sequence[Page] = (),
     model: ModelPass | None = None,
     map_pages: MapPages = map,
+    opportunity_sources: frozenset[str] = frozenset(),
 ) -> Extraction:
     by_url = {page.url: page for page in pages}
-    own = {page.url: page_subject(page) for page in pages}
+    institutes = {page.url: page.source_id not in opportunity_sources for page in pages}
+    own = {page.url: page_subject(page, institutes[page.url]) for page in pages}
     candidates: list[Candidate] = []
     relation_candidates: list[RelationCandidate] = []
     for page in pages:
-        found, related = selector_candidates(page)
+        found, related = selector_candidates(page, institutes[page.url])
         candidates += found
         relation_candidates += related
     dropped = Counter[str]()

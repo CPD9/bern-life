@@ -22,14 +22,25 @@ from bernlife.cache import CacheMiss, Message, cache_key, lookup
 from bernlife.extract import Extraction, extract
 from bernlife.extract_model import model_pass
 from bernlife.extract_prompt import ASKED, EXTRACT_PROMPT_VERSION, MAX_TOKENS
-from bernlife.extract_records import Page
+from bernlife.extract_records import OPPORTUNITY_KINDS, PEOPLE_KINDS, Page
 from bernlife.extract_report import summary
 from bernlife.jsonl import read_jsonl, write_jsonl
 from bernlife.llm import Router, connect
 from bernlife.llm_http import ModelUnavailable, Transport, urlopen_transport
+from bernlife.sources import Source, load_sources
 from bernlife.verify import recheck
 
-MODEL_KINDS = ("person", "unit", "project", "infrastructure", "listing", "other")
+MODEL_KINDS = (
+    "person",
+    "unit",
+    "project",
+    "infrastructure",
+    "call",
+    "service",
+    "space",
+    "listing",
+    "other",
+)
 
 
 def main(
@@ -62,10 +73,10 @@ def main(
     with ThreadPoolExecutor(config.max_concurrency(env)) as pool:
         if isinstance(llm, Router):
             model = partial(model_pass, ask=partial(_ask, llm), is_cached=partial(_cached, llm))
-            result = extract(chosen, model_pages, model, pool.map)
+            result = extract(chosen, model_pages, model, pool.map, opportunity_sources())
             label = f"{llm.backend} {_model(llm)}"
         else:
-            result = extract(chosen)
+            result = extract(chosen, opportunity_sources=opportunity_sources())
             label = "MOCK, selectors only"
     by_url = {page.url: page for page in pages}
     problems = _problems(result, by_url)
@@ -75,6 +86,17 @@ def main(
     _write(bundle, result, {page.source_id for page in chosen})
     print(summary(result, by_url, label))
     return 0
+
+
+def opportunity_sources(sources: Sequence[Source] | None = None) -> frozenset[str]:
+    """Sources whose page types name only opportunities and listings, such as a funder or a
+    coworking site: their pages yield calls, services and spaces, never people or units."""
+    found = set()
+    for source in load_sources() if sources is None else sources:
+        kinds = {page_type.kind for site in source.sites for page_type in site.page_types}
+        if kinds & set(OPPORTUNITY_KINDS) and not kinds & set(PEOPLE_KINDS):
+            found.add(source.id)
+    return frozenset(found)
 
 
 def _arguments(argv: Sequence[str]) -> argparse.Namespace:

@@ -17,7 +17,14 @@ describe("hudCounts", () => {
 
 describe("Hud", () => {
   test("shows no number at all when neither the clock nor health has answered", () => {
-    const { container } = render(<Hud now={null} health={{ status: "waiting" }} goal="Explore" />);
+    const { container } = render(
+      <Hud
+        now={null}
+        health={{ status: "waiting" }}
+        goal="Explore"
+        account={{ status: "checking" }}
+      />,
+    );
     expect(container.textContent).toBe("Bern LifeGoal Explore");
     expect(container.textContent).not.toMatch(/\d/);
   });
@@ -28,6 +35,7 @@ describe("Hud", () => {
         now={new Date("2026-10-18T12:05:00Z")}
         health={{ status: "ok", health: healthFixture }}
         goal="Explore"
+        account={{ status: "checking" }}
       />,
     );
     expect(container.textContent).toBe(
@@ -37,7 +45,8 @@ describe("Hud", () => {
 
   test("names every engine mode, and says plainly when the engine is down", () => {
     const label = (health: Parameters<typeof Hud>[0]["health"]) =>
-      render(<Hud now={null} health={health} goal="Explore" />).container.textContent;
+      render(<Hud now={null} health={health} goal="Explore" account={{ status: "checking" }} />)
+        .container.textContent;
     const withMode = (mode: "live" | "replay" | "mock") => ({
       status: "ok" as const,
       health: { ...copyOf(healthFixture), mode },

@@ -1,11 +1,13 @@
 // The big round head and what makes each kind recognisable: ear shape, panda patches, red panda
 // marks and ibex horns. Head coordinates, centred on the head.
 
+import { HeadAccessory } from "./bear-accessory";
 import { type BearConfig, type KindId } from "./bear-config";
 import { BearFace } from "./bear-face";
 import { type BearLook } from "./bear-look";
 import { HEAD, headSurfaceZ } from "./bear-shape";
 import { Ball, Plush, useSegments } from "./plush";
+import { PART } from "./use-bear-motion";
 
 type EarShape = "round" | "pointed" | "small" | "long";
 
@@ -76,7 +78,7 @@ function Horns({ colour }: { colour: string }) {
 export function BearHead({ config, look }: { config: BearConfig; look: BearLook }) {
   const shape = EARS[config.kind];
   return (
-    <group position-y={HEAD.y}>
+    <group name={PART.head} position-y={HEAD.y}>
       <Ball colour={look.fur} radius={HEAD.radius} />
       {[-1, 1].map((side) => (
         <Ear key={side} side={side as 1 | -1} shape={shape} look={look} />
@@ -123,6 +125,7 @@ export function BearHead({ config, look }: { config: BearConfig; look: BearLook 
         scale={[1.35, 0.95, 0.8]}
       />
       <BearFace face={config.face} eyes={look.eyes} mouth={look.nose} />
+      <HeadAccessory accessory={config.accessory} />
     </group>
   );
 }

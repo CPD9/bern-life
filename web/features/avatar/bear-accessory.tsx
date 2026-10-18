@@ -1,8 +1,8 @@
-// One accessory per bear. Glasses and the hard hat sit on the head, the scarf at the neck and the
-// backpack on the back; each is drawn in world coordinates with the head's height added.
+// One accessory per bear. Glasses and the hard hat are drawn in head coordinates and ride on the
+// head, so they tilt with it; the scarf and the backpack are drawn on the body.
 
 import { type AccessoryId } from "./bear-config";
-import { HEAD, NECK_Y, headSurfaceZ } from "./bear-shape";
+import { NECK_Y, headSurfaceZ } from "./bear-shape";
 import { Ball, Plush, useSegments } from "./plush";
 
 const SCARF = "#d9534f";
@@ -27,8 +27,8 @@ function Scarf() {
 }
 
 function Glasses() {
-  const y = HEAD.y + 0.05;
-  const z = headSurfaceZ(0.13, 0.05) + 0.03;
+  const y = 0.05;
+  const z = headSurfaceZ(0.13, y) + 0.03;
   return (
     <group position={[0, y, z]}>
       {[-1, 1].map((side) => (
@@ -47,9 +47,8 @@ function Glasses() {
 
 function HardHat() {
   const segments = useSegments();
-  const y = HEAD.y + 0.12;
   return (
-    <group position-y={y}>
+    <group position-y={0.12}>
       <mesh castShadow>
         <sphereGeometry args={[0.31, segments, segments / 2, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <Plush colour={HARD_HAT} />
@@ -76,17 +75,16 @@ function Backpack() {
   );
 }
 
-export function BearAccessory({ accessory }: { accessory: AccessoryId }) {
-  switch (accessory) {
-    case "none":
-      return null;
-    case "scarf":
-      return <Scarf />;
-    case "glasses":
-      return <Glasses />;
-    case "hard-hat":
-      return <HardHat />;
-    case "backpack":
-      return <Backpack />;
-  }
+/** The part of the accessory that sits on the head, in head coordinates. */
+export function HeadAccessory({ accessory }: { accessory: AccessoryId }) {
+  if (accessory === "glasses") return <Glasses />;
+  if (accessory === "hard-hat") return <HardHat />;
+  return null;
+}
+
+/** The part of the accessory that sits on the body. */
+export function BodyAccessory({ accessory }: { accessory: AccessoryId }) {
+  if (accessory === "scarf") return <Scarf />;
+  if (accessory === "backpack") return <Backpack />;
+  return null;
 }

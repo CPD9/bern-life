@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
-from bernlife.extract_records import FIELDS, Claim, Page, Subject
+from bernlife.extract_records import Claim, Page, Subject, fields_for
 from bernlife.names import fold, slug
 
 
@@ -70,7 +70,7 @@ def _preference(
 def _record(
     profile_id: str, subject: Subject, name: Claim, ordered: list[Claim]
 ) -> dict[str, object]:
-    fields: dict[str, list[dict[str, object]]] = {field: [] for field in FIELDS}
+    fields: dict[str, list[dict[str, object]]] = {f: [] for f in fields_for(subject.kind)}
     seen: set[tuple[str, str]] = set()
     for claim in ordered:
         key = (claim.field, claim.value.casefold())

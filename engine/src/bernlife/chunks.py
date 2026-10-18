@@ -6,6 +6,8 @@ or translated query finds it without a live model call. A passage is a run of wh
 from a page, so every claim or relation span that lies inside it is still a verbatim substring;
 search uses that to credit the profiles whose evidence a matching passage holds. Only cited
 pages are cut: a passage that no profile's evidence touches could never become a result.
+Passages cited only by opportunities (calls, services, spaces) get their own id prefix, so a
+people search reads exactly the chunks it read before opportunities existed.
 """
 
 import hashlib
@@ -13,9 +15,11 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from bernlife.extract_records import FIELDS
+from bernlife.extract_records import OPPORTUNITY_KINDS, PEOPLE_KINDS, fields_for
 
 PASSAGE_CHARS = 1000
+PASSAGE = "page"
+OPPORTUNITY_PASSAGE = "opp"
 Record = Mapping[str, Any]
 
 
@@ -73,12 +77,12 @@ def _cut(line: str, limit: int) -> list[str]:
     return [*parts, current]
 
 
-def page_passages(page: Record) -> list[Chunk]:
+def page_passages(page: Record, prefix: str = PASSAGE) -> list[Chunk]:
     title = str(page.get("title") or "")
     sha = str(page["sha256"])
     return [
         Chunk(
-            id=f"page-{sha[:16]}-{number}",
+            id=f"{prefix}-{sha[:16]}-{number}",
             kind="chunk",
             profile_id=None,
             page_url=str(page["url"]),
@@ -99,7 +103,8 @@ def cited_urls(profiles: Iterable[Record], relations: Iterable[Record]) -> set[s
 
 def claims_of(profile: Record) -> list[Record]:
     """The name first, then the fields in contract order."""
-    return [profile["name"], *(claim for field in FIELDS for claim in profile["fields"][field])]
+    fields = fields_for(profile["kind"])
+    return [profile["name"], *(claim for field in fields for claim in profile["fields"][field])]
 
 
 def build_chunks(
@@ -108,10 +113,25 @@ def build_chunks(
     relations: list[Record],
     enrichment: Mapping[str, Sequence[str]] | None = None,
 ) -> list[Chunk]:
-    cited = cited_urls(profiles, relations)
+    people = [p for p in profiles if p["kind"] in PEOPLE_KINDS]
+    cited = cited_urls(people, relations)
+    only_opportunities = cited_urls([p for p in profiles if p not in people], []) - cited
     chunks = [profile_chunk(profile, enrichment) for profile in profiles]
-    chunks += [chunk for page in pages if page["url"] in cited for chunk in page_passages(page)]
+    for page in pages:
+        if page["url"] in cited:
+            chunks += page_passages(page)
+        elif page["url"] in only_opportunities:
+            chunks += page_passages(page, OPPORTUNITY_PASSAGE)
     return sorted(chunks, key=lambda chunk: chunk.id)
+
+
+def chunk_prefixes(kinds: Iterable[str]) -> list[str]:
+    """The id prefixes of the chunks a search over `kinds` may read: profile chunks start with
+    their kind, passages with "page" (cited by people's profiles) or OPPORTUNITY_PASSAGE."""
+    wanted = list(kinds)
+    groups = [PASSAGE] if set(wanted) & set(PEOPLE_KINDS) else []
+    groups += [OPPORTUNITY_PASSAGE] if set(wanted) & set(OPPORTUNITY_KINDS) else []
+    return sorted([*wanted, *groups])
 
 
 def vector_key(text: str) -> str:

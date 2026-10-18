@@ -1,4 +1,5 @@
 import { formatBernShortDate, formatBernTime } from "@/infrastructure/bern-time";
+import { AccountBadge, type HudAccount } from "./account-badge";
 import { hudCounts } from "./hud-items";
 import type { HealthState } from "./use-health";
 
@@ -6,9 +7,10 @@ type HudProps = {
   now: Date | null;
   health: HealthState;
   goal: string;
+  account: HudAccount;
 };
 
-export function Hud({ now, health, goal }: HudProps) {
+export function Hud({ now, health, goal, account }: HudProps) {
   const counts = hudCounts(health.status === "ok" ? health.health : null);
   const mode = health.status === "ok" ? health.health.mode : null;
   return (
@@ -50,6 +52,7 @@ export function Hud({ now, health, goal }: HudProps) {
           Engine offline
         </span>
       )}
+      <AccountBadge account={account} />
     </div>
   );
 }

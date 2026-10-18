@@ -47,6 +47,10 @@ class ParseSearchTest(unittest.TestCase):
             parse_search(body, {"demo", "example"}),
             SearchRequest("glucose", "en", ["demo", "example"]),
         )
+        kinds = b'{"query": "grants", "kinds": ["space", "call", "call"]}'
+        self.assertEqual(
+            parse_search(kinds, {"demo"}), SearchRequest("grants", None, None, ["call", "space"])
+        )
 
     def test_bad_bodies_are_refused(self):
         for body in (
@@ -57,6 +61,8 @@ class ParseSearchTest(unittest.TestCase):
             b'{"query": "x", "lang": "it"}',
             b'{"query": "x", "sources": ["other"]}',
             b'{"query": "x", "sources": []}',
+            b'{"query": "x", "kinds": ["grant"]}',
+            b'{"query": "x", "kinds": []}',
             b'{"query": "x\\u0000y"}',
             b'{"query": "' + b"x" * 501 + b'"}',
         ):

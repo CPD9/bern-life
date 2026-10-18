@@ -8,7 +8,20 @@ pages under two spellings meets in one profile.
 from dataclasses import dataclass, field
 
 FIELDS = ("role", "unit", "expertise", "projects", "infrastructure", "services")
-PROFILE_KINDS = ("person", "unit", "project", "infrastructure")
+# Opportunities (contract: profile.schema.json) carry the base fields plus their own. Dates and
+# amounts are verbatim text like every other value, never parsed.
+OPPORTUNITY_FIELDS = {
+    "call": ("funder", "deadline", "amount", "eligibility"),
+    "service": ("eligibility",),
+    "space": ("location", "size"),
+}
+PEOPLE_KINDS = ("person", "unit", "project", "infrastructure")
+OPPORTUNITY_KINDS = tuple(OPPORTUNITY_FIELDS)
+PROFILE_KINDS = PEOPLE_KINDS + OPPORTUNITY_KINDS
+
+
+def fields_for(kind: str) -> tuple[str, ...]:
+    return FIELDS + OPPORTUNITY_FIELDS.get(kind, ())
 
 
 @dataclass(frozen=True)
@@ -52,7 +65,7 @@ class Subject:
 @dataclass(frozen=True)
 class Candidate:
     subject: Subject
-    field: str  # "name" or one of FIELDS
+    field: str  # "name" or one of fields_for(kind)
     value: str
     span: str
     method: str
