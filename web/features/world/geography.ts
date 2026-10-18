@@ -214,5 +214,50 @@ export const DISTRICTS: readonly District[] = [
   },
 ];
 
+/** Main streets as centre lines: the Old Town axis, Länggassstrasse, Murtenstrasse, the road to
+ * Liebefeld, and the streets off the three big bridges. */
+export const ROADS: readonly (readonly MapPoint[])[] = [
+  [
+    [-31.3, -5.3],
+    [-12, -4.5],
+    [8, -4],
+    [26, -3],
+    [38.3, -0.9],
+  ],
+  [
+    [-31.3, -5.3],
+    [-44, -12],
+    [-45, -24],
+    [-58, -44],
+    [-60, -66],
+  ],
+  [
+    [-31.3, -5.3],
+    [-55, -5.5],
+    [-75, -5.5],
+    [-98.5, -5.5],
+  ],
+  [
+    [-28, 8],
+    [-55, 30],
+    [-85, 60],
+    [-119.4, 97.5],
+  ],
+  [
+    [9.8, 20.8],
+    [21.2, 30.8],
+  ],
+  [
+    [6.7, -35.9],
+    [5, -60],
+  ],
+  [
+    [-10.4, -43.1],
+    [-6, -60],
+  ],
+];
+
+export const ROAD_WIDTH = 1.4;
+
 /** The ground and the camera's pan limits: every district and the river, plus a margin. */
 export const MAP_BOUNDS = { minX: -150, maxX: 60, minZ: -120, maxZ: 120 } as const;

@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildingKey, groupPlacesByBuilding } from "./buildings";
 import { MAP_BOUNDS } from "./geography";
-import { InvalidPlaceError, PLACES, parsePlaces, type Place } from "./places";
+import { InvalidPlaceError, PLACES, parsePlaces, type Place, type PlaceKind } from "./places";
 
 type SourceSite = { host: string; unit: string };
 type SourceFile = { id: string; sites: SourceSite[] };
@@ -23,13 +23,19 @@ const INVENTED_ADDRESS = {
   address_page_sha256: "a".repeat(64),
 } as const;
 
-function invented(id: string, address: string | null, x = 1, z = 2): Place {
+function invented(
+  id: string,
+  address: string | null,
+  x = 1,
+  z = 2,
+  kind: PlaceKind = "institute",
+): Place {
   const common = {
     id,
     name: `Example unit ${id}`,
     source_id: "example",
     host: "www.example-institute.test",
-    kind: "institute",
+    kind,
     x,
     z,
   } as const;
@@ -129,23 +135,24 @@ describe("buildingKey", () => {
 });
 
 describe("groupPlacesByBuilding", () => {
-  test("units at one building group with a count, others stand alone", () => {
+  test("units at one building group, take the first unit's kind, others stand alone", () => {
     const buildings = groupPlacesByBuilding([
       invented("c-wing", "Inselspital, INO-F; Rosenbühlgasse 27", 7, 8),
-      invented("b-short", "Murtenstrasse 50", 3, 4),
-      invented("a-long", "Murtenstrasse 50, 3008 Bern", 3, 4),
+      invented("b-short", "Murtenstrasse 50", 3, 4, "institute"),
+      invented("a-long", "Murtenstrasse 50, 3008 Bern", 3, 4, "centre"),
       invented("d-district", null, 5, 6),
     ]);
     expect(
       buildings.map((building) => ({
         key: building.key,
         at: [building.x, building.z],
+        kind: building.kind,
         ids: building.places.map((place) => place.id),
       })),
     ).toEqual([
-      { key: "murtenstrasse 50", at: [3, 4], ids: ["a-long", "b-short"] },
-      { key: "place:d-district", at: [5, 6], ids: ["d-district"] },
-      { key: "rosenbühlgasse 27", at: [7, 8], ids: ["c-wing"] },
+      { key: "murtenstrasse 50", at: [3, 4], kind: "centre", ids: ["a-long", "b-short"] },
+      { key: "place:d-district", at: [5, 6], kind: "institute", ids: ["d-district"] },
+      { key: "rosenbühlgasse 27", at: [7, 8], kind: "institute", ids: ["c-wing"] },
     ]);
   });
 });

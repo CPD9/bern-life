@@ -2,12 +2,14 @@
 // different ways ("Murtenstrasse 50, 3008 Bern" and "Murtenstrasse 50", or with a hospital wing in
 // front), so the key is the street and house number found inside the address.
 
-import { type Place } from "./places";
+import { type Place, type PlaceKind } from "./places";
 
 export type Building = {
   readonly key: string;
   readonly x: number;
   readonly z: number;
+  /** The first unit's kind picks the building colour and the marker pictogram. */
+  readonly kind: PlaceKind;
   readonly places: readonly Place[];
 };
 
@@ -34,7 +36,7 @@ export function groupPlacesByBuilding(places: readonly Place[]): readonly Buildi
     byKey.set(
       key,
       existing === undefined
-        ? { key, x: place.x, z: place.z, places: [place] }
+        ? { key, x: place.x, z: place.z, kind: place.kind, places: [place] }
         : { ...existing, places: [...existing.places, place] },
     );
   }
