@@ -4,49 +4,139 @@
   "title": "Profile",
   "description": "A person, unit, project or infrastructure built from stored pages. Every value is a claim with a verbatim span from a stored page; a field the pages do not support is an empty list, never a guess. No email or phone is stored: contact goes through the source page link.",
   "type": "object",
-  "required": ["id", "kind", "source_id", "name", "fields", "source_url"],
+  "required": [
+    "id",
+    "kind",
+    "source_id",
+    "name",
+    "fields",
+    "source_url"
+  ],
   "additionalProperties": false,
   "properties": {
-    "id": { "type": "string", "pattern": "^(person|unit|project|infrastructure)-[a-z0-9-]+$" },
-    "kind": { "enum": ["person", "unit", "project", "infrastructure"] },
-    "source_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
-    "name": { "$ref": "#/$defs/claim" },
-    "source_url": { "description": "The main page for this profile, shown as the result link.", "type": "string", "format": "uri" },
+    "id": {
+      "type": "string",
+      "pattern": "^(person|unit|project|infrastructure)-[a-z0-9-]+$"
+    },
+    "kind": {
+      "enum": [
+        "person",
+        "unit",
+        "project",
+        "infrastructure"
+      ]
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "name": {
+      "$ref": "#/$defs/claim"
+    },
+    "source_url": {
+      "description": "The main page for this profile, shown as the result link.",
+      "type": "string",
+      "format": "uri"
+    },
     "fields": {
       "type": "object",
-      "required": ["role", "unit", "expertise", "projects", "infrastructure", "services"],
+      "required": [
+        "role",
+        "unit",
+        "expertise",
+        "projects",
+        "infrastructure",
+        "services"
+      ],
       "additionalProperties": false,
       "properties": {
-        "role": { "$ref": "#/$defs/claims" },
-        "unit": { "$ref": "#/$defs/claims" },
-        "expertise": { "$ref": "#/$defs/claims" },
-        "projects": { "$ref": "#/$defs/claims" },
-        "infrastructure": { "$ref": "#/$defs/claims" },
-        "services": { "$ref": "#/$defs/claims" }
+        "role": {
+          "$ref": "#/$defs/claims"
+        },
+        "unit": {
+          "$ref": "#/$defs/claims"
+        },
+        "expertise": {
+          "$ref": "#/$defs/claims"
+        },
+        "projects": {
+          "$ref": "#/$defs/claims"
+        },
+        "infrastructure": {
+          "$ref": "#/$defs/claims"
+        },
+        "services": {
+          "$ref": "#/$defs/claims"
+        }
       }
     }
   },
   "$defs": {
-    "claims": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
     "claim": {
       "type": "object",
-      "required": ["value", "evidence", "method"],
+      "required": [
+        "value",
+        "evidence",
+        "method"
+      ],
       "additionalProperties": false,
       "properties": {
-        "value": { "type": "string", "minLength": 1, "maxLength": 200 },
-        "method": { "description": "selector: read by a per-source rule; model: proposed by Apertus and kept only because the verifier found the span.", "enum": ["selector", "model"] },
-        "evidence": { "$ref": "#/$defs/evidence" }
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "method": {
+          "description": "selector: read by a per-source rule; model: proposed by Apertus and kept only because the verifier found the span.",
+          "enum": [
+            "selector",
+            "model"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
       }
     },
     "evidence": {
       "type": "object",
-      "required": ["page_url", "page_sha256", "span"],
+      "required": [
+        "page_url",
+        "page_sha256",
+        "span"
+      ],
       "additionalProperties": false,
       "properties": {
-        "page_url": { "type": "string", "format": "uri" },
-        "page_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "span": { "description": "Verbatim substring of the page's stored text.", "type": "string", "minLength": 1, "maxLength": 300 },
-        "start": { "description": "Character offset of span in the page text.", "type": "integer", "minimum": 0 }
+        "page_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "page_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "span": {
+          "description": "Verbatim substring of the page's stored text.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "start": {
+          "description": "Character offset of span in the page text.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "fetched_at": {
+          "description": "When the page holding the span was fetched (copied from the page record).",
+          "type": "string",
+          "format": "date-time"
+        }
       }
     }
   }

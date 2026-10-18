@@ -2,6 +2,34 @@
 
 Newest first. Each entry: date, decision, why, who.
 
+## 2026-10-18 14:30 — Platform features during the hackathon, and who merges (Peter)
+- **Built overnight, not after:** the agent with tools (the Navigator character drives the map), the
+  match report (PDF + live map link), the inquiry inbox, the sources admin (add a source by URL,
+  re-crawl, health), spaces and talent as sources, feedback labels. Conditions: the inbox uses a web
+  form and invented inquiries, never a real mailbox; feedback tunes only on a separate dev query set,
+  never `eval/gold.jsonl`; spaces and talent figures carry a source and a date like every claim; the
+  agent sends nothing outside the app without a click. No PostGIS: distances come from the map
+  frame (W2: 1 unit ≈ 20 m, Zytglogge at the origin) and are shown as approximate. Order by value; what is not merged by Monday 08:00 goes on the roadmap slide.
+- **Only Peter merges.** Ruleset `main`: updates restricted to the admin via PR, code-owner review
+  (`* @CPD9`) after the last push. Yaseen (`yaseenmohamd`) and Nik (`nik-milcevs`) have write access.
+
+## 2026-10-18 afternoon — The world is in the hackathon (Peter)
+- **The life-sim world joins the submission**, built overnight in three.js (React Three Fiber +
+  drei): game shell, phone with the Ask app as the Navigator, a stylised 3D Bern where institutions
+  are places that light up by match. Peter: the format is proven, and its founder built hers in one
+  night. The engine still stands alone for the jury (`/navigator`, `make run`).
+- **People from public pages are never avatars.** They appear as entries with sources in a place's
+  panel; an avatar is for a person who joins and claims a profile. Agents (Navigator, Scout,
+  Matchmaker) are the characters in the world. (Raised in Yaseen's plan; adopted by the conductor;
+  Peter may overrule.)
+- **Honest HUD:** real counts only; no money, no "online" numbers, no invented activity.
+- **Map without tiles:** a hand-simplified Bern (Aare loop, districts) in three.js, no map service,
+  so it runs air-gapped. Institution positions come from addresses on their own pages, with the span.
+- **From Yaseen's plan, adopted:** pitch in BEDA's template; his demo storyline; field completeness
+  metric; per-unit caps and no prominence boost; aspect matrix and gaps for a brief; sitemap seeding;
+  `EntityRelation`. Not adopted: Apertus 8B as default for people data (measured
+  15/18 confirmations of invented personal details).
+
 ## 2026-10-18 — Base decisions (Peter, conductor)
 - **Postgres 17 + pgvector, schema in Prisma (`db/`).** Scalability matters and work continues after
   the hackathon; the world layer will need users and claims in the same database. The Python engine
