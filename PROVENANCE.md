@@ -26,3 +26,5 @@ No profile field comes from a model's memory. Every field carries a verbatim spa
 | Crawled pages, LLM cache, vectors | public pages of the hosts in `sources/` | copyright of the institutions; personal data under nDSG | **no**: SHA-pinned release asset (`make fetch`) |
 | Gold set `eval/gold.jsonl` | written by the team from public pages, before search existed | names and proof URLs only | yes |
 | Contract fixtures `contracts/fixtures/` | invented, describe no real person | ours | yes |
+| Place addresses `web/features/world/places.json` | one street line per unit from its own home or contact page (URL, date, sha256 per row) | facts (institutional addresses); no page copies | yes |
+| Map geography `web/features/world/geography.ts` | drawn by hand from public maps (Aare, bridges, districts, landmarks), approximate | ours | yes |
