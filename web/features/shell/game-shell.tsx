@@ -9,13 +9,23 @@ type GameShellProps = {
   phoneOpen: boolean;
   onSelectTab: (tab: ShellTab) => void;
   hud: ReactNode;
+  /** Cards that float at the side of the world, such as the story quest. */
+  side: ReactNode;
   canvas: ReactNode;
   overlay: ReactNode;
 };
 
 // The world fills the whole screen; HUD and tab bar float above it. Their wrappers ignore the
 // pointer so drags on the empty sky beside a panel still reach the canvas.
-export function GameShell({ view, phoneOpen, onSelectTab, hud, canvas, overlay }: GameShellProps) {
+export function GameShell({
+  view,
+  phoneOpen,
+  onSelectTab,
+  hud,
+  side,
+  canvas,
+  overlay,
+}: GameShellProps) {
   return (
     <div
       data-view={view}
@@ -27,6 +37,9 @@ export function GameShell({ view, phoneOpen, onSelectTab, hud, canvas, overlay }
       <header className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <div className="pointer-events-auto">{hud}</div>
       </header>
+      <div className="pointer-events-none absolute top-[calc(env(safe-area-inset-top)+10.5rem)] left-4 sm:top-[calc(env(safe-area-inset-top)+5.5rem)] flex flex-col items-start gap-3">
+        <div className="pointer-events-auto flex flex-col items-start gap-3">{side}</div>
+      </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="pointer-events-auto">
           <TabBar selected={phoneOpen ? "phone" : view} onSelect={onSelectTab} />

@@ -3,7 +3,8 @@
 A claim is traceable when its page is in the snapshot, the page text hashes to the claim's
 `page_sha256`, and the span appears in that text after whitespace normalisation. The hash is
 recomputed from the text rather than read from the page record, so a stale record cannot vouch
-for a span.
+for a span. A result shown through a related project or unit (`via`) is held to the same bar: the
+relation's own span and every related claim are checked, and the related profile must exist.
 """
 
 import hashlib
@@ -46,12 +47,25 @@ def check_claims(query: str, results: Sequence[Record], index: PageIndex) -> tup
     checked, misses = 0, []
     for result in results:
         profile = result["profile"]
-        for pointer, claim in claims(profile):
+        for pointer, evidence in evidence_of(result):
             checked += 1
-            reason = untraceable(claim["evidence"], index)
+            reason = untraceable(evidence, index)
             if reason is not None:
                 misses.append(Miss(query, profile["id"], pointer, reason))
     return checked, misses
+
+
+def evidence_of(result: Record) -> list[tuple[str, Record]]:
+    """Each piece of evidence a result shows, with its JSON pointer: profile claims, then `via`."""
+    shown = [(pointer, claim["evidence"]) for pointer, claim in claims(result["profile"])]
+    via = result.get("via")
+    if via is not None:
+        shown.append(("/via", via))
+        shown += [
+            (f"/via/related_claims/{i}", claim["evidence"])
+            for i, claim in enumerate(via["related_claims"])
+        ]
+    return shown
 
 
 def untraceable(evidence: Record, index: PageIndex) -> str | None:
@@ -67,5 +81,7 @@ def untraceable(evidence: Record, index: PageIndex) -> str | None:
 
 
 def invented(results: Sequence[Record], snapshot_ids: Mapping[str, Record]) -> tuple[str, ...]:
-    """Profile ids that the results show but the snapshot does not hold."""
-    return tuple(r["profile"]["id"] for r in results if r["profile"]["id"] not in snapshot_ids)
+    """Profile ids the results show, directly or through `via`, that the snapshot does not hold."""
+    shown = [r["profile"]["id"] for r in results]
+    shown += [r["via"]["related_profile_id"] for r in results if r.get("via") is not None]
+    return tuple(pid for pid in shown if pid not in snapshot_ids)

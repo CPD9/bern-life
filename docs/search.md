@@ -56,10 +56,14 @@ used; code maps the numbers back to JSON pointers. Asked for pointers directly (
 `explain-v1`), the model copied whole claim lines into them and only 33% of explanations passed. Code keeps the text only if:
 - every pointer was offered and exists;
 - the text is 1 to 400 characters with no control characters;
-- every capitalised word inside a sentence occurs in the cited claims, the name or the question.
+- the text is not a non-answer: it contains none of the phrases "do not contain", "does not
+  contain", "do not mention", "does not mention", "no information" (whole phrases, not single
+  words);
+- every capitalised word inside a sentence occurs in the cited claims (value or span) or the name.
 
-The last check is what stops a name or place from the model's memory. Otherwise the plain reason
-stays. The calls run in parallel, are cached per question and claims, and replay byte for byte.
+The last check is what stops a name or place from the model's memory. The question is not allowed
+text: a reply that copied "IRM" from the question about a person whose cited claim is on gene
+regulation used to pass. Otherwise the plain reason stays. The calls run in parallel, are cached per question and claims, and replay byte for byte.
 Explanations are English only: German capitalises every noun, which the name check cannot tell
 from a name.
 
@@ -75,6 +79,26 @@ best rank (then the higher fused score, then its id), and the unit cap applies t
 A result's reason and explanation answer the need that ranked it best. `brief_terms` lists the
 kept needs with their spans, and `query` is the need terms joined by "; ". No kept need, or no
 need with a result, abstains with `no_verifiable_source`.
+
+## Kinds: people and opportunities
+`POST /api/search` takes an optional `kinds` list. Without it, search covers person, unit,
+project and infrastructure, exactly as before opportunities existed:
+- **Chunk ids carry their group:** a profile chunk starts with its kind, people passages with
+  `page`, and passages cited only by opportunities with `opp`.
+- **Word statistics:** the full-text half and its counts read only the requested groups, so
+  their numbers are unchanged.
+- **Vector half for people:** a search that includes people reads the HNSW index unfiltered,
+  takes three times the pool, and drops other kinds' chunks afterwards. A filter inside the scan
+  makes Postgres trade the index for an exact scan, whose neighbours differ slightly; that alone
+  moved gold before the change.
+- **Vector half for opportunities alone:** the scan filters inside.
+
+Gold after loading the six opportunity sources (148 profiles, 1,199 new chunks): recall@10 0.36,
+MRR 0.43, invented queries abstained 8/10, false abstentions 0/38, 0 invented, in every language
+the same as `bundle-20261019-1`. The top 10 differs in one query (q002b, ranks 9 to 11). A profile
+the baseline reached with vector rank 106 drops out. Rebuilding the HNSW graph after inserting
+the new vectors shifts approximate neighbours that far down. Reloading the same bundle also
+reorders a few results below rank 10.
 
 ## Chunks
 - **Profile chunk**, one per profile: the name, then every claim value in contract order.

@@ -118,7 +118,9 @@ def verify_relation(relation: RelationCandidate, page: Page, own: Subject | None
 
 
 def contact_only(text: str) -> bool:
-    return not any(char.isalpha() for char in CONTACT_TOKEN.sub("", text))
+    """Nothing but [email] / [phone] tokens and punctuation. Digits count as content, so a
+    deadline ("31.03.2027") or a size ("120") can be evidence."""
+    return not any(char.isalnum() for char in CONTACT_TOKEN.sub("", text))
 
 
 def recheck(

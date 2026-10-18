@@ -3,13 +3,14 @@ import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { aspectMatrix } from "./aspect-matrix";
 import { BriefNeeds } from "./brief-needs";
 import { ExpandedTerms } from "./expanded-terms";
-import { abstainMessage, canRetry, failureMessage } from "./messages";
+import { abstainMessage, briefUnread, canRetry, failureMessage } from "./messages";
 import { ModeNotice } from "./mode-notices";
-import { ResultCard } from "./result-card";
-import type { NavigatorState } from "./use-navigator";
+import { ResultCard } from "@/infrastructure/ui/result-card";
+import type { NavigatorRequest, NavigatorState } from "./use-navigator";
 
 type ResultsViewProps = {
   state: NavigatorState;
+  fixtureMode: boolean;
   onRetry: () => void;
   onShowOnMap?: ((response: SearchResponse) => void) | undefined;
   onMakeReport?: ((response: SearchResponse) => boolean) | undefined;
@@ -63,7 +64,7 @@ function statusLine(state: NavigatorState): string {
       return failureMessage(state.failure);
     case "done": {
       const { response } = state;
-      if (response.abstained) return abstainMessage(response.abstain_reason);
+      if (response.abstained) return abstainMessage(response, state.request.kind);
       const count = response.results.length;
       return count === 0 ? "Nothing matched." : `${count} ${count === 1 ? "result" : "results"}`;
     }
@@ -72,14 +73,18 @@ function statusLine(state: NavigatorState): string {
 
 function Answer({
   response,
+  asked,
+  fixtureMode,
   onRetry,
   onShowOnMap,
   onMakeReport,
-}: ResultsViewProps & { response: SearchResponse }) {
+}: ResultsViewProps & { response: SearchResponse; asked: NavigatorRequest["kind"] }) {
   const matrix = aspectMatrix(response);
+  // An unread brief ran no search, so the status line alone says what happened.
+  const unread = asked === "brief" && briefUnread(response);
   return (
     <>
-      <ModeNotice mode={response.mode} />
+      {!unread && <ModeNotice mode={response.mode} fixtureMode={fixtureMode} />}
       {response.abstained && response.abstain_reason === "engine_error" && (
         <RetryButton onRetry={onRetry} />
       )}
@@ -118,7 +123,9 @@ export function ResultsView(props: ResultsViewProps) {
         {statusLine(state)}
       </p>
       {state.status === "failed" && canRetry(state.failure) && <RetryButton onRetry={onRetry} />}
-      {state.status === "done" && <Answer {...props} response={state.response} />}
+      {state.status === "done" && (
+        <Answer {...props} response={state.response} asked={state.request.kind} />
+      )}
     </div>
   );
 }

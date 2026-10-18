@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import type { AppEventName, AppEventSink } from "@/infrastructure/app-events";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { SearchRequest } from "@/infrastructure/engine-types";
 import { abstainedFixture, briefFixture, copyOf, resultFixture } from "@/test/fixtures";
@@ -11,12 +12,13 @@ type HarnessProps = {
   api: NavigatorApi;
   fixtureMode?: boolean;
   onMakeReport?: (response: SearchResponse) => boolean;
+  events?: AppEventSink;
 };
 
-function Harness({ api, fixtureMode = false, onMakeReport }: HarnessProps) {
+function Harness({ api, fixtureMode = false, onMakeReport, events }: HarnessProps) {
   return (
     <Navigator
-      controller={useNavigator(api)}
+      controller={useNavigator(api, events)}
       fixtureMode={fixtureMode}
       {...(onMakeReport ? { onMakeReport } : {})}
     />
@@ -37,14 +39,35 @@ async function ask(query: string) {
   });
 }
 
+async function submitBrief(text: string) {
+  fireEvent.click(screen.getByRole("button", { name: "Project brief" }));
+  fireEvent.change(screen.getByLabelText("Or paste the text"), { target: { value: text } });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Find experts" }));
+  });
+}
+
 describe("Navigator", () => {
-  test("a mock answer shows the MOCK banner and the expanded terms as search terms", async () => {
-    render(<Harness api={answering(resultFixture)} />);
+  test("a mock answer in fixture mode shows the MOCK banner and the expanded terms", async () => {
+    render(<Harness api={answering(resultFixture)} fixtureMode />);
     await ask("glucose sensors");
     expect(screen.getByRole("status").textContent).toBe("1 result");
     expect(screen.getByText("MOCK")).toBeTruthy();
+    expect(screen.queryByText(/plain search over the stored pages/)).toBeNull();
     expect(screen.getByText(/They are not facts about anyone/)).toBeTruthy();
     expect(screen.getByText("CGM")).toBeTruthy();
+  });
+
+  test("a mock answer from the engine says plain search, with no MOCK banner", async () => {
+    render(<Harness api={answering(resultFixture)} />);
+    await ask("glucose sensors");
+    expect(screen.queryByText("MOCK")).toBeNull();
+    expect(screen.queryByText(/canned test data/)).toBeNull();
+    expect(
+      screen.getByText(
+        "No recorded model answer for this question: plain search over the stored pages",
+      ),
+    ).toBeTruthy();
   });
 
   test("a replay answer shows the Replay chip and no MOCK banner", async () => {
@@ -90,13 +113,7 @@ describe("Navigator", () => {
 
   test("a brief shows each need with its sentence and the aspect matrix", async () => {
     render(<Harness api={answering(briefFixture)} />);
-    fireEvent.click(screen.getByRole("button", { name: "Project brief" }));
-    fireEvent.change(screen.getByLabelText("Or paste the text"), {
-      target: { value: "We are developing a wearable glucose sensor." },
-    });
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Find experts" }));
-    });
+    await submitBrief("We are developing a wearable glucose sensor.");
     expect(
       screen.getByText(
         "From your brief: “We are developing a wearable glucose sensor for people with diabetes.”",
@@ -104,6 +121,21 @@ describe("Navigator", () => {
     ).toBeTruthy();
     const cells = Array.from(document.querySelectorAll("tbody td"), (td) => td.textContent);
     expect(cells).toEqual(["Covered", "Not covered", "Not covered", "Partly"]);
+  });
+
+  test("a brief the replay could not read says it needs the model, not that no page supports it", async () => {
+    const unread: SearchResponse = {
+      ...copyOf(abstainedFixture),
+      query: "",
+      mode: "mock",
+      brief_terms: [],
+    };
+    render(<Harness api={answering(unread)} />);
+    await submitBrief("We are developing a wearable glucose sensor.");
+    expect(screen.getByRole("status").textContent).toBe(
+      "Reading a new brief needs the model; this replay has the recorded briefs only.",
+    );
+    expect(screen.queryByText(/plain search over the stored pages/)).toBeNull();
   });
 
   test("the FIXTURE label shows only in fixture mode", () => {
@@ -141,5 +173,17 @@ describe("Navigator", () => {
     render(<Harness api={answering(abstainedFixture)} onMakeReport={() => true} />);
     await ask("quantum origami");
     expect(screen.queryByRole("button", { name: "Make a report" })).toBeNull();
+  });
+
+  test("answers become story events through the injected sink", async () => {
+    const heard: AppEventName[] = [];
+    const sink = { emit: (name: AppEventName) => void heard.push(name) };
+    const { unmount } = render(<Harness api={answering(resultFixture)} events={sink} />);
+    await ask("Glukosesensoren für Kinder");
+    expect(heard).toEqual(["search_answered", "search_answered_other_language"]);
+    unmount();
+    render(<Harness api={answering(abstainedFixture)} events={sink} />);
+    await ask("Prof. Nobody");
+    expect(heard).toEqual(["search_answered", "search_answered_other_language", "abstained_seen"]);
   });
 });

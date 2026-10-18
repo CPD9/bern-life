@@ -11,7 +11,7 @@ from pathlib import Path
 
 from bernlife.embed import DIMENSIONS, Embedder
 from bernlife.embed_command import run
-from bernlife.extract_records import FIELDS
+from bernlife.extract_records import FIELDS, fields_for
 from bernlife.llm_http import ModelUnavailable
 from bernlife.sources import Site, Source
 
@@ -149,6 +149,26 @@ PROFILES = [
         expertise=[claim(APP_PAGE, "carbohydrate estimation from meal photos")],
     ),
 ]
+CALL_PAGE = page(
+    "https://www.example-institute.test/calls/glucose-2027",
+    "example",
+    EXAMPLE_UNIT,
+    "Glucose Monitoring Call 2027 - Example Institute",
+    "Glucose Monitoring Call 2027\nFunding for continuous glucose monitoring start-ups.\n"
+    "Deadline: 31.03.2027",
+)
+CALL = {
+    **profile(
+        "call-example-glucose-monitoring-call-2027", CALL_PAGE, "Glucose Monitoring Call 2027"
+    ),
+    "kind": "call",
+}
+CALL["fields"] = {
+    **{field: [] for field in fields_for("call")},
+    "expertise": [claim(CALL_PAGE, "continuous glucose monitoring")],
+    "deadline": [claim(CALL_PAGE, "31.03.2027", "Deadline: 31.03.2027")],
+}
+
 RELATIONS = [
     {
         "from_profile_id": "person-example-ada-muster",
@@ -223,9 +243,12 @@ def write_bundle(
     folder: Path,
     profiles: list[dict[str, object]] = PROFILES,
     terms: list[dict[str, object]] = (),
+    opportunities: bool = False,
 ) -> None:
     folder.mkdir(parents=True, exist_ok=True)
-    files = (("pages", PAGES), ("profiles", profiles), ("relations", RELATIONS), ("terms", terms))
+    pages = [*PAGES, CALL_PAGE] if opportunities else PAGES
+    profiles = [*profiles, CALL] if opportunities else profiles
+    files = (("pages", pages), ("profiles", profiles), ("relations", RELATIONS), ("terms", terms))
     for name, records in files:
         text = "".join(json.dumps(record) + "\n" for record in records)
         (folder / f"{name}.jsonl").write_text(text)

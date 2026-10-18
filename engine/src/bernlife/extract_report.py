@@ -4,7 +4,7 @@ from collections import Counter
 from collections.abc import Mapping
 
 from bernlife.extract import Extraction
-from bernlife.extract_records import FIELDS, PROFILE_KINDS, Page
+from bernlife.extract_records import PROFILE_KINDS, Page, fields_for
 
 NOT_FOUND = "span_not_in_page"
 
@@ -36,7 +36,7 @@ def summary(result: Extraction, pages: Mapping[str, Page], model_label: str) -> 
     for kind in PROFILE_KINDS:
         of_kind = [p for p in profiles if p["kind"] == kind]
         if of_kind:
-            shares = " ".join(f"{f} {_share(of_kind, f)}" for f in FIELDS)
+            shares = " ".join(f"{f} {_share(of_kind, f)}" for f in fields_for(kind))
             lines.append(f"  {kind:<15} {len(of_kind):>5}  {shares}")
     lines.append(f"subjects without a verified name: {result.unnamed_subjects}")
     without = ", ".join(f"{k} {n}" for k, n in sorted(result.pages_without_subject.items()))

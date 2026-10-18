@@ -12,7 +12,13 @@ from typing import Any
 
 from bernlife.cache import CacheMiss, Message
 from bernlife.extract_prompt import ASKED, page_messages
-from bernlife.extract_records import Candidate, Page, RelationCandidate, Subject
+from bernlife.extract_records import (
+    OPPORTUNITY_KINDS,
+    Candidate,
+    Page,
+    RelationCandidate,
+    Subject,
+)
 from bernlife.extract_selectors import institute_subject, person_subject, site_line
 from bernlife.llm_http import ModelUnavailable
 from bernlife.llm_json import parse_json
@@ -73,6 +79,8 @@ def read_reply(
             pairs, bad = _pairs(proposed.get(field, []))
             malformed += bad
             candidates += [Candidate(subject, field, v, s, MODEL, page.url) for v, s in pairs]
+    if page.kind in OPPORTUNITY_KINDS:
+        return malformed
     people = reply.get("people", [])
     for person in people if isinstance(people, list) else []:
         malformed += _read_person(person, page, subject, candidates, relations)

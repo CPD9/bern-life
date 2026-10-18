@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import { StandaloneAccountPage } from "@/features/accounts/standalone-account-page";
+import { Suspense } from "react";
+import { safeNext } from "@/infrastructure/safe-next";
+import { AccountApp } from "./account-app";
 
 export const metadata: Metadata = {
   title: "Account · Bern Life",
 };
 
-export default function AccountPage() {
+async function AccountForRequest({ searchParams }: Pick<PageProps<"/account">, "searchParams">) {
+  const { next } = await searchParams;
+  return <AccountApp next={safeNext(next)} />;
+}
+
+export default function AccountPage({ searchParams }: PageProps<"/account">) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 px-4 py-8 sm:px-6">
       <header className="flex flex-col gap-2">
@@ -15,7 +22,9 @@ export default function AccountPage() {
           Invite-only for now. Your profile stays private until you choose otherwise.
         </p>
       </header>
-      <StandaloneAccountPage />
+      <Suspense>
+        <AccountForRequest searchParams={searchParams} />
+      </Suspense>
     </main>
   );
 }
