@@ -38,7 +38,7 @@ describe("AvatarEditor", () => {
     const changes = renderEditor(() => 0.99);
     fireEvent.click(screen.getByRole("button", { name: "Shuffle" }));
     expect(changes).toEqual([
-      { body: "broad", skin: "tone-10", hair: "covered", outfit: "field-work", accent: "slate" },
+      { body: "broad", skin: "tone-10", hair: "hood", outfit: "field-work", accent: "slate" },
     ]);
   });
 });

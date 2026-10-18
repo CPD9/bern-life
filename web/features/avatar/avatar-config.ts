@@ -19,8 +19,8 @@ export const skinOptions = [
   { id: "tone-6", label: "Tone 6", colour: "#a56d48" },
   { id: "tone-7", label: "Tone 7", colour: "#8a5536" },
   { id: "tone-8", label: "Tone 8", colour: "#6f4128" },
-  { id: "tone-9", label: "Tone 9", colour: "#55301c" },
-  { id: "tone-10", label: "Tone 10, deepest", colour: "#3d2214" },
+  { id: "tone-9", label: "Tone 9", colour: "#5a3018" },
+  { id: "tone-10", label: "Tone 10, deepest", colour: "#452414" },
 ] as const satisfies readonly Swatch<string>[];
 
 export const hairOptions = [
@@ -30,6 +30,7 @@ export const hairOptions = [
   { id: "bun", label: "Bun" },
   { id: "buzz", label: "Buzz" },
   { id: "covered", label: "Covered" },
+  { id: "hood", label: "Animal hood" },
 ] as const satisfies readonly Option<string>[];
 
 export const outfitOptions = [
