@@ -9,6 +9,7 @@ import { shownAgentName } from "@/features/avatar/agent-name";
 import { AvatarEditor } from "@/features/avatar/avatar-editor";
 import { AvatarTurntable } from "@/features/avatar/avatar-turntable";
 import { BearFigure } from "@/features/avatar/bear-figure";
+import { motionFor } from "@/features/avatar/bear-motion";
 import { useAvatar } from "@/features/avatar/use-avatar";
 import { PersonEditor } from "@/features/avatar/person-editor";
 import { PersonTurntable } from "@/features/avatar/person-turntable";
@@ -33,6 +34,7 @@ export function StartApp() {
   const [agentName, setAgentName] = useAgentName();
   const [settings] = useSettings();
   const account = useAccount(httpAccountApi);
+  const agentShownName = shownAgentName(agentName);
 
   // Only on arrival: `dispatch` is stable, and a later `done` comes from finishing, which leaves.
   useEffect(() => {
@@ -52,15 +54,15 @@ export function StartApp() {
       }
       greeting={
         <FloatieGreeting
-          name={shownAgentName(agentName)}
+          name={agentShownName}
           figure={(onSelect) => (
             <Floatie
-              name={shownAgentName(agentName)}
+              name={agentShownName}
               figure={(reducedMotion) => (
                 <BearFigure
                   config={bear}
                   lite={settings.lite}
-                  motion={reducedMotion ? "still" : "idle"}
+                  motion={motionFor("idle", { reducedMotion, lite: settings.lite })}
                 />
               )}
               onSelect={onSelect}
@@ -86,7 +88,7 @@ export function StartApp() {
         if (account.state.status === "signed-in") {
           await saveToAccount((path, init) => fetch(path, init), state.profile, {
             person,
-            agent: { name: shownAgentName(agentName), bear },
+            agent: { name: agentShownName, bear },
           });
         }
         router.push("/");
