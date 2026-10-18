@@ -85,6 +85,21 @@ jobs:
   web:
     runs-on: ubuntu-latest
     timeout-minutes: 6
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
+        env:
+          POSTGRES_USER: bernlife
+          POSTGRES_PASSWORD: bernlife
+          POSTGRES_DB: bernlife_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bernlife -d bernlife_ci"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      # A throwaway database, so the accounts tests run here instead of skipping.
+      DATABASE_URL: postgresql://bernlife:bernlife@localhost:5432/bernlife_ci
     defaults:
       run:
         working-directory: web
@@ -104,6 +119,9 @@ jobs:
           key: web-${{ runner.os }}-${{ hashFiles('web/bun.lock') }}
           restore-keys: web-${{ runner.os }}-
       - run: bun install --frozen-lockfile
+      - name: Migrate the throwaway database
+        working-directory: db
+        run: bun install --frozen-lockfile && bunx prisma migrate deploy
       - run: bun run typecheck
       - run: bun run lint
       - run: bun run format:check

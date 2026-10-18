@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "bun test",
-    "contract:types": "bun scripts/contract-types.ts"
+    "contract:types": "bun scripts/contract-types.ts",
+    "invite:create": "bun scripts/invite-create.ts"
   },
   "packageManager": "bun@1.4.2",
   "ignoreScripts": [
@@ -23,11 +24,13 @@
     "unrs-resolver"
   ],
   "dependencies": {
+    "@node-rs/argon2": "2.2.2",
     "@react-three/drei": "10.7.9",
     "@react-three/fiber": "9.8.2",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
     "next": "16.4.2",
+    "postgres": "3.4.9",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "three": "0.186.1",
