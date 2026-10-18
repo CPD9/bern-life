@@ -25,7 +25,7 @@
     },
     {
       "kind": "call",
-      "url_pattern": "^https://www\\.innosuisse\\.admin\\.ch/en/[a-z0-9-]*(call-for-projects|-call-with-)[a-z0-9-]*$"
+      "url_pattern": "^https://www\\.innosuisse\\.admin\\.ch/en/(?![a-z0-9-]*-results$)[a-z0-9-]*(call-for-projects|-call-with-)[a-z0-9-]*$"
     },
     {
       "kind": "service",
