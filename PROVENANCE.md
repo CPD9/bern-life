@@ -6,6 +6,7 @@ Where code, data and models come from. Update this file in the same PR that adds
 
 | Bern Life file | Adapted from | Licence | Notes |
 |---|---|---|---|
+| `engine/src/bernlife/lang.py`, `lang_markers.json` | `CPD9/apertus-redteam-graph` `track_1a/src/redteam/lang_profile.py`, `lang_markers.json` (e52f5e1) | Apache-2.0 | de/en/fr/it marker lists copied unchanged; Swiss German and Romansh dropped; falls back to `<html lang>` |
 | — | `CPD9/apertus-redteam-graph` `track_1a/src/redteam/cache.py`, `llm.py`, `llm_json.py`, `stats.py` | Apache-2.0 | Planned in briefs I2 and I3. Fill in the row when the port lands. |
 
 ## Models

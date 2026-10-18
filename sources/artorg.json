@@ -14,5 +14,47 @@
     "max_pages_per_site": 600,
     "delay_s": 1.0,
     "max_depth": 4
-  }
+  },
+  "page_types": [
+    {
+      "kind": "unit",
+      "url_pattern": "^https://www\\.artorg\\.unibe\\.ch/research/[a-z]+/index_(?:eng|ger|fre)\\.html$"
+    },
+    {
+      "kind": "project",
+      "url_pattern": "^https://www\\.artorg\\.unibe\\.ch/research/[a-z]+/(?:research|research_activities|projects)/[a-z0-9_]+/index_(?:eng|ger|fre)\\.html$"
+    },
+    {
+      "kind": "unit",
+      "url_pattern": "/(?:research|forschung)/group_[a-z0-9_]+/index_(?:eng|ger|fre)\\.html$"
+    },
+    {
+      "kind": "listing",
+      "url_pattern": "/(?:personen|people|persons|staff|mitarbeitende|members|team|ispm_team|group_members)/(?:index_(?:eng|ger|fre)\\.html)?$"
+    },
+    {
+      "kind": "listing",
+      "url_pattern": "/(?:group_[a-z0-9_]+|[a-z0-9_]+_staff|staff_[a-z0-9_]+|administration)/index_(?:eng|ger|fre)\\.html$"
+    },
+    {
+      "kind": "person",
+      "url_pattern": "/(?:personen|people|persons|staff|mitarbeitende|members|team|ispm_team|group_members)[a-z0-9_]*/(?:[a-z0-9_]+/)*[a-z]+_[a-z0-9_]+/index_(?:eng|ger|fre)\\.html$"
+    },
+    {
+      "kind": "person",
+      "url_pattern": "/(?:personen|people|persons|staff|mitarbeitende|members|team|ispm_team|group_members)/[a-z]+-[a-z-]+/?$"
+    },
+    {
+      "kind": "project",
+      "url_pattern": "/(?:all_research_projects|projects|projekte|research_projects|forschungsprojekte)/[a-z0-9_]+/index_(?:eng|ger|fre)\\.html$"
+    },
+    {
+      "kind": "unit",
+      "url_pattern": "/(?:research_groups|research_programs|forschungsgruppen|research_groups_and_themes|abteilungen|departments)/(?:[a-z]+/)?[a-z0-9_]+/index_(?:eng|ger|fre)\\.html$"
+    },
+    {
+      "kind": "infrastructure",
+      "url_pattern": "/(?:services|dienstleistungen|einrichtungen__instrumente|plattformen|platforms|core_facilities|facilities|geraete)/"
+    }
+  ]
 }

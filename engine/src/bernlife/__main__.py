@@ -6,7 +6,9 @@ Each command is a module with a `main(argv)` function; adding a command is one l
 import importlib
 import sys
 
-COMMANDS: dict[str, tuple[str, str]] = {}
+COMMANDS: dict[str, tuple[str, str]] = {
+    "crawl": ("bernlife.crawl_command", "fetch allowed pages of sources/*.json into the bundle"),
+}
 
 
 def usage() -> str:
