@@ -39,20 +39,33 @@ sha256 of its ONNX file.
    chunk rank per signal, never a sum, so more pages earn nothing.
 4. **Fusion:** reciprocal rank fusion, `Σ 1/(60 + rank)`; `score` carries the fused value and
    both ranks.
-5. **Unit cap:** at most 4 profiles of one unit in the top 10, where a profile's unit is the unit
+5. **Can it say why?** A candidate is shown only if at least one cited claim besides its name
+   shares a content word with the query, or the query names it (its whole name, or a titled name
+   such as "Prof. Muster" that is part of a person's name). Words are folded for case and accents,
+   need three letters, and a short de/en/fr list of function and generic search words ("and",
+   "der", "qui", "research", "forscht") never counts. The same test picks the claims the reason
+   cites, so every shown result's reason cites a claim that matches. This rule exists because E2's
+   final run added 1,241 people who are a bare name from a news or partner page. A passage they
+   appear in credits them, and without the rule they would fill the top ten with nothing to show.
+   The rule asks whether a result can show its reason, not how prominent it is, so it adds no
+   prominence signal.
+6. **Unit cap:** at most 4 profiles of one unit in the top 10, where a profile's unit is the unit
    of its source page (the evaluator's exposure definition). A capped profile waits until after
    the top ten. The cap relaxes only when no other unit has a candidate left. There is no
    prominence signal: no page count, no links.
-6. The top 20 are returned with their verified profiles. The body has no timings, so the same
+7. The top 20 are returned with their verified profiles and the display-only metrics of
+   `docs/metrics.md` (added last; they never reorder). The body has no timings, so the same
    query on the same snapshot gives the same bytes.
 
 ## Abstention
-`abstained: true, abstain_reason: "no_verifiable_source"` when either check fails:
+`abstained: true, abstain_reason: "no_verifiable_source"` when any check fails:
 - **Weak support:** no candidate reaches coverage 0.332 (the share of the query's word weight
   one chunk matches; a word absent from the corpus keeps its full weight) **or** cosine
   similarity 0.824.
 - **Premise check:** a person named after a title (`Prof.`, `Dr.`, `PD`, `Frau`, `Mme` …) must
   be among the candidates' person names. A premise is a hypothesis to check, not a fact.
+- **Nothing can say why:** no candidate passes rule 5 above. The first two checks look at every
+  candidate, as they did when the thresholds were set; this one comes after them.
 
 ### How the thresholds were set
 Only on `eval/dev.jsonl`: 12 queries written from pages no gold query uses (none of the gold
@@ -87,16 +100,31 @@ abstentions. The similarity margin is 0.004 wide: e5 similarities crowd together
 off-topic queries are thin evidence.
 
 ## Baseline (no model help), bundle `local-8f34ab8c1fba`
-`make eval` on the gold predictions: recall@10 0.31 [0.18, 0.48], MRR 0.29, traceable claims
-1674/1674, invented entities 0, invented queries abstained 8/10, false abstentions 0/38. By
-language: en 0.42, de 0.16, fr 0.18. Latency per query over the 48 gold queries (Apple M-series
-CPU, local Postgres): p50 69 ms, p95 115 ms, max 137 ms.
+`make eval` on the gold predictions, before and after rule 5:
+
+| Run | recall@10 | MRR | traceable | invented | invented abstained | false abstentions | en / de / fr recall |
+|---|---|---|---|---|---|---|---|
+| without rule 5 | 0.31 [0.18, 0.48] | 0.29 | 1674/1674 | 0 | 8/10 | 0/38 | 0.42 / 0.16 / 0.18 |
+| with rule 5 | 0.22 [0.10, 0.35] | 0.27 | 3086/3086 | 0 | 8/10 | 4/38 | 0.34 / 0.05 / 0.05 |
+
+On the dev set the rule raised MRR from 0.50 to 0.61 with recall unchanged at 0.67, and caused one
+false abstention: a French question whose answer's claims are German ("Geschichte psychotroper
+Substanzen" for "substances psychotropes") shares no word with it. That is the structural cost on
+gold too. A result whose only tie to the question is a passage, a relation span or a phrase in
+another language is no longer shown. Showing one would mean a reason that cites nothing that
+matches. Expansion terms (E3b) give such queries words that can match claims.
+
+Latency per query over the 48 gold queries (Apple M-series CPU, local Postgres): p50 125 ms,
+p95 177 ms, max 219 ms with rule 5, which reads every candidate's profile (p50 69 ms before).
 
 ## Limits
 - No stemming: "sensor" does not match "sensors" in full text; the vectors cover some of it.
 - Cross-language recall is low (dev translations 0 of 3; gold de 0.16, fr 0.18): e5-small alone
   does not bridge German or French questions to English pages. Query expansion (E3b) targets this.
 - An invented name without a title, or an invented project, is caught only by weak support.
-- Passages credit profiles only through spans that lie fully inside them.
+- Passages credit profiles only through spans that lie fully inside them, and since rule 5 a
+  credited profile still needs a matching claim of its own to be shown.
+- Rule 5 matches whole words: "sensors" does not match "biosensors", "psychotropes" does not
+  match "psychotroper".
 - The API contract has no unit filter, so only `sources` filters. `lang` is accepted and unused.
 - Query vectors are computed where the search runs; another CPU can move the last digits.

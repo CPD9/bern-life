@@ -10,6 +10,7 @@ import unittest
 import urllib.request
 from pathlib import Path
 
+from bernlife.abstain import NO_SOURCE
 from bernlife.database import connect
 from bernlife.load_command import load
 from bernlife.search import PostgresStore, search
@@ -80,16 +81,19 @@ class SearchDbTest(unittest.TestCase):
     def test_the_source_filter_applies_inside_the_scans(self):
         self.assertEqual(self.ids("glucose", ["demo"]), ["person-demo-cleo-beispiel"])
 
-    def test_a_passage_credits_the_people_whose_evidence_it_holds(self):
-        found = self.ids("skin-worn patch")
-        self.assertEqual(
-            found[:3],
-            [
-                "person-example-ada-muster",
-                "person-example-ben-beispiel",
-                "project-example-glucopatch",
-            ],
-        )
+    def test_a_passage_credits_only_profiles_with_a_matching_claim(self):
+        response = search("skin-worn patch, wearable", None, self.store, fake_embedder())
+        (only,) = response["results"]
+        self.assertEqual(only["profile"]["id"], "person-example-ada-muster")
+        self.assertEqual(only["reason"]["cites"], ["/fields/expertise/1"])
+        self.assertEqual(only["metrics"]["covers"], ["wearable"])
+
+    def test_a_bare_name_is_shown_only_when_the_query_names_it(self):
+        self.assertEqual(self.ids("Ben Beispiel skin-worn patch"), ["person-example-ben-beispiel"])
+
+    def test_nothing_that_can_explain_itself_abstains(self):
+        response = search("skin-worn patch", None, self.store, fake_embedder())
+        self.assertEqual((response["abstained"], response["abstain_reason"]), (True, NO_SOURCE))
 
     def test_an_invented_titled_name_abstains(self):
         response = search(

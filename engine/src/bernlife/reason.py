@@ -1,18 +1,17 @@
 """Why it matches, without a model: the profile's claim values, each cited by its pointer.
 
-A claim counts as matched when its value shares a word with the query. When none does (a match
-on meaning only), the reason says who the profile is instead, from its role, unit and first
-expertise, and still cites every value it shows. The text never says more than the cited values.
+The reason lists the claims that share a content word with the query (matching.py). Search shows
+a profile without such a claim only when the query names it; then the reason says who the profile
+is, from its role, unit and first expertise, and still cites every value it shows. The text never
+says more than the cited values.
 """
 
-import re
 from collections.abc import Mapping
 from typing import Any
 
-from bernlife.names import fold
+from bernlife.matching import matched_claims
 
 Profile = Mapping[str, Any]
-ORDER = ("expertise", "projects", "infrastructure", "services", "role", "unit")
 LABELS = {
     "expertise": "Expertise",
     "projects": "Projects",
@@ -24,21 +23,6 @@ LABELS = {
 FALLBACK = (("role", 0), ("unit", 0), ("expertise", 0))
 MAX_CLAIMS = 4
 MAX_TEXT = 400
-WORD = re.compile(r"[a-z]{3,}")
-
-
-def words(text: str) -> set[str]:
-    return set(WORD.findall(fold(text)))
-
-
-def matched_claims(query: str, profile: Profile) -> list[tuple[str, int]]:
-    wanted = words(query)
-    return [
-        (field, index)
-        for field in ORDER
-        for index, claim in enumerate(profile["fields"][field])
-        if words(claim["value"]) & wanted
-    ]
 
 
 def describing_claims(profile: Profile) -> list[tuple[str, int]]:

@@ -39,10 +39,10 @@ def main(argv: Sequence[str], env: Mapping[str, str] = os.environ) -> int:
         conn.autocommit = True
         store, embedder = PostgresStore(conn), e5_embedder(paths.data_dir(env))
         for row in sorted(read_jsonl(args.dev), key=lambda r: str(r["id"])):
-            ranked = assess(str(row["query"]), None, store, embedder).ranked
-            coverage = max((c.coverage for c in ranked), default=0.0)
-            similarity = max((c.similarity for c in ranked), default=0.0)
-            unmatched = unmatched_person(str(row["query"]), ranked)
+            found = assess(str(row["query"]), None, store, embedder).found
+            coverage = max((c.coverage for c in found), default=0.0)
+            similarity = max((c.similarity for c in found), default=0.0)
+            unmatched = unmatched_person(str(row["query"]), found)
             lines.append(row_line(row, coverage, similarity, unmatched))
     print("\n".join(lines))
     return 0
