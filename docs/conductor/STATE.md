@@ -3,26 +3,31 @@
 To continue on another account or machine: open the repo and say "You are the conductor. Read
 CLAUDE.md, docs/conductor/STATE.md and .claude/prompts/README.md, then tell me the next step."
 
-Updated: 2026-10-18 14:50 (conductor)
+Updated: 2026-10-18 15:10 (conductor)
 
 ## Deadline
 - Planned feature freeze Sun 18 Oct 23:00; Peter builds through the night. Submission and finals
   Mon 19 Oct (Yaseen's plan says finals 17:00; exact submission time to confirm).
 
 ## Wave
-**W0 done** (5102e7f). Gold set + pre-registration merged (90b9b72, #2): frozen.
-**Lanes v2** (#3): the world joins the hackathon. **Round A** starting: E1, W1, W2 (codes after W1
-PR 1), I1. Briefs index: `.claude/prompts/README.md`. Peter runs the sessions, max three at once on
-the 8 GB laptop.
+**Round A merged:** gold set (#2), lanes v2 (#8), W1 scaffold (#11), I1 schema + compose (#9).
+**Open:** I1 bundle fetch + CI database #13 (replaces #12), E1 crawler #14, W2 places PR A (commit
+28a7054, push pending). **Round B** briefs: E2, W3; I2 waits for the CSCS URL.
 
 ## Lanes and sessions
 | Lane | Brief | Port | Branch / PR | Status |
 |---|---|---|---|---|
-| engine | E1 crawler + snapshot | 3011 | — | plan reviewed by conductor 14:50 |
-| world shell | W1 shell, phone, Ask | 3012 | `4-web-scaffold` (#4) | plan reviewed by conductor 14:35 |
-| world 3D | W2 Bern map, places light up | 3014 | — | plan reviewed by conductor 14:35; codes after W1 PR 1 |
-| infra | I1 db, compose, CI | 3013 | — | Yaseen (`yaseenmohamd`) |
-| conductor | lanes v2 | — | `3-lanes-v2` (#3) | PR to open |
+| engine | E1 → E2 | 3011 | #14 | E1 green, reviewed; E2 next |
+| world shell | W1 PR 2 Ask, PR 3 phone | 3012 | — | split approved; contracts added in #15 |
+| world 3D | W2 PR A → PR B | 3014 | `5-bern-map` | PR A committed, push pending |
+| world home | W3 | 3015 | — | waits for a free session |
+| infra | I1 PR 2 → I2 | 3013 | #13 | green except GitGuardian (false positive) |
+| conductor | round B | — | `15-round-b` (#15) | PR to open |
+
+## E1 crawl (2026-10-18)
+3,013 pages, 22 hosts, 18.8 min, none blocked; 22/22 gold proof URLs; 40/40 spans verbatim; 4,033
+emails and 2,585 phone numbers redacted; kinds: 795 person, 183 unit, 114 project, 173
+infrastructure, 194 listing, 1,554 other; 7 UniBE hosts hit the 150-page cap.
 
 ## Decisions (dated; details in docs/decisions.md)
 - 2026-10-18 Name Bern Life; repo `CPD9/bern-life`, private.
@@ -52,9 +57,12 @@ the 8 GB laptop.
   `gh pr merge <n> --squash --admin` (squash keeps commits signed and history linear).
 - 14:30 ruleset tightened: `update` restricted to the admin via PR, code-owner review after the last
   push. Collaborators `yaseenmohamd`, `nik-milcevs` (write).
-- Add the `web` check to the ruleset once W1 PR 1 is on main.
+- `web` added to the required checks (2026-10-18, after #11).
 
 ## Findings that change the build
+- 2026-10-18 Stacked PR #12 closed when its base branch was deleted on merge; reopened as #13.
+  Rule added to `docs/git-workflow.md`.
+- 2026-10-18 E1 found staff emails and phone numbers in page text; redacted at crawl time.
 - 2026-10-18 14 of the 22 gold proof pages contain non-breaking spaces. Page text normalises
   Unicode whitespace (now in E1); the pre-registration matches under the same rule.
 

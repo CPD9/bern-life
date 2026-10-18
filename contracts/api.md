@@ -6,7 +6,7 @@ against a schema in this folder. POST is accepted from loopback only.
 
 | Method and path | Body | Response |
 |---|---|---|
-| `GET /api/health` | — | `{ "mode": "live" \| "replay" \| "mock", "models": {role: id}, "snapshot": "<bundle version>", "counts": {"pages": n, "profiles": n} }` |
+| `GET /api/health` | — | `health.schema.json` (mode, models per role, snapshot version, counts of pages, profiles, sources) |
 | `POST /api/search` | `{ "query": string, "lang"?: "de" \| "en" \| "fr", "sources"?: ["unibe" \| "artorg" \| "dcb"] }` | `result.schema.json` |
 | `POST /api/brief` | `{ "text": string }` (plain text; the web app extracts it from an uploaded PDF and does not keep the file) | `result.schema.json` with `brief_terms` |
 | `GET /api/profile/{id}` | — | `profile.schema.json` |

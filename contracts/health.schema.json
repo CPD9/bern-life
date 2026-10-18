@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "health.schema.json",
+  "title": "Health",
+  "description": "GET /api/health. The HUD shows only counts present here; a missing count is not shown, never guessed.",
+  "type": "object",
+  "required": [
+    "mode",
+    "snapshot",
+    "counts"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "mode": {
+      "enum": [
+        "live",
+        "replay",
+        "mock"
+      ]
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "snapshot": {
+      "type": "string"
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pages": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "profiles": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sources": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

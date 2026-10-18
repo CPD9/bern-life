@@ -15,6 +15,9 @@ issue #n ──► worktree ../bern-life-<n>, branch <n>-<slug> from origin/main
   Sessions are opened there; their work happens in their own worktree.
 - One branch per issue: `<issue>-<slug>`, from current `origin/main`:
   `git worktree add ../bern-life-<n> -b <n>-<slug> origin/main`.
+- **If a PR is stacked on another, retarget it to `main` before merging its base with
+  `--delete-branch`.** Deleting the base branch closes the stacked PR, and a closed PR cannot be
+  retargeted (PR #12 was lost this way and reopened as #13).
 - Never stack a branch on an open PR. If work depends on an unmerged PR, wait for the merge (W2
   waited for W1's scaffold) or ask the conductor to split differently.
 - Keep branches short: hours, not days. A PR is 150–400 lines where possible.
