@@ -47,6 +47,24 @@ export interface SearchResponse {
       lexical_rank?: number | null;
       vector_rank?: number | null;
     };
+    /**
+     * Display only: describes a result, never reorders it. null means it could not be computed (shown as a dash, never 0). Computed from verified claims and pages, never from a model's opinion.
+     */
+    metrics?: {
+      relevance: number | null;
+      evidence: number | null;
+      confidence: number | null;
+      covers: string[];
+      missing: string[];
+      completeness: {
+        filled: number;
+        of: 5;
+      };
+      novelty: {
+        new_unit: boolean;
+        adds: string[];
+      };
+    };
   }[];
   timings_ms?: {
     [k: string]: number;
