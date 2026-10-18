@@ -1,0 +1,43 @@
+import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import type { NavigatorFailure } from "./navigator-api";
+
+export function failureMessage(failure: NavigatorFailure): string {
+  switch (failure.kind) {
+    case "network":
+      return "We could not reach the Bern Life server. Check your connection and try again.";
+    case "engine":
+      return failure.error === "bad_request"
+        ? "The search could not read this request. Try rephrasing it."
+        : "The search is not answering right now. Try again in a moment.";
+    case "brief":
+      switch (failure.reason) {
+        case "empty":
+          return "Add a PDF or paste the text of your brief first.";
+        case "too_large":
+          return "The PDF is larger than 5 MB. Upload a smaller file or paste the text.";
+        case "not_pdf":
+          return "That file is not a PDF. Upload a PDF or paste the text.";
+        case "too_many_pages":
+          return "The PDF has more than 20 pages. Upload a shorter brief or paste the key part.";
+        case "unreadable":
+          return "We could not read that PDF. Try another file or paste the text.";
+        case "no_text":
+          return "We found no text in that PDF; it may be a scan. Paste the text instead.";
+      }
+  }
+}
+
+export function canRetry(failure: NavigatorFailure): boolean {
+  return failure.kind !== "brief";
+}
+
+export function abstainMessage(reason: SearchResponse["abstain_reason"]): string {
+  switch (reason) {
+    case "no_verifiable_source":
+      return "No public page we hold supports an answer to this. We would rather say so than guess.";
+    case "query_out_of_scope":
+      return "This is outside what the Navigator covers: research and expertise at the University of Bern, ARTORG and Diabetes Center Berne.";
+    default:
+      return "The search could not finish, so there is nothing we can show.";
+  }
+}

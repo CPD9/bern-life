@@ -1,10 +1,9 @@
 // The only module that reads process.env. Parsing is a pure function so tests pass their own
 // source; env() parses lazily on first use so a build that never calls the engine needs no values.
 
-export type Env = {
-  readonly engineUrl: URL | null;
-  readonly demoFixtures: boolean;
-};
+export type Env =
+  | { readonly demoFixtures: true; readonly engineUrl: URL | null }
+  | { readonly demoFixtures: false; readonly engineUrl: URL };
 
 type EnvSource = Readonly<Record<string, string | undefined>>;
 
@@ -28,11 +27,8 @@ function parseDemoFixtures(value: string | undefined): boolean {
   throw new InvalidEnvError("DEMO_FIXTURES");
 }
 
-function parseEngineUrl(value: string | undefined, required: boolean): URL | null {
-  if (value === undefined || value === "") {
-    if (required) throw new MissingEnvError("ENGINE_URL");
-    return null;
-  }
+function parseEngineUrl(value: string | undefined): URL | null {
+  if (value === undefined || value === "") return null;
   if (!URL.canParse(value)) throw new InvalidEnvError("ENGINE_URL");
   const url = new URL(value);
   if (url.protocol !== "http:" && url.protocol !== "https:") {
@@ -42,11 +38,10 @@ function parseEngineUrl(value: string | undefined, required: boolean): URL | nul
 }
 
 export function parseEnv(source: EnvSource): Env {
-  const demoFixtures = parseDemoFixtures(source.DEMO_FIXTURES);
-  return {
-    engineUrl: parseEngineUrl(source.ENGINE_URL, !demoFixtures),
-    demoFixtures,
-  };
+  const engineUrl = parseEngineUrl(source.ENGINE_URL);
+  if (parseDemoFixtures(source.DEMO_FIXTURES)) return { demoFixtures: true, engineUrl };
+  if (engineUrl === null) throw new MissingEnvError("ENGINE_URL");
+  return { demoFixtures: false, engineUrl };
 }
 
 let cached: Env | undefined;
