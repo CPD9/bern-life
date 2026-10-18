@@ -98,9 +98,12 @@ export async function sessionUser(db: Db, idHash: string, now: Date): Promise<Us
 }
 
 /** Everything of the user goes with the row: credential, sessions, profile, the invites they
- *  made (foreign keys cascade); an invite they redeemed keeps no link to them. */
+ *  made, their memberships and messages (foreign keys cascade); an invite they redeemed keeps no
+ *  link to them, and a conversation nobody is left in goes too. */
 export async function deleteUser(db: Db, userId: string): Promise<void> {
   await db`delete from app_user where id = ${userId}`;
+  await db`delete from conversation c
+           where not exists (select 1 from member m where m.conversation_id = c.id)`;
 }
 
 export async function saveProfile(
