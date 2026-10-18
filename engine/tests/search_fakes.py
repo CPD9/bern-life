@@ -164,9 +164,42 @@ def fake_embedder() -> Embedder:
     return Embedder(hashed_encode)
 
 
-def write_bundle(folder: Path, profiles: list[dict[str, object]] = PROFILES) -> None:
+class FakeChat:
+    """A connected model with canned replies per role, counting what it was asked."""
+
+    def __init__(self, replies: dict[str, object], backend: str = "replay"):
+        self.replies, self.backend = replies, backend
+        self.asked: list[str] = []
+
+    def chat(self, messages, *, role, prompt_version, temperature=0.0, seed=None, max_tokens=700):
+        self.asked.append(role)
+        reply = self.replies[role]
+        if isinstance(reply, Exception):
+            raise reply
+        return reply if isinstance(reply, str) else json.dumps(reply)
+
+    def models(self) -> dict[str, str]:
+        return dict.fromkeys(("expand", "enrich", "extract", "explain", "brief"), "fake-70b")
+
+
+KRYO_TERM = {
+    "value": "cryogenic electron microscopy of membrane proteins",
+    "term": "Kryo-Elektronenmikroskopie",
+    "kind": "translation",
+    "lang": "de",
+    "model": "fake-70b",
+    "prompt_version": "enrich-v1",
+}
+
+
+def write_bundle(
+    folder: Path,
+    profiles: list[dict[str, object]] = PROFILES,
+    terms: list[dict[str, object]] = (),
+) -> None:
     folder.mkdir(parents=True, exist_ok=True)
-    for name, records in (("pages", PAGES), ("profiles", profiles), ("relations", RELATIONS)):
+    files = (("pages", PAGES), ("profiles", profiles), ("relations", RELATIONS), ("terms", terms))
+    for name, records in files:
         text = "".join(json.dumps(record) + "\n" for record in records)
         (folder / f"{name}.jsonl").write_text(text)
     run(folder, fake_embedder())

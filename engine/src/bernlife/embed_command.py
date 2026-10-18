@@ -14,6 +14,7 @@ from bernlife import paths
 from bernlife.bundle_files import read_bundle, read_vectors, write_vectors
 from bernlife.chunks import Chunk, build_chunks, vector_key
 from bernlife.embed import Embedder, e5_embedder
+from bernlife.terms import enrichment_by_value
 
 DECIMALS = 6
 
@@ -37,7 +38,8 @@ def vector_rows(
 
 def run(bundle_dir: Path, embedder: Embedder) -> str:
     bundle = read_bundle(bundle_dir)
-    chunks = build_chunks(bundle.pages, bundle.profiles, bundle.relations)
+    enrichment = enrichment_by_value(bundle.terms)
+    chunks = build_chunks(bundle.pages, bundle.profiles, bundle.relations, enrichment)
     started = time.monotonic()
     rows, encoded = vector_rows(chunks, read_vectors(bundle_dir), embedder)
     write_vectors(bundle_dir, rows)

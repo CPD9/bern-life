@@ -18,15 +18,19 @@ import psycopg
 from bernlife import config, paths
 from bernlife.database import connect
 from bernlife.embed import MODEL_ID, Embedder, e5_embedder
-from bernlife.search import MODE, PostgresStore, search
+from bernlife.llm import Chat
+from bernlife.llm import connect as connect_model
+from bernlife.search import search
 from bernlife.server import SearchRequest, make_server
+from bernlife.store import PostgresStore
 
 log = logging.getLogger("bernlife.serve")
 
 
 class EngineApi:
-    def __init__(self, conn: psycopg.Connection, embedder: Embedder):
+    def __init__(self, conn: psycopg.Connection, embedder: Embedder, llm: Chat):
         self._store = PostgresStore(conn)
+        self._llm = llm
         self._conn = conn
         self._embedder = embedder
         self._lock = threading.Lock()
@@ -39,8 +43,8 @@ class EngineApi:
             ).fetchone()
             snapshot = self._store.snapshot()
         return {
-            "mode": MODE,
-            "models": {"embed": MODEL_ID},
+            "mode": self._llm.backend,
+            "models": {**self._llm.models(), "embed": MODEL_ID},
             "snapshot": snapshot,
             "counts": {"pages": pages, "profiles": profiles, "sources": sources},
         }
@@ -48,7 +52,9 @@ class EngineApi:
     def search(self, request: SearchRequest) -> dict[str, Any]:
         started = time.monotonic()
         with self._lock:
-            response = search(request.query, request.sources, self._store, self._embedder)
+            response = search(
+                request.query, request.sources, self._store, self._embedder, self._llm
+            )
         elapsed_ms = (time.monotonic() - started) * 1000
         log.info("search %.0f ms, %d results", elapsed_ms, len(response["results"]))
         return response
@@ -72,7 +78,7 @@ def main(argv: Sequence[str], env: Mapping[str, str] = os.environ) -> int:
     if PostgresStore(conn).snapshot() == "none":
         print("serve: no bundle loaded; run python -m bernlife load first", file=sys.stderr)
         return 1
-    api = EngineApi(conn, e5_embedder(Path(paths.data_dir(env))))
+    api = EngineApi(conn, e5_embedder(Path(paths.data_dir(env))), connect_model(env))
     server = make_server(api, config.engine_port(env))
     log.info("serving on http://127.0.0.1:%d", server.server_address[1])
     try:

@@ -19,7 +19,9 @@ from bernlife import config, paths
 from bernlife.database import connect
 from bernlife.embed import e5_embedder
 from bernlife.jsonl import read_jsonl, write_atomic
-from bernlife.search import PostgresStore, search
+from bernlife.llm import connect as connect_model
+from bernlife.search import search
+from bernlife.store import PostgresStore
 
 Search = Callable[[str], dict[str, Any]]
 
@@ -57,9 +59,10 @@ def main(argv: Sequence[str], env: Mapping[str, str] = os.environ) -> int:
     with connect(config.database_url(env)) as conn:
         conn.autocommit = True
         store, embedder = PostgresStore(conn), e5_embedder(paths.data_dir(env))
+        llm = connect_model(env)
         embedder.query("warm up")
-        lines, latencies = predict(gold, lambda query: search(query, None, store, embedder))
+        lines, latencies = predict(gold, lambda query: search(query, None, store, embedder, llm))
     text = "".join(json.dumps(line, ensure_ascii=False) + "\n" for line in lines)
     write_atomic(args.out, text.encode("utf-8"))
-    print(summary(lines, latencies), file=sys.stderr)
+    print(f"{summary(lines, latencies)}; model: {llm.backend}", file=sys.stderr)
     return 0
