@@ -13,7 +13,13 @@ from typing import Any
 from bernlife.jsonl import read_jsonl, write_atomic
 
 Record = dict[str, Any]
-IDENTITY_FILES = ("pages.jsonl", "profiles.jsonl", "relations.jsonl", "vectors.jsonl")
+IDENTITY_FILES = (
+    "pages.jsonl",
+    "profiles.jsonl",
+    "relations.jsonl",
+    "terms.jsonl",
+    "vectors.jsonl",
+)
 
 
 @dataclass(frozen=True)
@@ -21,6 +27,7 @@ class Bundle:
     pages: list[Record]
     profiles: list[Record]
     relations: list[Record]
+    terms: list[Record]
 
 
 @dataclass(frozen=True)
@@ -34,6 +41,7 @@ def read_bundle(folder: Path) -> Bundle:
         pages=read_jsonl(folder / "pages.jsonl"),
         profiles=read_jsonl(folder / "profiles.jsonl"),
         relations=read_jsonl(folder / "relations.jsonl"),
+        terms=read_jsonl(folder / "terms.jsonl"),
     )
 
 

@@ -57,7 +57,8 @@ stored by any writer:
   `position_method` is `address`.
 - The `verify_evidence_span` trigger rejects a claim or relation whose `span` is not in the page
   text (at `start` when given; offsets count characters, as Python does) with
-  `ERROR: evidence span not found in page` (SQLSTATE `23514`).
+  `ERROR: evidence span not found in page` (SQLSTATE `23514`). It reads the whole page text,
+  because a slice of a compressed long page can cut a UTF-8 character in half.
 
 Postgres puts the failing row into the error detail of the sha256 check. Log it on the server;
 never show it to a user.
