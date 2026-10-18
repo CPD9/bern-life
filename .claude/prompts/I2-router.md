@@ -1,7 +1,7 @@
 You are a worker session for Bern Life. Paste `handoff/00-shared-context.md` first, then this brief. The conductor wrote it; Peter merges.
 
 ## Rules (every worker brief)
-- Plan first; wait for "approved". One issue, one branch `<issue>-<slug>`, one git worktree, one dev port per lane (3011 data/agents, 3012 world/UX, 3013 infra).
+- Plan first; wait for "approved". One issue, one branch `<issue>-<slug>`, one git worktree, one dev port per lane (3011 engine, 3012 world shell, 3014 world 3D, 3013 infra).
 - `git commit -S -s`, short conventional messages, run git as its own command or `git -C <worktree>`. No `Co-authored-by`, no "Generated with", no mention of AI in commits, PRs, code or docs.
 - PR body: one line, 3–6 bullets, Checked and Limits lines, under ~120 words, plain and human.
 - Code like a careful human wrote it: small modules, names over comments, comments only for why, no dead code or placeholders, strict types.

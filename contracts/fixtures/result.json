@@ -34,7 +34,8 @@
             "page_url": "https://www.example-institute.test/team/ada-muster",
             "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
             "span": "Dr. Ada Muster",
-            "start": 0
+            "start": 0,
+            "fetched_at": "2026-10-18T12:00:00Z"
           }
         },
         "source_url": "https://www.example-institute.test/team/ada-muster",
@@ -47,7 +48,8 @@
                 "page_url": "https://www.example-institute.test/team/ada-muster",
                 "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
                 "span": "Group Leader, Sensor Lab",
-                "start": 15
+                "start": 15,
+                "fetched_at": "2026-10-18T12:00:00Z"
               }
             }
           ],
@@ -59,7 +61,8 @@
                 "page_url": "https://www.example-institute.test/team/ada-muster",
                 "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
                 "span": "Sensor Lab",
-                "start": 29
+                "start": 29,
+                "fetched_at": "2026-10-18T12:00:00Z"
               }
             },
             {
@@ -69,7 +72,8 @@
                 "page_url": "https://www.example-institute.test/team/ada-muster",
                 "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
                 "span": "Example Institute for Engineering",
-                "start": 40
+                "start": 40,
+                "fetched_at": "2026-10-18T12:00:00Z"
               }
             }
           ],
@@ -81,7 +85,8 @@
                 "page_url": "https://www.example-institute.test/team/ada-muster",
                 "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
                 "span": "continuous glucose monitoring",
-                "start": 84
+                "start": 84,
+                "fetched_at": "2026-10-18T12:00:00Z"
               }
             },
             {
@@ -91,7 +96,8 @@
                 "page_url": "https://www.example-institute.test/team/ada-muster",
                 "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
                 "span": "wearable biosensors",
-                "start": 115
+                "start": 115,
+                "fetched_at": "2026-10-18T12:00:00Z"
               }
             }
           ],
@@ -103,7 +109,8 @@
                 "page_url": "https://www.example-institute.test/team/ada-muster",
                 "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
                 "span": "GlucoPatch, a skin-worn sensor for people with type 1 diabetes",
-                "start": 179
+                "start": 179,
+                "fetched_at": "2026-10-18T12:00:00Z"
               }
             }
           ],
@@ -115,7 +122,8 @@
                 "page_url": "https://www.example-institute.test/team/ada-muster",
                 "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
                 "span": "cleanroom for thin-film sensor fabrication",
-                "start": 259
+                "start": 259,
+                "fetched_at": "2026-10-18T12:00:00Z"
               }
             }
           ],
