@@ -11,6 +11,7 @@ bun run lint
 bun run format:check
 bun run test
 bun run build
+bun run contract:types   # regenerate types after a change in contracts/
 ```
 
 Each lane runs the dev server on its own port (`CONTRIBUTING.md`). The server binds to 127.0.0.1.
@@ -24,10 +25,25 @@ Read only in `infrastructure/env.ts`.
 | `ENGINE_URL`    | Engine base URL, e.g. `http://127.0.0.1:8100`. Required unless `DEMO_FIXTURES=1`.           |
 | `DEMO_FIXTURES` | `1` renders the invented fixtures from `contracts/fixtures/` instead of calling the engine. |
 
+## Contract
+
+Engine responses are checked with Ajv against `contracts/*.schema.json`; a body that does not match
+is shown as an error, never half rendered. TypeScript types are generated from the same schemas into
+`infrastructure/contract-types.generated.ts`; a test fails when they are out of date.
+
+The browser talks only to this app's routes: `POST /api/search` (JSON) and `POST /api/brief` (form
+data with `text` or a PDF `file`, at most 5 MB and 20 pages, read in memory and not kept).
+
+In fixture mode a question that shares a word with the fixture query or its expanded terms
+("glucose", "CGM") returns `result.json`; any other question returns the abstained fixture; every
+brief returns `result-brief.json`.
+
 ## Layout
 
 - `app/` routes and the global design tokens (`globals.css`, day and night).
+- `app/navigator/` the Navigator on its own page, for the jury.
 - `features/shell/` HUD, tab bar and the full-screen frame (lane 2a).
+- `features/navigator/` Ask: question and project brief, result cards with evidence, aspect matrix.
 - `features/world/` the 3D scene that fills the frame (lane 2b).
 - `infrastructure/` code shared between features; the only place that reads `process.env`.
 
