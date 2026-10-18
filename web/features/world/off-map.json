@@ -1,0 +1,12 @@
+[
+  {
+    "source_id": "sipbb",
+    "host": "sipbb.ch",
+    "reason": "outside-bern"
+  },
+  {
+    "source_id": "snsf",
+    "host": "www.snf.ch",
+    "reason": "no-stored-address"
+  }
+]

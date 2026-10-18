@@ -26,7 +26,13 @@ const DAY: WorldPalette = {
   blockTones: ["#f2ede4", "#e9dfd0", "#dfe6ec", "#efe4d8"],
   trunk: "#8a6a4f",
   crown: "#6fae5d",
-  placeBuilding: { institute: "#f7f3ff", platform: "#eef7ff", centre: "#fff6ea" },
+  placeBuilding: {
+    institute: "#f7f3ff",
+    platform: "#eef7ff",
+    centre: "#fff6ea",
+    agency: "#eef7ee",
+    space: "#fff0f3",
+  },
   campus: "#cfe0bd",
 };
 
@@ -40,7 +46,13 @@ const NIGHT: WorldPalette = {
   blockTones: ["#6b7384", "#76706a", "#66737f", "#7a746c"],
   trunk: "#5a4a3a",
   crown: "#3f7350",
-  placeBuilding: { institute: "#a6a2c4", platform: "#93a9bf", centre: "#c2aa8e" },
+  placeBuilding: {
+    institute: "#a6a2c4",
+    platform: "#93a9bf",
+    centre: "#c2aa8e",
+    agency: "#93b39b",
+    space: "#bf9aa8",
+  },
   campus: "#4a6a50",
 };
 
