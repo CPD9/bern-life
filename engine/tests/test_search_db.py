@@ -227,6 +227,30 @@ class SearchDbTest(unittest.TestCase):
         self.assertNotIn("via", by_id["project-demo-carb-counter"])
         self.assertEqual(list(result_validator().iter_errors(response)), [])
 
+    def test_people_search_reads_the_same_with_opportunities_loaded(self):
+        before = json.dumps(search("glucose monitoring", None, self.store, fake_embedder()))
+        folder = Path(tempfile.mkdtemp())
+        write_bundle(folder, opportunities=True)
+        self.assertEqual(load(self.conn, folder, SOURCES), [])
+        after = search("glucose monitoring", None, self.store, fake_embedder())
+        self.assertNotIn("call-", json.dumps([r["profile"]["id"] for r in after["results"]]))
+        self.assertEqual(
+            json.dumps(after).replace(after["versions"]["snapshot"], "S"),
+            before.replace(json.loads(before)["versions"]["snapshot"], "S"),
+        )
+
+    def test_a_kinds_search_finds_the_call_with_its_verbatim_deadline(self):
+        folder = Path(tempfile.mkdtemp())
+        write_bundle(folder, opportunities=True)
+        self.assertEqual(load(self.conn, folder, SOURCES), [])
+        response = search("glucose monitoring", None, self.store, fake_embedder(), kinds=["call"])
+        (only,) = response["results"]
+        self.assertEqual(only["profile"]["id"], "call-example-glucose-monitoring-call-2027")
+        self.assertEqual(
+            only["profile"]["fields"]["deadline"][0]["evidence"]["span"], "Deadline: 31.03.2027"
+        )
+        self.assertEqual(list(result_validator().iter_errors(response)), [])
+
 
 if __name__ == "__main__":
     unittest.main()

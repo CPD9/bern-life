@@ -15,6 +15,8 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Protocol
 
+from bernlife.extract_records import PROFILE_KINDS
+
 LANGS = ("de", "en", "fr")
 MAX_BODY = 16_384
 MAX_BRIEF_BODY = 65_536
@@ -37,6 +39,7 @@ class SearchRequest:
     query: str
     lang: str | None
     sources: list[str] | None
+    kinds: list[str] | None = None
 
 
 class Api(Protocol):
@@ -52,9 +55,10 @@ def parse_search(body: bytes, source_ids: set[str]) -> SearchRequest:
         payload = json.loads(body)
     except ValueError:
         raise BadRequest("not JSON") from None
-    if not isinstance(payload, dict) or set(payload) - {"query", "lang", "sources"}:
+    if not isinstance(payload, dict) or set(payload) - {"query", "lang", "sources", "kinds"}:
         raise BadRequest("unexpected fields")
     query, lang, sources = payload.get("query"), payload.get("lang"), payload.get("sources")
+    kinds = payload.get("kinds")
     if not isinstance(query, str) or not 0 < len(query.strip()) <= MAX_QUERY:
         raise BadRequest("query")
     if "\x00" in query:
@@ -65,7 +69,16 @@ def parse_search(body: bytes, source_ids: set[str]) -> SearchRequest:
         not isinstance(sources, list) or not sources or not set(sources) <= source_ids
     ):
         raise BadRequest("sources")
-    return SearchRequest(query.strip(), lang, sorted(set(sources)) if sources else None)
+    if kinds is not None and (
+        not isinstance(kinds, list) or not kinds or not set(kinds) <= set(PROFILE_KINDS)
+    ):
+        raise BadRequest("kinds")
+    return SearchRequest(
+        query.strip(),
+        lang,
+        sorted(set(sources)) if sources else None,
+        sorted(set(kinds)) if kinds else None,
+    )
 
 
 def parse_brief(body: bytes) -> str:

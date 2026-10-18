@@ -4,17 +4,21 @@ Full text uses the `simple` configuration (no stemming, no language guess), weig
 word by BM25's inverse document frequency, so common words in any language weigh little without a
 stopword list. `coverage` is the share of the query's word weight a chunk matches; a word found
 nowhere in the corpus keeps its full weight, so a query about something absent covers little.
-The vector half is an HNSW cosine scan. Source filters sit inside both scans.
+The vector half is an HNSW cosine scan. Source and kind filters sit inside both scans, and the
+word statistics count only the chunks a search over those kinds may read, so adding
+opportunities leaves a people search's numbers as they were.
 
 A profile chunk stands for its profile. A passage stands for the page's own subject and for every
 profile whose claim or relation span lies inside it. Each profile keeps its best rank per signal,
 never a sum, so having more pages gives no advantage.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import psycopg
 
+from bernlife.chunks import chunk_prefixes
 from bernlife.load_rows import vector_literal
 
 POOL = 200
@@ -24,20 +28,27 @@ WITH query_terms AS (
     SELECT DISTINCT lexeme
       FROM unnest(tsvector_to_array(to_tsvector('simple', %(query)s))) AS lexeme
 ),
-corpus AS (SELECT count(*)::float8 AS n FROM chunk),
+corpus AS (
+    SELECT count(*)::float8 AS n FROM chunk
+     WHERE split_part(id, '-', 1) = ANY(%(prefixes)s::text[])
+),
 weighted AS (
     SELECT t.lexeme, q.tq, ln(1 + (corpus.n - df.n + 0.5) / (df.n + 0.5)) AS idf
       FROM query_terms t
      CROSS JOIN corpus
      CROSS JOIN LATERAL (SELECT to_tsquery('simple', quote_literal(t.lexeme)) AS tq) q
-     CROSS JOIN LATERAL (SELECT count(*)::float8 AS n FROM chunk WHERE tsv @@ q.tq) df
+     CROSS JOIN LATERAL (
+           SELECT count(*)::float8 AS n FROM chunk
+            WHERE tsv @@ q.tq AND split_part(id, '-', 1) = ANY(%(prefixes)s::text[])
+     ) df
 ),
 total AS (SELECT sum(idf) AS idf FROM weighted),
 lexical AS (
     SELECT c.id, sum(w.idf * ts_rank(c.tsv, w.tq, 1)) AS score, sum(w.idf) AS matched
       FROM chunk c JOIN weighted w ON c.tsv @@ w.tq
-     WHERE %(sources)s::text[] IS NULL OR c.page_url = ANY(ARRAY(
-           SELECT url FROM page WHERE source_id = ANY(%(sources)s::text[])))
+     WHERE split_part(c.id, '-', 1) = ANY(%(prefixes)s::text[])
+       AND (%(sources)s::text[] IS NULL OR c.page_url = ANY(ARRAY(
+           SELECT url FROM page WHERE source_id = ANY(%(sources)s::text[]))))
      GROUP BY c.id
      ORDER BY score DESC, c.id
      LIMIT %(pool)s
@@ -45,8 +56,9 @@ lexical AS (
 nearest AS MATERIALIZED (
     SELECT c.id, c.embedding <=> %(vector)s::vector AS distance
       FROM chunk c
-     WHERE %(sources)s::text[] IS NULL OR c.page_url = ANY(ARRAY(
-           SELECT url FROM page WHERE source_id = ANY(%(sources)s::text[])))
+     WHERE split_part(c.id, '-', 1) = ANY(%(prefixes)s::text[])
+       AND (%(sources)s::text[] IS NULL OR c.page_url = ANY(ARRAY(
+           SELECT url FROM page WHERE source_id = ANY(%(sources)s::text[]))))
      ORDER BY c.embedding <=> %(vector)s::vector
      LIMIT %(pool)s
 ),
@@ -81,7 +93,7 @@ owners AS (
 SELECT o.signal, o.profile_id, min(o.rank) AS best_rank, max(o.strength) AS strength,
        p.kind::text, p.name, pg.unit
   FROM owners o
-  JOIN profile p ON p.id = o.profile_id
+  JOIN profile p ON p.id = o.profile_id AND p.kind::text = ANY(%(kinds)s::text[])
   JOIN page pg ON pg.url = p.source_url
  GROUP BY o.signal, o.profile_id, p.kind, p.name, pg.unit
  ORDER BY o.signal, best_rank, o.profile_id
@@ -100,8 +112,19 @@ class Hit:
 
 
 def fetch_hits(
-    conn: psycopg.Connection, query: str, vector: list[float], sources: list[str] | None
+    conn: psycopg.Connection,
+    query: str,
+    vector: list[float],
+    sources: list[str] | None,
+    kinds: Sequence[str],
 ) -> list[Hit]:
-    params = {"query": query, "vector": vector_literal(vector), "sources": sources, "pool": POOL}
+    params = {
+        "query": query,
+        "vector": vector_literal(vector),
+        "sources": sources,
+        "kinds": list(kinds),
+        "prefixes": chunk_prefixes(kinds),
+        "pool": POOL,
+    }
     rows = conn.execute(STATEMENT, params).fetchall()
     return [Hit(row[0], row[1], row[2], float(row[3] or 0.0), *row[4:]) for row in rows]
