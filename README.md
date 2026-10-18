@@ -63,8 +63,9 @@ the page, word for word, becomes a claim. The check is plain string matching in 
 
 **Ask in your words.** "blood sugar sensor" is widened with terms such as CGM or Blutzuckersensor,
 shown as search terms and never as facts about anyone. Full-text and vector search are fused into
-one ranking in Postgres. The search step is being built now; until it lands, the app answers from
-the invented fixture.
+one ranking in Postgres. The engine searches locally today (`python -m bernlife load`, then
+`python -m bernlife serve`; see [`docs/search.md`](docs/search.md)); `make fetch && make run`
+comes with the bundle.
 
 <img src="docs/assets/explain-brief.svg" alt="A company brief: a PDF becomes needs tied to their sentences, matched experts with coverage and gaps, and places lighting up on the map of Bern" width="800">
 
@@ -84,11 +85,10 @@ not kept. Lighting up the matching places on the map comes with the world on the
 
 ## Where it runs
 
-Everything is self-hosted. Apertus v1.5 is reached only through an OpenAI-compatible endpoint you
-configure: the Swiss CSCS API for the demo, or vLLM on your own hardware with the scripts in
-`infra/runpod/`. Every model call is cached by content hash, so a replay needs no GPU and gives the
-same bytes. The map is drawn in three.js without map tiles, and the app loads no fonts or scripts
-from elsewhere at run time, so it also runs air-gapped.
+Apertus runs where you choose: the CSCS API for the demo, or vLLM on your own hardware
+(`infra/runpod/`). The rest is self-hosted. Every model call is cached, so a replay needs no model
+and no GPU. The map is drawn in three.js without map tiles, and the app loads no fonts or scripts
+from elsewhere at run time, so with vLLM on your own hardware it runs air-gapped.
 
 ## The numbers
 
