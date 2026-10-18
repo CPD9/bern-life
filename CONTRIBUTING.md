@@ -17,6 +17,7 @@ git worktree add ../bern-life-<issue> -b <issue>-<slug> origin/main
 | 2b world 3D | `web/features/world/`, `web/public/world/` | 3014 | 8104 | `bernlife_l2` |
 | 2c world home | `web/features/onboarding/`, `web/features/avatar/`, `web/features/home/` | 3015 | 8105 | `bernlife_l2` |
 | 3 infra / hosting (Yaseen) | `db/`, `infra/`, `Makefile`, `Dockerfile*`, `compose.yaml`, `.github/workflows/`, `eval/src/` | 3013 | 8103 | `bernlife_l3` |
+| backend (Yaseen) | `db/` migrations, `web/features/accounts/`, `web/features/messages/`, `web/app/api/auth/`, `web/app/api/messages/`, `web/infrastructure/session.ts` | 3016 | — | `bernlife_l3` |
 | conductor | `contracts/`, `eval/gold.jsonl`, `eval/PREREGISTRATION.md`, `docs/`, `handoff/`, `.claude/prompts/` | — | — | — |
 
 Edit only what your brief names. A change to `contracts/` goes through the conductor first, because
