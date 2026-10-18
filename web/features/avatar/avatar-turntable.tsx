@@ -1,18 +1,23 @@
 "use client";
 
-// The figure on a plate, turned by dragging or with the arrow keys. It does not spin by itself:
-// the canvas renders only when the angle changes, and nothing moves that the player did not move.
+// The bear on a plate, turned by dragging or with the arrow keys. It never spins by itself; it
+// breathes and blinks while standing and waddles when Walk is on. Under the OS reduce-motion
+// setting it stands still, and the canvas renders only when something changes.
 
 import { Canvas } from "@react-three/fiber";
 import { type KeyboardEvent, type PointerEvent, useRef, useState } from "react";
 import { type BearConfig } from "./bear-config";
 import { BearFigure } from "./bear-figure";
+import { motionFor } from "./bear-motion";
 import { RADIANS_PER_PIXEL, angleAfterKey, degreesOf, turnLabel } from "./turntable-turn";
+import { useReducedMotion } from "./use-reduced-motion";
 
 const PLATE_COLOUR = "#d9e2ea";
 
 export function AvatarTurntable({ config, lite }: { config: BearConfig; lite: boolean }) {
   const [angle, setAngle] = useState(0);
+  const [walking, setWalking] = useState(false);
+  const motion = motionFor(walking ? "walk" : "idle", useReducedMotion());
   const dragX = useRef<number | null>(null);
   const degrees = degreesOf(angle);
 
@@ -74,11 +79,19 @@ export function AvatarTurntable({ config, lite }: { config: BearConfig; lite: bo
             <meshLambertMaterial color={PLATE_COLOUR} />
           </mesh>
           <group rotation-y={angle}>
-            <BearFigure config={config} lite={lite} />
+            <BearFigure config={config} lite={lite} motion={motion} />
           </group>
         </Canvas>
       </div>
       <figcaption className="text-muted text-sm">Drag to spin, or use the arrow keys</figcaption>
+      <button
+        type="button"
+        aria-pressed={walking}
+        onClick={() => setWalking((on) => !on)}
+        className="bg-chip rounded-pill aria-pressed:bg-chip-selected aria-pressed:text-chip-selected-ink px-3 py-1 text-sm font-bold"
+      >
+        Walk
+      </button>
     </figure>
   );
 }
