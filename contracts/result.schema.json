@@ -244,6 +244,65 @@
                 }
               }
             }
+          },
+          "via": {
+            "description": "When the result's own claims do not match the question but a related project or unit does: the relation (its verbatim span on its page) and the related profile's matching claims, inline, so both sentences are shown and checked.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "span",
+              "page_url",
+              "page_sha256",
+              "related_profile_id",
+              "related_name",
+              "related_claims"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "leads",
+                  "works_on",
+                  "member_of"
+                ]
+              },
+              "span": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "page_url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "page_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "fetched_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "related_profile_id": {
+                "type": "string",
+                "pattern": "^(person|unit|project|infrastructure)-[a-z0-9-]+$"
+              },
+              "related_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "related_claims": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "profile.schema.json#/$defs/claim"
+                }
+              }
+            }
           }
         }
       }
