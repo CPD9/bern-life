@@ -5,7 +5,8 @@ export type ConversationSummary = {
   id: string;
   kind: "direct" | "group";
   title: string | null;
-  members: Person[];
+  /** Everyone in the conversation but you, by handle. */
+  others: Person[];
   last: { body: string; at: string; author: Person } | null;
   unread: number;
 };

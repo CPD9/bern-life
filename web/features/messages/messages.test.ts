@@ -69,8 +69,8 @@ describe.skipIf(testDb === null)("messages against a throwaway database", () => 
       "unknown_handle",
     );
     const summaries = await conversationsOf(sql, c);
-    expect(summaries.map((s) => [s.kind, s.title, s.members.map((m) => m.handle)])).toEqual([
-      ["group", "Bern Life", ["ada", "bea", "cem"]],
+    expect(summaries.map((s) => [s.kind, s.title, s.others.map((m) => m.handle)])).toEqual([
+      ["group", "Bern Life", ["ada", "bea"]],
     ]);
   });
 

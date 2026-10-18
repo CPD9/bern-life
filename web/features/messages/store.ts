@@ -35,7 +35,8 @@ export async function conversationsOf(db: Db, me: string): Promise<ConversationS
     select c.id, c.kind::text as kind, c.title,
       (select coalesce(json_agg(json_build_object('handle', u.handle, 'displayName', u.display_name)
                                 order by u.handle), '[]'::json)
-         from member m join app_user u on u.id = m.user_id where m.conversation_id = c.id) as members,
+         from member m join app_user u on u.id = m.user_id
+         where m.conversation_id = c.id and m.user_id <> ${me}) as others,
       (select json_build_object('body', x.body, 'at', x.created_at,
                                 'author', json_build_object('handle', a.handle, 'displayName', a.display_name))
          from message x join app_user a on a.id = x.author_id
