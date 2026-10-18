@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { AppEventName } from "@/infrastructure/app-events";
 import { copyOf, resultFixture } from "@/test/fixtures";
 import { ResultCard } from "./result-card";
 
@@ -43,5 +44,16 @@ describe("ResultCard", () => {
       "wearable biosensors (cited)",
       "GlucoPatch (cited)",
     ]);
+  });
+
+  test("opening a claim's evidence is a story event; closing it is not", () => {
+    const heard: AppEventName[] = [];
+    render(
+      <ResultCard result={firstResult()} events={{ emit: (name) => void heard.push(name) }} />,
+    );
+    const claim = screen.getAllByRole("button", { name: "Group Leader" })[0]!;
+    fireEvent.click(claim);
+    fireEvent.click(claim);
+    expect(heard).toEqual(["evidence_opened"]);
   });
 });

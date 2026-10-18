@@ -16,6 +16,7 @@ const schemaFiles = [
   { file: "result.schema.json", declaresShared: false },
   { file: "profile.schema.json", declaresShared: true },
   { file: "health.schema.json", declaresShared: false },
+  { file: "quest.schema.json", declaresShared: false },
 ];
 
 async function generateContractTypes(): Promise<string> {

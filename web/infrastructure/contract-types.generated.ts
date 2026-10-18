@@ -142,3 +142,156 @@ export interface Health {
     sources?: number;
   };
 }
+
+/**
+ * Story mode: a guided journey whose quests complete only on app events, never by self-report. Each quest names the case criterion it demonstrates.
+ */
+export interface Story {
+  id: string;
+  title: string;
+  /**
+   * @minItems 1
+   */
+  quests: [
+    {
+      id: string;
+      title: string;
+      goal: string;
+      criterion:
+        | "c1-right-people"
+        | "c2-wording"
+        | "c3-traceable"
+        | "c4-structured"
+        | "c5-sources"
+        | "c6-extend"
+        | "ethics-abstain"
+        | "stretch";
+      optional?: boolean;
+      /**
+       * @minItems 1
+       */
+      steps: [
+        {
+          id: string;
+          text: string;
+          /**
+           * What the floatie says if the player asks.
+           */
+          hint?: string;
+          done_when:
+            | "settled"
+            | "office_ready"
+            | "search_answered"
+            | "search_answered_other_language"
+            | "brief_answered"
+            | "evidence_opened"
+            | "report_made"
+            | "lobby_entered"
+            | "abstained_seen"
+            | "source_added"
+            | "numbers_seen"
+            | "opportunity_saved"
+            | "connection_saved"
+            | "library_item_saved"
+            | "message_sent"
+            | "garage_visited";
+        },
+        ...{
+          id: string;
+          text: string;
+          /**
+           * What the floatie says if the player asks.
+           */
+          hint?: string;
+          done_when:
+            | "settled"
+            | "office_ready"
+            | "search_answered"
+            | "search_answered_other_language"
+            | "brief_answered"
+            | "evidence_opened"
+            | "report_made"
+            | "lobby_entered"
+            | "abstained_seen"
+            | "source_added"
+            | "numbers_seen"
+            | "opportunity_saved"
+            | "connection_saved"
+            | "library_item_saved"
+            | "message_sent"
+            | "garage_visited";
+        }[]
+      ];
+    },
+    ...{
+      id: string;
+      title: string;
+      goal: string;
+      criterion:
+        | "c1-right-people"
+        | "c2-wording"
+        | "c3-traceable"
+        | "c4-structured"
+        | "c5-sources"
+        | "c6-extend"
+        | "ethics-abstain"
+        | "stretch";
+      optional?: boolean;
+      /**
+       * @minItems 1
+       */
+      steps: [
+        {
+          id: string;
+          text: string;
+          /**
+           * What the floatie says if the player asks.
+           */
+          hint?: string;
+          done_when:
+            | "settled"
+            | "office_ready"
+            | "search_answered"
+            | "search_answered_other_language"
+            | "brief_answered"
+            | "evidence_opened"
+            | "report_made"
+            | "lobby_entered"
+            | "abstained_seen"
+            | "source_added"
+            | "numbers_seen"
+            | "opportunity_saved"
+            | "connection_saved"
+            | "library_item_saved"
+            | "message_sent"
+            | "garage_visited";
+        },
+        ...{
+          id: string;
+          text: string;
+          /**
+           * What the floatie says if the player asks.
+           */
+          hint?: string;
+          done_when:
+            | "settled"
+            | "office_ready"
+            | "search_answered"
+            | "search_answered_other_language"
+            | "brief_answered"
+            | "evidence_opened"
+            | "report_made"
+            | "lobby_entered"
+            | "abstained_seen"
+            | "source_added"
+            | "numbers_seen"
+            | "opportunity_saved"
+            | "connection_saved"
+            | "library_item_saved"
+            | "message_sent"
+            | "garage_visited";
+        }[]
+      ];
+    }[]
+  ];
+}

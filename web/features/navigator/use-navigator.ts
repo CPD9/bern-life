@@ -3,9 +3,11 @@
 // One controller per Navigator. The phone's Ask app and the agent (round C) drive the same
 // instance, so a search started by either shows up in the same input and result list.
 import { useCallback, useRef, useState } from "react";
+import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { SearchRequest } from "@/infrastructure/engine-types";
 import type { BriefInput, NavigatorApi, NavigatorFailure } from "./navigator-api";
+import { answerEvents } from "./navigator-events";
 
 export type NavigatorRequest =
   { kind: "search"; search: SearchRequest } | { kind: "brief"; brief: BriefInput };
@@ -25,7 +27,10 @@ export type NavigatorController = {
   retry(): void;
 };
 
-export function useNavigator(api: NavigatorApi): NavigatorController {
+export function useNavigator(
+  api: NavigatorApi,
+  events: AppEventSink = appEvents,
+): NavigatorController {
   const [state, setState] = useState<NavigatorState>({ status: "idle" });
   const [draft, setDraft] = useState("");
   const latest = useRef(0);
@@ -39,13 +44,14 @@ export function useNavigator(api: NavigatorApi): NavigatorController {
           ? await api.search(request.search)
           : await api.brief(request.brief);
       if (id !== latest.current) return;
-      setState(
-        outcome.ok
-          ? { status: "done", request, response: outcome.response }
-          : { status: "failed", request, failure: outcome.failure },
-      );
+      if (!outcome.ok) {
+        setState({ status: "failed", request, failure: outcome.failure });
+        return;
+      }
+      setState({ status: "done", request, response: outcome.response });
+      for (const event of answerEvents(request, outcome.response)) events.emit(event);
     },
-    [api],
+    [api, events],
   );
 
   return {

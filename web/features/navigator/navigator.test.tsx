@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import type { AppEventName, AppEventSink } from "@/infrastructure/app-events";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { SearchRequest } from "@/infrastructure/engine-types";
 import { abstainedFixture, briefFixture, copyOf, resultFixture } from "@/test/fixtures";
@@ -11,12 +12,13 @@ type HarnessProps = {
   api: NavigatorApi;
   fixtureMode?: boolean;
   onMakeReport?: (response: SearchResponse) => boolean;
+  events?: AppEventSink;
 };
 
-function Harness({ api, fixtureMode = false, onMakeReport }: HarnessProps) {
+function Harness({ api, fixtureMode = false, onMakeReport, events }: HarnessProps) {
   return (
     <Navigator
-      controller={useNavigator(api)}
+      controller={useNavigator(api, events)}
       fixtureMode={fixtureMode}
       {...(onMakeReport ? { onMakeReport } : {})}
     />
@@ -141,5 +143,17 @@ describe("Navigator", () => {
     render(<Harness api={answering(abstainedFixture)} onMakeReport={() => true} />);
     await ask("quantum origami");
     expect(screen.queryByRole("button", { name: "Make a report" })).toBeNull();
+  });
+
+  test("answers become story events through the injected sink", async () => {
+    const heard: AppEventName[] = [];
+    const sink = { emit: (name: AppEventName) => void heard.push(name) };
+    const { unmount } = render(<Harness api={answering(resultFixture)} events={sink} />);
+    await ask("Glukosesensoren für Kinder");
+    expect(heard).toEqual(["search_answered", "search_answered_other_language"]);
+    unmount();
+    render(<Harness api={answering(abstainedFixture)} events={sink} />);
+    await ask("Prof. Nobody");
+    expect(heard).toEqual(["search_answered", "search_answered_other_language", "abstained_seen"]);
   });
 });
