@@ -9,10 +9,6 @@ describe("idlePose", () => {
     expect([round(pose.lift), round(pose.glow), round(pose.halo)]).toEqual([0.04, 1.1, 1.05]);
     expect([pose.lean, pose.ripple.opacity]).toEqual([0, 0]);
   });
-
-  test("the wings flutter three times a second around a slightly raised rest", () => {
-    expect([0, 1 / 12, 3 / 12].map((s) => round(idlePose(s).wings))).toEqual([0.3, 0.65, -0.05]);
-  });
 });
 
 describe("listeningPose", () => {

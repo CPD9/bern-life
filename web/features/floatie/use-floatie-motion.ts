@@ -21,7 +21,6 @@ export const PART = {
   halo: "floatie-halo",
   light: "floatie-light",
   ripple: "floatie-ripple",
-  wings: ["floatie-wing-left", "floatie-wing-right"],
   eyes: ["floatie-eye-left", "floatie-eye-right"],
 } as const;
 
@@ -37,9 +36,6 @@ function applyPose(root: Group, pose: FloatiePose) {
   const part = (name: string): Object3D | undefined => root.getObjectByName(name);
   root.position.y = pose.lift;
   part(PART.body)?.rotation.set(pose.lean, 0, 0);
-  PART.wings.forEach((name, index) =>
-    part(name)?.rotation.set(0, (index === 0 ? -1 : 1) * pose.wings, 0),
-  );
   PART.eyes.forEach((name) => part(name)?.scale.set(1, pose.eyes, 1));
   part(PART.halo)?.scale.setScalar(pose.halo);
 

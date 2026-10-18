@@ -1,17 +1,16 @@
 // Lumi from primitives: a little bear cub made of honey-gold light, with round ears, a cream
-// muzzle and two pairs of see-through wings. All its fur shares one glowing material, so the whole
+// muzzle and little paws. All its fur shares one glowing material, so the whole
 // bear brightens together. The glow is layered, see-through spheres plus a small warm light, so it
 // needs no bloom pass and works the same in lite graphics, only with fewer segments.
 
 import { useEffect, useMemo } from "react";
-import { DoubleSide, type Material, MeshLambertMaterial, MeshStandardMaterial } from "three";
+import { type Material, MeshLambertMaterial, MeshStandardMaterial } from "three";
 import { type FloatieState } from "./floatie-motion";
 import { PART, useFloatieMotion } from "./use-floatie-motion";
 
 const FUR = "#ffcf7a";
 const EMBER = "#ffae3c";
 const HALO = "#ffd36b";
-const WING = "#fff0c8";
 const FACE = "#4a3220";
 const CHEEK = "#ff9f8a";
 const MUZZLE = "#fff1d2";
@@ -41,36 +40,6 @@ function Glow({
         toneMapped={false}
       />
     </mesh>
-  );
-}
-
-/** A fairy's pair on each side: a large upper wing and a small lower one, hinged at the body. */
-function Wing({ side, segments }: { side: -1 | 1; segments: number }) {
-  const blades: readonly [number, number, number, number][] = [
-    // x, y, length, tilt
-    [0.13, 0.04, 0.13, 0.5],
-    [0.1, -0.05, 0.08, -0.35],
-  ];
-  return (
-    <group name={PART.wings[side < 0 ? 0 : 1]} position={[side * 0.08, -0.06, -0.06]}>
-      {blades.map(([x, y, length, tilt]) => (
-        <mesh
-          key={y}
-          position={[side * x, y, 0]}
-          rotation={[0, 0, side * tilt]}
-          scale={[1, 0.45, 0.08]}
-        >
-          <sphereGeometry args={[length, segments, segments]} />
-          <meshBasicMaterial
-            color={WING}
-            transparent
-            opacity={0.7}
-            side={DoubleSide}
-            toneMapped={false}
-          />
-        </mesh>
-      ))}
-    </group>
   );
 }
 
@@ -166,8 +135,6 @@ export function FloatieFigure({
         ))}
         <Ears fur={fur} segments={segments} />
         <Face segments={segments} />
-        <Wing side={-1} segments={segments} />
-        <Wing side={1} segments={segments} />
       </group>
       <group name={PART.halo}>
         <Glow radius={CORE_RADIUS * 1.25} opacity={0.2} segments={segments} />
