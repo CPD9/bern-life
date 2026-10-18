@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { defaultAvatar } from "./avatar-config";
+import { defaultBear } from "./bear-config";
 import { avatarKey, createAvatarStore } from "./avatar-store";
 
 function memoryStorage(initial: Record<string, string> = {}) {
@@ -20,11 +20,11 @@ const throwing = {
 };
 
 const chosen = {
-  body: "slim",
-  skin: "tone-7",
-  hair: "curly",
+  kind: "red-panda",
+  fur: "ginger",
+  face: "wink",
   outfit: "field-work",
-  accent: "teal",
+  accessory: "backpack",
 } as const;
 
 describe("createAvatarStore", () => {
@@ -35,19 +35,37 @@ describe("createAvatarStore", () => {
     expect(createAvatarStore(() => storage).get()).toEqual(chosen);
   });
 
-  test("a corrupted or outdated value is ignored and the default avatar shown", () => {
+  test("a corrupted or unknown value is ignored and the default bear shown", () => {
     const corrupted = memoryStorage({ [avatarKey]: "{not json" });
-    expect(createAvatarStore(() => corrupted).get()).toEqual(defaultAvatar);
+    expect(createAvatarStore(() => corrupted).get()).toEqual(defaultBear);
 
-    const outdated = memoryStorage({ [avatarKey]: JSON.stringify({ ...chosen, hair: "mohawk" }) });
-    expect(createAvatarStore(() => outdated).get()).toEqual(defaultAvatar);
+    const unknown = memoryStorage({ [avatarKey]: JSON.stringify({ kind: "dragon" }) });
+    expect(createAvatarStore(() => unknown).get()).toEqual(defaultBear);
+  });
+
+  test("a saved human figure from before the bears comes back as a matching bear", () => {
+    const human = {
+      body: "slim",
+      skin: "tone-9",
+      hair: "curly",
+      outfit: "lab-coat",
+      accent: "teal",
+    };
+    const storage = memoryStorage({ [avatarKey]: JSON.stringify(human) });
+    expect(createAvatarStore(() => storage).get()).toEqual({
+      kind: "brown-bear",
+      fur: "cocoa",
+      face: "happy",
+      outfit: "lab-coat",
+      accessory: "none",
+    });
   });
 
   test("blocked storage keeps the avatar in memory and still notifies", () => {
     const store = createAvatarStore(() => throwing);
     let notified = 0;
     store.subscribe(() => notified++);
-    expect(store.get()).toEqual(defaultAvatar);
+    expect(store.get()).toEqual(defaultBear);
     store.set(chosen);
     expect(store.get()).toEqual(chosen);
     expect(notified).toBe(1);
