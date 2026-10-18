@@ -6,11 +6,11 @@
 
 import { Canvas } from "@react-three/fiber";
 import { type KeyboardEvent, type PointerEvent, useRef, useState } from "react";
+import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { type BearConfig } from "./bear-config";
 import { BearFigure } from "./bear-figure";
 import { motionFor } from "./bear-motion";
 import { RADIANS_PER_PIXEL, angleAfterKey, degreesOf, turnLabel } from "./turntable-turn";
-import { useReducedMotion } from "./use-reduced-motion";
 
 const PLATE_COLOUR = "#d9e2ea";
 
