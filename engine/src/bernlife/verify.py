@@ -22,7 +22,7 @@ from bernlife.extract_records import (
     Subject,
 )
 from bernlife.names import fold, looks_like_person, mentions
-from bernlife.spans import Located, from_name_line, locate
+from bernlife.spans import Located, beside_name, from_name_line, locate
 
 SPAN_MAX = 300
 VALUE_MAX = 200
@@ -53,7 +53,8 @@ class Verified:
     relations: tuple[Relation, ...]
     dropped: Counter[str]
     verdicts: Counter[tuple[str, str, str]]  # (method, field, "kept" or the drop reason)
-    adjusted: Counter[str]  # kept spans the page text replaced: case_only, name_to_role
+    adjusted: Counter[str]  # kept spans the page text replaced: case_only, role_below_name,
+    # role_beside_name
 
 
 def verify_all(
@@ -92,7 +93,7 @@ def verify_claim(candidate: Candidate, page: Page, own: Subject | None) -> Claim
         return found
     if not _belongs(subject, found.span, own):
         is_role = candidate.field == "role" and subject.kind == "person"
-        widened = from_name_line(found.span, page.text, subject.name, SPAN_MAX) if is_role else None
+        widened = _widen_role(found.span, page.text, subject.name) if is_role else None
         if widened is None:
             return "wrong_page"
         found = widened
@@ -152,6 +153,12 @@ def _found(span: str, value: str | None, page: Page) -> Located | str:
     return found
 
 
+def _widen_role(span: str, text: str, name: str) -> Located | None:
+    """The tighter span first: a role beside the name on its line, then one on a line below."""
+    beside = beside_name(span, text, name, SPAN_MAX)
+    return beside if beside is not None else from_name_line(span, text, name, SPAN_MAX)
+
+
 def _tally(
     method: str,
     field: str,
@@ -165,8 +172,11 @@ def _tally(
         return
     verdicts[method, field, "kept"] += 1
     stored = result.evidence.span
-    if stored != proposed:
-        adjusted["case_only" if stored.casefold() == proposed.casefold() else "name_to_role"] += 1
+    if stored.casefold() == proposed.casefold():
+        if stored != proposed:
+            adjusted["case_only"] += 1
+    else:
+        adjusted["role_below_name" if "\n" in stored else "role_beside_name"] += 1
 
 
 def _belongs(subject: Subject, span: str, own: Subject | None) -> bool:

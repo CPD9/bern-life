@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import replace
 
 from bernlife.extract_records import Candidate, RelationCandidate, Subject
 from bernlife.extract_selectors import person_subject
@@ -80,6 +81,33 @@ class VerifyClaimTest(unittest.TestCase):
         role = claim(CARA, "Lab Manager", "Lab Manager", crowded.url, "role")
         self.assertEqual(verify_claim(role, crowded, None), "wrong_page")
 
+    def test_a_team_line_role_runs_from_the_name_to_its_parenthesis(self):
+        text = (
+            "Back to Projects\n"
+            "Project team: Ada Muster (Founder & CEO), Ben Beispiel (Founder & CSO), "
+            "Cara Probst & Dora Demo (Projektleiter)\n"
+            "Projektteam: Prof. Dr. Erika Erfunden, Beispielspital und Universität Bern "
+            "(Projektleitung); Dr. Finn Fiktiv\n"
+            "Partners: Gina Gedacht (Founder & CEO)"
+        )
+        project = page(LAB, "The Demo Project - DCB", text, "project")
+
+        def role(name: str, value: str) -> str:
+            person = person_subject("example", name)
+            result = verify_claim(claim(person, value, value, LAB, "role"), project, None)
+            return result if isinstance(result, str) else result.evidence.span
+
+        self.assertEqual(role("Ada Muster", "Founder & CEO"), "Ada Muster (Founder & CEO)")
+        self.assertEqual(role("Ben Beispiel", "Founder & CSO"), "Ben Beispiel (Founder & CSO)")
+        self.assertEqual(role("Ada Muster", "Founder & CSO"), "wrong_page")
+        self.assertEqual(role("Cara Probst", "Projektleiter"), "wrong_page")
+        self.assertEqual(role("Dora Demo", "Projektleiter"), "Dora Demo (Projektleiter)")
+        self.assertEqual(
+            role("Erika Erfunden", "Projektleitung"),
+            "Erika Erfunden, Beispielspital und Universität Bern (Projektleitung)",
+        )
+        self.assertEqual(role("Gina Gedacht", "Founder & CEO"), "wrong_page")
+
     def test_a_case_only_difference_stores_the_page_text_when_unique(self):
         candidate = claim(ADA, "University of Bern", "university of bern", ADA_PAGE.url)
         kept = verify_claim(candidate, ADA_PAGE, ADA)
@@ -144,6 +172,18 @@ class VerifyAllTest(unittest.TestCase):
             },
         )
         self.assertEqual(dict(result.adjusted), {"case_only": 1})
+
+    def test_counts_widened_roles_by_where_the_name_stood(self):
+        team = page(
+            TEAM_PAGE.url, TEAM_PAGE.title, "Project team: Cara Probst (Lab Manager)", "listing"
+        )
+        pages = {TEAM_PAGE.url: TEAM_PAGE, "x": team}
+        candidates = [
+            claim(CARA, "Lab Manager", "Lab Manager", TEAM_PAGE.url, "role"),
+            Candidate(CARA, "role", "Lab Manager", "Lab Manager", "model", "x"),
+        ]
+        result = verify_all(candidates, [], {**pages, "x": replace(team, url="x")}, {})
+        self.assertEqual(dict(result.adjusted), {"role_below_name": 1, "role_beside_name": 1})
 
 
 class RecheckTest(unittest.TestCase):

@@ -36,10 +36,13 @@ by string matching. The model proposes; the verifier decides.
    A stored span is always cut from the page text, never taken from the model, and code may adjust
    it in only two ways (`spans.py`). A span that differs from the page only in case is stored as the
    page's own text, and only when that case-insensitive match is unique on the page. A person's role
-   whose span does not name them is kept only if its line lies at most two lines after a line naming
-   the person. Its evidence then runs from the start of that name line to the end of the role line
-   (≤ 300 characters), so it still names the person. This covers team lists that put the role under
-   the name.
+   whose span does not name them is kept in only two cases. On a `Project team:` / `Projektteam:`
+   line, the role must stand in parentheses after the person's name with no other person's name in
+   between; the evidence runs from the start of the name to the closing parenthesis. Otherwise the
+   role's line must lie at most two lines after a line naming the person; the evidence runs from the
+   start of that name line to the end of the role line. Either span is at most 300 characters and
+   still names the person. The report counts these as `case_only`, `role_beside_name` and
+   `role_below_name`.
 
    Model failures are counted by their marker (`model_timeout`, `cache_miss`, ...); the run goes
    on. A `leads` relation needs a leadership word in its span (head, lead, Leiter, director, ...);

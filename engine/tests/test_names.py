@@ -17,6 +17,7 @@ class NamesTest(unittest.TestCase):
         self.assertTrue(looks_like_person("Carla Pou i Miralbell"))
         self.assertTrue(looks_like_person("Philipp V'kovski-Kratzel"))
         self.assertFalse(looks_like_person("QUMEA AG"))
+        self.assertFalse(looks_like_person("Universität Bern"))
         self.assertFalse(looks_like_person("Sensing & Monitoring Lab"))
         self.assertFalse(looks_like_person("Ada"))
         self.assertFalse(looks_like_person("Room 3010 Bern"))

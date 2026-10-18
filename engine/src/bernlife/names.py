@@ -16,7 +16,7 @@ TITLES = frozenset(
 PARTICLES = frozenset({"von", "van", "de", "der", "den", "di", "da", "del", "della", "le", "la"})
 PARTICLES |= frozenset({"du", "des", "dos", "zu", "zum", "ten", "ter", "y", "i", "e", "al", "el"})
 NOT_PEOPLE = frozenset(
-    {"ag", "gmbh", "inc", "ltd", "sa", "llc", "university", "universität", "université"}
+    {"ag", "gmbh", "inc", "ltd", "sa", "llc", "university", "universitat", "universite"}
     | {"institute", "institut", "center", "centre", "zentrum", "lab", "laboratory", "group"}
     | {"team", "department", "foundation", "stiftung", "hospital", "spital", "clinic", "klinik"}
 )
