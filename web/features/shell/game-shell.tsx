@@ -37,7 +37,7 @@ export function GameShell({
       <header className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <div className="pointer-events-auto">{hud}</div>
       </header>
-      <div className="pointer-events-none absolute top-[max(5.5rem,calc(env(safe-area-inset-top)+5.5rem))] left-4 flex flex-col items-start gap-3">
+      <div className="pointer-events-none absolute top-[calc(env(safe-area-inset-top)+10.5rem)] left-4 sm:top-[calc(env(safe-area-inset-top)+5.5rem)] flex flex-col items-start gap-3">
         <div className="pointer-events-auto flex flex-col items-start gap-3">{side}</div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
