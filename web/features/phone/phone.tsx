@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { PhoneHome } from "./phone-home";
 
 export type PhoneApp = {
@@ -15,15 +15,17 @@ type PhoneProps = {
   open: boolean;
   onClose: () => void;
   apps: readonly PhoneApp[];
+  /** The open app, null for the home screen. Owned by the caller so it can open an app directly. */
+  appId: string | null;
+  onAppChange: (appId: string | null) => void;
   now: Date | null;
 };
 
 // A native modal dialog: the page behind it is inert and Escape closes it. Focus goes back to
 // whatever opened the phone (the Phone tab) explicitly, rather than trusting each browser to.
-export function Phone({ open, onClose, apps, now }: PhoneProps) {
+export function Phone({ open, onClose, apps, appId, onAppChange, now }: PhoneProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
-  const [appId, setAppId] = useState<string | null>(null);
   const app = apps.find((candidate) => candidate.id === appId);
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export function Phone({ open, onClose, apps, now }: PhoneProps) {
   }, [open]);
 
   function handleClose() {
-    setAppId(null);
+    onAppChange(null);
     onClose();
     opener.current?.focus();
   }
@@ -64,7 +66,7 @@ export function Phone({ open, onClose, apps, now }: PhoneProps) {
               <header className="border-panel-border flex items-center gap-2 border-b px-3 py-3 pr-28 sm:pr-3">
                 <button
                   type="button"
-                  onClick={() => setAppId(null)}
+                  onClick={() => onAppChange(null)}
                   className="rounded-pill text-primary px-3 py-1.5 font-bold"
                 >
                   <span aria-hidden="true">‹ </span>Apps
@@ -74,7 +76,7 @@ export function Phone({ open, onClose, apps, now }: PhoneProps) {
               <div className="flex-1 overflow-y-auto px-4 py-4">{app.content}</div>
             </section>
           ) : (
-            <PhoneHome now={now} apps={apps} onOpen={setAppId} />
+            <PhoneHome now={now} apps={apps} onOpen={onAppChange} />
           )}
         </div>
       </div>
