@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { httpAccountApi } from "@/features/accounts/account-api";
 import { useAccount } from "@/features/accounts/use-account";
 import { AgentEditor } from "@/features/avatar/agent-editor";
+import { shownAgentName } from "@/features/avatar/agent-name";
 import { AvatarEditor } from "@/features/avatar/avatar-editor";
 import { AvatarTurntable } from "@/features/avatar/avatar-turntable";
 import { useAvatar } from "@/features/avatar/use-avatar";
@@ -18,7 +19,7 @@ import { saveToAccount } from "./save-to-account";
 
 // Composes onboarding with the avatar editors, which are another feature: your look is a person,
 // and your first agent is a bear. A player who finished before starts again at the first step with
-// their answers kept. Finishing while signed in also saves them to the account.
+// their answers kept. Finishing while signed in also saves them and both looks to the account.
 export function StartApp() {
   const router = useRouter();
   const [state, dispatch] = useOnboarding();
@@ -59,7 +60,10 @@ export function StartApp() {
       }
       onDone={async () => {
         if (account.state.status === "signed-in") {
-          await saveToAccount((path, init) => fetch(path, init), state.profile, bear);
+          await saveToAccount((path, init) => fetch(path, init), state.profile, {
+            person,
+            agent: { name: shownAgentName(agentName), bear },
+          });
         }
         router.push("/");
       }}

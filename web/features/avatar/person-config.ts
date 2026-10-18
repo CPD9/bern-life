@@ -48,7 +48,7 @@ export const accentOptions = [
   { id: "coral", label: "Coral", colour: "#e0674f" },
   { id: "amber", label: "Amber", colour: "#e0a030" },
   { id: "teal", label: "Teal", colour: "#1f9a9a" },
-  { id: "rose", label: "Rose", colour: "#d4588a" },
+  { id: "rose", label: "Rose", colour: "#da5e90" },
   { id: "slate", label: "Slate", colour: "#56677a" },
 ] as const satisfies readonly Swatch<string>[];
 
@@ -90,6 +90,15 @@ export function shufflePerson(random: () => number): PersonConfig {
     outfit: pick(outfitOptions, random),
     accent: pick(accentOptions, random),
   };
+}
+
+/**
+ * The HUD badge wears the person's accent, read from the stored look on each render. Every accent
+ * reaches 4.5:1 with dark or white ink, so the initial on it always reads.
+ */
+export function personBadgeColour(person: PersonConfig): string {
+  const accent = accentOptions.find((option) => option.id === person.accent) ?? accentOptions[0];
+  return accent.colour;
 }
 
 function idFrom<Id extends string>(options: readonly Option<Id>[], value: unknown): Id | null {
