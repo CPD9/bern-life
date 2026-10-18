@@ -1,124 +1,145 @@
-// A low-poly figure from three.js primitives only, feet on y = 0 and facing +z. Low segment counts
-// and flat shading give the faceted look and keep it cheap enough to stand on the map later.
+// A low-poly toy figure from three.js primitives only, feet on y = 0 and facing +z: a big head on a
+// small body, short wide legs in chunky shoes, and big round hands. Low segment counts and flat
+// shading give the faceted look and keep it cheap enough to stand on the map later.
 
 import { type ThreeElements } from "@react-three/fiber";
 import { type ReactNode } from "react";
 import { DoubleSide } from "three";
 import { type AvatarConfig } from "./avatar-config";
+import { AvatarFace } from "./avatar-face";
 import { Hair } from "./avatar-hair";
 import { meshParameters } from "./avatar-mesh";
 
-const SEGMENTS = 10;
-const SOLE = 0.05;
-const EYE_COLOUR = "#1f2329";
+const SEGMENTS = 8;
+/** Feet are squashed low-poly spheres: round, chunky and slightly turned out. */
+const FOOT_SQUASH = 0.62;
+/** Arms hang slightly away from the body, like a toy's. */
+const ARM_SPREAD = 0.45;
 
 type Part = { colour: string; shadows: boolean; children: ReactNode };
-
-function Material({ colour }: { colour: string }) {
-  return <meshLambertMaterial color={colour} flatShading />;
-}
 
 function Solid({ colour, shadows, children, ...placement }: Part & ThreeElements["mesh"]) {
   return (
     <mesh castShadow={shadows} {...placement}>
       {children}
-      <Material colour={colour} />
+      <meshLambertMaterial color={colour} flatShading />
+    </mesh>
+  );
+}
+
+function OpenCylinder({
+  colour,
+  shadows,
+  y,
+  top,
+  bottom,
+  height,
+  gap,
+}: {
+  colour: string;
+  shadows: boolean;
+  y: number;
+  top: number;
+  bottom: number;
+  height: number;
+  gap: number;
+}) {
+  // Open towards +z, so the shirt shows through the front of a coat or vest.
+  return (
+    <mesh castShadow={shadows} position-y={y} scale={[1, 1, 0.8]}>
+      <cylinderGeometry
+        args={[top, bottom, height, SEGMENTS, 1, true, gap / 2, Math.PI * 2 - gap]}
+      />
+      <meshLambertMaterial color={colour} flatShading side={DoubleSide} />
     </mesh>
   );
 }
 
 export function AvatarFigure({ config, shadows }: { config: AvatarConfig; shadows: boolean }) {
   const p = meshParameters(config);
-  const legCentre = SOLE + p.legs.radius + p.legs.length / 2;
-  const hipTop = SOLE + p.legs.length + p.legs.radius * 2;
-  const torsoCentre = hipTop - p.torso.radius * 0.6 + p.torso.radius + p.torso.length / 2;
-  const shoulder = torsoCentre + p.torso.length / 2 + p.torso.radius * 0.4;
-  const headCentre = torsoCentre + p.torso.length / 2 + p.torso.radius + p.head.radius * 0.85;
+  const footRadius = p.legs.radius * 1.45;
+  const footHeight = footRadius * 2 * FOOT_SQUASH;
+  const legBottom = footHeight * 0.6;
+  const legCentre = legBottom + p.legs.radius + p.legs.length / 2;
+  const hipTop = legBottom + p.legs.length + p.legs.radius * 2;
+  const torsoCentre = hipTop - p.torso.radius * 0.5 + p.torso.radius + p.torso.length / 2;
+  const shoulder = torsoCentre + p.torso.length / 2 + p.torso.radius * 0.3;
+  const headCentre = torsoCentre + p.torso.length / 2 + p.torso.radius + p.head.radius * 0.75;
   const legX = p.legs.gap / 2 + p.legs.radius;
-  const armX = p.torso.radius + p.arms.radius * 0.9;
-  const torsoFront = p.torso.radius * 0.72;
+  const armLength = p.arms.length + p.arms.radius * 2;
 
   return (
     <group>
       {[-1, 1].map((side) => (
         <group key={side}>
-          <Solid colour={p.shoes} shadows={shadows} position={[side * legX, 0.04, 0.03]}>
-            <boxGeometry args={[p.legs.radius * 2.2, 0.08, 0.2]} />
+          <Solid
+            colour={p.shoes}
+            shadows={shadows}
+            position={[side * legX, footHeight / 2, 0.05]}
+            rotation-y={side * 0.2}
+            scale={[1, FOOT_SQUASH, 1.3]}
+          >
+            <sphereGeometry args={[footRadius, 6, 4]} />
           </Solid>
           <Solid colour={p.legs.colour} shadows={shadows} position={[side * legX, legCentre, 0]}>
-            <capsuleGeometry args={[p.legs.radius, p.legs.length, 3, SEGMENTS]} />
+            <capsuleGeometry args={[p.legs.radius, p.legs.length, 2, SEGMENTS]} />
           </Solid>
-          <Solid
-            colour={p.arms.colour}
-            shadows={shadows}
-            position={[side * armX, shoulder - p.arms.length / 2 - p.arms.radius * 0.2, 0]}
-            rotation-z={side * 0.08}
+          <group
+            position={[side * p.torso.radius * 0.85, shoulder, 0]}
+            rotation-z={side * ARM_SPREAD}
           >
-            <capsuleGeometry args={[p.arms.radius, p.arms.length, 3, SEGMENTS]} />
-          </Solid>
+            <Solid colour={p.arms.colour} shadows={shadows} position-y={-armLength / 2}>
+              <capsuleGeometry args={[p.arms.radius, p.arms.length, 2, SEGMENTS]} />
+            </Solid>
+            <Solid
+              colour={p.hands.colour}
+              shadows={shadows}
+              position-y={-armLength - p.hands.radius * 0.5}
+            >
+              <icosahedronGeometry args={[p.hands.radius, 1]} />
+            </Solid>
+          </group>
         </group>
       ))}
-      <Solid
-        colour={p.torso.colour}
-        shadows={shadows}
-        position-y={torsoCentre}
-        scale={[1, 1, 0.75]}
-      >
-        <capsuleGeometry args={[p.torso.radius, p.torso.length, 3, SEGMENTS]} />
+      <Solid colour={p.torso.colour} shadows={shadows} position-y={torsoCentre} scale={[1, 1, 0.8]}>
+        <capsuleGeometry args={[p.torso.radius, p.torso.length, 2, SEGMENTS]} />
       </Solid>
       {p.coat && (
-        <mesh castShadow={shadows} position-y={shoulder - p.coat.length / 2} scale={[1, 1, 0.78]}>
-          <cylinderGeometry
-            args={[
-              p.torso.radius * 1.1,
-              p.torso.radius * 1.3,
-              p.coat.length,
-              SEGMENTS,
-              1,
-              true,
-              0.4,
-              Math.PI * 2 - 0.8,
-            ]}
-          />
-          <meshLambertMaterial color={p.coat.colour} flatShading side={DoubleSide} />
-        </mesh>
+        <OpenCylinder
+          colour={p.coat.colour}
+          shadows={shadows}
+          y={shoulder - p.coat.length / 2}
+          top={p.torso.radius * 1.08}
+          bottom={p.torso.radius * 1.35}
+          height={p.coat.length}
+          gap={0.9}
+        />
       )}
       {p.vest && (
-        <mesh castShadow={shadows} position-y={torsoCentre} scale={[1, 1, 0.78]}>
-          <cylinderGeometry
-            args={[
-              p.torso.radius * 1.08,
-              p.torso.radius * 1.12,
-              p.torso.length + p.torso.radius,
-              SEGMENTS,
-              1,
-              true,
-              0.5,
-              Math.PI * 2 - 1,
-            ]}
-          />
-          <meshLambertMaterial color={p.vest.colour} flatShading side={DoubleSide} />
-        </mesh>
+        <OpenCylinder
+          colour={p.vest.colour}
+          shadows={shadows}
+          y={torsoCentre}
+          top={p.torso.radius * 1.06}
+          bottom={p.torso.radius * 1.1}
+          height={p.torso.length + p.torso.radius}
+          gap={1.1}
+        />
       )}
       {p.tie && (
-        <Solid colour={p.tie.colour} shadows={false} position={[0, torsoCentre, torsoFront]}>
-          <boxGeometry args={[0.05, p.torso.length * 0.8, 0.02]} />
+        <Solid
+          colour={p.tie.colour}
+          shadows={false}
+          position={[0, torsoCentre + p.torso.radius * 0.2, p.torso.radius * 0.8]}
+        >
+          <boxGeometry args={[0.05, p.torso.length + p.torso.radius * 0.8, 0.02]} />
         </Solid>
       )}
       <group position-y={headCentre}>
         <Solid colour={p.head.colour} shadows={shadows}>
-          <sphereGeometry args={[p.head.radius, SEGMENTS, 8]} />
+          <icosahedronGeometry args={[p.head.radius, 2]} />
         </Solid>
-        {[-1, 1].map((side) => (
-          <Solid
-            key={side}
-            colour={EYE_COLOUR}
-            shadows={false}
-            position={[side * p.head.radius * 0.35, 0.01, p.head.radius * 0.92]}
-          >
-            <sphereGeometry args={[p.head.radius * 0.1, 6, 4]} />
-          </Solid>
-        ))}
+        <AvatarFace headRadius={p.head.radius} eyes={p.eyes} />
         <Hair hair={p.hair} headRadius={p.head.radius} />
       </group>
     </group>
