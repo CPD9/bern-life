@@ -14,7 +14,8 @@ define require_lane_name
 	  *) echo "refusing: NAME must be l1, l2 or l3 (got '$(NAME)')" >&2; exit 2 ;; esac
 endef
 
-.PHONY: help fetch db-up db-migrate db-reset-throwaway db-drop-throwaway test live
+.PHONY: help fetch db-up db-migrate db-reset-throwaway db-drop-throwaway test live eval eval-fixture
+.PHONY: pack-cache bundle
 
 help:
 	@echo "make fetch                    download and verify the snapshot bundle into data/bundle/"
@@ -24,6 +25,10 @@ help:
 	@echo "make db-drop-throwaway NAME=l3    drop bernlife_l3"
 	@echo "make test                     contracts, engine, infra, db schema, web (if present)"
 	@echo "make live ARGS=<command>      stop unless the model endpoint in .env answers, then run it"
+	@echo "make eval [PRED=<file>]       score predictions against eval/gold.jsonl (default: the bundle's)"
+	@echo "make eval-fixture             the same on the invented fixture in eval/tests/fixtures/"
+	@echo "make pack-cache               fold recorded model calls into the bundle's cache pack"
+	@echo "make bundle [BUNDLE_VERSION=bundle-YYYYMMDD-N]   check and pack the snapshot bundle"
 
 fetch:
 	$(PYTHON) infra/fetch_bundle.py
@@ -52,6 +57,7 @@ test: db/node_modules
 	$(PYTHON) -m ruff format --check .
 	$(PYTHON) -m unittest discover -s engine/tests
 	$(PYTHON) -m unittest discover -s infra/tests -t .
+	PYTHONPATH=eval/src $(PYTHON) -m unittest discover -s eval/tests
 	cd db && bun run validate
 	@if [ -f web/package.json ]; then \
 	  cd web && bun run typecheck && bun run lint && bun run test; \
@@ -64,3 +70,27 @@ live:
 	@set -a; [ ! -f .env ] || . ./.env; set +a; \
 	export BERNLIFE_BACKEND=live PYTHONPATH=engine/src; \
 	$(PYTHON) -m bernlife health && { [ -z "$(ARGS)" ] || $(PYTHON) -m bernlife $(ARGS); }
+
+# The evaluator is separate code from the search: it reads the bundle's files and imports nothing
+# from engine/. The bundle sits where make fetch puts it.
+BUNDLE ?= $(or $(BERNLIFE_DATA_DIR),data)/bundle
+PRED ?= $(BUNDLE)/predictions.jsonl
+EVALUATOR = PYTHONPATH=eval/src $(PYTHON) -m evaluator --gold eval/gold.jsonl
+FIXTURE = eval/tests/fixtures
+
+eval:
+	$(EVALUATOR) --predictions $(PRED) --pages $(BUNDLE)/pages.jsonl --profiles $(BUNDLE)/profiles.jsonl
+
+eval-fixture:
+	$(EVALUATOR) --predictions $(FIXTURE)/predictions.jsonl --pages $(FIXTURE)/pages.jsonl \
+	  --profiles $(FIXTURE)/profiles.jsonl --out eval/out/fixture
+
+# The bundle is built where the data is: crawl, extraction, predictions and the model cache under
+# BERNLIFE_DATA_DIR. pack-cache never deletes; `python -m infra.pack_cache --prune` does, by hand.
+BUNDLE_VERSION ?= bundle-$(shell date +%Y%m%d)-1
+
+pack-cache:
+	PYTHONPATH=engine/src $(PYTHON) -m infra.pack_cache
+
+bundle: pack-cache
+	PYTHONPATH=engine/src $(PYTHON) -m infra.build_bundle --version $(BUNDLE_VERSION)

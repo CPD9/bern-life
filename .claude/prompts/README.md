@@ -39,7 +39,8 @@ Postgres at a time.
 | `E3b-expand-explain-brief.md` | engine | E3a merged; CSCS key in `.env` |
 | `I3-evaluator.md` | infra (Yaseen) | running now |
 | `I4-bundle-run.md` | infra (Yaseen) | I3 merged; E3a `predict`; Peter runs `gh release` |
-| W4 (world on the real engine) and X1 (the agent) | world | briefs follow when W1/W2 report |
+| `X1-agent.md` (X1a engine, X1b web) | engine, then world shell | E3a merged; W1 PR 3 merged |
+| `W4-world-live.md` | world | W1 PR 3 and W2 B2 merged; E3a serving |
 
 ## Round D (≈03:00 → 08:00)
 X2 match report: PDF plus a live link that opens the same lit-up map · X3 inquiry inbox: a web form
