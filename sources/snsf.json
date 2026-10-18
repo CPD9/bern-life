@@ -107,5 +107,15 @@
     "max_pages_per_site": 120,
     "delay_s": 1.0,
     "max_depth": 0
-  }
+  },
+  "page_types": [
+    {
+      "kind": "call",
+      "url_pattern": "^https://www\\.snf\\.ch/en/[A-Za-z0-9]+/funding/"
+    },
+    {
+      "kind": "listing",
+      "url_pattern": "^https://www\\.snf\\.ch/"
+    }
+  ]
 }

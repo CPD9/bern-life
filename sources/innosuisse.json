@@ -17,5 +17,23 @@
     "max_pages_per_site": 200,
     "delay_s": 1.0,
     "max_depth": 3
-  }
+  },
+  "page_types": [
+    {
+      "kind": "listing",
+      "url_pattern": "^https://www\\.innosuisse\\.admin\\.ch/en/(calls-for-projects-and-applications|support-offers|support-for-start-ups|supporting-sme-innovation|funding-for-(national|international)-projects)$"
+    },
+    {
+      "kind": "call",
+      "url_pattern": "^https://www\\.innosuisse\\.admin\\.ch/en/[a-z0-9-]*(call-for-projects|-call-with-)[a-z0-9-]*$"
+    },
+    {
+      "kind": "service",
+      "url_pattern": "^https://www\\.innosuisse\\.admin\\.ch/en/(innovation-cheque|innovation-project-with-implementation-partner|innovation-projects-without-implementation-partner|bridge-projects|start-up-innovation-projects|swiss-accelerator-innovation-projects|(initial|core|scale-up|start-up)-coaching-for-start-up|innovation-mentoring|enterprise-europe-network-for-sme|innosuisse-trade-fair-support|start-ups-goglobal|entrepreneurship-training|start-up-camps|(eureka|eurostars|globalstars|eureka-network|bilateral)-projects|eureka-clusters|flagship-initiative-en|project-set-up-assistance-and-networking|thematic-eu-partnerships)$"
+    },
+    {
+      "kind": "listing",
+      "url_pattern": "^https://www\\.innosuisse\\.admin\\.ch/"
+    }
+  ]
 }

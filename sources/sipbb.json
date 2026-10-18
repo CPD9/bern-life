@@ -21,5 +21,23 @@
     "max_pages_per_site": 40,
     "delay_s": 1.0,
     "max_depth": 2
-  }
+  },
+  "page_types": [
+    {
+      "kind": "listing",
+      "url_pattern": "^https://sipbb\\.ch/services/$"
+    },
+    {
+      "kind": "space",
+      "url_pattern": "^https://sipbb\\.ch/services/(sipbb_space|meeting-rooms)/$"
+    },
+    {
+      "kind": "service",
+      "url_pattern": "^https://sipbb\\.ch/(services/startup|consulting|research-technology|research)/$"
+    },
+    {
+      "kind": "listing",
+      "url_pattern": "^https://sipbb\\.ch/"
+    }
+  ]
 }

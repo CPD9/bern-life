@@ -19,5 +19,19 @@
     "max_pages_per_site": 20,
     "delay_s": 1.0,
     "max_depth": 2
-  }
+  },
+  "page_types": [
+    {
+      "kind": "listing",
+      "url_pattern": "^https://www\\.effinger\\.ch/(raeume/|coworking/abo/.*)$"
+    },
+    {
+      "kind": "space",
+      "url_pattern": "^https://www\\.effinger\\.ch/(coworking/|raeume/[a-z0-9-]+/)$"
+    },
+    {
+      "kind": "listing",
+      "url_pattern": "^https://www\\.effinger\\.ch/"
+    }
+  ]
 }

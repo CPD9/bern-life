@@ -19,9 +19,15 @@ from dataclasses import dataclass
 import psycopg
 
 from bernlife.chunks import chunk_prefixes
+from bernlife.extract_records import PEOPLE_KINDS
 from bernlife.load_rows import vector_literal
 
 POOL = 200
+# A search that includes people reads the vector index unfiltered, as it always did, and drops
+# other kinds' chunks afterwards: a filter inside the scan makes Postgres trade the HNSW index for
+# an exact scan, whose neighbours differ slightly. Opportunity chunks are a small share, so three
+# times the pool still leaves POOL people chunks. A search for opportunities alone filters inside.
+OVERFETCH = 3
 
 STATEMENT = """
 WITH query_terms AS (
@@ -54,12 +60,17 @@ lexical AS (
      LIMIT %(pool)s
 ),
 nearest AS MATERIALIZED (
-    SELECT c.id, c.embedding <=> %(vector)s::vector AS distance
-      FROM chunk c
-     WHERE split_part(c.id, '-', 1) = ANY(%(prefixes)s::text[])
-       AND (%(sources)s::text[] IS NULL OR c.page_url = ANY(ARRAY(
-           SELECT url FROM page WHERE source_id = ANY(%(sources)s::text[]))))
-     ORDER BY c.embedding <=> %(vector)s::vector
+    SELECT id, distance FROM (
+        SELECT c.id, c.embedding <=> %(vector)s::vector AS distance
+          FROM chunk c
+         WHERE (NOT %(scan_by_kind)s OR split_part(c.id, '-', 1) = ANY(%(prefixes)s::text[]))
+           AND (%(sources)s::text[] IS NULL OR c.page_url = ANY(ARRAY(
+               SELECT url FROM page WHERE source_id = ANY(%(sources)s::text[]))))
+         ORDER BY c.embedding <=> %(vector)s::vector
+         LIMIT %(scan_limit)s
+    ) scanned
+     WHERE split_part(id, '-', 1) = ANY(%(prefixes)s::text[])
+     ORDER BY distance, id
      LIMIT %(pool)s
 ),
 hits AS (
@@ -118,6 +129,7 @@ def fetch_hits(
     sources: list[str] | None,
     kinds: Sequence[str],
 ) -> list[Hit]:
+    people_free = not set(kinds) & set(PEOPLE_KINDS)
     params = {
         "query": query,
         "vector": vector_literal(vector),
@@ -125,6 +137,8 @@ def fetch_hits(
         "kinds": list(kinds),
         "prefixes": chunk_prefixes(kinds),
         "pool": POOL,
+        "scan_by_kind": people_free,
+        "scan_limit": POOL if people_free else POOL * OVERFETCH,
     }
     rows = conn.execute(STATEMENT, params).fetchall()
     return [Hit(row[0], row[1], row[2], float(row[3] or 0.0), *row[4:]) for row in rows]
