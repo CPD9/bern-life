@@ -2,6 +2,26 @@
 # work apart in their own bernlife_<lane> database (make db-reset-throwaway).
 name: bernlife
 
+x-database-url: &database-url postgresql://${POSTGRES_USER:-bernlife}:${POSTGRES_PASSWORD:-bernlife}@db:5432/${POSTGRES_DB:-bernlife}
+
+x-engine-build: &engine-build
+  context: .
+  dockerfile: engine/Dockerfile
+
+# make run's engine steps: the bundle read-only, the embedding model in a volume (fetched once),
+# and replay only, so every model answer comes from the bundle's recorded calls.
+x-engine-run: &engine-run
+  profiles: [run]
+  build: *engine-build
+  image: bernlife-engine
+  environment:
+    DATABASE_URL: *database-url
+    BERNLIFE_BACKEND: replay
+    ENGINE_PORT: "8100"
+  volumes:
+    - ${BERNLIFE_BUNDLE_DIR:-./data/bundle}:/app/data/bundle:ro
+    - models:/app/data/models
+
 services:
   db:
     image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
@@ -10,7 +30,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bernlife}
       POSTGRES_DB: ${POSTGRES_DB:-bernlife}
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -22,11 +42,9 @@ services:
   # Runs one `python -m bernlife <command>` at a time: docker compose run --rm engine <command>.
   engine:
     profiles: [engine]
-    build:
-      context: .
-      dockerfile: engine/Dockerfile
+    build: *engine-build
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-bernlife}:${POSTGRES_PASSWORD:-bernlife}@db:5432/${POSTGRES_DB:-bernlife}
+      DATABASE_URL: *database-url
     ports:
       - "127.0.0.1:${ENGINE_PORT:-8100}:8100"
     volumes:
@@ -35,5 +53,68 @@ services:
       db:
         condition: service_healthy
 
+  migrate:
+    profiles: [run]
+    build:
+      context: .
+      dockerfile: db/Dockerfile
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      db:
+        condition: service_healthy
+
+  load:
+    <<: *engine-run
+    command: [load]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # serve binds 127.0.0.1 and takes searches from loopback only, so the web app joins this
+  # container's network, and the web port is published here.
+  serve:
+    <<: *engine-run
+    command: [serve]
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request as u; u.urlopen('http://127.0.0.1:8100/api/health', timeout=2)
+      interval: 2s
+      timeout: 3s
+      # The first run downloads the embedding model before serve answers.
+      retries: 300
+    depends_on:
+      load:
+        condition: service_completed_successfully
+
+  web:
+    profiles: [run]
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    network_mode: service:serve
+    environment:
+      ENGINE_URL: http://127.0.0.1:8100
+      DATABASE_URL: *database-url
+      APP_ORIGIN: http://127.0.0.1:${WEB_PORT:-3000}
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    depends_on:
+      serve:
+        condition: service_healthy
+
 volumes:
   pgdata:
+  models:
