@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { type ReadPdf, readBriefText } from "./brief-text";
+import { type ReadPdf, readBriefText, uploadTooLarge } from "./brief-text";
 
 const pdfBytes = new TextEncoder().encode("%PDF-1.7 invented");
 
@@ -80,5 +80,20 @@ describe("readBriefText", () => {
       ok: false,
       reason: "unreadable",
     });
+  });
+});
+
+describe("uploadTooLarge", () => {
+  const withLength = (value: string) => new Headers({ "content-length": value });
+  const limit = 5 * 1024 * 1024 + 64 * 1024;
+
+  test("refuses a declared body over 5 MB plus the form margin", () => {
+    expect(uploadTooLarge(withLength(String(limit)))).toBe(false);
+    expect(uploadTooLarge(withLength(String(limit + 1)))).toBe(true);
+  });
+
+  test("a missing or unreadable header is left to the file-size check", () => {
+    expect(uploadTooLarge(new Headers())).toBe(false);
+    expect(uploadTooLarge(withLength("lots"))).toBe(false);
   });
 });
