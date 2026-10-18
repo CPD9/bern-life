@@ -2,22 +2,25 @@
 
 // The bear on a plate, turned by dragging or with the arrow keys. It never spins by itself; it
 // breathes and blinks while standing and waddles when Walk is on. Under the OS reduce-motion
-// setting it stands still, and the canvas renders only when something changes.
+// setting it stands still; with lite graphics it stands still until Walk is on. The canvas renders
+// only when something changes.
 
 import { Canvas } from "@react-three/fiber";
 import { type KeyboardEvent, type PointerEvent, useRef, useState } from "react";
+import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { type BearConfig } from "./bear-config";
 import { BearFigure } from "./bear-figure";
 import { motionFor } from "./bear-motion";
 import { RADIANS_PER_PIXEL, angleAfterKey, degreesOf, turnLabel } from "./turntable-turn";
-import { useReducedMotion } from "./use-reduced-motion";
+import { WalkToggle } from "./walk-toggle";
 
 const PLATE_COLOUR = "#d9e2ea";
 
 export function AvatarTurntable({ config, lite }: { config: BearConfig; lite: boolean }) {
   const [angle, setAngle] = useState(0);
   const [walking, setWalking] = useState(false);
-  const motion = motionFor(walking ? "walk" : "idle", useReducedMotion());
+  const reducedMotion = useReducedMotion();
+  const motion = motionFor(walking ? "walk" : "idle", { reducedMotion, lite });
   const dragX = useRef<number | null>(null);
   const degrees = degreesOf(angle);
 
@@ -84,14 +87,11 @@ export function AvatarTurntable({ config, lite }: { config: BearConfig; lite: bo
         </Canvas>
       </div>
       <figcaption className="text-muted text-sm">Drag to spin, or use the arrow keys</figcaption>
-      <button
-        type="button"
-        aria-pressed={walking}
-        onClick={() => setWalking((on) => !on)}
-        className="bg-chip rounded-pill aria-pressed:bg-chip-selected aria-pressed:text-chip-selected-ink px-3 py-1 text-sm font-bold"
-      >
-        Walk
-      </button>
+      <WalkToggle
+        walking={walking}
+        reducedMotion={reducedMotion}
+        onToggle={() => setWalking((on) => !on)}
+      />
     </figure>
   );
 }
