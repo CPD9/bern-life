@@ -1,0 +1,25 @@
+name: clean-clone
+
+# The judge's path on a fresh runner: make fetch && make run, one search, every step timed.
+# Manual, because image builds, the embedding model and the bundle take longer than CI's budget.
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: Search sent through the web app once it is ready
+        default: diabetes technology
+
+jobs:
+  clean-clone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: make fetch && make run on a clean copy, then one search
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QUERY: ${{ inputs.query }}
+        run: python -m infra.clean_clone --query "$QUERY"
