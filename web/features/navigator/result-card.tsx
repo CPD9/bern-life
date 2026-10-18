@@ -9,7 +9,7 @@ import {
   citedClaims,
   fieldLabels,
   presentFields,
-} from "./claims";
+} from "@/infrastructure/claims";
 
 const kindLabels: Record<Profile["kind"], string> = {
   person: "Person",
