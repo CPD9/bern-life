@@ -5,16 +5,19 @@ import { httpAccountApi } from "@/features/accounts/account-api";
 import { useAccount } from "@/features/accounts/use-account";
 import { type BearConfig, furOptions } from "@/features/avatar/bear-config";
 import { useAvatar } from "@/features/avatar/use-avatar";
+import { DesktopDialog } from "@/features/desktop/desktop";
+import { useDesktop } from "@/features/desktop/use-desktop";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
 import { Navigator } from "@/features/navigator/navigator";
 import { useNavigator } from "@/features/navigator/use-navigator";
+import { OfficeView } from "@/features/office/office-view";
 import { useOnboarding } from "@/features/onboarding/use-onboarding";
 import { comingNextText } from "@/features/phone/coming-next-text";
 import { type PhoneApp, Phone } from "@/features/phone/phone";
 import { SettingsApp } from "@/features/phone/settings-app";
 import { openReport } from "@/features/report/open-report";
 import type { HudAccount } from "@/features/shell/account-badge";
-import { firstRunCard } from "@/features/shell/first-run";
+import { firstRunCard, landingView } from "@/features/shell/first-run";
 import { GameShell, type WorldView } from "@/features/shell/game-shell";
 import { GuideGreeting } from "@/features/shell/guide-greeting";
 import { Hud } from "@/features/shell/hud";
@@ -32,6 +35,7 @@ import { useNow } from "@/infrastructure/bern-time";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
 import { AppIcon } from "@/infrastructure/ui/app-icons";
 import { ComingNext } from "@/infrastructure/ui/coming-next";
+import { useOfficeApps } from "./office-apps";
 
 // The badge reads the colour from the stored bear on each render, so there is no second copy.
 function furColourOf(bear: BearConfig): string {
@@ -53,9 +57,11 @@ type WorldAppProps = {
 };
 
 export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldAppProps) {
-  const [view, setView] = useState<WorldView>("home");
+  // null until the player picks a tab: then the landing view follows onboarding (Home is the office).
+  const [view, setView] = useState<WorldView | null>(null);
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [phoneApp, setPhoneApp] = useState<string | null>(null);
+  const [desktopOpen, setDesktopOpen] = useState(false);
   const [storyMenuOpen, setStoryMenuOpen] = useState(false);
   const storyController = useStory({ story, demo: storyDemo, emitted: emittedToday });
   const account = useAccount(httpAccountApi);
@@ -64,6 +70,8 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const [greetingDismissed, setGreetingDismissed] = useState(false);
   const [joinDismissed, setJoinDismissed] = useState(false);
   const navigator = useNavigator(httpNavigatorApi);
+  const desktop = useDesktop();
+  const officeApps = useOfficeApps({ navigator, desktop, fixtureMode });
   const now = useNow();
   const health = useHealth();
 
@@ -137,9 +145,11 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     setPhoneOpen(true);
   }
 
+  const shownView = view ?? landingView(onboarding.done);
+
   return (
     <GameShell
-      view={view}
+      view={shownView}
       phoneOpen={phoneOpen}
       onSelectTab={(tab) => (tab === "phone" ? setPhoneOpen(true) : setView(tab))}
       hud={<Hud now={now} health={health} goal={goal} account={hudAccount} />}
@@ -159,7 +169,14 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           {storyDemo && <CriteriaChecklist controller={storyController} />}
         </>
       }
-      canvas={<WorldCanvas demoSearch={demoSearch} />}
+      canvas={
+        <>
+          <WorldCanvas demoSearch={demoSearch} />
+          {shownView === "home" && (
+            <OfficeView onUseDesk={() => setDesktopOpen(true)} onGoOutside={() => setView("map")} />
+          )}
+        </>
+      }
       overlay={
         <>
           <Phone
@@ -168,6 +185,13 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
             apps={apps}
             appId={phoneApp}
             onAppChange={setPhoneApp}
+            now={now}
+          />
+          <DesktopDialog
+            open={desktopOpen}
+            onClose={() => setDesktopOpen(false)}
+            apps={officeApps}
+            controller={desktop}
             now={now}
           />
           <StoryMenu
