@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" width="800" height="380" role="img" aria-labelledby="t d">
   <title id="t">Ask in your words</title>
-  <desc id="d">The question "blood sugar sensor" becomes extra search terms (CGM, continuous glucose monitoring, Blutzuckersensor), which are search terms and not facts. Full-text search and meaning search run together and merge into one ranking. Each result card carries a link to its evidence. Example data is invented.</desc>
+  <desc id="d">The question "blood sugar sensor" is typed and widened into search terms (CGM, continuous glucose monitoring, Blutzuckersensor), which are search terms and not facts. Full-text search and meaning search run side by side and flow into one ranking. Result cards rise in, each with a link to its evidence. Example data is invented.</desc>
   <style>
     text { font-family: ui-rounded, "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; }
     .bg { fill: #eef4fa; }
     .card { fill: #ffffff; stroke: #dfe6ee; }
+    .card-fill { fill: #ffffff; }
     .chip { fill: #eef1f4; }
     .ink { fill: #14202b; }
     .muted { fill: #5b6773; }
@@ -14,9 +15,11 @@
     .badge { fill: #14202b; }
     .on-badge { fill: #ffffff; }
     .on-green { fill: #ffffff; }
+    .shadow { fill: #14202b; opacity: 0.07; }
     @media (prefers-color-scheme: dark) {
       .bg { fill: #0d1b2a; }
       .card { fill: #17212d; stroke: #2a3a4d; }
+      .card-fill { fill: #17212d; }
       .chip { fill: #223041; }
       .ink { fill: #eef3f8; }
       .muted { fill: #a3b0bd; }
@@ -26,30 +29,55 @@
       .badge { fill: #eef3f8; }
       .on-badge { fill: #14202b; }
       .on-green { fill: #08130d; }
+      .shadow { fill: #000000; opacity: 0.3; }
     }
 
-    /* Resting styles are the last frame; with motion reduced the picture is complete. */
-    .w1 { animation: w1 12s infinite; }
-    .w2 { animation: w2 12s infinite; }
-    .w3 { animation: w3 12s infinite; }
-    .t1 { animation: t1 12s infinite; }
-    .t2 { animation: t2 12s infinite; }
-    .t3 { animation: t3 12s infinite; }
-    .lanes { animation: lanes 12s infinite; }
-    .merge { animation: merge 12s infinite; }
-    .r1 { animation: r1 12s infinite; }
-    .r2 { animation: r2 12s infinite; }
+    /* Resting styles are the last frame, so with motion reduced the picture is complete. */
+    .pop { transform-box: fill-box; transform-origin: center; }
+    .cover { transform-box: fill-box; transform-origin: right center; transform: scaleX(0); animation: type 12s steps(18) infinite; }
+    .caret { animation: caret 12s steps(18) infinite; }
+    .blink { animation: blink 0.9s steps(1) infinite; }
+    .draw { stroke-dasharray: 1; }
+    .c1 { animation: c1 12s ease-out infinite; }
+    .c2 { animation: c2 12s ease-out infinite; }
+    .c3 { animation: c3 12s ease-out infinite; }
+    .t1 { animation: t1 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
+    .t2 { animation: t2 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
+    .t3 { animation: t3 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
+    .note { animation: note 12s ease-out infinite; }
+    .feed { animation: feed 12s ease-out infinite; }
+    .lanes { animation: lanes 12s ease-out infinite; }
+    .stream { opacity: 0; animation: stream 12s linear infinite; }
+    .dot { animation: dot 1.1s linear infinite; }
+    .d2 { animation-delay: -0.37s; }
+    .d3 { animation-delay: -0.74s; }
+    .join { animation: join 12s ease-out infinite; }
+    .rank { animation: rank 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
+    .halo { opacity: 0; animation: halo 12s ease-out infinite; }
+    .r1 { animation: r1 12s cubic-bezier(.34, 1.4, .64, 1) infinite; }
+    .r2 { animation: r2 12s cubic-bezier(.34, 1.4, .64, 1) infinite; }
+    .glint { animation: glint 12s ease-out infinite; }
 
-    @keyframes w1 { 0%, 2% { opacity: 0; } 5%, 100% { opacity: 1; } }
-    @keyframes w2 { 0%, 6% { opacity: 0; } 9%, 100% { opacity: 1; } }
-    @keyframes w3 { 0%, 10% { opacity: 0; } 13%, 100% { opacity: 1; } }
-    @keyframes t1 { 0%, 17% { opacity: 0; transform: translateX(-24px); } 22%, 100% { opacity: 1; transform: none; } }
-    @keyframes t2 { 0%, 21% { opacity: 0; transform: translateX(-24px); } 26%, 100% { opacity: 1; transform: none; } }
-    @keyframes t3 { 0%, 25% { opacity: 0; transform: translateX(-24px); } 30%, 100% { opacity: 1; transform: none; } }
-    @keyframes lanes { 0%, 34% { opacity: 0; } 42%, 100% { opacity: 1; } }
-    @keyframes merge { 0%, 46% { opacity: 0; transform: scale(0.9); } 52%, 100% { opacity: 1; transform: none; } }
-    @keyframes r1 { 0%, 58% { opacity: 0; transform: translateY(16px); } 64%, 100% { opacity: 1; transform: none; } }
-    @keyframes r2 { 0%, 63% { opacity: 0; transform: translateY(16px); } 69%, 100% { opacity: 1; transform: none; } }
+    @keyframes type { 0%, 1% { transform: scaleX(1); } 13%, 100% { transform: scaleX(0); } }
+    @keyframes caret { 0%, 1% { transform: translateX(-150px); } 13%, 100% { transform: translateX(0); } }
+    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes c1 { 0%, 15% { stroke-dashoffset: 1; } 19%, 100% { stroke-dashoffset: 0; } }
+    @keyframes c2 { 0%, 18% { stroke-dashoffset: 1; } 22%, 100% { stroke-dashoffset: 0; } }
+    @keyframes c3 { 0%, 21% { stroke-dashoffset: 1; } 25%, 100% { stroke-dashoffset: 0; } }
+    @keyframes t1 { 0%, 18% { opacity: 0; transform: scale(0.6); } 22%, 100% { opacity: 1; transform: scale(1); } }
+    @keyframes t2 { 0%, 21% { opacity: 0; transform: scale(0.6); } 25%, 100% { opacity: 1; transform: scale(1); } }
+    @keyframes t3 { 0%, 24% { opacity: 0; transform: scale(0.6); } 28%, 100% { opacity: 1; transform: scale(1); } }
+    @keyframes note { 0%, 28% { opacity: 0; } 32%, 100% { opacity: 1; } }
+    @keyframes feed { 0%, 32% { stroke-dashoffset: 1; } 37%, 100% { stroke-dashoffset: 0; } }
+    @keyframes lanes { 0%, 34% { opacity: 0; transform: translateX(-12px); } 39%, 100% { opacity: 1; transform: none; } }
+    @keyframes stream { 0%, 38% { opacity: 0; } 40%, 58% { opacity: 1; } 61%, 100% { opacity: 0; } }
+    @keyframes dot { 0% { transform: translateX(0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(130px); opacity: 0; } }
+    @keyframes join { 0%, 50% { stroke-dashoffset: 1; } 55%, 100% { stroke-dashoffset: 0; } }
+    @keyframes rank { 0%, 53% { opacity: 0; transform: scale(0.7); } 57%, 100% { opacity: 1; transform: scale(1); } }
+    @keyframes halo { 0%, 57% { opacity: 0; transform: scale(1); } 58% { opacity: 0.5; transform: scale(1); } 66%, 100% { opacity: 0; transform: scale(1.35); } }
+    @keyframes r1 { 0%, 61% { opacity: 0; transform: translateY(28px); } 66%, 100% { opacity: 1; transform: none; } }
+    @keyframes r2 { 0%, 65% { opacity: 0; transform: translateY(28px); } 70%, 100% { opacity: 1; transform: none; } }
+    @keyframes glint { 0%, 72% { stroke-dashoffset: 1; } 77%, 100% { stroke-dashoffset: 0; } }
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; }
     }
@@ -59,53 +87,65 @@
   <text class="ink" x="32" y="42" font-size="20" font-weight="800">Ask in your words</text>
   <text class="muted" x="32" y="64" font-size="13">Your words become search terms; words and meaning are searched together; every result keeps its evidence.</text>
 
-  <!-- The question -->
+  <!-- The question, typed -->
+  <rect class="shadow" x="34" y="102" width="250" height="48" rx="24"/>
   <rect class="card" x="32" y="96" width="250" height="48" rx="24"/>
   <circle cx="58" cy="118" r="7" fill="none" class="flow" stroke-width="2.4"/>
   <path d="M63 123l6 6" class="flow" stroke-width="2.4" stroke-linecap="round"/>
-  <text class="ink w1" x="80" y="125" font-size="15" font-weight="700">blood</text>
-  <text class="ink w2" x="126" y="125" font-size="15" font-weight="700">sugar</text>
-  <text class="ink w3" x="174" y="125" font-size="15" font-weight="700">sensor</text>
+  <text class="ink" x="80" y="125" font-size="15" font-weight="700">blood sugar sensor</text>
+  <rect class="card-fill cover" x="78" y="106" width="156" height="26"/>
+  <g class="caret"><rect class="green blink" x="231" y="109" width="2" height="21" rx="1"/></g>
   <text class="muted" x="32" y="176" font-size="12">German, English or French.</text>
   <text class="muted" x="32" y="194" font-size="12">Apertus 70B suggests the extra terms;</text>
   <text class="muted" x="32" y="212" font-size="12">every answer is cached, so a rerun</text>
   <text class="muted" x="32" y="230" font-size="12">needs no GPU.</text>
 
-  <path d="M282 120h22" class="flow" stroke-width="2" fill="none"/>
-
-  <!-- Expanded terms -->
-  <g class="t1">
+  <!-- Expanded terms, each drawn out of the question -->
+  <path class="flow draw c1" d="M282 120C296 120 296 103 310 103" pathLength="1" stroke-width="2" fill="none"/>
+  <path class="flow draw c2" d="M282 120C296 120 296 139 310 139" pathLength="1" stroke-width="2" fill="none"/>
+  <path class="flow draw c3" d="M282 120C296 120 296 175 310 175" pathLength="1" stroke-width="2" fill="none"/>
+  <g class="pop t1">
     <rect class="chip" x="310" y="88" width="230" height="30" rx="15"/>
     <text class="ink" x="326" y="108" font-size="13" font-weight="700">CGM</text>
     <text class="muted" x="526" y="108" font-size="11" text-anchor="end">acronym</text>
   </g>
-  <g class="t2">
+  <g class="pop t2">
     <rect class="chip" x="310" y="124" width="230" height="30" rx="15"/>
     <text class="ink" x="326" y="144" font-size="13" font-weight="700">continuous glucose monitoring</text>
   </g>
-  <g class="t3">
+  <g class="pop t3">
     <rect class="chip" x="310" y="160" width="230" height="30" rx="15"/>
     <text class="ink" x="326" y="180" font-size="13" font-weight="700">Blutzuckersensor</text>
     <text class="muted" x="526" y="180" font-size="11" text-anchor="end">German</text>
   </g>
-  <text class="muted t3" x="310" y="210" font-size="11">Search terms only, never facts about anyone.</text>
+  <text class="muted note" x="310" y="210" font-size="11">Search terms only, never facts about anyone.</text>
 
-  <!-- Two searches, one ranking -->
+  <!-- Two searches side by side, streaming into one ranking -->
+  <path class="flow draw feed" d="M540 103C564 103 564 109 588 109M540 175C564 175 564 169 588 169" pathLength="1" stroke-width="2" fill="none"/>
   <g class="lanes">
-    <path d="M540 103c24 0 24 6 48 6M540 175c24 0 24-6 48-6" class="flow" stroke-width="2" fill="none"/>
     <rect class="card" x="588" y="94" width="180" height="30" rx="15"/>
     <text class="ink" x="604" y="114" font-size="12" font-weight="700">Words · full-text</text>
     <rect class="card" x="588" y="154" width="180" height="30" rx="15"/>
     <text class="ink" x="604" y="174" font-size="12" font-weight="700">Meaning · vectors</text>
   </g>
-  <g class="merge">
-    <path d="M768 109c24 0 24 114 0 114M768 169c14 0 14 54 0 54" class="flow" stroke-width="2" fill="none"/>
+  <g class="stream">
+    <circle class="green dot" cx="612" cy="130" r="3"/>
+    <circle class="green dot d2" cx="612" cy="130" r="3"/>
+    <circle class="green dot d3" cx="612" cy="130" r="3"/>
+    <circle class="green dot" cx="612" cy="190" r="3"/>
+    <circle class="green dot d2" cx="612" cy="190" r="3"/>
+    <circle class="green dot d3" cx="612" cy="190" r="3"/>
+  </g>
+  <path class="flow draw join" d="M768 109C792 109 792 223 768 223M768 169C782 169 782 223 768 223" pathLength="1" stroke-width="2" fill="none"/>
+  <rect class="green pop halo" x="588" y="208" width="180" height="30" rx="15"/>
+  <g class="pop rank">
     <rect class="green" x="588" y="208" width="180" height="30" rx="15"/>
     <text class="on-green" x="678" y="228" font-size="12" font-weight="800" text-anchor="middle">One ranking</text>
   </g>
 
   <!-- Results with evidence -->
   <g class="r1">
+    <rect class="shadow" x="34" y="264" width="360" height="86" rx="16"/>
     <rect class="card" x="32" y="258" width="360" height="86" rx="16"/>
     <circle class="badge" cx="58" cy="284" r="12"/>
     <text class="on-badge" x="58" y="289" font-size="12" font-weight="800" text-anchor="middle">1</text>
@@ -113,8 +153,10 @@
     <rect class="chip" x="48" y="304" width="210" height="26" rx="13"/>
     <text class="ink" x="60" y="322" font-size="12" font-weight="700">continuous glucose monitoring</text>
     <text class="green" x="376" y="322" font-size="12" font-weight="800" text-anchor="end">evidence ↗</text>
+    <path class="green-line draw glint" d="M306 327h70" pathLength="1" stroke-width="2" stroke-linecap="round"/>
   </g>
   <g class="r2">
+    <rect class="shadow" x="410" y="264" width="360" height="86" rx="16"/>
     <rect class="card" x="408" y="258" width="360" height="86" rx="16"/>
     <circle class="badge" cx="434" cy="284" r="12"/>
     <text class="on-badge" x="434" y="289" font-size="12" font-weight="800" text-anchor="middle">2</text>
@@ -122,6 +164,7 @@
     <rect class="chip" x="424" y="304" width="160" height="26" rx="13"/>
     <text class="ink" x="436" y="322" font-size="12" font-weight="700">wearable biosensors</text>
     <text class="green" x="752" y="322" font-size="12" font-weight="800" text-anchor="end">evidence ↗</text>
+    <path class="green-line draw glint" d="M682 327h70" pathLength="1" stroke-width="2" stroke-linecap="round"/>
   </g>
 
   <text class="muted" x="768" y="366" font-size="10" text-anchor="end">Example data is invented.</text>
