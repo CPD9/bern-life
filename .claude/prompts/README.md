@@ -39,6 +39,7 @@ Postgres at a time.
 | `E3b-expand-explain-brief.md` | engine | E3a merged; CSCS key in `.env` |
 | `I3-evaluator.md` | infra (Yaseen) | running now |
 | `I4-bundle-run.md` | infra (Yaseen) | I3 merged; E3a `predict`; Peter runs `gh release` |
+| `I5-metrics.md` | infra (Yaseen) | I4 tools merged; uses E3a's response builder |
 | `X1-agent.md` (X1a engine, X1b web) | engine, then world shell | E3a merged; W1 PR 3 merged |
 | `W4-world-live.md` | world | W1 PR 3 and W2 B2 merged; E3a serving |
 

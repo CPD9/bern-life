@@ -142,6 +142,25 @@
         "fused": 0.0325,
         "lexical_rank": 1,
         "vector_rank": 2
+      },
+      "metrics": {
+        "relevance": 1.0,
+        "covers": [
+          "glucose sensors"
+        ],
+        "missing": [],
+        "evidence": 1.0,
+        "completeness": {
+          "filled": 5,
+          "of": 5
+        },
+        "novelty": {
+          "new_unit": true,
+          "adds": [
+            "glucose sensors"
+          ]
+        },
+        "confidence": null
       }
     }
   ],
