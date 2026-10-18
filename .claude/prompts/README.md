@@ -40,6 +40,8 @@ Postgres at a time.
 | `I3-evaluator.md` | infra (Yaseen) | running now |
 | `I4-bundle-run.md` | infra (Yaseen) | I3 merged; E3a `predict`; Peter runs `gh release` |
 | `I5-metrics.md` | infra (Yaseen) | I4 tools merged; uses E3a's response builder |
+| `D1-readme.md` | world shell (W1) | after W1 PR 3 |
+| `S-accounts-messages.md` (S1 accounts, S2 messages) | backend (Yaseen) | after I5; one migration PR at a time |
 | `X1-agent.md` (X1a engine, X1b web) | engine, then world shell | E3a merged; W1 PR 3 merged |
 | `W4-world-live.md` | world | W1 PR 3 and W2 B2 merged; E3a serving |
 
