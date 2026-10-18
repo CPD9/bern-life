@@ -1,0 +1,104 @@
+import { describe, expect, test } from "bun:test";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import type { SearchRequest } from "@/infrastructure/engine-types";
+import { abstainedFixture, briefFixture, copyOf, resultFixture } from "@/test/fixtures";
+import type { NavigatorApi, NavigatorOutcome } from "./navigator-api";
+import { Navigator } from "./navigator";
+import { useNavigator } from "./use-navigator";
+
+function Harness({ api, fixtureMode = false }: { api: NavigatorApi; fixtureMode?: boolean }) {
+  return <Navigator controller={useNavigator(api)} fixtureMode={fixtureMode} />;
+}
+
+function answering(response: SearchResponse): NavigatorApi {
+  return {
+    search: async () => ({ ok: true, response }),
+    brief: async () => ({ ok: true, response }),
+  };
+}
+
+async function ask(query: string) {
+  fireEvent.change(screen.getByLabelText("Ask in your words"), { target: { value: query } });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+  });
+}
+
+describe("Navigator", () => {
+  test("a mock answer shows the MOCK banner and the expanded terms as search terms", async () => {
+    render(<Harness api={answering(resultFixture)} />);
+    await ask("glucose sensors");
+    expect(screen.getByRole("status").textContent).toBe("1 result");
+    expect(screen.getByText("MOCK")).toBeTruthy();
+    expect(screen.getByText(/They are not facts about anyone/)).toBeTruthy();
+    expect(screen.getByText("CGM")).toBeTruthy();
+  });
+
+  test("a replay answer shows the Replay chip and no MOCK banner", async () => {
+    render(<Harness api={answering({ ...copyOf(resultFixture), mode: "replay" })} />);
+    await ask("glucose sensors");
+    expect(screen.queryByText("MOCK")).toBeNull();
+    expect(screen.getByText("Replay · answered from recorded model calls")).toBeTruthy();
+  });
+
+  test("an abstained answer says there is no verifiable source, in plain words", async () => {
+    render(<Harness api={answering(abstainedFixture)} />);
+    await ask("quantum glucose");
+    expect(screen.getByRole("status").textContent).toBe(
+      "No public page we hold supports an answer to this. We would rather say so than guess.",
+    );
+    expect(screen.queryByRole("article")).toBeNull();
+  });
+
+  test("an engine failure shows a sentence and Try again repeats the same search", async () => {
+    const outcomes: NavigatorOutcome[] = [
+      { ok: false, failure: { kind: "engine", error: "engine_error" } },
+      { ok: true, response: resultFixture },
+    ];
+    const requests: SearchRequest[] = [];
+    const api: NavigatorApi = {
+      search: async (request) => {
+        requests.push(request);
+        return outcomes.shift()!;
+      },
+      brief: async () => outcomes.shift()!,
+    };
+    render(<Harness api={api} />);
+    await ask("CGM");
+    expect(screen.getByRole("status").textContent).toBe(
+      "The search is not answering right now. Try again in a moment.",
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    });
+    expect(requests).toEqual([{ query: "CGM" }, { query: "CGM" }]);
+    expect(screen.getByRole("status").textContent).toBe("1 result");
+  });
+
+  test("a brief shows each need with its sentence and the aspect matrix", async () => {
+    render(<Harness api={answering(briefFixture)} />);
+    fireEvent.click(screen.getByRole("button", { name: "Project brief" }));
+    fireEvent.change(screen.getByLabelText("Or paste the text"), {
+      target: { value: "We are developing a wearable glucose sensor." },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Find experts" }));
+    });
+    expect(
+      screen.getByText(
+        "From your brief: “We are developing a wearable glucose sensor for people with diabetes.”",
+      ),
+    ).toBeTruthy();
+    const cells = Array.from(document.querySelectorAll("tbody td"), (td) => td.textContent);
+    expect(cells).toEqual(["Covered", "Not covered", "Not covered", "Partly"]);
+  });
+
+  test("the FIXTURE label shows only in fixture mode", () => {
+    const { unmount } = render(<Harness api={answering(resultFixture)} fixtureMode />);
+    expect(screen.getByText("FIXTURE data")).toBeTruthy();
+    unmount();
+    render(<Harness api={answering(resultFixture)} />);
+    expect(screen.queryByText("FIXTURE data")).toBeNull();
+  });
+});

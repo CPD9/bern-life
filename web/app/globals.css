@@ -20,6 +20,9 @@
   --chip-selected-ink: light-dark(#ffffff, #14202b);
   --focus: light-dark(#1d6fd6, #7cb6ff);
   --shadow-color: light-dark(rgb(20 32 43 / 0.12), rgb(0 0 0 / 0.45));
+  --warn-bg: light-dark(#fff1d6, #3a2a10);
+  --warn-ink: light-dark(#6b3a00, #ffd9a0);
+  --mark: light-dark(#fff3b0, #4a4120);
 }
 
 :root[data-theme="day"] {
@@ -43,6 +46,9 @@
   --color-chip-selected: var(--chip-selected);
   --color-chip-selected-ink: var(--chip-selected-ink);
   --color-focus: var(--focus);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-ink: var(--warn-ink);
+  --color-mark: var(--mark);
   --radius-panel: 1.75rem;
   --radius-pill: 999px;
   --shadow-panel: 0 8px 24px var(--shadow-color);
