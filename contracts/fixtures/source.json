@@ -1,0 +1,31 @@
+{
+  "id": "example",
+  "name": "Example Institute (fixture, not a real site)",
+  "sites": [
+    {
+      "host": "www.example-institute.test",
+      "unit": "Example Institute for Engineering",
+      "seeds": [
+        "https://www.example-institute.test/"
+      ],
+      "allow_paths": [
+        "/team/",
+        "/research/"
+      ],
+      "deny_paths": [
+        "/login"
+      ]
+    }
+  ],
+  "crawl": {
+    "max_pages_per_site": 50,
+    "delay_s": 1.0,
+    "max_depth": 3
+  },
+  "page_types": [
+    {
+      "kind": "person",
+      "url_pattern": "^https://www\\.example-institute\\.test/team/[a-z-]+$"
+    }
+  ]
+}

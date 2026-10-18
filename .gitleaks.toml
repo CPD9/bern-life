@@ -1,0 +1,11 @@
+title = "bern-life"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Build output and dependencies"
+paths = [
+  '''(^|/)\.next/''',
+  '''(^|/)node_modules/''',
+]

@@ -1,0 +1,18 @@
+{
+  "id": "dcb",
+  "name": "Diabetes Center Berne",
+  "sites": [
+    {
+      "host": "www.dcberne.com",
+      "unit": "Diabetes Center Berne",
+      "seeds": [
+        "https://www.dcberne.com/"
+      ]
+    }
+  ],
+  "crawl": {
+    "max_pages_per_site": 400,
+    "delay_s": 1.0,
+    "max_depth": 4
+  }
+}

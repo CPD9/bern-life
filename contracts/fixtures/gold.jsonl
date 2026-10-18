@@ -1,0 +1,3 @@
+{"id": "q001", "query": "glucose sensors", "lang": "en", "variant": "site", "sources": ["dcb"], "expect": {"abstain": false, "people": [{"name": "Ada Muster", "unit": "Sensor Lab", "proof_url": "https://www.example-institute.test/team/ada-muster", "proof_span": "continuous glucose monitoring"}]}}
+{"id": "q001b", "query": "Blutzucker messen am Arm", "lang": "de", "variant": "lay", "variant_of": "q001", "sources": ["dcb"], "expect": {"abstain": false, "people": [{"name": "Ada Muster", "proof_url": "https://www.example-institute.test/team/ada-muster"}]}}
+{"id": "q090", "query": "Which projects does Prof. Invented Person lead on quantum glucose?", "lang": "en", "variant": "invented", "sources": [], "expect": {"abstain": true}, "notes": "Invented person; fixture."}

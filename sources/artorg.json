@@ -1,0 +1,18 @@
+{
+  "id": "artorg",
+  "name": "ARTORG Center for Biomedical Engineering Research",
+  "sites": [
+    {
+      "host": "www.artorg.unibe.ch",
+      "unit": "ARTORG Center for Biomedical Engineering Research",
+      "seeds": [
+        "https://www.artorg.unibe.ch/"
+      ]
+    }
+  ],
+  "crawl": {
+    "max_pages_per_site": 600,
+    "delay_s": 1.0,
+    "max_depth": 4
+  }
+}

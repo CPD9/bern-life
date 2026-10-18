@@ -1,0 +1,12 @@
+{
+  "url": "https://www.example-institute.test/team/ada-muster",
+  "source_id": "example",
+  "unit": "Sensor Lab",
+  "fetched_at": "2026-10-18T12:00:00Z",
+  "sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
+  "status": 200,
+  "lang": "en",
+  "title": "Dr. Ada Muster",
+  "kind": "person",
+  "text": "Dr. Ada Muster\nGroup Leader, Sensor Lab\nExample Institute for Engineering\nResearch: continuous glucose monitoring, wearable biosensors and closed-loop insulin delivery.\nProjects: GlucoPatch, a skin-worn sensor for people with type 1 diabetes.\nInfrastructure: cleanroom for thin-film sensor fabrication."
+}

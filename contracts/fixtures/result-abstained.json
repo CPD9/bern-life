@@ -1,0 +1,13 @@
+{
+  "query": "What does Prof. Invented Person publish on quantum glucose?",
+  "mode": "mock",
+  "abstained": true,
+  "abstain_reason": "no_verifiable_source",
+  "expanded_terms": [],
+  "results": [],
+  "versions": {
+    "engine": "0.0.0",
+    "snapshot": "fixture",
+    "prompts": "fixture"
+  }
+}

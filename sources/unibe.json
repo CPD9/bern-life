@@ -1,0 +1,151 @@
+{
+  "id": "unibe",
+  "name": "University of Bern",
+  "sites": [
+    {
+      "host": "www.dbmr.unibe.ch",
+      "unit": "Department for BioMedical Research (DBMR)",
+      "seeds": [
+        "https://www.dbmr.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.ngs.unibe.ch",
+      "unit": "Next Generation Sequencing Platform",
+      "seeds": [
+        "https://www.ngs.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.tki.unibe.ch",
+      "unit": "Theodor Kocher Institute",
+      "seeds": [
+        "https://www.tki.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.iml.unibe.ch",
+      "unit": "Institut für Medizinische Lehre (IML)",
+      "seeds": [
+        "https://www.iml.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.irm.unibe.ch",
+      "unit": "Institut für Rechtsmedizin (IRM)",
+      "seeds": [
+        "https://www.irm.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.ifik.unibe.ch",
+      "unit": "Institute for Infectious Diseases (IFIK)",
+      "seeds": [
+        "https://www.ifik.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.ispm.unibe.ch",
+      "unit": "Institute of Social and Preventive Medicine (ISPM)",
+      "seeds": [
+        "https://www.ispm.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.ikim.unibe.ch",
+      "unit": "Institut für Komplementäre und Integrative Medizin (IKIM)",
+      "seeds": [
+        "https://www.ikim.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.img.unibe.ch",
+      "unit": "Institut für Medizingeschichte",
+      "seeds": [
+        "https://www.img.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.ibmm.unibe.ch",
+      "unit": "Institut für Biochemie und Molekulare Medizin (IBMM)",
+      "seeds": [
+        "https://www.ibmm.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.pki.unibe.ch",
+      "unit": "Institut für Pharmakologie (PKI)",
+      "seeds": [
+        "https://www.pki.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.inf.unibe.ch",
+      "unit": "Institute of Computer Science",
+      "seeds": [
+        "https://www.inf.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.itp.unibe.ch",
+      "unit": "Institute for Theoretical Physics",
+      "seeds": [
+        "https://www.itp.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.iap.unibe.ch",
+      "unit": "Institute of Applied Physics",
+      "seeds": [
+        "https://www.iap.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.dcbp.unibe.ch",
+      "unit": "Department of Chemistry, Biochemistry and Pharmaceutical Sciences",
+      "seeds": [
+        "https://www.dcbp.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.csh.unibe.ch",
+      "unit": "Center for Space and Habitability (CSH)",
+      "seeds": [
+        "https://www.csh.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.mic.unibe.ch",
+      "unit": "Microscopy Imaging Center (MIC)",
+      "seeds": [
+        "https://www.mic.unibe.ch/"
+      ]
+    },
+    {
+      "host": "strada.unibe.ch",
+      "unit": "STRADA – réseau interdisciplinaire UniBE",
+      "seeds": [
+        "https://strada.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.neuroscience.unibe.ch",
+      "unit": "Clinical Neuroscience Bern",
+      "seeds": [
+        "https://www.neuroscience.unibe.ch/"
+      ]
+    },
+    {
+      "host": "www.ita.vetsuisse.unibe.ch",
+      "unit": "Division of Veterinary Anatomy",
+      "seeds": [
+        "https://www.ita.vetsuisse.unibe.ch/"
+      ]
+    }
+  ],
+  "crawl": {
+    "max_pages_per_site": 150,
+    "delay_s": 1.0,
+    "max_depth": 3
+  }
+}

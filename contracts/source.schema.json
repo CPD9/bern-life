@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "source.schema.json",
+  "title": "Source",
+  "description": "One institution to crawl. Adding a file under sources/ that validates against this schema is the whole step for a new site.",
+  "type": "object",
+  "required": ["id", "name", "sites", "crawl"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "name": { "type": "string", "minLength": 1 },
+    "sites": {
+      "description": "Each host is one unit, so exposure can be measured by unit.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["host", "unit", "seeds"],
+        "additionalProperties": false,
+        "properties": {
+          "host": { "type": "string", "pattern": "^[a-z0-9.-]+$" },
+          "unit": { "type": "string", "minLength": 1 },
+          "seeds": { "type": "array", "minItems": 1, "items": { "type": "string", "format": "uri" } },
+          "allow_paths": { "type": "array", "items": { "type": "string" } },
+          "deny_paths": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "crawl": {
+      "type": "object",
+      "required": ["max_pages_per_site", "delay_s"],
+      "additionalProperties": false,
+      "properties": {
+        "max_pages_per_site": { "type": "integer", "minimum": 1 },
+        "delay_s": { "type": "number", "minimum": 0.5 },
+        "max_depth": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "page_types": {
+      "description": "URL patterns (regular expressions) that mark a page as a person, unit, project or infrastructure page.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "url_pattern"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "enum": ["person", "unit", "project", "infrastructure", "listing"] },
+          "url_pattern": { "type": "string" }
+        }
+      }
+    }
+  }
+}

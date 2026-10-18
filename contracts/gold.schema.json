@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gold.schema.json",
+  "title": "GoldQuery",
+  "description": "One line of eval/gold.jsonl. Written before search exists and frozen by eval/PREREGISTRATION.md. Expected people and units are matched to results by proof_url host+path and by name.",
+  "type": "object",
+  "required": ["id", "query", "lang", "variant", "sources", "expect"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^q[0-9]{3}[a-z]?$" },
+    "query": { "type": "string", "minLength": 2 },
+    "lang": { "enum": ["de", "en", "fr"] },
+    "variant": {
+      "description": "site: the source's own wording; synonym, lay, translation: rewordings of variant_of; invented: a person or project that does not exist; control: the neutral form of a leading question.",
+      "enum": ["site", "synonym", "lay", "translation", "invented", "control"]
+    },
+    "variant_of": { "type": "string", "pattern": "^q[0-9]{3}[a-z]?$" },
+    "sources": { "type": "array", "items": { "enum": ["unibe", "artorg", "dcb"] } },
+    "expect": {
+      "type": "object",
+      "required": ["abstain"],
+      "additionalProperties": false,
+      "properties": {
+        "abstain": { "type": "boolean" },
+        "people": { "$ref": "#/$defs/targets" },
+        "units": { "$ref": "#/$defs/targets" }
+      }
+    },
+    "notes": { "type": "string" }
+  },
+  "$defs": {
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "proof_url"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "unit": { "type": "string" },
+          "proof_url": { "type": "string", "format": "uri" },
+          "proof_span": { "type": "string", "maxLength": 300 }
+        }
+      }
+    }
+  }
+}
