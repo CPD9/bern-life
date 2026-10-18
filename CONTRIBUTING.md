@@ -15,6 +15,7 @@ git worktree add ../bern-life-<issue> -b <issue>-<slug> origin/main
 | 1 data / engine / agents | `engine/`, `sources/` | 3011 | 8101 | `bernlife_l1` |
 | 2a world shell | `web/` except `web/features/world/` | 3012 | 8102 | `bernlife_l2` |
 | 2b world 3D | `web/features/world/`, `web/public/world/` | 3014 | 8104 | `bernlife_l2` |
+| 2c world home | `web/features/onboarding/`, `web/features/avatar/`, `web/features/home/` | 3015 | 8105 | `bernlife_l2` |
 | 3 infra / hosting (Yaseen) | `db/`, `infra/`, `Makefile`, `Dockerfile*`, `compose.yaml`, `.github/workflows/`, `eval/src/` | 3013 | 8103 | `bernlife_l3` |
 | conductor | `contracts/`, `eval/gold.jsonl`, `eval/PREREGISTRATION.md`, `docs/`, `handoff/`, `.claude/prompts/` | — | — | — |
 

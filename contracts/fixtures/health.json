@@ -1,0 +1,12 @@
+{
+  "mode": "mock",
+  "models": {
+    "expand": "MOCK-no-model"
+  },
+  "snapshot": "fixture",
+  "counts": {
+    "pages": 2,
+    "profiles": 2,
+    "sources": 1
+  }
+}
