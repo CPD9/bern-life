@@ -3,7 +3,7 @@
 To continue on another account or machine: open the repo and say "You are the conductor. Read
 CLAUDE.md, docs/conductor/STATE.md and .claude/prompts/README.md, then tell me the next step."
 
-Updated: 2026-10-18 19:30 (conductor)
+Updated: 2026-10-18 23:30 (conductor; see HANDOVER.md for the full vision)
 
 ## Deadline
 - Planned feature freeze Sun 18 Oct 23:00; Peter builds through the night. Submission and finals
@@ -25,6 +25,15 @@ onboarding and home.
 | world 3D | Peter's session (W2) | W4 world on real data | walk the map |
 | backend / infra | Yaseen | span-trigger migration | `make run`, Messages app, S3 Exoscale |
 | world home | Nik | avatar #62 | onboarding steps, home room; X2 match report UI |
+
+## Since 19:30
+- Merged: expansion + enrichment (#74), explanations + briefs (#91), span-trigger fix (#83), `make run`
+  (#88), match report (#79), messages app (#86), documents (#93), onboarding (#90, #81), story
+  contract + briefs (#92), `via` contract (#97), explainers (#77).
+- Hosted on Exoscale: https://151-145-197-170.sslip.io (invite-only; fixtures until engine + bundle).
+- Gold with reasons through projects (`via`, #108): recall@10 0.36, MRR 0.43, 100% traceable.
+- Open: #104 opportunity kinds contract, #110 enum migration, #106 labs (S4b), #108 `via` search,
+  #105 Nik's bears, #102 Exoscale; STORY (#95) local in W1.
 
 ## Search baseline (E3a, bundle `local-8f34ab8c1fba`, no model help)
 | Run | recall@10 | MRR | traceable | invented | invented abstained | false abstentions | en / de / fr |
