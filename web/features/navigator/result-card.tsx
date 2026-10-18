@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import type { Profile } from "@/infrastructure/contract-types.generated";
 import { ClaimButton, EvidencePanel } from "./claim-evidence";
 import {
@@ -25,8 +26,14 @@ const kindLabels: Record<Profile["kind"], string> = {
 // belongs to the group that was clicked, so its key is group plus pointer.
 type OpenClaim = { group: string; pointer: string } | null;
 
-export function ResultCard({ result }: { result: SearchResult }) {
+type ResultCardProps = { result: SearchResult; events?: AppEventSink };
+
+export function ResultCard({ result, events = appEvents }: ResultCardProps) {
   const [open, setOpen] = useState<OpenClaim>(null);
+  function toggle(next: OpenClaim) {
+    setOpen(next);
+    if (next !== null) events.emit("evidence_opened");
+  }
   const baseId = useId();
   const cited = new Set(result.reason.cites);
   const { profile } = result;
@@ -45,7 +52,7 @@ export function ResultCard({ result }: { result: SearchResult }) {
               cited={cited.has(pointer)}
               open={openRef?.pointer === pointer}
               panelId={panelId}
-              onToggle={() => setOpen(openRef?.pointer === pointer ? null : { group, pointer })}
+              onToggle={() => toggle(openRef?.pointer === pointer ? null : { group, pointer })}
             />
           ))}
         </span>
@@ -72,7 +79,7 @@ export function ResultCard({ result }: { result: SearchResult }) {
               type="button"
               aria-expanded={nameOpen}
               aria-controls={`${baseId}-name-evidence`}
-              onClick={() => setOpen(nameOpen ? null : { group: "name", pointer: "/name" })}
+              onClick={() => toggle(nameOpen ? null : { group: "name", pointer: "/name" })}
               className="text-left text-lg font-extrabold underline decoration-dotted underline-offset-4"
             >
               {profile.name.value}
