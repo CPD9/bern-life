@@ -38,9 +38,9 @@ class CheckTest(unittest.TestCase):
                 with self.subTest(outcome=outcome, reply=str(bad)[:40]):
                     self.assertEqual(check(bad, ADA, OFFERED), outcome)
 
-    def test_a_capital_copied_from_the_question_is_not_evidence(self):
-        # The question asked about time-of-death estimation at the IRM; the cited claim is about
-        # glucose monitoring, so the reply must not place the result there.
+    def test_a_capital_outside_the_name_and_the_cited_claims_fails(self):
+        # The cited claim is about glucose monitoring, so the reply must not place the result at
+        # an institute or on a topic the claims never mention.
         text = "Ada Muster is the researcher at the IRM who works on Time-of-death estimation."
         self.assertEqual(check(reply(text), ADA, OFFERED), "names")
 
@@ -84,6 +84,14 @@ class ExplainTest(unittest.TestCase):
                 self.assertEqual(
                     explain(FakeChat({"explain": answer}), QUESTION, ADA, PLAIN), (PLAIN, outcome)
                 )
+
+    def test_a_capital_copied_from_the_question_is_not_evidence(self):
+        # The question is in the prompt but is not evidence about the result: words the reply
+        # copies from it fail the names check.
+        question = "Wer forscht am IRM Bern zur Todeszeitschaetzung?"
+        text = "Ada Muster is the researcher at IRM Bern who works on Todeszeitschaetzung."
+        llm = FakeChat({"explain": reply(text)})
+        self.assertEqual(explain(llm, question, ADA, PLAIN), (PLAIN, "names"))
 
     def test_only_the_top_five_are_explained(self):
         results = [{"rank": n, "profile": ADA, "reason": PLAIN} for n in range(1, 8)]
