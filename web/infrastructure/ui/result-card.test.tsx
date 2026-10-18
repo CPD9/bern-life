@@ -87,6 +87,16 @@ describe("ResultCard through a related project", () => {
     expect(screen.getByText(/Proposed by Apertus/)).toBeTruthy();
   });
 
+  test("a claim's button points at its evidence panel, not at the section heading", () => {
+    render(<ResultCard result={teamResult()} />);
+    const claim = screen.getByRole("button", { name: "carbohydrates from meal photos (cited)" });
+    fireEvent.click(claim);
+    const panel = document.getElementById(claim.getAttribute("aria-controls")!);
+    expect(panel?.textContent).toContain("“estimates carbohydrates from meal photos”");
+    const ids = Array.from(document.querySelectorAll("[id]"), (el) => el.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
   test("a reason that cites only the name is hidden; the relation still explains the result", () => {
     render(<ResultCard result={leadResult()} />);
     expect(headings()).toEqual(["Through the project PlateScan"]);

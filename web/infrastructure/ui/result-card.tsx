@@ -55,7 +55,8 @@ export function ResultCard({ result, events = appEvents }: ResultCardProps) {
     isCited = (pointer: string) => cited.has(pointer),
   ) {
     const openRef = open?.group === group ? refs.find((ref) => ref.pointer === open.pointer) : null;
-    const panelId = `${baseId}-${group}`;
+    // Section headings are `${baseId}-why` and `${baseId}-via`, so panels get their own suffix.
+    const panelId = `${baseId}-${group}-evidence`;
     return (
       <>
         <span className="flex flex-wrap gap-1.5">
