@@ -4,10 +4,10 @@ version = "0.1.0"
 description = "Research & Expertise Navigator engine: crawl, extract with evidence, enrich, search"
 requires-python = ">=3.12"
 license = "Apache-2.0"
-dependencies = ["jsonschema==4.26.0"]
+dependencies = ["jsonschema==4.26.0", "psycopg[binary]==3.3.6", "fastembed==0.8.1"]
 
 [project.optional-dependencies]
-dev = ["psycopg[binary]==3.3.6", "ruff==0.14.0"]
+dev = ["ruff==0.14.0"]
 
 [project.scripts]
 bernlife = "bernlife.__main__:main"

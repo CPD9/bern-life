@@ -1,12 +1,14 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type SearchResponse } from "@/infrastructure/contract-types.generated";
 import { groupPlacesByBuilding } from "./buildings";
 import { type CameraCommand } from "./camera-moves";
 import { liteTrees, planCity } from "./city-plan";
 import { useWorldDisplay } from "./display";
-import { AARE_PATH, DISTRICTS, MAP_BOUNDS, RATHAUSPLATZ, ROADS } from "./geography";
+import { AARE_PATH, DISTRICTS, MAP_BOUNDS, type MapPoint, RATHAUSPLATZ, ROADS } from "./geography";
+import { lightUp } from "./light";
 import { type CameraHandle, MapCamera } from "./map-camera";
 import { AnchorProjector } from "./markers/anchor-projector";
 import { markerAnchors, PlaceMarkers } from "./markers/place-markers";
@@ -18,7 +20,9 @@ import { City } from "./scene/city";
 import { Ground } from "./scene/ground";
 import { Lights } from "./scene/lights";
 import { PlaceBuildings } from "./scene/place-buildings";
+import { SearchSummary } from "./search-summary";
 import { useMapKeys } from "./use-map-keys";
+import { useWorldSearch, worldSearch } from "./world-search";
 
 const BUILDINGS = groupPlacesByBuilding(PLACES);
 /** The square in front of the city hall stays open for the agents. */
@@ -32,10 +36,14 @@ const CITY = planCity({
 });
 const ANCHORS = [...markerAnchors(BUILDINGS), AGENTS_ANCHOR];
 
-export type WorldCanvasProps = { onAgentSelect?: (id: AgentId) => void };
+export type WorldCanvasProps = {
+  onAgentSelect?: (id: AgentId) => void;
+  /** Shown lit at load: the world fixture, passed only when the app runs with DEMO_FIXTURES=1. */
+  demoSearch?: SearchResponse | undefined;
+};
 
 // Transparent so the shell's sky shows through; "demand" renders only when something changes.
-export function WorldCanvas({ onAgentSelect }: WorldCanvasProps) {
+export function WorldCanvas({ onAgentSelect, demoSearch }: WorldCanvasProps) {
   const display = useWorldDisplay();
   const palette = paletteFor(display.night);
   const shadows = !display.lite;
@@ -44,6 +52,27 @@ export function WorldCanvas({ onAgentSelect }: WorldCanvasProps) {
   const anchorsRef = useRef(new Map<string, HTMLElement>());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selected = BUILDINGS.find((building) => building.key === selectedKey) ?? null;
+  const search = useWorldSearch();
+  const response = search.status === "results" ? search.response : null;
+  const lighting = useMemo(
+    () => (response === null ? null : lightUp(response, BUILDINGS)),
+    [response],
+  );
+  const fixture = response?.versions.snapshot === "fixture";
+
+  useEffect(() => {
+    if (demoSearch !== undefined) worldSearch.showResults(demoSearch);
+  }, [demoSearch]);
+
+  const framePoints = useMemo(
+    () =>
+      lighting === null
+        ? []
+        : BUILDINGS.filter((building) => lighting.byBuilding.has(building.key)).map(
+            (building): MapPoint => [building.x, building.z],
+          ),
+    [lighting],
+  );
 
   const closePanel = useCallback(() => {
     setSelectedKey(null);
@@ -88,10 +117,19 @@ export function WorldCanvas({ onAgentSelect }: WorldCanvasProps) {
           palette={palette}
           shadows={shadows}
         />
-        <PlaceBuildings buildings={BUILDINGS} palette={palette} shadows={shadows} />
+        <PlaceBuildings
+          buildings={BUILDINGS}
+          palette={palette}
+          shadows={shadows}
+          lighting={lighting}
+        />
         <AgentFigures shadows={shadows} />
         <AnchorProjector anchors={ANCHORS} elementsRef={anchorsRef} />
-        <MapCamera handleRef={cameraRef} reducedMotion={display.reducedMotion} />
+        <MapCamera
+          handleRef={cameraRef}
+          reducedMotion={display.reducedMotion}
+          framePoints={framePoints}
+        />
       </Canvas>
       {/* Its own stacking layer, so marker depth order never lifts a marker over the panel. */}
       <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden *:pointer-events-auto">
@@ -100,10 +138,20 @@ export function WorldCanvas({ onAgentSelect }: WorldCanvasProps) {
           selectedKey={selectedKey}
           onSelect={selectBuilding}
           elementsRef={anchorsRef}
+          searching={search.status === "searching"}
+          lighting={lighting}
         />
         <AgentButtons onSelect={onAgentSelect} elementsRef={anchorsRef} />
       </div>
-      {selected !== null && <PlacePanel building={selected} onClose={closePanel} />}
+      <SearchSummary state={search} lighting={lighting} onClear={worldSearch.clear} />
+      {selected !== null && (
+        <PlacePanel
+          building={selected}
+          light={lighting?.byBuilding.get(selected.key)}
+          fixture={fixture}
+          onClose={closePanel}
+        />
+      )}
     </div>
   );
 }

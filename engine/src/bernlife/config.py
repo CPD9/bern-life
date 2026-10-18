@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 
 BACKENDS = ("live", "replay", "mock")
 DEFAULT_MAX_CONCURRENCY = 4
+DEFAULT_ENGINE_PORT = 8100
 
 
 class ConfigError(ValueError):
@@ -46,6 +47,20 @@ def backend(env: Mapping[str, str] = os.environ) -> str:
     if value and value not in BACKENDS:
         raise ConfigError(f"BERNLIFE_BACKEND must be live, replay or mock, not {value!r}")
     return value
+
+
+def database_url(env: Mapping[str, str] = os.environ) -> str:
+    url = env.get("DATABASE_URL", "")
+    if not url:
+        raise ConfigError("DATABASE_URL is not set; see .env.example")
+    return url
+
+
+def engine_port(env: Mapping[str, str] = os.environ) -> int:
+    raw = env.get("ENGINE_PORT", "") or str(DEFAULT_ENGINE_PORT)
+    if not raw.isdigit() or not 0 < int(raw) < 65536:
+        raise ConfigError(f"ENGINE_PORT must be a port number, not {raw!r}")
+    return int(raw)
 
 
 def max_concurrency(env: Mapping[str, str] = os.environ) -> int:

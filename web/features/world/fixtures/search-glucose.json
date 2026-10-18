@@ -1,0 +1,323 @@
+{
+  "query": "glucose sensors",
+  "mode": "mock",
+  "abstained": false,
+  "abstain_reason": null,
+  "expanded_terms": [
+    {
+      "term": "continuous glucose monitoring",
+      "kind": "synonym",
+      "lang": "en"
+    },
+    {
+      "term": "CGM",
+      "kind": "acronym",
+      "lang": "en"
+    }
+  ],
+  "results": [
+    {
+      "rank": 1,
+      "profile": {
+        "id": "person-fixture-ada-muster",
+        "kind": "person",
+        "source_id": "fixture",
+        "name": {
+          "value": "Ada Muster",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.dcberne.com/fixture/ada-muster",
+            "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+            "span": "Ada Muster",
+            "start": 0
+          }
+        },
+        "source_url": "https://www.dcberne.com/fixture/ada-muster",
+        "fields": {
+          "role": [
+            {
+              "value": "Research Scientist",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.dcberne.com/fixture/ada-muster",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "Research Scientist",
+                "start": 12
+              }
+            }
+          ],
+          "unit": [],
+          "expertise": [
+            {
+              "value": "continuous glucose monitoring",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.dcberne.com/fixture/ada-muster",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "continuous glucose monitoring",
+                "start": 40
+              }
+            }
+          ],
+          "projects": [],
+          "infrastructure": [],
+          "services": []
+        }
+      },
+      "reason": {
+        "text": "Lists continuous glucose monitoring as a research topic.",
+        "cites": ["/fields/expertise/0"]
+      },
+      "score": {
+        "fused": 0.0331,
+        "lexical_rank": 1,
+        "vector_rank": 1
+      }
+    },
+    {
+      "rank": 2,
+      "profile": {
+        "id": "person-fixture-beat-beispiel",
+        "kind": "person",
+        "source_id": "fixture",
+        "name": {
+          "value": "Beat Beispiel",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.artorg.unibe.ch/fixture/beat-beispiel",
+            "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+            "span": "Beat Beispiel",
+            "start": 0
+          }
+        },
+        "source_url": "https://www.artorg.unibe.ch/fixture/beat-beispiel",
+        "fields": {
+          "role": [
+            {
+              "value": "Group Leader",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.artorg.unibe.ch/fixture/beat-beispiel",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "Group Leader",
+                "start": 15
+              }
+            }
+          ],
+          "unit": [],
+          "expertise": [
+            {
+              "value": "wearable biosensors",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.artorg.unibe.ch/fixture/beat-beispiel",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "wearable biosensors",
+                "start": 40
+              }
+            }
+          ],
+          "projects": [],
+          "infrastructure": [],
+          "services": []
+        }
+      },
+      "reason": {
+        "text": "Works on wearable biosensors.",
+        "cites": ["/fields/expertise/0"]
+      },
+      "score": {
+        "fused": 0.0318,
+        "lexical_rank": 2,
+        "vector_rank": 2
+      }
+    },
+    {
+      "rank": 3,
+      "profile": {
+        "id": "person-fixture-carla-exempel",
+        "kind": "person",
+        "source_id": "fixture",
+        "name": {
+          "value": "Carla Exempel",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.ibmm.unibe.ch/fixture/carla-exempel",
+            "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+            "span": "Carla Exempel",
+            "start": 0
+          }
+        },
+        "source_url": "https://www.ibmm.unibe.ch/fixture/carla-exempel",
+        "fields": {
+          "role": [
+            {
+              "value": "Postdoctoral Fellow",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.ibmm.unibe.ch/fixture/carla-exempel",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "Postdoctoral Fellow",
+                "start": 15
+              }
+            }
+          ],
+          "unit": [],
+          "expertise": [
+            {
+              "value": "glucose metabolism",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.ibmm.unibe.ch/fixture/carla-exempel",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "glucose metabolism",
+                "start": 40
+              }
+            }
+          ],
+          "projects": [],
+          "infrastructure": [],
+          "services": []
+        }
+      },
+      "reason": {
+        "text": "Studies glucose metabolism.",
+        "cites": ["/fields/expertise/0"]
+      },
+      "score": {
+        "fused": 0.0302,
+        "lexical_rank": 3,
+        "vector_rank": 3
+      }
+    },
+    {
+      "rank": 4,
+      "profile": {
+        "id": "person-fixture-dora-demo",
+        "kind": "person",
+        "source_id": "fixture",
+        "name": {
+          "value": "Dora Demo",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.neuroscience.unibe.ch/fixture/dora-demo",
+            "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+            "span": "Dora Demo",
+            "start": 0
+          }
+        },
+        "source_url": "https://www.neuroscience.unibe.ch/fixture/dora-demo",
+        "fields": {
+          "role": [
+            {
+              "value": "PhD Student",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.neuroscience.unibe.ch/fixture/dora-demo",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "PhD Student",
+                "start": 11
+              }
+            }
+          ],
+          "unit": [],
+          "expertise": [
+            {
+              "value": "sensor signal processing",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.neuroscience.unibe.ch/fixture/dora-demo",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "sensor signal processing",
+                "start": 40
+              }
+            }
+          ],
+          "projects": [],
+          "infrastructure": [],
+          "services": []
+        }
+      },
+      "reason": {
+        "text": "Works on sensor signal processing.",
+        "cites": ["/fields/expertise/0"]
+      },
+      "score": {
+        "fused": 0.0288,
+        "lexical_rank": 4,
+        "vector_rank": 4
+      }
+    },
+    {
+      "rank": 5,
+      "profile": {
+        "id": "person-fixture-emil-exempel",
+        "kind": "person",
+        "source_id": "fixture",
+        "name": {
+          "value": "Emil Exempel",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.example-institute.test/fixture/emil-exempel",
+            "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+            "span": "Emil Exempel",
+            "start": 0
+          }
+        },
+        "source_url": "https://www.example-institute.test/fixture/emil-exempel",
+        "fields": {
+          "role": [
+            {
+              "value": "Engineer",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.example-institute.test/fixture/emil-exempel",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "Engineer",
+                "start": 14
+              }
+            }
+          ],
+          "unit": [],
+          "expertise": [
+            {
+              "value": "glucose sensor housings",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.example-institute.test/fixture/emil-exempel",
+                "page_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+                "span": "glucose sensor housings",
+                "start": 40
+              }
+            }
+          ],
+          "projects": [],
+          "infrastructure": [],
+          "services": []
+        }
+      },
+      "reason": {
+        "text": "Designs glucose sensor housings.",
+        "cites": ["/fields/expertise/0"]
+      },
+      "score": {
+        "fused": 0.0251,
+        "lexical_rank": 5,
+        "vector_rank": 5
+      }
+    }
+  ],
+  "timings_ms": {
+    "expand": 0,
+    "search": 0,
+    "explain": 0
+  },
+  "versions": {
+    "engine": "0.0.0",
+    "snapshot": "fixture",
+    "prompts": "fixture",
+    "models": {
+      "expand": "MOCK-no-model"
+    }
+  }
+}
