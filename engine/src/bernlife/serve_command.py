@@ -16,6 +16,7 @@ from typing import Any
 import psycopg
 
 from bernlife import config, paths
+from bernlife.brief_search import brief_search
 from bernlife.database import connect
 from bernlife.embed import MODEL_ID, Embedder, e5_embedder
 from bernlife.llm import Chat
@@ -58,6 +59,10 @@ class EngineApi:
         elapsed_ms = (time.monotonic() - started) * 1000
         log.info("search %.0f ms, %d results", elapsed_ms, len(response["results"]))
         return response
+
+    def brief(self, text: str) -> dict[str, Any]:
+        with self._lock:
+            return brief_search(text, None, self._store, self._embedder, self._llm)
 
     def profile(self, profile_id: str) -> dict[str, Any] | None:
         with self._lock:

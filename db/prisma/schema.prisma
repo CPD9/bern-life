@@ -276,6 +276,7 @@ model User {
   inviteUsed  Invite?      @relation("invite_used_by")
   memberships Member[]
   messages    Message[]
+  documents   Document[]
 
   // "user" is a reserved word in Postgres; every raw query would have to quote it.
   @@map("app_user")
@@ -385,4 +386,30 @@ model Message {
 
   @@index([conversationId, createdAt, id])
   @@map("message")
+}
+
+// Documents (S4a). The file lives on disk at $BERNLIFE_DATA_DIR/uploads/<sha256>, one copy per
+// hash, never in git or the bundle; the row holds what is needed to find and check it. The size,
+// hash and type CHECKs are in the migration.
+enum DocumentVisibility {
+  private
+  members
+  public
+}
+
+model Document {
+  id         String             @id @default(uuid()) @db.Uuid
+  ownerId    String             @map("owner_id") @db.Uuid
+  fileName   String             @map("file_name")
+  sha256     String             @db.Char(64)
+  size       Int
+  pages      Int
+  mime       String
+  visibility DocumentVisibility @default(private)
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, createdAt])
+  @@index([sha256])
+  @@map("document")
 }
