@@ -1,14 +1,19 @@
 """Download the snapshot bundle named in bundle.lock, verify it and unpack it to data/bundle/.
 
+    python3 infra/fetch_bundle.py [--archive <tarball copied by hand>]
+
 The bundle is a release asset and never enters git (deletion path), so this is how pages, vectors
 and the model cache reach a clean clone. A download is untrusted until its sha256 matches the lock
 and every file matches manifest.json; the installed bundle is replaced only after both checks.
+The hosted VM holds no GitHub token, so there the tarball arrives by scp and --archive puts it
+through the same checks in place of the download.
 
 The archive holds manifest.json and the bundle files at its root. The manifest lists every other
 file with its sha256 and, for text files, its line count:
 {"version": "bundle-20261018-1", "files": {"pages.jsonl": {"sha256": "...", "lines": 1234}}}
 """
 
+import argparse
 import hashlib
 import json
 import os
@@ -164,9 +169,25 @@ def public_download(lock: Lock, dest: Path) -> None:
         ) from err
 
 
-def main() -> int:
+def copy_archive(archive: Path) -> Download:
+    def download(lock: Lock, dest: Path) -> None:
+        try:
+            shutil.copyfile(archive, dest)
+        except OSError as err:
+            raise BundleError(f"Could not read {archive}.") from err
+
+    return download
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="python3 infra/fetch_bundle.py")
+    parser.add_argument("--archive", type=Path, help="a bundle tarball copied by hand")
+    args = parser.parse_args(argv)
     data_dir = Path(os.environ.get("BERNLIFE_DATA_DIR") or ROOT / "data").expanduser()
-    download = gh_download if shutil.which("gh") else public_download
+    if args.archive is not None:
+        download = copy_archive(args.archive.expanduser())
+    else:
+        download = gh_download if shutil.which("gh") else public_download
     try:
         lock = read_lock(ROOT / "bundle.lock")
         data_dir.mkdir(parents=True, exist_ok=True)
