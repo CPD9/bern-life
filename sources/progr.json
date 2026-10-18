@@ -1,0 +1,32 @@
+{
+  "id": "progr",
+  "name": "PROGR",
+  "sites": [
+    {
+      "host": "www.progr.ch",
+      "unit": "PROGR, rooms and studios for rent",
+      "seeds": [
+        "https://www.progr.ch/de/vermietung/",
+        "https://www.progr.ch/de/vermietung/raeume/"
+      ],
+      "allow_paths": [
+        "/de/vermietung"
+      ]
+    }
+  ],
+  "crawl": {
+    "max_pages_per_site": 30,
+    "delay_s": 1.0,
+    "max_depth": 2
+  },
+  "page_types": [
+    {
+      "kind": "space",
+      "url_pattern": "^https://www\\.progr\\.ch/de/vermietung/$"
+    },
+    {
+      "kind": "listing",
+      "url_pattern": "^https://www\\.progr\\.ch/de/vermietung/.+$"
+    }
+  ]
+}

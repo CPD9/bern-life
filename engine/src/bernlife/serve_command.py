@@ -19,6 +19,7 @@ from bernlife import config, paths
 from bernlife.brief_search import brief_search
 from bernlife.database import connect
 from bernlife.embed import MODEL_ID, Embedder, e5_embedder
+from bernlife.extract_records import PEOPLE_KINDS
 from bernlife.llm import Chat
 from bernlife.llm import connect as connect_model
 from bernlife.search import search
@@ -54,7 +55,12 @@ class EngineApi:
         started = time.monotonic()
         with self._lock:
             response = search(
-                request.query, request.sources, self._store, self._embedder, self._llm
+                request.query,
+                request.sources,
+                self._store,
+                self._embedder,
+                self._llm,
+                request.kinds or PEOPLE_KINDS,
             )
         elapsed_ms = (time.monotonic() - started) * 1000
         log.info("search %.0f ms, %d results", elapsed_ms, len(response["results"]))

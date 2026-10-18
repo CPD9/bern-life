@@ -9,7 +9,14 @@ a whole line of the text, so a selector never states something the page text doe
 import re
 from urllib.parse import urlsplit
 
-from bernlife.extract_records import PROFILE_KINDS, Candidate, Page, RelationCandidate, Subject
+from bernlife.extract_records import (
+    OPPORTUNITY_KINDS,
+    PROFILE_KINDS,
+    Candidate,
+    Page,
+    RelationCandidate,
+    Subject,
+)
 from bernlife.names import (
     display_name,
     fold,
@@ -20,6 +27,8 @@ from bernlife.names import (
 )
 
 SELECTOR = "selector"
+HEADING_CHARS = 80
+HEADING_LINES = 5
 TITLE_SUFFIX = re.compile(r"^(.*\S)\s+[-–|]\s+(\S.*)$")
 AFFILIATION = re.compile(r"^(?:University of Bern|Universität Bern|Université de Berne), ")
 LABELS = frozenset(
@@ -54,8 +63,26 @@ def page_name(page: Page) -> str | None:
     rest = match.group(1) if match else page.title.strip()
     candidates = [rest]
     candidates += [rest.split(sep, 1)[1] for sep in (": ", " - ", " – ") if sep in rest]
+    candidates += [rest.split(" | ", 1)[0]] if " | " in rest else []
     lines = set(page.text.split("\n"))
-    return next((name for name in candidates if name in lines), None)
+    found = next((name for name in candidates if name in lines), None)
+    if found is None and page.kind in OPPORTUNITY_KINDS:
+        return heading_line(page, candidates[-1])
+    return found
+
+
+def heading_line(page: Page, first_segment: str) -> str | None:
+    """Funders and coworking sites title a page with a sentence or a "Room | Rooms | Site" path,
+    so the name is a short line of the page: the one holding the title's first segment as a
+    word, else the first of the opening lines that shares a word with the title."""
+    lines = [line for line in page.text.split("\n") if 0 < len(line) <= HEADING_CHARS]
+    segment = fold(first_segment)
+    holding = [line for line in lines if segment and f" {segment} " in f" {fold(line)} "]
+    if holding:
+        return holding[0]
+    title_words = {w for w in fold(page.title).split() if len(w) >= 4}
+    opening = [line for line in page.text.split("\n")[:HEADING_LINES] if line in lines]
+    return next((line for line in opening if title_words & set(fold(line).split())), None)
 
 
 def site_line(page: Page) -> str | None:
@@ -66,15 +93,16 @@ def site_line(page: Page) -> str | None:
     return match.group(2)
 
 
-def page_subject(page: Page) -> Subject | None:
-    """What the page itself is about, or None for listings and pages without a readable name."""
+def page_subject(page: Page, institutes: bool = True) -> Subject | None:
+    """What the page itself is about, or None for listings and pages without a readable name.
+    Without `institutes` (an opportunity source), a page is never read as its site's institute."""
     name = page_name(page)
     if page.kind not in PROFILE_KINDS or name is None:
         return None
     if page.kind == "person":
         person = display_name(name)
         return person_subject(page.source_id, person) if looks_like_person(person) else None
-    if name == site_line(page):
+    if institutes and name == site_line(page):
         return institute_subject(page, name)
     return Subject(page.kind, page.source_id, _page_key(page, name), name)
 
@@ -87,14 +115,18 @@ def _page_key(page: Page, name: str) -> str:
     return f"page:{urlsplit(page.url).hostname}:{fold(name)}"
 
 
-def selector_candidates(page: Page) -> tuple[list[Candidate], list[RelationCandidate]]:
+def selector_candidates(
+    page: Page, institutes: bool = True
+) -> tuple[list[Candidate], list[RelationCandidate]]:
+    """Without `institutes` (an opportunity source), the header line names no unit: a funder's or
+    a coworking site's header is not a research unit for people search."""
     candidates: list[Candidate] = []
     relations: list[RelationCandidate] = []
-    site = site_line(page)
+    site = site_line(page) if institutes else None
     institute = institute_subject(page, site) if site else None
     if institute and site:
         candidates.append(Candidate(institute, "name", site, site, SELECTOR, page.url))
-    subject = page_subject(page)
+    subject = page_subject(page, institutes)
     name = page_name(page)
     if subject is None or name is None or subject == institute:
         return candidates, relations

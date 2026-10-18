@@ -64,6 +64,39 @@ replaced.
 Before writing, the command checks every stored span against its page again and validates every
 profile against the contract. It writes nothing if one fails.
 
+## Opportunities: calls, services, spaces
+Six sources describe opportunities rather than people. Each is one file in `sources/` (criterion 6):
+
+| Source | What it gives |
+|---|---|
+| Bern Economic Development Agency | services |
+| Innosuisse | calls and services |
+| SNSF | calls |
+| Switzerland Innovation Park Biel/Bienne | services and spaces |
+| Effinger | coworking space and rooms |
+| PROGR | rooms and studios for rent |
+
+Their `page_types` mark `call`, `service` and `space` pages and end in a catch-all `listing`.
+Without that catch-all, news pages would fall to the path words and become projects. A source
+whose page types name only opportunity kinds and listings is an opportunity source:
+- its pages never name an institute, so a funder's or a coworking site's header is not read as a
+  research unit;
+- the model pass on it runs with `--kinds call,service,space`, and its own instruction asks for
+  no people.
+
+- **Fields:** `call` asks for funder, deadline, amount, eligibility and expertise; `service` for
+  services, eligibility and expertise; `space` for location, size and services
+  (`extract_records.fields_for`).
+- **Verbatim values:** dates, amounts and sizes are copied as written, and the verifier checks
+  them like any value. A deadline written differently from its span is dropped, never parsed.
+  Values made of digits ("31.03.2027", "47m2") count as content; only `[email]` / `[phone]`
+  tokens and punctuation are contact-only. Replaying E2's extraction with this rule gave
+  byte-identical `profiles.jsonl` and `relations.jsonl`.
+- **Names:** these sites title pages with a sentence or a "Room | Rooms | Site" path. When the
+  title gives no line, the name is a short line of the page: the one holding the title's first
+  segment as a word, else the first opening line that shares a word with the title. This
+  applies to opportunity pages only.
+
 ## Running it
 ```bash
 BERNLIFE_BACKEND=mock python -m bernlife extract
@@ -79,6 +112,10 @@ address span occurs on its page and that the recorded page hash is the stored on
 nothing.
 
 ## Limits
+- An opportunity's short span can drop its context: the SNSF IICT page's amount "up to CHF 5000"
+  is verbatim, but it belongs to a preparatory grant mentioned in the same sentence.
+- PROGR's room pages load their text in the browser; the server sends the rental overview for
+  each, so only the overview is a space.
 - People with the same name in one source become one profile.
 - DCB's English and German pages pair only when their names are equal; a translated name gives two
   profiles.
