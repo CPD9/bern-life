@@ -1,0 +1,39 @@
+# One project name for every worktree, so all lanes share one Postgres on 5433 and keep their
+# work apart in their own bernlife_<lane> database (make db-reset-throwaway).
+name: bernlife
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bernlife}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bernlife}
+      POSTGRES_DB: ${POSTGRES_DB:-bernlife}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Runs one `python -m bernlife <command>` at a time: docker compose run --rm engine <command>.
+  engine:
+    profiles: [engine]
+    build:
+      context: .
+      dockerfile: engine/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bernlife}:${POSTGRES_PASSWORD:-bernlife}@db:5432/${POSTGRES_DB:-bernlife}
+    ports:
+      - "127.0.0.1:${ENGINE_PORT:-8100}:8100"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
