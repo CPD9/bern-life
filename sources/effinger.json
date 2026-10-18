@@ -1,0 +1,23 @@
+{
+  "id": "effinger",
+  "name": "Effinger",
+  "sites": [
+    {
+      "host": "www.effinger.ch",
+      "unit": "Effinger coworking",
+      "seeds": [
+        "https://www.effinger.ch/coworking/",
+        "https://www.effinger.ch/raeume/"
+      ],
+      "allow_paths": [
+        "/coworking/",
+        "/raeume/"
+      ]
+    }
+  ],
+  "crawl": {
+    "max_pages_per_site": 20,
+    "delay_s": 1.0,
+    "max_depth": 2
+  }
+}

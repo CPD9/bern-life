@@ -1,0 +1,21 @@
+{
+  "id": "innosuisse",
+  "name": "Innosuisse",
+  "sites": [
+    {
+      "host": "www.innosuisse.admin.ch",
+      "unit": "Innosuisse",
+      "seeds": [
+        "https://www.innosuisse.admin.ch/en"
+      ],
+      "allow_paths": [
+        "/en/"
+      ]
+    }
+  ],
+  "crawl": {
+    "max_pages_per_site": 200,
+    "delay_s": 1.0,
+    "max_depth": 3
+  }
+}

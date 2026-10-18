@@ -1,0 +1,21 @@
+{
+  "id": "beda",
+  "name": "Bern Economic Development Agency",
+  "sites": [
+    {
+      "host": "www.berninvest.be.ch",
+      "unit": "Bern Economic Development Agency",
+      "seeds": [
+        "https://www.berninvest.be.ch/en/start/dienstleistungen.html"
+      ],
+      "allow_paths": [
+        "/en/start/dienstleistungen"
+      ]
+    }
+  ],
+  "crawl": {
+    "max_pages_per_site": 40,
+    "delay_s": 10.0,
+    "max_depth": 3
+  }
+}
