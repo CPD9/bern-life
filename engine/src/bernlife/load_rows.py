@@ -9,7 +9,7 @@ from collections.abc import Iterator, Mapping
 from typing import Any
 
 from bernlife.chunks import Chunk, vector_key
-from bernlife.extract_records import FIELDS
+from bernlife.extract_records import fields_for
 
 Record = Mapping[str, Any]
 Row = dict[str, object]
@@ -47,7 +47,7 @@ def profile_row(profile: Record) -> Row:
 def claim_rows(profile: Record) -> Iterator[tuple[str, Row]]:
     """(label, row) pairs; the label names the claim in a refusal without quoting page text."""
     yield f"{profile['id']}/name", _claim_row(profile["id"], "name", 0, profile["name"])
-    for field in FIELDS:
+    for field in fields_for(profile["kind"]):
         for position, claim in enumerate(profile["fields"][field]):
             label = f"{profile['id']}/{field}/{position}"
             yield label, _claim_row(profile["id"], field, position, claim)

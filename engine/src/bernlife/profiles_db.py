@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 
 import psycopg
 
-from bernlife.extract_records import FIELDS
+from bernlife.extract_records import fields_for
 
 STATEMENT = """
 SELECT p.id, p.kind::text, p.source_id, p.source_url, c.field::text, c.position, c.value,
@@ -43,7 +43,7 @@ def read_profiles(conn: psycopg.Connection, ids: Sequence[str]) -> dict[str, dic
     for row in conn.execute(STATEMENT, (list(ids),)).fetchall():
         profile_id, kind, source_id, source_url, field = row[:5]
         if profile_id not in profiles:
-            fields[profile_id] = {name: [] for name in FIELDS}
+            fields[profile_id] = {name: [] for name in fields_for(kind)}
             profiles[profile_id] = {"id": profile_id, "kind": kind, "source_id": source_id}
             profiles[profile_id]["source_url"] = source_url
         if field == "name":

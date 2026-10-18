@@ -20,6 +20,7 @@ from bernlife.chunks import claims_of
 from bernlife.embed import MODEL_ID, Embedder
 from bernlife.expand import EXPAND_PROMPT_VERSION, Expansion, expand, expanded_text
 from bernlife.explain import EXPLAIN_PROMPT_VERSION, explain_top
+from bernlife.extract_records import PEOPLE_KINDS
 from bernlife.llm import Chat
 from bernlife.matching import Asked, asked, can_explain
 from bernlife.metrics import query_topics, with_metrics
@@ -50,14 +51,15 @@ def assess(
     store: Store,
     embedder: Embedder,
     expansion: Expansion | None = None,
+    kinds: Sequence[str] = PEOPLE_KINDS,
 ) -> Assessment:
     """Abstention looks at every candidate; only those that can explain themselves are ranked."""
-    plain = store.hits(query, embedder.query(query), sources)
+    plain = store.hits(query, embedder.query(query), sources, kinds)
     terms = [term.term for term in expansion.terms()] if expansion else []
     expanded = []
     if terms:
         text = expanded_text(query, expansion.terms())
-        expanded = store.hits(text, embedder.query(text), sources)
+        expanded = store.hits(text, embedder.query(text), sources, kinds)
     found = candidates(plain, expanded)
     profiles = store.profiles([c.profile_id for c in found])
     values = sorted({c["value"] for p in profiles.values() for c in p["fields"]["expertise"]})
@@ -99,9 +101,11 @@ def search(
     store: Store,
     embedder: Embedder,
     llm: Chat | None = None,
+    kinds: Sequence[str] = PEOPLE_KINDS,
 ) -> dict[str, Any]:
+    """Without `kinds`, people, units, projects and infrastructure, as before opportunities."""
     expansion = expand(llm, query) if llm is not None else None
-    assessment = assess(query, sources, store, embedder, expansion)
+    assessment = assess(query, sources, store, embedder, expansion, kinds)
     results = []
     if assessment.abstain_reason is None:
         shown = assessment.ranked[:RESULTS]

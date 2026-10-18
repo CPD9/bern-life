@@ -31,7 +31,7 @@ export const appEvents: AppEvents = createAppEvents();
  * Add an event here in the same PR that emits it:
  * - search_answered, search_answered_other_language, brief_answered, abstained_seen:
  *   features/navigator/navigator-events.ts
- * - evidence_opened: features/navigator/result-card.tsx
+ * - evidence_opened: infrastructure/ui/result-card.tsx
  * - report_made: features/report/open-report.ts
  */
 export const emittedToday: readonly AppEventName[] = [

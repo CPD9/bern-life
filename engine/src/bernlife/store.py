@@ -24,7 +24,9 @@ class Relation:
 
 
 class Store(Protocol):
-    def hits(self, query: str, vector: list[float], sources: list[str] | None) -> list[Hit]: ...
+    def hits(
+        self, query: str, vector: list[float], sources: list[str] | None, kinds: Sequence[str]
+    ) -> list[Hit]: ...
     def profiles(self, ids: Sequence[str]) -> dict[str, dict[str, Any]]: ...
     def enrichment(self, values: Sequence[str]) -> dict[str, list[str]]: ...
     def pages(self, urls: Sequence[str]) -> dict[str, dict[str, Any]]: ...
@@ -36,8 +38,10 @@ class Store(Protocol):
 class PostgresStore:
     conn: psycopg.Connection
 
-    def hits(self, query: str, vector: list[float], sources: list[str] | None) -> list[Hit]:
-        return fetch_hits(self.conn, query, vector, sources)
+    def hits(
+        self, query: str, vector: list[float], sources: list[str] | None, kinds: Sequence[str]
+    ) -> list[Hit]:
+        return fetch_hits(self.conn, query, vector, sources, kinds)
 
     def profiles(self, ids: Sequence[str]) -> dict[str, dict[str, Any]]:
         return read_profiles(self.conn, ids)

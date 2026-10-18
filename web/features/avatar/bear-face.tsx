@@ -5,6 +5,7 @@ import { type FaceId } from "./bear-config";
 import { DARK_EYES } from "./bear-look";
 import { headSurfaceZ } from "./bear-shape";
 import { Ball } from "./plush";
+import { PART } from "./use-bear-motion";
 
 const EYE_X = 0.13;
 const EYE_Y = 0.05;
@@ -13,12 +14,15 @@ const BLUSH = "#ee8f8f";
 
 type EyeStyle = "open" | "closed-happy" | "closed-sleepy";
 
-function Eye({ side, style, colour }: { side: 1 | -1; style: EyeStyle; colour: string }) {
+type EyeProps = { side: 1 | -1; style: EyeStyle; colour: string };
+
+function Eye({ side, style, colour }: EyeProps) {
   const x = side * EYE_X;
   const z = headSurfaceZ(x, EYE_Y);
   if (style === "open") {
+    // Open eyes blink by squashing in height; the pose maths sets the scale.
     return (
-      <group position={[x, EYE_Y, z - 0.01]}>
+      <group name={PART.eyes[side === -1 ? 0 : 1]} position={[x, EYE_Y, z - 0.01]}>
         <Ball colour={colour} radius={0.05} scale={[0.85, 1, 0.5]} />
         {colour === DARK_EYES && (
           <Ball colour={CATCHLIGHT} radius={0.016} position={[0.015, 0.02, 0.025]} />
@@ -45,7 +49,9 @@ const EYES: Readonly<Record<FaceId, readonly [EyeStyle, EyeStyle]>> = {
   wink: ["open", "closed-happy"],
 };
 
-export function BearFace({ face, eyes, mouth }: { face: FaceId; eyes: string; mouth: string }) {
+type FaceProps = { face: FaceId; eyes: string; mouth: string };
+
+export function BearFace({ face, eyes, mouth }: FaceProps) {
   const [left, right] = EYES[face];
   return (
     <group>

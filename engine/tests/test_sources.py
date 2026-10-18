@@ -10,10 +10,13 @@ FIXTURE = paths.repo_root() / "contracts" / "fixtures" / "source.json"
 
 
 class RealSourcesTest(unittest.TestCase):
-    def test_the_three_sources_and_22_hosts_load(self):
+    def test_the_case_sources_and_the_opportunity_sources_load(self):
         sources = load_sources()
-        self.assertEqual([s.id for s in sources], ["artorg", "dcb", "unibe"])
-        self.assertEqual(sum(len(s.sites) for s in sources), 22)
+        self.assertEqual(
+            [s.id for s in sources],
+            ["artorg", "beda", "dcb", "effinger", "innosuisse", "progr", "sipbb", "snsf", "unibe"],
+        )
+        self.assertEqual(sum(len(s.sites) for s in sources), 28)
 
 
 class BrokenSourceTest(unittest.TestCase):
