@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { aspectMatrix } from "./aspect-matrix";
 import { BriefNeeds } from "./brief-needs";
@@ -11,6 +12,7 @@ type ResultsViewProps = {
   state: NavigatorState;
   onRetry: () => void;
   onShowOnMap?: ((response: SearchResponse) => void) | undefined;
+  onMakeReport?: ((response: SearchResponse) => boolean) | undefined;
 };
 
 function RetryButton({ onRetry }: { onRetry: () => void }) {
@@ -22,6 +24,32 @@ function RetryButton({ onRetry }: { onRetry: () => void }) {
     >
       Try again
     </button>
+  );
+}
+
+function MakeReportButton({
+  response,
+  onMakeReport,
+}: {
+  response: SearchResponse;
+  onMakeReport: (response: SearchResponse) => boolean;
+}) {
+  const [blocked, setBlocked] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setBlocked(!onMakeReport(response))}
+        className="bg-chip-selected text-chip-selected-ink rounded-pill px-5 py-2 font-bold"
+      >
+        Make a report
+      </button>
+      {blocked && (
+        <p role="alert" className="text-sm">
+          This browser blocks storage, so the report could not be kept.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -46,6 +74,7 @@ function Answer({
   response,
   onRetry,
   onShowOnMap,
+  onMakeReport,
 }: ResultsViewProps & { response: SearchResponse }) {
   const matrix = aspectMatrix(response);
   return (
@@ -56,14 +85,19 @@ function Answer({
       )}
       <ExpandedTerms terms={response.expanded_terms} />
       {matrix && <BriefNeeds matrix={matrix} />}
-      {onShowOnMap && response.results.length > 0 && (
-        <button
-          type="button"
-          onClick={() => onShowOnMap(response)}
-          className="bg-primary text-primary-ink rounded-pill self-start px-5 py-2 font-bold"
-        >
-          Show on map
-        </button>
+      {response.results.length > 0 && (onShowOnMap || onMakeReport) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {onShowOnMap && (
+            <button
+              type="button"
+              onClick={() => onShowOnMap(response)}
+              className="bg-primary text-primary-ink rounded-pill px-5 py-2 font-bold"
+            >
+              Show on map
+            </button>
+          )}
+          {onMakeReport && <MakeReportButton response={response} onMakeReport={onMakeReport} />}
+        </div>
       )}
       <ol className="flex flex-col gap-4">
         {response.results.map((result) => (

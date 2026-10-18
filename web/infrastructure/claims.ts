@@ -1,4 +1,4 @@
-import type { Claim, Profile, SearchResponse } from "@/infrastructure/contract-types.generated";
+import type { Claim, Profile, SearchResponse } from "./contract-types.generated";
 
 export type SearchResult = SearchResponse["results"][number];
 
