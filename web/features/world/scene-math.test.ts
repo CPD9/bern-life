@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { commandForKey, panOffset, PAN_STEP, START_VIEW, startPosition } from "./camera-moves";
+import {
+  commandForKey,
+  focusTarget,
+  panOffset,
+  PAN_STEP,
+  START_VIEW,
+  startPosition,
+} from "./camera-moves";
 import { CLEARANCE, liteTrees, planCity, type CityInput } from "./city-plan";
 import { AARE_PATH, DISTRICTS, MAP_BOUNDS, RATHAUSPLATZ, ROADS, ROAD_WIDTH } from "./geography";
 import { distanceToPolyline, pointInPolygon } from "./geometry";
@@ -164,5 +171,14 @@ describe("start view", () => {
     expect(distance(1.6)).toBeCloseTo(175, 10);
     expect(distance(0.88)).toBeCloseTo(218.75, 10);
     expect(distance(0.46)).toBeCloseTo(297.5, 10);
+  });
+});
+
+describe("focusTarget", () => {
+  test("landscape centres the place; portrait stops 12 units short, toward the viewer", () => {
+    expect(focusTarget(-37, -17.6, 0, false)).toEqual([-37, -17.6]);
+    const [x, z] = focusTarget(-37, -17.6, 0, true);
+    expect(x).toBeCloseTo(-37, 10);
+    expect(z).toBeCloseTo(-5.6, 10);
   });
 });
