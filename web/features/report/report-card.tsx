@@ -8,6 +8,9 @@ const kindLabels: Record<Card["kind"], string> = {
   unit: "Unit",
   project: "Project",
   infrastructure: "Infrastructure",
+  call: "Funding call",
+  service: "Service",
+  space: "Space",
 };
 
 const fetchedFormat = new Intl.DateTimeFormat("en-GB", {

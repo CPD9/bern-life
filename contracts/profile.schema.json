@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "profile.schema.json",
   "title": "Profile",
-  "description": "A person, unit, project or infrastructure built from stored pages. Every value is a claim with a verbatim span from a stored page; a field the pages do not support is an empty list, never a guess. No email or phone is stored: contact goes through the source page link.",
+  "description": "A person, unit, project or infrastructure built from stored pages. Every value is a claim with a verbatim span from a stored page; a field the pages do not support is an empty list, never a guess. No email or phone is stored: contact goes through the source page link. Calls, services and spaces (opportunities) use the optional fields funder, deadline, amount, eligibility, location and size; dates and amounts are verbatim text from the page, never parsed or computed.",
   "type": "object",
   "required": [
     "id",
@@ -16,14 +16,17 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^(person|unit|project|infrastructure)-[a-z0-9-]+$"
+      "pattern": "^(person|unit|project|infrastructure|call|service|space)-[a-z0-9-]+$"
     },
     "kind": {
       "enum": [
         "person",
         "unit",
         "project",
-        "infrastructure"
+        "infrastructure",
+        "call",
+        "service",
+        "space"
       ]
     },
     "source_id": {
@@ -66,6 +69,24 @@
           "$ref": "#/$defs/claims"
         },
         "services": {
+          "$ref": "#/$defs/claims"
+        },
+        "funder": {
+          "$ref": "#/$defs/claims"
+        },
+        "deadline": {
+          "$ref": "#/$defs/claims"
+        },
+        "amount": {
+          "$ref": "#/$defs/claims"
+        },
+        "eligibility": {
+          "$ref": "#/$defs/claims"
+        },
+        "location": {
+          "$ref": "#/$defs/claims"
+        },
+        "size": {
           "$ref": "#/$defs/claims"
         }
       }

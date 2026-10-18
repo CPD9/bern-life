@@ -16,6 +16,9 @@ enum ProfileKind {
   unit
   project
   infrastructure
+  call
+  service
+  space
 
   @@map("profile_kind")
 }
@@ -27,6 +30,9 @@ enum PageKind {
   infrastructure
   listing
   other
+  call
+  service
+  space
 
   @@map("page_kind")
 }
@@ -49,6 +55,12 @@ enum ClaimField {
   projects
   infrastructure
   services
+  funder
+  deadline
+  amount
+  eligibility
+  location
+  size
 
   @@map("claim_field")
 }
