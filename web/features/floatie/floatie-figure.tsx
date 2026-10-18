@@ -1,20 +1,25 @@
-// Lumi from primitives: a honey-gold seed of light with a sleepy face, a sprout on top and two
-// see-through wings. The glow is layered, see-through spheres plus a small warm light, so it needs no
-// bloom pass and works the same in lite graphics, only with fewer segments.
+// Lumi from primitives: a little bear cub made of honey-gold light, with round ears, a cream
+// muzzle and two pairs of see-through wings. All its fur shares one glowing material, so the whole
+// bear brightens together. The glow is layered, see-through spheres plus a small warm light, so it
+// needs no bloom pass and works the same in lite graphics, only with fewer segments.
 
-import { DoubleSide } from "three";
+import { useEffect, useMemo } from "react";
+import { DoubleSide, type Material, MeshLambertMaterial, MeshStandardMaterial } from "three";
 import { type FloatieState } from "./floatie-motion";
 import { PART, useFloatieMotion } from "./use-floatie-motion";
 
-const CORE = "#ffd27a";
+const FUR = "#ffcf7a";
 const EMBER = "#ffae3c";
 const HALO = "#ffd36b";
 const WING = "#fff0c8";
 const FACE = "#4a3220";
 const CHEEK = "#ff9f8a";
-const SPROUT = "#7fb65a";
+const MUZZLE = "#fff1d2";
+const INNER_EAR = "#ffb36b";
 
 const CORE_RADIUS = 0.16;
+const HEAD_Y = 0.05;
+const HEAD_RADIUS = 0.13;
 
 function Glow({
   radius,
@@ -47,7 +52,7 @@ function Wing({ side, segments }: { side: -1 | 1; segments: number }) {
     [0.1, -0.05, 0.08, -0.35],
   ];
   return (
-    <group name={PART.wings[side < 0 ? 0 : 1]} position={[side * 0.1, 0, -0.06]}>
+    <group name={PART.wings[side < 0 ? 0 : 1]} position={[side * 0.08, -0.06, -0.06]}>
       {blades.map(([x, y, length, tilt]) => (
         <mesh
           key={y}
@@ -70,42 +75,67 @@ function Wing({ side, segments }: { side: -1 | 1; segments: number }) {
 }
 
 function Face({ segments }: { segments: number }) {
-  const z = CORE_RADIUS * 0.94;
+  const z = HEAD_RADIUS * 0.92;
   return (
-    <group>
+    <group position={[0, HEAD_Y, 0]}>
       {PART.eyes.map((name, index) => (
-        <mesh key={name} name={name} position={[(index === 0 ? -1 : 1) * 0.052, 0.02, z]}>
-          <sphereGeometry args={[0.02, segments, segments]} />
+        <mesh key={name} name={name} position={[(index === 0 ? -1 : 1) * 0.048, 0.025, z]}>
+          <sphereGeometry args={[0.017, segments, segments]} />
           <meshBasicMaterial color={FACE} />
         </mesh>
       ))}
       {[-1, 1].map((side) => (
-        <mesh key={side} position={[side * 0.092, -0.024, z * 0.82]} scale={[1, 0.6, 0.4]}>
-          <sphereGeometry args={[0.024, segments, segments]} />
+        <mesh key={side} position={[side * 0.082, -0.022, z * 0.84]} scale={[1, 0.6, 0.4]}>
+          <sphereGeometry args={[0.022, segments, segments]} />
           <meshBasicMaterial color={CHEEK} transparent opacity={0.7} />
         </mesh>
       ))}
-      <mesh position={[0, -0.018, z + 0.004]} rotation={[0, 0, Math.PI]}>
-        <torusGeometry args={[0.022, 0.006, 8, segments, Math.PI]} />
+      <mesh position={[0, -0.025, z - 0.01]} scale={[1, 0.75, 0.6]}>
+        <sphereGeometry args={[0.048, segments, segments]} />
+        <meshBasicMaterial color={MUZZLE} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, -0.012, z + 0.018]} scale={[1.3, 0.85, 0.8]}>
+        <sphereGeometry args={[0.013, segments, segments]} />
+        <meshBasicMaterial color={FACE} />
+      </mesh>
+      <mesh position={[0, -0.03, z + 0.016]} rotation={[0, 0, Math.PI]}>
+        <torusGeometry args={[0.012, 0.004, 8, segments, Math.PI]} />
         <meshBasicMaterial color={FACE} />
       </mesh>
     </group>
   );
 }
 
-function Sprout({ segments }: { segments: number }) {
-  return (
-    <group position={[0, CORE_RADIUS * 0.95, 0]}>
-      <mesh position={[0, 0.025, 0]} rotation={[0, 0, -0.2]}>
-        <cylinderGeometry args={[0.006, 0.008, 0.05, 8]} />
-        <meshLambertMaterial color={SPROUT} />
+/** The glowing fur every part of the bear shares, so its glow can be turned up in one place. */
+function useFur(lite: boolean): Material {
+  const fur = useMemo(
+    () =>
+      lite
+        ? new MeshLambertMaterial({ color: FUR, emissive: EMBER, toneMapped: false })
+        : new MeshStandardMaterial({
+            color: FUR,
+            emissive: EMBER,
+            roughness: 0.55,
+            toneMapped: false,
+          }),
+    [lite],
+  );
+  useEffect(() => () => fur.dispose(), [fur]);
+  return fur;
+}
+
+function Ears({ fur, segments }: { fur: Material; segments: number }) {
+  return [-1, 1].map((side) => (
+    <group key={side} position={[side * 0.09, HEAD_Y + 0.1, -0.01]}>
+      <mesh material={fur}>
+        <sphereGeometry args={[0.045, segments, segments]} />
       </mesh>
-      <mesh position={[0.03, 0.055, 0]} rotation={[0, 0, -0.5]} scale={[1, 0.4, 0.6]}>
-        <sphereGeometry args={[0.035, segments, segments]} />
-        <meshLambertMaterial color={SPROUT} emissive={SPROUT} emissiveIntensity={0.25} />
+      <mesh position={[0, 0, 0.03]} scale={[1, 1, 0.4]}>
+        <sphereGeometry args={[0.026, segments, segments]} />
+        <meshBasicMaterial color={INNER_EAR} toneMapped={false} />
       </mesh>
     </group>
-  );
+  ));
 }
 
 export function FloatieFigure({
@@ -119,24 +149,23 @@ export function FloatieFigure({
 }) {
   const root = useFloatieMotion(state, reducedMotion);
   const segments = lite ? 14 : 32;
+  const fur = useFur(lite);
   return (
     <group ref={root}>
       <group name={PART.body}>
-        <mesh name={PART.core}>
-          <sphereGeometry args={[CORE_RADIUS, segments, segments]} />
-          {lite ? (
-            <meshLambertMaterial color={CORE} emissive={EMBER} toneMapped={false} />
-          ) : (
-            <meshStandardMaterial
-              color={CORE}
-              emissive={EMBER}
-              roughness={0.55}
-              toneMapped={false}
-            />
-          )}
+        <mesh name={PART.core} material={fur} position={[0, HEAD_Y, 0]}>
+          <sphereGeometry args={[HEAD_RADIUS, segments, segments]} />
         </mesh>
+        <mesh material={fur} position={[0, -0.1, -0.01]} scale={[1, 0.95, 0.9]}>
+          <sphereGeometry args={[0.095, segments, segments]} />
+        </mesh>
+        {[-1, 1].map((side) => (
+          <mesh key={side} material={fur} position={[side * 0.07, -0.085, 0.07]}>
+            <sphereGeometry args={[0.032, segments, segments]} />
+          </mesh>
+        ))}
+        <Ears fur={fur} segments={segments} />
         <Face segments={segments} />
-        <Sprout segments={segments} />
         <Wing side={-1} segments={segments} />
         <Wing side={1} segments={segments} />
       </group>
