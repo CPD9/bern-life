@@ -7,7 +7,7 @@ against a schema in this folder. POST is accepted from loopback only.
 | Method and path | Body | Response |
 |---|---|---|
 | `GET /api/health` | — | `health.schema.json` (mode, models per role, snapshot version, counts of pages, profiles, sources) |
-| `POST /api/search` | `{ "query": string, "lang"?: "de" \| "en" \| "fr", "sources"?: ["unibe" \| "artorg" \| "dcb"] }` | `result.schema.json` |
+| `POST /api/search` | `{ "query": string, "lang"?: "de" \| "en" \| "fr", "sources"?: [source ids], "kinds"?: ["person" \| "unit" \| "project" \| "infrastructure" \| "call" \| "service" \| "space"] }`; without `kinds`, only person, unit, project and infrastructure are searched | `result.schema.json` |
 | `POST /api/brief` | `{ "text": string }` (plain text; the web app extracts it from an uploaded PDF and does not keep the file) | `result.schema.json` with `brief_terms` |
 | `GET /api/profile/{id}` | — | `profile.schema.json` |
 | `POST /api/agent` | `{ "messages": [{ "role": "user" \| "assistant", "content": string }] }` (at most 12, newest last) | `agent.schema.json` |

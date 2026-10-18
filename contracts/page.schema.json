@@ -4,18 +4,67 @@
   "title": "Page",
   "description": "One fetched page in the snapshot bundle. Evidence spans are checked against `text`, so `text` is stored exactly as extraction saw it.",
   "type": "object",
-  "required": ["url", "source_id", "unit", "fetched_at", "sha256", "status", "text"],
+  "required": [
+    "url",
+    "source_id",
+    "unit",
+    "fetched_at",
+    "sha256",
+    "status",
+    "text"
+  ],
   "additionalProperties": false,
   "properties": {
-    "url": { "type": "string", "format": "uri" },
-    "source_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
-    "unit": { "type": "string" },
-    "fetched_at": { "type": "string", "format": "date-time" },
-    "sha256": { "description": "sha256 of `text` as UTF-8.", "type": "string", "pattern": "^[0-9a-f]{64}$" },
-    "status": { "type": "integer" },
-    "lang": { "enum": ["de", "en", "fr", "it", "unknown"] },
-    "title": { "type": "string" },
-    "kind": { "enum": ["person", "unit", "project", "infrastructure", "listing", "other"] },
-    "text": { "type": "string" }
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "fetched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sha256": {
+      "description": "sha256 of `text` as UTF-8.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "status": {
+      "type": "integer"
+    },
+    "lang": {
+      "enum": [
+        "de",
+        "en",
+        "fr",
+        "it",
+        "unknown"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "person",
+        "unit",
+        "project",
+        "infrastructure",
+        "call",
+        "service",
+        "space",
+        "listing",
+        "other"
+      ]
+    },
+    "text": {
+      "type": "string"
+    }
   }
 }
