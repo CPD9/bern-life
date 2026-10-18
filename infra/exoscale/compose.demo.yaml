@@ -1,0 +1,12 @@
+# Rollback to the invented fixtures, labelled DEMO, without the engine (infra/exoscale.md):
+#   ./demo.sh
+# The web app leaves the engine's network for its own, so Caddy's web:3000 reaches it again once
+# serve, which carries that name as an alias, is removed. Needs Docker Compose 2.24.4 or later.
+services:
+  web:
+    network_mode: !reset null
+    environment:
+      DEMO_FIXTURES: "1"
+    depends_on: !override
+      migrate:
+        condition: service_completed_successfully

@@ -1,6 +1,6 @@
 [project]
 name = "bernlife"
-version = "0.1.0"
+version = "0.2.0"
 description = "Research & Expertise Navigator engine: crawl, extract with evidence, enrich, search"
 requires-python = ">=3.12"
 license = "Apache-2.0"

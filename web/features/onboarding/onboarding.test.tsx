@@ -18,7 +18,8 @@ function Harness({ source, onDone }: { source: () => OnboardingStore; onDone: ()
     <Onboarding
       state={state}
       dispatch={dispatch}
-      lookStep={<p>Avatar editor slot</p>}
+      lookStep={<p>Person editor slot</p>}
+      agentStep={<p>Agent editor slot</p>}
       onDone={onDone}
     />
   );
@@ -35,15 +36,15 @@ function setup() {
 const proceed = () => fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
 describe("Onboarding", () => {
-  test("the role answer is saved and Continue shows the Look slot as step 2 of 4", () => {
+  test("the role answer is saved and Continue shows the Look slot as step 2 of 5", () => {
     const { store } = setup();
     fireEvent.click(screen.getByLabelText(/Researcher/));
     proceed();
     const heading = screen.getByRole("heading", { level: 1 });
     expect(heading.textContent).toBe("Your look");
     expect(document.activeElement).toBe(heading);
-    expect(screen.getByText("Avatar editor slot")).toBeTruthy();
-    expect(screen.getByRole("list", { name: "Step 2 of 4" })).toBeTruthy();
+    expect(screen.getByText("Person editor slot")).toBeTruthy();
+    expect(screen.getByRole("list", { name: "Step 2 of 5" })).toBeTruthy();
     expect(store.get()).toMatchObject({ step: 1, profile: { role: "researcher" } });
   });
 
@@ -55,6 +56,9 @@ describe("Onboarding", () => {
     proceed();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Who sees what");
     expect(screen.getByText("Uploads are private unless you choose to share one.")).toBeTruthy();
+    proceed();
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Create your agent");
+    expect(screen.getByText("Agent editor slot")).toBeTruthy();
     expect(done).toEqual([]);
     proceed();
     expect(store.get()).toMatchObject({ done: true, profile: { goal: "funding" } });

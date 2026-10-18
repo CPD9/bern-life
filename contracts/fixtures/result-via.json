@@ -1,0 +1,158 @@
+{
+  "query": "carbohydrates from meal photos",
+  "mode": "mock",
+  "abstained": false,
+  "abstain_reason": null,
+  "expanded_terms": [],
+  "results": [
+    {
+      "rank": 1,
+      "profile": {
+        "id": "person-example-noah-exempel",
+        "kind": "person",
+        "source_id": "example",
+        "name": {
+          "value": "Noah Exempel",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.example-institute.test/projects/platescan",
+            "page_sha256": "3e48582b7f27c2f6aeaa6a61fa873af505469e1f4332ecf0213cdcabe3723c59",
+            "span": "Dr. Noah Exempel",
+            "start": 108,
+            "fetched_at": "2026-10-18T12:00:00Z"
+          }
+        },
+        "source_url": "https://www.example-institute.test/projects/platescan",
+        "fields": {
+          "role": [],
+          "unit": [],
+          "expertise": [],
+          "projects": [],
+          "infrastructure": [],
+          "services": []
+        }
+      },
+      "reason": {
+        "text": "Name: Noah Exempel",
+        "cites": [
+          "/name"
+        ]
+      },
+      "score": {
+        "fused": 0.0311,
+        "lexical_rank": 1,
+        "vector_rank": 3
+      },
+      "via": {
+        "kind": "leads",
+        "page_url": "https://www.example-institute.test/projects/platescan",
+        "page_sha256": "3e48582b7f27c2f6aeaa6a61fa873af505469e1f4332ecf0213cdcabe3723c59",
+        "span": "Project lead: Dr. Noah Exempel",
+        "start": 94,
+        "fetched_at": "2026-10-18T12:00:00Z",
+        "related_profile_id": "project-example-platescan",
+        "related_name": "PlateScan",
+        "related_claims": [
+          {
+            "value": "carbohydrates from meal photos",
+            "method": "model",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/projects/platescan",
+              "page_sha256": "3e48582b7f27c2f6aeaa6a61fa873af505469e1f4332ecf0213cdcabe3723c59",
+              "span": "estimates carbohydrates from meal photos",
+              "start": 20,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "rank": 2,
+      "profile": {
+        "id": "person-example-lena-beispiel",
+        "kind": "person",
+        "source_id": "example",
+        "name": {
+          "value": "Lena Beispiel",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.example-institute.test/projects/platescan",
+            "page_sha256": "3e48582b7f27c2f6aeaa6a61fa873af505469e1f4332ecf0213cdcabe3723c59",
+            "span": "Lena Beispiel",
+            "start": 139,
+            "fetched_at": "2026-10-18T12:00:00Z"
+          }
+        },
+        "source_url": "https://www.example-institute.test/projects/platescan",
+        "fields": {
+          "role": [
+            {
+              "value": "Project team",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.example-institute.test/projects/platescan",
+                "page_sha256": "3e48582b7f27c2f6aeaa6a61fa873af505469e1f4332ecf0213cdcabe3723c59",
+                "span": "Project team: Lena Beispiel",
+                "start": 125,
+                "fetched_at": "2026-10-18T12:00:00Z"
+              }
+            }
+          ],
+          "unit": [],
+          "expertise": [],
+          "projects": [],
+          "infrastructure": [],
+          "services": []
+        }
+      },
+      "reason": {
+        "text": "Role: Project team",
+        "cites": [
+          "/fields/role/0"
+        ]
+      },
+      "score": {
+        "fused": 0.0298,
+        "lexical_rank": 2,
+        "vector_rank": 4
+      },
+      "via": {
+        "kind": "works_on",
+        "page_url": "https://www.example-institute.test/projects/platescan",
+        "page_sha256": "3e48582b7f27c2f6aeaa6a61fa873af505469e1f4332ecf0213cdcabe3723c59",
+        "span": "Project team: Lena Beispiel",
+        "start": 125,
+        "fetched_at": "2026-10-18T12:00:00Z",
+        "related_profile_id": "project-example-platescan",
+        "related_name": "PlateScan",
+        "related_claims": [
+          {
+            "value": "carbohydrates from meal photos",
+            "method": "model",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/projects/platescan",
+              "page_sha256": "3e48582b7f27c2f6aeaa6a61fa873af505469e1f4332ecf0213cdcabe3723c59",
+              "span": "estimates carbohydrates from meal photos",
+              "start": 20,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "timings_ms": {
+    "expand": 0,
+    "search": 9,
+    "explain": 0
+  },
+  "versions": {
+    "engine": "0.0.0",
+    "snapshot": "fixture",
+    "prompts": "fixture",
+    "models": {
+      "expand": "MOCK-no-model"
+    }
+  }
+}
