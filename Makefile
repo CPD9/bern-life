@@ -15,6 +15,7 @@ define require_lane_name
 endef
 
 .PHONY: help fetch db-up db-migrate db-reset-throwaway db-drop-throwaway test live eval eval-fixture
+.PHONY: pack-cache bundle
 
 help:
 	@echo "make fetch                    download and verify the snapshot bundle into data/bundle/"
@@ -26,6 +27,8 @@ help:
 	@echo "make live ARGS=<command>      stop unless the model endpoint in .env answers, then run it"
 	@echo "make eval [PRED=<file>]       score predictions against eval/gold.jsonl (default: the bundle's)"
 	@echo "make eval-fixture             the same on the invented fixture in eval/tests/fixtures/"
+	@echo "make pack-cache               fold recorded model calls into the bundle's cache pack"
+	@echo "make bundle [BUNDLE_VERSION=bundle-YYYYMMDD-N]   check and pack the snapshot bundle"
 
 fetch:
 	$(PYTHON) infra/fetch_bundle.py
@@ -81,3 +84,13 @@ eval:
 eval-fixture:
 	$(EVALUATOR) --predictions $(FIXTURE)/predictions.jsonl --pages $(FIXTURE)/pages.jsonl \
 	  --profiles $(FIXTURE)/profiles.jsonl --out eval/out/fixture
+
+# The bundle is built where the data is: crawl, extraction, predictions and the model cache under
+# BERNLIFE_DATA_DIR. pack-cache never deletes; `python -m infra.pack_cache --prune` does, by hand.
+BUNDLE_VERSION ?= bundle-$(shell date +%Y%m%d)-1
+
+pack-cache:
+	PYTHONPATH=engine/src $(PYTHON) -m infra.pack_cache
+
+bundle: pack-cache
+	PYTHONPATH=engine/src $(PYTHON) -m infra.build_bundle --version $(BUNDLE_VERSION)
