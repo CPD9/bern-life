@@ -56,7 +56,13 @@ function anchors() {
 describe("PlacePanel", () => {
   test("lists every unit with its address and source, and says positions are approximate", () => {
     render(
-      <PlacePanel building={shared} light={undefined} fixture={false} onClose={() => undefined} />,
+      <PlacePanel
+        building={shared}
+        light={undefined}
+        fixture={false}
+        onClose={() => undefined}
+        onSearchHere={undefined}
+      />,
     );
     expect(screen.getByRole("heading", { name: "2 units here" })).toBeTruthy();
     expect(screen.getByText("Example Sensor Lab")).toBeTruthy();
@@ -74,7 +80,16 @@ describe("PlacePanel", () => {
 
   test("Close calls back and the heading takes focus on open", () => {
     const onClose = mock(() => undefined);
-    render(<PlacePanel building={shared} light={undefined} fixture={false} onClose={onClose} />);
+    render(
+      <PlacePanel
+        building={shared}
+        light={undefined}
+        fixture={false}
+        onClose={onClose}
+        onSearchHere={undefined}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Search here" })).toBeNull();
     expect(document.activeElement?.textContent).toBe("2 units here");
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -173,6 +188,7 @@ describe("after a search", () => {
         light={lighting.byBuilding.get(artorg.key)}
         fixture={true}
         onClose={() => undefined}
+        onSearchHere={undefined}
       />,
     );
     expect(screen.getByRole("heading", { name: /2 matches here/ })).toBeTruthy();
@@ -187,5 +203,22 @@ describe("after a search", () => {
       "Source page",
       "Source page",
     ]);
+  });
+
+  test("real results show as result cards; Search here passes the building back", () => {
+    const onSearchHere = mock((building: Building) => building.key);
+    render(
+      <PlacePanel
+        building={artorg}
+        light={lighting.byBuilding.get(artorg.key)}
+        fixture={false}
+        onClose={() => undefined}
+        onSearchHere={onSearchHere}
+      />,
+    );
+    expect(screen.queryByText(/Fixture source/)).toBeNull();
+    expect(screen.getAllByRole("article").length).toBe(2);
+    fireEvent.click(screen.getByRole("button", { name: "Search here" }));
+    expect(onSearchHere).toHaveBeenCalledWith(artorg);
   });
 });

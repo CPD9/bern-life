@@ -1,7 +1,9 @@
 // A place's panel: the units in the building with their verbatim addresses, and, after a search,
-// the results found there. People from public pages appear only here, as entries with sources.
+// the results found there. People from public pages appear only here, as entries with sources:
+// the same result card as Ask, so every claim opens its evidence; fixture results get a plain list.
 
 import { useEffect, useRef } from "react";
+import { ResultCard } from "@/infrastructure/ui/result-card";
 import { type Building } from "./buildings";
 import { type BuildingLight, type SearchResult } from "./light";
 import { KIND_LABELS } from "./markers/place-markers";
@@ -34,7 +36,7 @@ function PlaceEntry({ place }: { place: Place }) {
 }
 
 /** Fixture results point at /fixture/ paths that do not exist, so their source is text, not a link. */
-function MatchEntry({ result, fixture }: { result: SearchResult; fixture: boolean }) {
+function FixtureMatch({ result }: { result: SearchResult }) {
   const role = result.profile.fields.role[0]?.value;
   return (
     <li className="flex flex-col gap-1">
@@ -49,20 +51,9 @@ function MatchEntry({ result, fixture }: { result: SearchResult; fixture: boolea
         <span className="text-muted">Why it matches: </span>
         {result.reason.text}
       </p>
-      {fixture ? (
-        <p className="text-muted text-xs break-all">
-          Fixture source, not a real page: {result.profile.source_url}
-        </p>
-      ) : (
-        <a
-          href={result.profile.source_url}
-          target="_blank"
-          rel="noreferrer"
-          className={`${LINK} text-sm`}
-        >
-          Source page
-        </a>
-      )}
+      <p className="text-muted text-xs break-all">
+        Fixture source, not a real page: {result.profile.source_url}
+      </p>
     </li>
   );
 }
@@ -72,9 +63,11 @@ type PanelProps = {
   light: BuildingLight | undefined;
   fixture: boolean;
   onClose: () => void;
+  /** Starts a question about this place in Ask; absent when nothing can take it. */
+  onSearchHere: ((building: Building) => void) | undefined;
 };
 
-export function PlacePanel({ building, light, fixture, onClose }: PanelProps) {
+export function PlacePanel({ building, light, fixture, onClose, onSearchHere }: PanelProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const headingId = `place-${building.key.replace(/[^a-z0-9]+/gi, "-")}`;
 
@@ -98,6 +91,15 @@ export function PlacePanel({ building, light, fixture, onClose }: PanelProps) {
           Close
         </button>
       </div>
+      {onSearchHere !== undefined && (
+        <button
+          type="button"
+          onClick={() => onSearchHere(building)}
+          className="bg-primary text-primary-ink rounded-pill self-start px-4 py-1.5 text-sm font-bold"
+        >
+          Search here
+        </button>
+      )}
       {light !== undefined && (
         <div className="flex flex-col gap-3">
           <h3 className="font-extrabold">
@@ -109,9 +111,15 @@ export function PlacePanel({ building, light, fixture, onClose }: PanelProps) {
             )}
           </h3>
           <ul className="flex flex-col gap-4">
-            {light.results.map((result) => (
-              <MatchEntry key={result.profile.id} result={result} fixture={fixture} />
-            ))}
+            {light.results.map((result) =>
+              fixture ? (
+                <FixtureMatch key={result.profile.id} result={result} />
+              ) : (
+                <li key={result.profile.id}>
+                  <ResultCard result={result} />
+                </li>
+              ),
+            )}
           </ul>
         </div>
       )}
