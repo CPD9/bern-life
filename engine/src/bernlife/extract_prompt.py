@@ -19,6 +19,7 @@ ASKED = {
     "project": ("unit", "expertise", "infrastructure"),
     "infrastructure": ("unit", "expertise", "services"),
     "listing": (),
+    "other": (),
 }
 PAGE_WORDS = {
     "person": "a staff profile page",
@@ -26,6 +27,7 @@ PAGE_WORDS = {
     "project": "a page about a project or study",
     "infrastructure": "a page about an instrument, facility, platform or service",
     "listing": "a list of staff or team members",
+    "other": "a page of the institution's website, such as news or a research overview",
 }
 FIELD_HELP = {
     "role": "the job title or function of the person the page is about",
