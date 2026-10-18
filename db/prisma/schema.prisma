@@ -252,3 +252,137 @@ model BundleLoad {
 
   @@map("bundle_load")
 }
+
+// Accounts (brief S1). Invite-only and self-hosted: no email is collected, passwords are argon2id
+// hashes, and sessions and invite codes are stored only as SHA-256 hashes of the random value the
+// person holds, so reading these tables cannot sign anyone in. Everything a person owns cascades
+// from app_user, so deleting an account removes all of it.
+
+enum ProfileVisibility {
+  private
+  members
+  public
+}
+
+model User {
+  id          String       @id @default(uuid()) @db.Uuid
+  handle      String       @unique
+  displayName String       @map("display_name")
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  credential  Credential?
+  sessions    Session[]
+  profile     UserProfile?
+  invitesMade Invite[]     @relation("invite_created_by")
+  inviteUsed  Invite?      @relation("invite_used_by")
+  memberships Member[]
+  messages    Message[]
+
+  // "user" is a reserved word in Postgres; every raw query would have to quote it.
+  @@map("app_user")
+}
+
+model Credential {
+  userId    String   @id @map("user_id") @db.Uuid
+  hash      String
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credential")
+}
+
+model Session {
+  idHash    String   @id @map("id_hash") @db.Char(64)
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+model Invite {
+  codeHash  String    @id @map("code_hash") @db.Char(64)
+  createdBy String?   @map("created_by") @db.Uuid
+  usedBy    String?   @unique @map("used_by") @db.Uuid
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  creator   User?     @relation("invite_created_by", fields: [createdBy], references: [id], onDelete: Cascade)
+  redeemer  User?     @relation("invite_used_by", fields: [usedBy], references: [id], onDelete: SetNull)
+
+  @@map("invite")
+}
+
+model UserProfile {
+  userId     String            @id @map("user_id") @db.Uuid
+  role       String?
+  goal       String?
+  expertise  String[]          @default([])
+  visibility ProfileVisibility @default(private)
+  avatar     Json?
+  updatedAt  DateTime          @default(now()) @map("updated_at") @db.Timestamptz(3)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profile")
+}
+
+// Failed sign-ins per handle and per IP, and sign-up attempts per IP, in fixed 15-minute windows.
+model RateLimit {
+  key         String   @id
+  windowStart DateTime @map("window_start") @db.Timestamptz(3)
+  count       Int
+
+  @@map("rate_limit")
+}
+
+// Messages (brief S2). Only members of a conversation can read or post in it, and every query says
+// so. Messages are never sent to a model, indexed for search or shown to the agent. A deleted
+// message keeps its row (pagination stays stable) but loses its text.
+
+enum ConversationKind {
+  direct
+  group
+}
+
+model Conversation {
+  id        String           @id @default(uuid()) @db.Uuid
+  kind      ConversationKind
+  title     String?
+  // The two user ids, sorted and joined, so a pair has one direct conversation.
+  directKey String?          @unique @map("direct_key")
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  members   Member[]
+  messages  Message[]
+
+  @@map("conversation")
+}
+
+model Member {
+  conversationId String       @map("conversation_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  joinedAt       DateTime     @default(now()) @map("joined_at") @db.Timestamptz(3)
+  lastReadAt     DateTime?    @map("last_read_at") @db.Timestamptz(3)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("member")
+}
+
+model Message {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @map("conversation_id") @db.Uuid
+  authorId       String       @map("author_id") @db.Uuid
+  // At most 4,000 characters (a CHECK in the migration); emptied when the message is deleted.
+  body           String
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(3)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author         User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt, id])
+  @@map("message")
+}

@@ -53,3 +53,17 @@ turn and pinch within the same limits. Tab reaches each marker; opening a place 
 it, and Escape closes the panel. Markers and agent buttons are page buttons placed over the canvas
 each frame (`markers/anchor-projector.tsx`). `WorldCanvas` takes `onAgentSelect(id)` for the agents
 (`navigator`, `scout`, `matchmaker`).
+
+## Search light-up
+
+The app drives `worldSearch` (`world-search.ts`): `begin()` when a query is sent, `showResults()`
+with the `SearchResponse`, `clear()` to reset. While a search runs every marker breathes (no motion
+under `prefers-reduced-motion`). With results, `light.ts` maps each result to a building by the host
+of its `source_url`: lit markers glow by best rank (1 → 1.0, 2 → 0.85, 3 → 0.7, 4 → 0.55, 5 → 0.4,
+then 0.3) and carry that rank as a badge, unlit markers drop to 60 %, and the camera frames the lit
+places. Results on no mapped host are counted as "not on the map", never dropped. A place's panel
+lists its matches (name, role, why it matches, source).
+
+With `DEMO_FIXTURES=1` the map starts lit with `fixtures/search-glucose.json`: invented people on
+real hosts at `/fixture/` paths that do not exist, so the UI labels it FIXTURE and shows those
+sources as text, not links.
