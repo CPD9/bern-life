@@ -51,7 +51,7 @@
         {
           "id": "ask-again",
           "text": "Ask again in German or French.",
-          "hint": "Try 'Sensoren für Blutzucker' or 'capteurs pour le diabète', or pick DE or FR.",
+          "hint": "Try 'Sensoren für Blutzucker' or 'capteurs pour le diabète'.",
           "done_when": "search_answered_other_language"
         }
       ]
