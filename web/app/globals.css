@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/*
+ * Every colour is a light-dark() pair, so one token list serves both themes. The OS decides by
+ * default; the night-mode setting overrides it by writing data-theme on <html>.
+ */
+:root {
+  color-scheme: light dark;
+
+  --sky-top: light-dark(#cfe4f7, #0d1b2a);
+  --sky-bottom: light-dark(#eef4fa, #1b2a3d);
+  --panel: light-dark(#ffffff, #17212d);
+  --panel-border: light-dark(rgb(20 32 43 / 0.06), rgb(255 255 255 / 0.08));
+  --ink: light-dark(#14202b, #eef3f8);
+  --muted: light-dark(#5b6773, #a3b0bd);
+  --primary: light-dark(#13804a, #2fb36b);
+  --primary-ink: light-dark(#ffffff, #08130d);
+  --chip: light-dark(#eef1f4, #223041);
+  --chip-selected: light-dark(#14202b, #eef3f8);
+  --chip-selected-ink: light-dark(#ffffff, #14202b);
+  --focus: light-dark(#1d6fd6, #7cb6ff);
+  --shadow-color: light-dark(rgb(20 32 43 / 0.12), rgb(0 0 0 / 0.45));
+}
+
+:root[data-theme="day"] {
+  color-scheme: light;
+}
+
+:root[data-theme="night"] {
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-sky-top: var(--sky-top);
+  --color-sky-bottom: var(--sky-bottom);
+  --color-panel: var(--panel);
+  --color-panel-border: var(--panel-border);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-ink: var(--primary-ink);
+  --color-chip: var(--chip);
+  --color-chip-selected: var(--chip-selected);
+  --color-chip-selected-ink: var(--chip-selected-ink);
+  --color-focus: var(--focus);
+  --radius-panel: 1.75rem;
+  --radius-pill: 999px;
+  --shadow-panel: 0 8px 24px var(--shadow-color);
+  --font-sans: var(--font-rounded), ui-rounded, system-ui, sans-serif;
+}
+
+body {
+  background: var(--sky-bottom);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
