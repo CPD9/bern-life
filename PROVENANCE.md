@@ -14,8 +14,9 @@ Where code, data and models come from. Update this file in the same PR that adds
 
 | Model | Revision | Role | Where it runs |
 |---|---|---|---|
-| `swiss-ai/Apertus-v1.5-70B` (or the `onprem-ai/Apertus-v1.5-70B-FP8` build) | pinned in brief I2 | query expansion, enrichment terms, "why it matches" from retrieved evidence | CSCS API (Swiss) for the demo; vLLM on RunPod for smoke tests only |
-| `swiss-ai/Apertus-v1.5-8B` | `ef4bbc54d6fe658bc782280ff9f3b53a10a9758f` | optional fast path, never for facts about people | as above |
+| `swiss-ai/Apertus-v1.5-70B`, served by the event gateway as `apertus-v1-5-70b` | as served by CSCS on the day (`infra/cscs.md`) | every model role: query expansion, enrichment terms, extraction proposals, "why it matches", brief needs | CSCS API (Swiss) through the event gateway, for the demo |
+| `onprem-ai/Apertus-v1.5-70B-FP8` | `70378c8df951c9f932e0a28f72e0148d868b5f6b` | as above, for smoke tests | vLLM on RunPod (`infra/runpod/serve_70b.sh`) |
+| `swiss-ai/Apertus-v1.5-8B` | `ef4bbc54d6fe658bc782280ff9f3b53a10a9758f` on RunPod | fallback only while no 70B route is set, never for facts about people | the event gateway as `apertus-v1-5-8b`, or vLLM on RunPod (`infra/runpod/serve_8b.sh`) |
 | `intfloat/multilingual-e5-small` | pinned in brief E3 | query and passage embeddings, 384-d | CPU, inside the engine container |
 
 No profile field comes from a model's memory. Every field carries a verbatim span from a stored page.
@@ -28,3 +29,5 @@ No profile field comes from a model's memory. Every field carries a verbatim spa
 | Crawled pages, LLM cache, vectors | public pages of the hosts in `sources/` | copyright of the institutions; personal data under nDSG | **no**: SHA-pinned release asset (`make fetch`) |
 | Gold set `eval/gold.jsonl` | written by the team from public pages, before search existed | names and proof URLs only | yes |
 | Contract fixtures `contracts/fixtures/` | invented, describe no real person | ours | yes |
+| Place addresses `web/features/world/places.json` | one street line per unit from its own home or contact page (URL, date, sha256 per row) | facts (institutional addresses); no page copies | yes |
+| Map geography `web/features/world/geography.ts` | drawn by hand from public maps (Aare, bridges, districts, landmarks), approximate | ours | yes |
