@@ -8,10 +8,21 @@ import {
   startPosition,
 } from "./camera-moves";
 import { CLEARANCE, liteTrees, planCity, type CityInput } from "./city-plan";
-import { AARE_PATH, DISTRICTS, MAP_BOUNDS, RATHAUSPLATZ, ROADS, ROAD_WIDTH } from "./geography";
+import {
+  AARE_PATH,
+  AARE_WIDTH,
+  DISTRICTS,
+  LANDMARKS,
+  MAP_BOUNDS,
+  MAP_LABELS,
+  OLD_TOWN_AXIS,
+  RATHAUSPLATZ,
+  ROADS,
+  ROAD_WIDTH,
+} from "./geography";
 import { distanceToPolyline, pointInPolygon } from "./geometry";
 import { PLACES } from "./places";
-import { ribbon } from "./ribbon";
+import { ribbon, smoothPath } from "./ribbon";
 import { bernHour, lightingAt, phaseAt } from "./sky";
 
 describe("ribbon", () => {
@@ -36,6 +47,76 @@ describe("ribbon", () => {
   });
 });
 
+describe("smoothPath", () => {
+  const bend: [number, number][] = [
+    [0, 0],
+    [10, 0],
+    [10, 10],
+    [20, 10],
+  ];
+
+  test("passes through every point, with the given steps per segment", () => {
+    const curve = smoothPath(bend, 4);
+    expect(curve).toHaveLength(3 * 4 + 1);
+    bend.forEach(([x, z], index) => {
+      expect(curve[index * 4]?.[0]).toBeCloseTo(x, 10);
+      expect(curve[index * 4]?.[1]).toBeCloseTo(z, 10);
+    });
+  });
+
+  test("a straight line stays straight; two points or one step stay as given", () => {
+    const line = smoothPath(
+      [
+        [0, 0],
+        [5, 0],
+        [10, 0],
+      ],
+      5,
+    );
+    line.forEach(([x, z], index) => {
+      expect(z).toBeCloseTo(0, 10);
+      expect(x).toBeGreaterThan(line[index - 1]?.[0] ?? -1);
+    });
+    expect(line[5]?.[0]).toBeCloseTo(5, 10);
+    expect(smoothPath(bend.slice(0, 2), 4)).toEqual(bend.slice(0, 2));
+    expect(smoothPath(bend, 1)).toEqual(bend);
+  });
+
+  test("the smoothed Aare stays within half a river's width of the drawn one", () => {
+    for (const point of smoothPath(AARE_PATH, 8)) {
+      expect(distanceToPolyline(point, AARE_PATH)).toBeLessThan(AARE_WIDTH / 2);
+    }
+  });
+});
+
+describe("map labels", () => {
+  test("each district label stands in its district, the Aare's on the water", () => {
+    expect(MAP_LABELS.map((label) => label.name)).toEqual([
+      "Aare",
+      "Altstadt",
+      "Länggasse",
+      "Insel",
+      "Kirchenfeld",
+      "Lorraine",
+      "Mattenhof",
+      "Liebefeld",
+    ]);
+    for (const label of MAP_LABELS) {
+      const district = DISTRICTS.find((candidate) => candidate.id === label.district);
+      if (district === undefined) {
+        expect(distanceToPolyline(label.at, AARE_PATH)).toBeLessThan(AARE_WIDTH / 2);
+      } else {
+        expect(pointInPolygon(label.at, district.outline)).toBe(true);
+      }
+    }
+  });
+
+  test("the Old Town's main street runs under the Zytglogge", () => {
+    expect(distanceToPolyline(LANDMARKS.zytglogge, OLD_TOWN_AXIS)).toBe(0);
+    expect(ROADS[0]).toBe(OLD_TOWN_AXIS);
+  });
+});
+
 describe("planCity", () => {
   const input: CityInput = {
     districts: DISTRICTS,
@@ -52,12 +133,13 @@ describe("planCity", () => {
     expect(planCity({ ...input, seed: 1292 })).not.toEqual(plan);
   });
 
-  test("every district gets buildings", () => {
-    for (const district of DISTRICTS) {
-      expect(
-        plan.blocks.some((block) => pointInPolygon([block.x, block.z], district.outline)),
-      ).toBe(true);
-    }
+  test("every district but the Old Town gets generic buildings; the Old Town has its rows", () => {
+    const withBlocks = DISTRICTS.filter((district) =>
+      plan.blocks.some((block) => pointInPolygon([block.x, block.z], district.outline)),
+    ).map((district) => district.id);
+    expect(withBlocks).toEqual(
+      DISTRICTS.map((district) => district.id).filter((id) => id !== "old-town"),
+    );
   });
 
   test("no building stands in the river, on a road or on a place site", () => {
