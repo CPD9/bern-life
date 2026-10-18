@@ -9,8 +9,7 @@ import { httpNavigatorApi } from "@/features/navigator/navigator-api";
 import { Navigator } from "@/features/navigator/navigator";
 import { useNavigator } from "@/features/navigator/use-navigator";
 import { useOnboarding } from "@/features/onboarding/use-onboarding";
-import { AppIcon } from "@/features/phone/app-icons";
-import { ComingNext, comingNextText } from "@/features/phone/coming-next";
+import { comingNextText } from "@/features/phone/coming-next-text";
 import { type PhoneApp, Phone } from "@/features/phone/phone";
 import { SettingsApp } from "@/features/phone/settings-app";
 import { openReport } from "@/features/report/open-report";
@@ -31,6 +30,8 @@ import { WorldCanvas } from "@/features/world/world-canvas";
 import { emittedToday } from "@/infrastructure/app-events";
 import { useNow } from "@/infrastructure/bern-time";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
+import { AppIcon } from "@/infrastructure/ui/app-icons";
+import { ComingNext } from "@/infrastructure/ui/coming-next";
 
 // The badge reads the colour from the stored bear on each render, so there is no second copy.
 function furColourOf(bear: BearConfig): string {

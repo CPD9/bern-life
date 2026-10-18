@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { ComingNext, comingNextText } from "./coming-next";
+import { ComingNext } from "@/infrastructure/ui/coming-next";
+import { comingNextText } from "./coming-next-text";
 import { type PhoneApp, Phone } from "./phone";
 
 const apps: PhoneApp[] = [
