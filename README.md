@@ -36,11 +36,11 @@ http://127.0.0.1:3000/navigator.
    (needs [Bun](https://bun.sh)), then choose **Join Bern Life**.
 5. **Onboarding.** Five short steps: who you are in Bern, your look (you are a person), what
    brings you here, who sees what, and your first agent: a bear called Lumi, which you can rename.
-6. **Your office.** Onboarding ends in your office, with you on the rug and Lumi by the desk.
-7. **The desktop.** Click the desk to use the computer: the Navigator, Agents, Messages and
-   Reports open as windows. Notifications stay inside the app.
-8. **Lumi.** In Agents, Lumi's skills (search, project brief, match report) each have a Try button.
-   A loop reruns a saved search and tells you what changed, with source links.
+6. **Back in Bern.** Onboarding ends on the map again. A card beside it offers **Start the
+   story**, short quests that each walk through one part of the case and finish only when you
+   actually do the step, or **Explore freely**.
+7. **What is next.** On the phone, Agents, Messages and Projects & calls are marked
+   **Coming next**: what each will do is written there, and none of it is in this build yet.
 
 Questions that are not recorded in the bundle's model cache still get an answer: plain search
 over the stored pages, and the app says so. Only `make live` with a model endpoint in `.env`
