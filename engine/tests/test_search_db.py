@@ -12,13 +12,15 @@ from pathlib import Path
 
 from bernlife.abstain import NO_SOURCE
 from bernlife.database import connect
+from bernlife.llm import MockLLM
 from bernlife.load_command import load
-from bernlife.search import PostgresStore, search
+from bernlife.search import search
 from bernlife.serve_command import EngineApi
 from bernlife.server import make_server
+from bernlife.store import PostgresStore
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
-from search_fakes import SOURCES, fake_embedder, truncate_all, write_bundle
+from search_fakes import KRYO_TERM, SOURCES, FakeChat, fake_embedder, truncate_all, write_bundle
 
 from db import database_url
 
@@ -58,7 +60,7 @@ class SearchDbTest(unittest.TestCase):
         return [result["profile"]["id"] for result in response["results"]]
 
     def test_api_search_validates_against_the_contract_and_repeats_byte_for_byte(self):
-        server = make_server(EngineApi(self.conn, fake_embedder()), 0)
+        server = make_server(EngineApi(self.conn, fake_embedder(), MockLLM()), 0)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
@@ -103,6 +105,54 @@ class SearchDbTest(unittest.TestCase):
             (response["abstained"], response["abstain_reason"], response["results"]),
             (True, "no_verifiable_source", []),
         )
+
+    def test_an_invented_term_finds_its_profile_only_through_enrichment(self):
+        query = "Wer macht Kryo-Elektronenmikroskopie?"
+        self.assertEqual(search(query, None, self.store, fake_embedder())["results"], [])
+        folder = Path(tempfile.mkdtemp())
+        write_bundle(folder, terms=[KRYO_TERM])
+        self.assertEqual(load(self.conn, folder, SOURCES), [])
+        response = search(query, None, self.store, fake_embedder())
+        (only,) = response["results"]
+        self.assertEqual(only["profile"]["id"], "person-example-dora-demo")
+        self.assertEqual(only["reason"]["cites"], ["/fields/expertise/0"])
+        self.assertNotIn("Kryo", json.dumps(only["profile"]))
+
+    def test_expansion_terms_retrieve_label_the_mode_and_repeat_byte_for_byte(self):
+        expansion = {
+            "topics": [
+                {
+                    "topic": "Blutzucker",
+                    "terms": [{"term": "glucose monitoring", "kind": "translation", "lang": "en"}],
+                }
+            ]
+        }
+        llm = FakeChat({"expand": expansion})
+        query = "skin-worn Blutzucker"
+        first = search(query, None, self.store, fake_embedder(), llm)
+        second = search(query, None, self.store, fake_embedder(), llm)
+        self.assertEqual(json.dumps(first), json.dumps(second))
+        self.assertEqual(list(result_validator().iter_errors(first)), [])
+        self.assertEqual(
+            (first["mode"], first["versions"]["prompts"], first["versions"]["models"]["expand"]),
+            ("replay", "expand-v1", "fake-70b"),
+        )
+        self.assertEqual(
+            first["expanded_terms"],
+            [{"term": "glucose monitoring", "kind": "translation", "lang": "en"}],
+        )
+        self.assertEqual(first["results"][0]["profile"]["id"], "person-example-ada-muster")
+        self.assertEqual(first["results"][0]["metrics"]["covers"], ["Blutzucker"])
+        plain = search(query, None, self.store, fake_embedder())
+        self.assertEqual((plain["abstained"], plain["mode"]), (True, "mock"))
+
+    def test_mock_runs_end_to_end_and_says_so(self):
+        response = search("glucose monitoring", None, self.store, fake_embedder(), MockLLM())
+        self.assertEqual(
+            (response["mode"], response["expanded_terms"], response["versions"]["prompts"]),
+            ("mock", [], "none"),
+        )
+        self.assertEqual(response["results"][0]["profile"]["id"], "person-example-ada-muster")
 
 
 if __name__ == "__main__":

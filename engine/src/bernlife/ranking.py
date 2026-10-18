@@ -48,11 +48,22 @@ def rrf(rank_lists: Sequence[Mapping[str, int]], k: int = RRF_K) -> dict[str, fl
     return fused
 
 
-def candidates(hits: Sequence[Hit]) -> list[Candidate]:
-    ranks = {signal: profile_ranks(hits, signal) for signal in SIGNALS}
-    fused = rrf([ranks[signal] for signal in SIGNALS])
-    strength = {(h.signal, h.profile_id): h.strength for h in hits}
-    about = {h.profile_id: h for h in hits}
+def candidates(plain: Sequence[Hit], expanded: Sequence[Hit] = ()) -> list[Candidate]:
+    """Up to four rank lists fused: each signal for the plain question and, when there is one,
+    for the question with its expansion terms. A profile's rank per signal is its best of the
+    two. Coverage and similarity come from the plain question only, the signals abstention was
+    calibrated on."""
+    lists = [
+        (signal, profile_ranks(hits, signal)) for hits in (plain, expanded) for signal in SIGNALS
+    ]
+    fused = rrf([ranks for _, ranks in lists])
+    strength = {(h.signal, h.profile_id): h.strength for h in plain}
+    about = {h.profile_id: h for h in [*expanded, *plain]}
+
+    def best(signal: str, profile_id: str) -> int | None:
+        found = [ranks[profile_id] for s, ranks in lists if s == signal and profile_id in ranks]
+        return min(found, default=None)
+
     found = [
         Candidate(
             profile_id=profile_id,
@@ -60,8 +71,8 @@ def candidates(hits: Sequence[Hit]) -> list[Candidate]:
             name=about[profile_id].name,
             unit=about[profile_id].unit,
             fused=score,
-            lexical_rank=ranks["lexical"].get(profile_id),
-            vector_rank=ranks["vector"].get(profile_id),
+            lexical_rank=best("lexical", profile_id),
+            vector_rank=best("vector", profile_id),
             coverage=strength.get(("lexical", profile_id), 0.0),
             similarity=strength.get(("vector", profile_id), 0.0),
         )

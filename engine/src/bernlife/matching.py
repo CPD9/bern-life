@@ -6,12 +6,16 @@ a news or partner page, credited by a passage it appears in, would fill the top 
 that have nothing to show. This decides whether a result can carry a reason, not how prominent it
 is, so it adds no prominence signal.
 
+A claim matches through its own words or its enrichment terms; the question matches through its
+own words or its expansion terms. Either way the reason cites the verbatim claim, never a term.
+
 Words are folded (case, accents) and need three letters. Function words and the generic words of
 a search ("research", "who", "forscht") are left out: sharing "and" or "der" is not a reason.
 """
 
 import re
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any
 
 from bernlife.abstain import named_people
@@ -51,14 +55,34 @@ def words(text: str) -> set[str]:
     return set(WORD.findall(fold(text))) - STOPWORDS
 
 
-def matched_claims(query: str, profile: Profile) -> list[tuple[str, int]]:
-    """(field, index) of every non-name claim sharing a content word with the query."""
-    wanted = words(query)
+@dataclass(frozen=True)
+class Asked:
+    query: str
+    words: frozenset[str]
+
+
+def asked(query: str, terms: Iterable[str] = ()) -> Asked:
+    """The question's content words, plus those of its expansion terms."""
+    return Asked(query, frozenset(words(query).union(*(words(term) for term in terms))))
+
+
+def matched_claims(
+    question: Asked, profile: Profile, enrichment: Mapping[str, Sequence[str]] | None = None
+) -> list[tuple[str, int]]:
+    """(field, index) of every non-name claim sharing a content word with the question."""
+    terms = enrichment or {}
     return [
         (field, index)
+        for field, index, value in _values(profile)
+        if (words(value).union(*(words(t) for t in terms.get(value, ())))) & question.words
+    ]
+
+
+def _values(profile: Profile) -> list[tuple[str, int, str]]:
+    return [
+        (field, index, claim["value"])
         for field in ORDER
         for index, claim in enumerate(profile["fields"][field])
-        if words(claim["value"]) & wanted
     ]
 
 
@@ -75,5 +99,9 @@ def names_profile(query: str, profile: Profile) -> bool:
     return profile["kind"] == "person" and any(set(person) <= own for person in named_people(query))
 
 
-def can_explain(query: str, profile: Profile) -> bool:
-    return bool(matched_claims(query, profile)) or names_profile(query, profile)
+def can_explain(
+    question: Asked, profile: Profile, enrichment: Mapping[str, Sequence[str]] | None = None
+) -> bool:
+    return bool(matched_claims(question, profile, enrichment)) or names_profile(
+        question.query, profile
+    )

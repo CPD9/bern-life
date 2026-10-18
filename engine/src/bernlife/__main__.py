@@ -11,6 +11,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "check-places": ("bernlife.places_check", "confirm the map's addresses against stored pages"),
     "crawl": ("bernlife.crawl_command", "fetch allowed pages of sources/*.json into the bundle"),
     "embed": ("bernlife.embed_command", "a vector for every chunk text into vectors.jsonl"),
+    "enrich": ("bernlife.enrich_command", "retrieval terms for every expertise value"),
     "extract": ("bernlife.extract_command", "pages into profiles and relations with evidence"),
     "health": ("bernlife.health", "model mode, model per role, recorded calls"),
     "load": ("bernlife.load_command", "the bundle into Postgres, one transaction per source"),
