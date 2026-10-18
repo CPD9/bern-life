@@ -17,13 +17,21 @@ const apps: PhoneApp[] = [
 
 function Harness() {
   const [open, setOpen] = useState(false);
+  const [appId, setAppId] = useState<string | null>(null);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
         Phone
       </button>
       <span data-testid="state">{open ? "open" : "closed"}</span>
-      <Phone open={open} onClose={() => setOpen(false)} apps={apps} now={null} />
+      <Phone
+        open={open}
+        onClose={() => setOpen(false)}
+        apps={apps}
+        appId={appId}
+        onAppChange={setAppId}
+        now={null}
+      />
     </>
   );
 }
