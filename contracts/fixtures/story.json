@@ -1,0 +1,153 @@
+{
+  "id": "move-to-bern",
+  "title": "Moving your business to Bern",
+  "quests": [
+    {
+      "id": "arrive",
+      "title": "Arrive and settle",
+      "goal": "Choose the district where your office will be.",
+      "criterion": "c5-sources",
+      "steps": [
+        {
+          "id": "settle",
+          "text": "Pick a district on the map. Every fact shown has its source and date.",
+          "hint": "Tap a district to see its facts, then choose one.",
+          "done_when": "settled"
+        },
+        {
+          "id": "office",
+          "text": "Set up your office.",
+          "done_when": "office_ready"
+        }
+      ]
+    },
+    {
+      "id": "find-experts",
+      "title": "Find the right people",
+      "goal": "Ask for the expertise your project needs.",
+      "criterion": "c1-right-people",
+      "steps": [
+        {
+          "id": "ask",
+          "text": "Ask the Navigator in your own words.",
+          "hint": "Try 'glucose sensors' or 'blood sugar monitoring'.",
+          "done_when": "search_answered"
+        },
+        {
+          "id": "evidence",
+          "text": "Open the sentence that proves a result.",
+          "done_when": "evidence_opened"
+        }
+      ]
+    },
+    {
+      "id": "other-words",
+      "title": "Ask it differently",
+      "goal": "Ask the same need in German or French, or in lay terms.",
+      "criterion": "c2-wording",
+      "steps": [
+        {
+          "id": "ask-again",
+          "text": "Ask again in another language or in everyday words.",
+          "done_when": "search_answered_other_language"
+        }
+      ]
+    },
+    {
+      "id": "brief",
+      "title": "Bring your project brief",
+      "goal": "Upload a project description and see matched experts with evidence.",
+      "criterion": "c3-traceable",
+      "steps": [
+        {
+          "id": "upload",
+          "text": "Upload or paste your brief.",
+          "done_when": "brief_answered"
+        },
+        {
+          "id": "report",
+          "text": "Make a match report to share.",
+          "done_when": "report_made"
+        }
+      ]
+    },
+    {
+      "id": "visit",
+      "title": "Visit an institute",
+      "goal": "Walk to a place and see who works there.",
+      "criterion": "c4-structured",
+      "steps": [
+        {
+          "id": "lobby",
+          "text": "Walk to an institute and enter its lobby.",
+          "done_when": "lobby_entered"
+        }
+      ]
+    },
+    {
+      "id": "honest",
+      "title": "When nobody fits",
+      "goal": "See how the Navigator answers when no page supports a claim.",
+      "criterion": "ethics-abstain",
+      "steps": [
+        {
+          "id": "invented",
+          "text": "Ask about a professor who does not exist.",
+          "hint": "The Navigator says 'no verifiable source' instead of guessing.",
+          "done_when": "abstained_seen"
+        }
+      ]
+    },
+    {
+      "id": "extend",
+      "title": "Add a new source",
+      "goal": "Add an institution's website with one configuration file.",
+      "criterion": "c6-extend",
+      "steps": [
+        {
+          "id": "source",
+          "text": "Add a source in the sources admin.",
+          "done_when": "source_added"
+        },
+        {
+          "id": "numbers",
+          "text": "Look at the measured numbers.",
+          "done_when": "numbers_seen"
+        }
+      ]
+    },
+    {
+      "id": "grow",
+      "title": "Grow in Bern",
+      "goal": "Find opportunities, connections and partners for your business in Bern.",
+      "criterion": "stretch",
+      "steps": [
+        {
+          "id": "opportunity",
+          "text": "Save a funding call or a service for your business.",
+          "done_when": "opportunity_saved"
+        },
+        {
+          "id": "connection",
+          "text": "Add a lab or an expert to your network.",
+          "done_when": "connection_saved"
+        },
+        {
+          "id": "library",
+          "text": "Keep a source or a document in your office library.",
+          "done_when": "library_item_saved"
+        },
+        {
+          "id": "message",
+          "text": "Send a message to a member of your lab or network.",
+          "done_when": "message_sent"
+        },
+        {
+          "id": "garage",
+          "text": "Visit the garage and meet the models behind the Navigator.",
+          "done_when": "garage_visited"
+        }
+      ]
+    }
+  ]
+}
