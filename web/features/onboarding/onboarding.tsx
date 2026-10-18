@@ -1,7 +1,7 @@
 "use client";
 
 // The first-run frame: a dash per step for progress, Back, Skip and one green Continue. The Look
-// step is a slot because the avatar editor is another feature; app/ passes it in.
+// and agent steps are slots because their editors are another feature; app/ passes them in.
 
 import { type ReactNode, useEffect, useRef } from "react";
 import { ChoiceCards } from "./choice-cards";
@@ -20,6 +20,7 @@ type OnboardingProps = {
   state: OnboardingState;
   dispatch: (action: OnboardingAction) => void;
   lookStep: ReactNode;
+  agentStep: ReactNode;
   onDone: () => void;
 };
 
@@ -40,7 +41,7 @@ function ProgressDashes({ step }: { step: number }) {
   );
 }
 
-export function Onboarding({ state, dispatch, lookStep, onDone }: OnboardingProps) {
+export function Onboarding({ state, dispatch, lookStep, agentStep, onDone }: OnboardingProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const step = stepAt(state);
   const answer = (change: Partial<Profile>) => dispatch({ type: "answer", change });
@@ -83,6 +84,7 @@ export function Onboarding({ state, dispatch, lookStep, onDone }: OnboardingProp
         onChange={(visibility) => answer({ visibility })}
       />
     ),
+    agent: agentStep,
   };
 
   return (

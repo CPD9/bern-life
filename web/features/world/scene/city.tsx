@@ -1,10 +1,21 @@
-// Generic buildings and trees as instanced meshes: a few hundred boxes cost one draw call each kind.
+// The city above the ground: generic buildings and trees as instanced meshes (a few hundred boxes
+// cost one draw call each kind), the Old Town's house rows, the landmarks and bridges, and the
+// district names. Landmarks and bridges claim their ground after the generic plan is laid out.
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { Color, type InstancedMesh, Object3D } from "three";
 import { type Block } from "../city-plan";
-import { BRIDGES, type MapPoint } from "../geography";
+import { useWorldDisplay } from "../display";
+import { type MapPoint } from "../geography";
 import { type WorldPalette } from "../palette";
+import { coveredByAny } from "./footprint";
+import { Landmarks } from "./landmarks";
+import { MapLabels } from "./map-labels";
+import { OldTownHouses } from "./old-town";
+import { CLAIMED, OLD_TOWN_HOUSES } from "./town";
+
+/** Half a generic block's widest side, and a tree crown's radius, kept off claimed ground. */
+const CLAIM_MARGIN = { block: 1.3, tree: 0.7 } as const;
 
 const scratch = new Object3D();
 const tint = new Color();
@@ -69,25 +80,6 @@ function TreeLayer({ trees, palette, shadows }: CityProps & { trees: readonly Ma
   );
 }
 
-function Bridges({ palette, shadows }: CityProps) {
-  return (
-    <group>
-      {Object.entries(BRIDGES).map(([id, [[ax, az], [bx, bz]]]) => (
-        <mesh
-          key={id}
-          position={[(ax + bx) / 2, 0.35, (az + bz) / 2]}
-          rotation-y={-Math.atan2(bz - az, bx - ax)}
-          castShadow={shadows}
-          receiveShadow={shadows}
-        >
-          <boxGeometry args={[Math.hypot(bx - ax, bz - az), 0.4, 1.5]} />
-          <meshLambertMaterial color={palette.bridge} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
 type CityProps = { palette: WorldPalette; shadows: boolean };
 
 export function City({
@@ -96,11 +88,22 @@ export function City({
   palette,
   shadows,
 }: CityProps & { blocks: readonly Block[]; trees: readonly MapPoint[] }) {
+  const { lite } = useWorldDisplay();
+  const shownBlocks = useMemo(
+    () => blocks.filter((block) => !coveredByAny(CLAIMED, [block.x, block.z], CLAIM_MARGIN.block)),
+    [blocks],
+  );
+  const shownTrees = useMemo(
+    () => trees.filter((tree) => !coveredByAny(CLAIMED, tree, CLAIM_MARGIN.tree)),
+    [trees],
+  );
   return (
     <group>
-      <Blocks blocks={blocks} palette={palette} shadows={shadows} />
-      <TreeLayer trees={trees} palette={palette} shadows={shadows} />
-      <Bridges palette={palette} shadows={shadows} />
+      <Blocks blocks={shownBlocks} palette={palette} shadows={shadows} />
+      <TreeLayer trees={shownTrees} palette={palette} shadows={shadows} />
+      <OldTownHouses houses={OLD_TOWN_HOUSES} palette={palette} shadows={shadows} />
+      <Landmarks palette={palette} shadows={shadows} lite={lite} />
+      <MapLabels />
     </group>
   );
 }

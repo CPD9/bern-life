@@ -29,3 +29,35 @@ export function ribbon(path: readonly MapPoint[], width: number, height: number)
   }
   return { positions, indices };
 }
+
+function catmullRom(p0: number, p1: number, p2: number, p3: number, t: number): number {
+  const t2 = t * t;
+  return (
+    0.5 *
+    (2 * p1 +
+      (p2 - p0) * t +
+      (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+      (3 * p1 - p0 - 3 * p2 + p3) * t2 * t)
+  );
+}
+
+/** Catmull-Rom through every point of `path`, `samples` steps per segment, so the Aare bends
+ * instead of kinking. The curve passes through each given point; the ends repeat theirs. */
+export function smoothPath(path: readonly MapPoint[], samples: number): MapPoint[] {
+  if (path.length < 3 || samples < 2) return [...path];
+  const at = (index: number): MapPoint =>
+    path[Math.max(0, Math.min(path.length - 1, index))] ?? [0, 0];
+  const points: MapPoint[] = [];
+  for (let i = 0; i < path.length - 1; i++) {
+    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    for (let step = 0; step < samples; step++) {
+      const t = step / samples;
+      points.push([
+        catmullRom(p0[0], p1[0], p2[0], p3[0], t),
+        catmullRom(p0[1], p1[1], p2[1], p3[1], t),
+      ]);
+    }
+  }
+  points.push(at(path.length - 1));
+  return points;
+}

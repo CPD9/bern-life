@@ -1,7 +1,8 @@
 # The hosted Bern Life on one Exoscale VM (infra/exoscale.md). Only Caddy publishes a port (443);
-# Postgres and the web app are reachable on the compose network alone. Values come from .env next
-# to this file on the VM (never in git): SITE_HOST, POSTGRES_PASSWORD, and DEMO_FIXTURES until the
-# bundle is released.
+# Postgres, the engine and the web app are reachable on the compose network alone. Values come
+# from .env next to this file on the VM (never in git): SITE_HOST, POSTGRES_PASSWORD, and
+# DEMO_FIXTURES=0. The snapshot bundle sits in /opt/bernlife/data/bundle, installed by
+# infra/fetch_bundle.py --archive; compose.demo.yaml rolls back to the invented fixtures.
 name: bernlife-prod
 
 services:
@@ -30,22 +31,82 @@ services:
       db:
         condition: service_healthy
 
+  # Replay only, as in the root compose.yaml: every model answer comes from the bundle's recorded
+  # calls, so no GPU and no key. The bundle is mounted read-only; the embedding model is fetched
+  # once into a volume.
+  load:
+    build: &engine-build
+      context: ../..
+      dockerfile: engine/Dockerfile
+    image: bernlife-prod-engine
+    command: [load]
+    environment: &engine-run
+      <<: *database
+      BERNLIFE_BACKEND: replay
+      ENGINE_PORT: "8100"
+    volumes: &engine-volumes
+      - ../../data/bundle:/app/data/bundle:ro
+      - models:/app/data/models
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # serve binds 127.0.0.1 and takes searches from loopback only, so the web app joins this
+  # container's network. Caddy still proxies to web:3000: the alias points that name here.
+  serve:
+    build: *engine-build
+    image: bernlife-prod-engine
+    command: [serve]
+    restart: unless-stopped
+    environment: *engine-run
+    volumes: *engine-volumes
+    networks:
+      default:
+        aliases: [web]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request as u; u.urlopen('http://127.0.0.1:8100/api/health', timeout=2)
+      interval: 2s
+      timeout: 3s
+      # The first run downloads the embedding model before serve answers.
+      retries: 300
+    depends_on:
+      load:
+        condition: service_completed_successfully
+
   web:
     build:
       context: ../..
       dockerfile: web/Dockerfile
     restart: unless-stopped
+    network_mode: service:serve
     environment:
       <<: *database
       APP_ORIGIN: https://${SITE_HOST:?set SITE_HOST in .env}
       DEMO_FIXTURES: ${DEMO_FIXTURES:-0}
-      ENGINE_URL: ${ENGINE_URL:-}
+      ENGINE_URL: http://127.0.0.1:8100
       BERNLIFE_DATA_DIR: /data
     volumes:
       - uploads:/data/uploads
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 2s
+      timeout: 3s
+      retries: 60
     depends_on:
       migrate:
         condition: service_completed_successfully
+      serve:
+        condition: service_healthy
+        # A new serve container is a new network; web has to follow it.
+        restart: true
 
   # HTTPS with an automatic certificate. With port 80 closed, Caddy proves the name over 443
   # (TLS-ALPN challenge).
@@ -66,5 +127,6 @@ services:
 volumes:
   pgdata:
   uploads:
+  models:
   caddy-data:
   caddy-config:
