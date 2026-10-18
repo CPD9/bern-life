@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { InvalidEnvError, MissingEnvError, parseEnv } from "./env";
+import { InvalidEnvError, MissingEnvError, parseDataDir, parseEnv } from "./env";
 
 describe("parseEnv", () => {
   test("fixtures mode needs no engine URL", () => {
@@ -33,5 +33,14 @@ describe("parseEnv", () => {
 
   test("DEMO_FIXTURES accepts only 1 or 0", () => {
     expect(() => parseEnv({ DEMO_FIXTURES: "true" })).toThrow(new InvalidEnvError("DEMO_FIXTURES"));
+  });
+});
+
+describe("parseDataDir", () => {
+  test("defaults to the repo's data folder and resolves relative values from web/", () => {
+    expect(parseDataDir({}, "/repo/web")).toBe("/repo/data");
+    expect(parseDataDir({ BERNLIFE_DATA_DIR: "" }, "/repo/web")).toBe("/repo/data");
+    expect(parseDataDir({ BERNLIFE_DATA_DIR: "../shared" }, "/repo/web")).toBe("/repo/shared");
+    expect(parseDataDir({ BERNLIFE_DATA_DIR: "/srv/bernlife" }, "/repo/web")).toBe("/srv/bernlife");
   });
 });
