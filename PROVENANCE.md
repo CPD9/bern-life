@@ -11,6 +11,12 @@ Where code, data and models come from. Update this file in the same PR that adds
 | `infra/pack_cache.py` | `CPD9/apertus-redteam-graph` `track_1a/scripts/pack_cache.py` (f5e07d3) | Apache-2.0 | Brief I4. Folds the live call files into the bundle's pack (not the live folder's own) and carries `models.json`. |
 | `eval/src/evaluator/stats.py` | `CPD9/apertus-redteam-graph` `track_1a/src/redteam/stats.py` (f5e07d3) | Apache-2.0 | Brief I3. `wilson` unchanged; the two-way cluster bootstrap becomes one-way (a base need with its variants). |
 
+## Characters and art
+
+| Bern Life file | Origin | Licence | Notes |
+|---|---|---|---|
+| `web/features/avatar/` (the bear family) | drawn by the team from three.js primitives | ours | Brief W3-bear. Style reference only: the Apertus Agents avatars in `CPD9/apertus-redteam-graph` `track_1a/web/avatars/`. The Dot Avatar Maker studio that made those was not used: its repo records no licence that allows redistributing it (`track_1a/.gitignore`), so no code or asset from it is in Bern Life. |
+
 ## Models
 
 | Model | Revision | Role | Where it runs |

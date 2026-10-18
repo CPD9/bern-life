@@ -1,7 +1,8 @@
 // The avatar lives in localStorage for now. Storage can be missing or throw (private windows,
-// blocked site data), so every access is guarded and memory is the fallback; a stored value that
-// no longer parses is ignored and the default avatar is shown instead.
+// blocked site data), so every access is guarded and memory is the fallback. An earlier human
+// figure is migrated to a matching bear; anything else that no longer parses shows the default.
 
+import { migrateHumanAvatar } from "./avatar-migration";
 import { type BearConfig, defaultBear, parseBear } from "./bear-config";
 
 export const avatarKey = "bernlife.avatar";
@@ -17,7 +18,8 @@ export type AvatarStore = {
 function readAvatar(raw: string | null): BearConfig {
   if (raw === null) return defaultBear;
   try {
-    return parseBear(JSON.parse(raw)) ?? defaultBear;
+    const stored: unknown = JSON.parse(raw);
+    return parseBear(stored) ?? migrateHumanAvatar(stored) ?? defaultBear;
   } catch {
     return defaultBear;
   }

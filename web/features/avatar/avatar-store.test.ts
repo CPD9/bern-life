@@ -35,14 +35,30 @@ describe("createAvatarStore", () => {
     expect(createAvatarStore(() => storage).get()).toEqual(chosen);
   });
 
-  test("a corrupted or outdated value is ignored and the default avatar shown", () => {
+  test("a corrupted or unknown value is ignored and the default bear shown", () => {
     const corrupted = memoryStorage({ [avatarKey]: "{not json" });
     expect(createAvatarStore(() => corrupted).get()).toEqual(defaultBear);
 
-    const outdated = memoryStorage({
-      [avatarKey]: JSON.stringify({ body: "slim", skin: "tone-7", hair: "curly" }),
+    const unknown = memoryStorage({ [avatarKey]: JSON.stringify({ kind: "dragon" }) });
+    expect(createAvatarStore(() => unknown).get()).toEqual(defaultBear);
+  });
+
+  test("a saved human figure from before the bears comes back as a matching bear", () => {
+    const human = {
+      body: "slim",
+      skin: "tone-9",
+      hair: "curly",
+      outfit: "lab-coat",
+      accent: "teal",
+    };
+    const storage = memoryStorage({ [avatarKey]: JSON.stringify(human) });
+    expect(createAvatarStore(() => storage).get()).toEqual({
+      kind: "brown-bear",
+      fur: "cocoa",
+      face: "happy",
+      outfit: "lab-coat",
+      accessory: "none",
     });
-    expect(createAvatarStore(() => outdated).get()).toEqual(defaultBear);
   });
 
   test("blocked storage keeps the avatar in memory and still notifies", () => {

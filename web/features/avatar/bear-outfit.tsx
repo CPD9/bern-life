@@ -35,10 +35,10 @@ export const OUTFITS: Readonly<Record<OutfitId, Outfit>> = {
   },
   // A blue-white coat with a collar, so it still reads on a snow-white polar bear.
   "lab-coat": {
-    bands: [{ colour: "#dfe8f3", from: 0.18, to: 0.86, open: 0.9 }],
-    sleeves: "#dfe8f3",
+    bands: [{ colour: "#d3e0ef", from: 0.18, to: 0.86, open: 0.9 }],
+    sleeves: "#d3e0ef",
     tie: null,
-    collar: "#b9cbe0",
+    collar: "#9fb6d2",
   },
   "field-work": {
     bands: [{ colour: "#6b7b4a", from: 0.18, to: 0.62, open: 1.1 }],
@@ -65,7 +65,7 @@ function BandMesh({ band }: { band: Band }) {
           Math.PI * (band.to - band.from),
         ]}
       />
-      <Plush colour={band.colour} twoSided />
+      <Plush colour={band.colour} twoSided cloth />
     </mesh>
   );
 }
@@ -81,7 +81,7 @@ export function BearOutfit({ outfit }: { outfit: OutfitId }) {
       {look.collar && (
         <mesh position-y={NECK_Y - 0.03} rotation-x={Math.PI / 2}>
           <torusGeometry args={[0.16, 0.03, 8, segments]} />
-          <Plush colour={look.collar} />
+          <Plush colour={look.collar} cloth />
         </mesh>
       )}
       {look.tie && (

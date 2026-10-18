@@ -21,14 +21,17 @@ export function useSegments(): number {
 
 const SHEEN = "#fff4e8";
 
+/** Fur gets the full velvet sheen; cloth gets a little, so pale clothes still read on pale fur. */
 export function Plush({
   colour,
   opacity = 1,
   twoSided = false,
+  cloth = false,
 }: {
   colour: string;
   opacity?: number;
   twoSided?: boolean;
+  cloth?: boolean;
 }) {
   const { lite } = useContext(QualityContext);
   const side = twoSided ? DoubleSide : FrontSide;
@@ -42,7 +45,7 @@ export function Plush({
     <meshPhysicalMaterial
       color={colour}
       roughness={0.85}
-      sheen={1}
+      sheen={cloth ? 0.25 : 1}
       sheenRoughness={0.55}
       sheenColor={SHEEN}
       side={side}
