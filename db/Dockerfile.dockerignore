@@ -1,0 +1,6 @@
+# Allow-list: the migration image gets the Prisma package and its migrations, nothing else.
+*
+!db/package.json
+!db/bun.lock
+!db/prisma.config.ts
+!db/prisma
