@@ -1,24 +1,46 @@
 # Bern Life worker briefs
 
-The conductor keeps `docs/conductor/STATE.md` and writes these briefs. Paste
-`handoff/00-shared-context.md`, then one brief, into a new Claude Code session opened on
-`~/Developer/bern-life`. At most three worker sessions at once, one per lane.
+The conductor keeps `docs/conductor/STATE.md` and writes these briefs. Peter runs the sessions.
+Open a new Claude Code session on `~/Developer/bern-life` and start it with:
 
-## W1 round 1 (Sun 18 Oct, from ≈14:00)
+```
+/plan @handoff/00-shared-context.md @.claude/prompts/<brief>.md
+```
 
-| Order | File | Lane | Depends on |
+The session plans, Peter pastes the plan to the conductor, and the session implements after
+"approved". At most three sessions on Peter's laptop at once (8 GB): one Next dev server and one
+Postgres at a time.
+
+## Round A (Sun 18 Oct, now → ≈19:30)
+
+| File | Lane | Port | Depends on |
 | --- | --- | --- | --- |
-| 1 | `E1-crawler.md` | 1 data / engine (port 3011) | W0 on `main` |
-| 2 | `I1-plumbing.md` (two PRs) | 3 infra, Yaseen (3013) | W0 on `main` |
-| 3 | `U1-search-ui.md` | 2 world / UX, Nik (3012) | W0 on `main` |
-| 4 | `I2-router.md` | 3 infra, Yaseen | I1 PR 1 merged; CSCS base URL from Peter |
+| `E1-crawler.md` | engine | 3011 | — |
+| `W1-world-shell.md` (PR 1 scaffold, PR 2 phone + Ask) | world shell | 3012 | — |
+| `W2-bern-map.md` | world 3D | 3014 | W1 PR 1 merged before coding |
+| `I1-plumbing.md` (two PRs) | infra (Yaseen, or Peter as a 4th session when one ends) | 3013 | — |
 
-Conductor in parallel: the gold set (`eval/gold.jsonl`) and `eval/PREREGISTRATION.md`, frozen
-before any search code merges.
+## Round B (≈19:30 → 23:00, briefs written when round A reports)
+E2 extraction + verifier (relations, place addresses checked against the snapshot) · I2 model
+router + CSCS · W3 onboarding (Role → Look → Expertise → Goal → Visibility), your avatar, home room ·
+W2 follow-up: walk the map with your avatar.
 
-## W1 round 2 (≈18:30–22:30, briefs written once round 1 reports)
+## Round C (23:00 → ≈03:00)
+E3 enrichment + hybrid search + explain + brief API · I3 evaluator · W4 the world and phone on the
+real engine (map lights up from live search) · X1 the agent: the Navigator character in Ask uses
+tools (search, light up and fly to places, open a profile, start a match report); it never sends
+anything outside the app without a click.
 
-E2 extraction + verifier · E3 enrichment + hybrid search + explain · I3 evaluator · I4 live batch
-and bundle release · U2 UI on the real engine · U3 README with animated explainers.
+## Round D (≈03:00 → 08:00)
+X2 match report: PDF plus a live link that opens the same lit-up map · X3 inquiry inbox: a web form
+and invented inquiries are split into needs, matched, and answered with a cited draft that staff
+approve (no real mailbox) · X4 sources admin: add a source by pasting a URL (preview, save), re-crawl
+of changed pages, source health · X5 spaces and talent as ordinary sources, every figure sourced and
+dated · X6 feedback labels on results, tuned only on a separate dev query set, never the gold set ·
+I4 live batch on CSCS and the bundle release.
 
-When a session reports back, paste its PR link into the conductor session for the reviewer pass.
+## Monday morning
+D1 README with animated explainers · P1 pitch in BEDA's template (file stays out of git) · final
+eval run · rehearsal. Anything not merged by 08:00 goes on the roadmap slide.
+
+When a session reports back, paste its plan or PR link into the conductor session.

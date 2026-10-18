@@ -34,11 +34,80 @@ jobs:
   engine:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
+        env:
+          POSTGRES_USER: bernlife
+          POSTGRES_PASSWORD: bernlife
+          POSTGRES_DB: bernlife
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bernlife -d bernlife"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      # Always set here, so integration tests fail on a broken database instead of skipping.
+      DATABASE_URL: postgresql://bernlife:bernlife@localhost:5432/bernlife
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: engine/pyproject.toml
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('db/bun.lock') }}
       - run: pip install -e "engine[dev]"
+      - run: bun install --frozen-lockfile
+        working-directory: db
+      - name: Migrations apply to an empty database, and a second deploy is a no-op
+        working-directory: db
+        run: |
+          bunx prisma migrate deploy
+          bunx prisma migrate deploy | tee second-deploy.txt
+          grep -q "No pending migrations to apply." second-deploy.txt
+      - name: Migrated database matches schema.prisma (only the HNSW index is outside Prisma)
+        working-directory: db
+        run: |
+          bunx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script \
+            | grep -v -e '^--' -e '^$' > drift.sql
+          echo 'DROP INDEX "chunk_embedding_hnsw_idx";' | diff - drift.sql
       - run: ruff check . && ruff format --check .
       - run: python -m unittest discover -s engine/tests -v
+      - run: python -m unittest discover -s infra/tests -t . -v
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            web/.next/cache
+          key: web-${{ runner.os }}-${{ hashFiles('web/bun.lock') }}
+          restore-keys: web-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint
+      - run: bun run format:check
+      - run: bun run test
+      - run: bun run build
+        env:
+          DEMO_FIXTURES: "1"
