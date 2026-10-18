@@ -15,7 +15,7 @@ import {
 import { failure, signedIn } from "./http";
 import type { SignUp } from "./input";
 import { profileOf } from "./store";
-import { SKIPPED, emptyAccounts, testDb } from "./testing";
+import { SKIPPED, emptyTables, openTestDb } from "@/infrastructure/test-database";
 
 const NOW = new Date("2026-10-18T20:00:00Z");
 const IP = "192.0.2.10";
@@ -24,14 +24,15 @@ const ORIGIN = "http://127.0.0.1:3016";
 const minutes = (n: number) => new Date(NOW.getTime() + n * 60 * 1000);
 const days = (n: number) => new Date(NOW.getTime() + n * 24 * 60 * 60 * 1000);
 
+const testDb = openTestDb();
 if (testDb === null) test.skip(SKIPPED, () => {});
 
 describe.skipIf(testDb === null)("accounts against a throwaway database", () => {
   const sql = testDb as Sql;
 
-  beforeEach(() => emptyAccounts(sql));
+  beforeEach(() => emptyTables(sql));
   afterAll(async () => {
-    await emptyAccounts(sql);
+    await emptyTables(sql);
     await sql.end();
   });
 

@@ -1,7 +1,13 @@
+// A place's panel: the units in the building with their verbatim addresses, and, after a search,
+// the results found there. People from public pages appear only here, as entries with sources.
+
 import { useEffect, useRef } from "react";
 import { type Building } from "./buildings";
+import { type BuildingLight, type SearchResult } from "./light";
 import { KIND_LABELS } from "./markers/place-markers";
 import { type Place } from "./places";
+
+const LINK = "text-primary font-bold underline underline-offset-2";
 
 function PlaceEntry({ place }: { place: Place }) {
   return (
@@ -11,24 +17,14 @@ function PlaceEntry({ place }: { place: Place }) {
       {place.position_method === "address" ? (
         <p className="text-sm">
           {place.address}{" "}
-          <a
-            href={place.address_url}
-            target="_blank"
-            rel="noreferrer"
-            className="text-primary font-bold underline underline-offset-2"
-          >
+          <a href={place.address_url} target="_blank" rel="noreferrer" className={LINK}>
             Source page
           </a>
         </p>
       ) : (
         <p className="text-sm">
           No address of its own on its pages; placed in its district.{" "}
-          <a
-            href={`https://${place.host}/`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-primary font-bold underline underline-offset-2"
-          >
+          <a href={`https://${place.host}/`} target="_blank" rel="noreferrer" className={LINK}>
             Website
           </a>
         </p>
@@ -37,7 +33,48 @@ function PlaceEntry({ place }: { place: Place }) {
   );
 }
 
-export function PlacePanel({ building, onClose }: { building: Building; onClose: () => void }) {
+/** Fixture results point at /fixture/ paths that do not exist, so their source is text, not a link. */
+function MatchEntry({ result, fixture }: { result: SearchResult; fixture: boolean }) {
+  const role = result.profile.fields.role[0]?.value;
+  return (
+    <li className="flex flex-col gap-1">
+      <p className="text-ink flex items-center gap-2 font-extrabold">
+        <span className="rounded-pill bg-primary text-primary-ink min-w-6 px-1.5 text-center text-xs leading-6">
+          {result.rank}
+        </span>
+        {result.profile.name.value}
+      </p>
+      {role !== undefined && <p className="text-muted text-sm">{role}</p>}
+      <p className="text-sm">
+        <span className="text-muted">Why it matches: </span>
+        {result.reason.text}
+      </p>
+      {fixture ? (
+        <p className="text-muted text-xs break-all">
+          Fixture source, not a real page: {result.profile.source_url}
+        </p>
+      ) : (
+        <a
+          href={result.profile.source_url}
+          target="_blank"
+          rel="noreferrer"
+          className={`${LINK} text-sm`}
+        >
+          Source page
+        </a>
+      )}
+    </li>
+  );
+}
+
+type PanelProps = {
+  building: Building;
+  light: BuildingLight | undefined;
+  fixture: boolean;
+  onClose: () => void;
+};
+
+export function PlacePanel({ building, light, fixture, onClose }: PanelProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const headingId = `place-${building.key.replace(/[^a-z0-9]+/gi, "-")}`;
 
@@ -61,6 +98,23 @@ export function PlacePanel({ building, onClose }: { building: Building; onClose:
           Close
         </button>
       </div>
+      {light !== undefined && (
+        <div className="flex flex-col gap-3">
+          <h3 className="font-extrabold">
+            {light.results.length === 1 ? "1 match here" : `${light.results.length} matches here`}
+            {fixture && (
+              <span className="rounded-pill bg-chip ml-2 px-2 py-0.5 align-middle text-xs">
+                FIXTURE
+              </span>
+            )}
+          </h3>
+          <ul className="flex flex-col gap-4">
+            {light.results.map((result) => (
+              <MatchEntry key={result.profile.id} result={result} fixture={fixture} />
+            ))}
+          </ul>
+        </div>
+      )}
       <ul className="flex flex-col gap-4">
         {building.places.map((place) => (
           <PlaceEntry key={place.id} place={place} />

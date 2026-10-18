@@ -1,10 +1,12 @@
 import { describe, expect, mock, test } from "bun:test";
 import { createRef } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { type Building } from "./buildings";
+import { type Building, groupPlacesByBuilding } from "./buildings";
+import { worldDemoSearch } from "./demo-search";
+import { lightUp } from "./light";
 import { PlaceMarkers } from "./markers/place-markers";
 import { PlacePanel } from "./place-panel";
-import { type Place } from "./places";
+import { PLACES, type Place } from "./places";
 import { AgentButtons } from "./scene/agents";
 
 const addressed: Place = {
@@ -53,7 +55,9 @@ function anchors() {
 
 describe("PlacePanel", () => {
   test("lists every unit with its address and source, and says positions are approximate", () => {
-    render(<PlacePanel building={shared} onClose={() => undefined} />);
+    render(
+      <PlacePanel building={shared} light={undefined} fixture={false} onClose={() => undefined} />,
+    );
     expect(screen.getByRole("heading", { name: "2 units here" })).toBeTruthy();
     expect(screen.getByText("Example Sensor Lab")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Source page" }).getAttribute("href")).toBe(
@@ -70,7 +74,7 @@ describe("PlacePanel", () => {
 
   test("Close calls back and the heading takes focus on open", () => {
     const onClose = mock(() => undefined);
-    render(<PlacePanel building={shared} onClose={onClose} />);
+    render(<PlacePanel building={shared} light={undefined} fixture={false} onClose={onClose} />);
     expect(document.activeElement?.textContent).toBe("2 units here");
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -87,6 +91,8 @@ describe("PlaceMarkers", () => {
         selectedKey={null}
         onSelect={onSelect}
         elementsRef={elements}
+        searching={false}
+        lighting={null}
       />,
     );
     const marker = screen.getByRole("button", {
@@ -113,5 +119,73 @@ describe("AgentButtons", () => {
     render(<AgentButtons onSelect={onSelect} elementsRef={anchors()} />);
     fireEvent.click(screen.getByRole("button", { name: "Navigator" }));
     expect(onSelect).toHaveBeenCalledWith("navigator");
+  });
+});
+
+describe("while a search runs", () => {
+  test("every marker breathes, unless the viewer asked for reduced motion", () => {
+    render(
+      <PlaceMarkers
+        buildings={[shared]}
+        selectedKey={null}
+        onSelect={() => undefined}
+        elementsRef={anchors()}
+        searching={true}
+        lighting={null}
+      />,
+    );
+    expect(screen.getByRole("button").className).toContain("motion-safe:animate-pulse");
+  });
+});
+
+describe("after a search", () => {
+  const buildings = groupPlacesByBuilding(PLACES);
+  const lighting = lightUp(worldDemoSearch(), buildings);
+  const artorg = buildings.find((building) => building.key === "murtenstrasse 50");
+  const inf = buildings.find((building) => building.key === "neubrückstrasse 10");
+  if (artorg === undefined || inf === undefined) throw new Error("places changed");
+
+  test("a lit marker says its matches and best rank; an unlit one steps back", () => {
+    render(
+      <PlaceMarkers
+        buildings={[artorg, inf]}
+        selectedKey={null}
+        onSelect={() => undefined}
+        elementsRef={anchors()}
+        searching={false}
+        lighting={lighting}
+      />,
+    );
+    const lit = screen.getByRole("button", { name: /^ARTORG/ });
+    expect(lit.getAttribute("aria-label")).toBe(
+      "ARTORG Center for Biomedical Engineering Research · Clinical Neuroscience Bern (Centre), 2 matches, best rank 2",
+    );
+    expect(lit.style.boxShadow).toBe("0 0 0 8.95px rgb(47 179 107 / 0.63)");
+    expect(
+      screen.getByRole("button", { name: /^Institute of Computer Science/ }).style.opacity,
+    ).toBe("0.6");
+  });
+
+  test("the panel lists the matches; fixture sources are text, not links", () => {
+    render(
+      <PlacePanel
+        building={artorg}
+        light={lighting.byBuilding.get(artorg.key)}
+        fixture={true}
+        onClose={() => undefined}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: /2 matches here/ })).toBeTruthy();
+    expect(screen.getByText("Beat Beispiel")).toBeTruthy();
+    expect(screen.getByText("Works on wearable biosensors.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Fixture source, not a real page: https://www.artorg.unibe.ch/fixture/beat-beispiel",
+      ),
+    ).toBeTruthy();
+    expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "Source page",
+      "Source page",
+    ]);
   });
 });

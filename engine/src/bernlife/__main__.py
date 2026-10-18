@@ -7,10 +7,15 @@ import importlib
 import sys
 
 COMMANDS: dict[str, tuple[str, str]] = {
+    "calibrate": ("bernlife.calibrate_command", "abstention signals per dev query"),
     "check-places": ("bernlife.places_check", "confirm the map's addresses against stored pages"),
     "crawl": ("bernlife.crawl_command", "fetch allowed pages of sources/*.json into the bundle"),
+    "embed": ("bernlife.embed_command", "a vector for every chunk text into vectors.jsonl"),
     "extract": ("bernlife.extract_command", "pages into profiles and relations with evidence"),
     "health": ("bernlife.health", "model mode, model per role, recorded calls"),
+    "load": ("bernlife.load_command", "the bundle into Postgres, one transaction per source"),
+    "predict": ("bernlife.predict_command", "every gold query through search, for the evaluator"),
+    "serve": ("bernlife.serve_command", "the engine HTTP API on 127.0.0.1:$ENGINE_PORT"),
 }
 
 

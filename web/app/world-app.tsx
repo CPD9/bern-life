@@ -13,10 +13,17 @@ import { Hud } from "@/features/shell/hud";
 import { useHealth } from "@/features/shell/use-health";
 import { WorldCanvas } from "@/features/world/world-canvas";
 import { useNow } from "@/infrastructure/bern-time";
+import { type SearchResponse } from "@/infrastructure/contract-types.generated";
 
 // Composes the features. One Navigator controller lives here, above the phone, so a search
 // survives closing the phone and the agent can drive the same instance.
-export function WorldApp({ fixtureMode }: { fixtureMode: boolean }) {
+type WorldAppProps = {
+  fixtureMode: boolean;
+  /** Under DEMO_FIXTURES the map starts lit with the world fixture; W4 replaces this with live search. */
+  demoSearch: SearchResponse | undefined;
+};
+
+export function WorldApp({ fixtureMode, demoSearch }: WorldAppProps) {
   const [view, setView] = useState<WorldView>("home");
   const [phoneOpen, setPhoneOpen] = useState(false);
   const navigator = useNavigator(httpNavigatorApi);
@@ -67,7 +74,7 @@ export function WorldApp({ fixtureMode }: { fixtureMode: boolean }) {
       phoneOpen={phoneOpen}
       onSelectTab={(tab) => (tab === "phone" ? setPhoneOpen(true) : setView(tab))}
       hud={<Hud now={now} health={health} goal="Explore" />}
-      canvas={<WorldCanvas />}
+      canvas={<WorldCanvas demoSearch={demoSearch} />}
       overlay={<Phone open={phoneOpen} onClose={() => setPhoneOpen(false)} apps={apps} now={now} />}
     />
   );
