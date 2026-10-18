@@ -9,7 +9,7 @@ IP; the database is reachable on the compose network only. Sign-up stays invite-
 | | |
 |---|---|
 | VM | `bernlife-prod`, zone CH-GVA-2, Ubuntu 24.04 LTS, Standard Medium (2 vCPU, 4 GB), 50 GB disk, 2 GB swap |
-| Address | `https://151-145-197-170.sslip.io` (sslip.io maps the name to the IP; a real domain only needs `SITE_HOST` changed) |
+| Address | `https://<ip-with-dashes>.sslip.io` (sslip.io maps the name to the IP; a real domain only needs `SITE_HOST` changed); the address is shared in Messages, not here |
 | Code | `/opt/bernlife`, copied from git (tracked files only) |
 | Settings | `/opt/bernlife/infra/exoscale/.env` (mode 600): `SITE_HOST`, `POSTGRES_PASSWORD` (generated on the VM, never printed), `DEMO_FIXTURES` |
 | Backups | `/var/backups/bernlife`, nightly at 02:15 UTC, 14 days kept, root only |
