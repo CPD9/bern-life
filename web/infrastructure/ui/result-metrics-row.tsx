@@ -8,9 +8,13 @@ export function ResultMetricsRow({ metrics }: { metrics: SearchResult["metrics"]
   const tags = noveltyTags(metrics);
   return (
     <section aria-label="How well this result fits" className="flex flex-col gap-1.5 text-sm">
-      <ul className="flex flex-wrap gap-x-4 gap-y-1">
+      <ul className="flex flex-wrap gap-1.5">
         {rows.map(({ label, value }) => (
-          <li key={label} title={metricMeanings[label]}>
+          <li
+            key={label}
+            title={metricMeanings[label]}
+            className="border-panel-border bg-panel rounded-pill border px-3 py-1"
+          >
             <span className="text-muted">{label} </span>
             <strong>{value}</strong>
           </li>
