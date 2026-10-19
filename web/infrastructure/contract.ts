@@ -6,6 +6,7 @@ import type {
   AgentReply,
   Health,
   Numbers,
+  PlacePeople,
   SearchResponse,
   SourcesList,
   Story,
@@ -14,6 +15,7 @@ import {
   isAgentReply,
   isHealth,
   isNumbers,
+  isPlacePeople,
   isSearchResponse,
   isSourcesList,
   isStory,
@@ -69,4 +71,8 @@ export function parseSourcesList(body: unknown): SourcesList | null {
 
 export function parseNumbers(body: unknown): Numbers | null {
   return isNumbers(body) ? body : null;
+}
+
+export function parsePlacePeople(body: unknown): PlacePeople | null {
+  return isPlacePeople(body) ? body : null;
 }

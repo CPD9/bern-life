@@ -110,12 +110,16 @@ reorders a few results below rank 10.
   relation span inside it is found by plain string matching.
 - Vectors are stored under the sha256 of the text they were made from (`passage: ` + text), so a
   re-extraction can never reuse a stale vector. `tsv` uses the `simple` configuration: no
-  stemming, no language guess.
+  stemming, no language guess. Word forms are handled at query time (Ranking, rule 1).
 
 ## Ranking (one SQL statement plus pure code)
 1. **Full text:** each query word weighs its BM25 inverse document frequency, so common words in
    any language count little without a stopword list. A chunk scores the weighted `ts_rank` of
-   the words it contains.
+   the words it contains. A query word of letters only also matches the words its light word
+   form (`word_forms.py`) maps to the same form, the comparison rule 5 makes: "Kohlenhydrate"
+   finds "Kohlenhydraten", "sensor" finds "sensors", and "species" finds "specie" but never
+   "special" or "specialist" (no prefix). Coverage still counts only the exact words, as when the
+   abstention thresholds were set.
 2. **Vectors:** HNSW cosine over the same chunks (`hnsw.iterative_scan = strict_order`,
    `ef_search = 100`). Source filters sit inside both scans. Without a filter Postgres walks the
    HNSW index; with a selective filter it may choose an exact filtered scan, which is cheaper at
@@ -128,11 +132,16 @@ reorders a few results below rank 10.
 5. **Can it say why?** A candidate is shown only if at least one cited claim besides its name
    shares a content word with the query, or the query names it (its whole name, or a titled name
    such as "Prof. Muster" that is part of a person's name). Words are folded for case and accents,
-   need three letters, and a short de/en/fr list of function and generic search words ("and",
-   "der", "qui", "research", "forscht") never counts. The same test picks the claims the reason
-   cites, so every shown result's reason cites a claim that matches. This rule exists because E2's
-   final run added 1,241 people who are a bare name from a news or partner page. A passage they
-   appear in credits them, and without the rule they would fill the top ten with nothing to show.
+   need three letters and are compared by their light word form: an inflection ending (-e, -en,
+   -er, -es, -em, -ern, -s, and a plural -s with the ending under it) comes off while four letters
+   stay, so "Kohlenhydrate" matches "Kohlenhydraten" and "psychotropes" matches "psychotroper".
+   A short de/en/fr list of function and generic search words ("and", "der", "qui", "research",
+   "forscht") never counts, in any of their forms. The same test picks the claims the reason
+   cites, so every shown result's reason cites a claim that matches: the claims sharing a word as
+   written when there are any, else those sharing only its form, so a reason cites what an exact
+   match would. This rule exists because E2's final run added 1,241 people who are a bare name
+   from a news or partner page. A passage they appear in credits them, and without the rule they
+   would fill the top ten with nothing to show.
    The rule asks whether a result can show its reason, not how prominent it is, so it adds no
    prominence signal.
    **Through a project (`via`):** a candidate with no matching claim of its own is still shown
@@ -143,6 +152,24 @@ reorders a few results below rank 10.
    plain one from its own claims, and it is not sent to the explainer. Unit membership
    (`member_of`) does not count: on the dev set it added nothing, and a broad unit would vouch
    for everyone in it.
+   **On their own page (`passage`):** a candidate with neither is still shown when its own page,
+   the page its name claim cites, has words matching two distinct word forms of the question
+   (the same word-form test; all of them if the question has only one) next to its name: one
+   shared word is enough for a claim, which is about its profile, but not for a page window.
+   Next to the name means within 300 characters after the name, and as far before it unless another
+   profile's name ends there. The window never holds another profile's name from that page, so
+   on a team list the line under one name is never lent to the next. Words of the name itself
+   do not count. The result then carries `passage`: the verbatim span from the name to the
+   nearest matching words, with the page's url, sha256, offset and fetch date. Code checks that
+   the page text hashes to the name claim's sha256 and that the span is that text at that
+   offset, and the evaluator checks the span like a claim. It is a passage on their page, not a
+   claim of their profile: its `reason` stays the plain one from its own claims, it is not sent
+   to the explainer, and abstention never reads it (the third check below counts only claims
+   and `via`). Such results rank with the others by fused score, after a result with a
+   matching claim or a `via` at an equal score, under one unit cap. 300 characters was fixed before the
+   first dev run: on pages naming several profiles half of all gaps between two names are under
+   102 characters, so there the next name ends the window; a page about one profile has a median
+   text of 734 characters.
 6. **Unit cap:** at most 4 profiles of one unit in the top 10, where a profile's unit is the unit
    of its source page (the evaluator's exposure definition). A capped profile waits until after
    the top ten. The cap relaxes only when no other unit has a candidate left. There is no
@@ -156,9 +183,14 @@ reorders a few results below rank 10.
 - **Weak support:** no candidate reaches coverage 0.332 (the share of the query's word weight
   one chunk matches; a word absent from the corpus keeps its full weight) **or** cosine
   similarity 0.824.
-- **Premise check:** a person named after a title (`Prof.`, `Dr.`, `PD`, `Frau`, `Mme` …) must
-  be among the candidates' person names. A premise is a hypothesis to check, not a fact.
-- **Nothing can say why:** no candidate passes rule 5 above. The first two checks look at every
+- **Premise check:** a person named after a title (`Prof.`, `Dr.`, `PD`, `Frau`, `Mme`, and
+  since 2026-10-19 `Pr`, `Pre`, `Dre`, `professeure`, `docteure`, `Prof.in`, `Dr.in`, `Dr.med.`
+  …) must be among the candidates' person names. `PR` in capitals is not a title. `Pr`, `Pre`
+  and `Dre` open a name only with their period or after a French article or preposition ("la
+  Pre", "du Pr", "chez la Dre"), so "Pre Clinical Models" in English Title Case names nobody. A
+  premise is a hypothesis to check, not a fact.
+- **Nothing can say why:** no candidate passes rule 5 above through a claim of its own or a
+  project (`via`); a passage on its own page does not count. The first two checks look at every
   candidate, as they did when the thresholds were set; this one comes after them.
 
 ### How the thresholds were set
@@ -238,6 +270,61 @@ Tried on dev and not adopted: abstaining only when both the plain and the expand
 below the thresholds. It answered q918 (rank 5), but the two off-topic questions stopped
 abstaining (3/5 instead of 5/5), so the rule reading the plain signals stays.
 
+## Word forms and French and German titles (dev decision of 2026-10-19)
+Decided on `eval/dev.jsonl` under a rule committed before the runs (`eval/PREREGISTRATION.md`,
+amendment of 2026-10-19), bundle `bundle-20261019-3`, replay, thresholds unchanged.
+
+| Set | Row | recall@10 | MRR | false abstentions | invented abstained | en / de / fr recall |
+|---|---|---|---|---|---|---|
+| dev | base | 0.86 [0.73, 1.00] | 0.66 | 1/22 | 5/5 | 1.00 / 0.71 / 0.83 |
+| dev | + titles + word forms | 0.91 [0.77, 1.00] | 0.66 | 1/22 | 5/5 | 1.00 / 0.71 / 1.00 |
+| gold | base | 0.38 [0.22, 0.56] | 0.46 | 0/38 | 8/10 | 0.55 / 0.18 / 0.12 |
+| gold | + titles + word forms | 0.40 [0.23, 0.57] | 0.44 | 0/38 | 9/10 | 0.56 / 0.20 / 0.12 |
+
+Traceability stayed 100% with 0 invented entities. Titles changed no dev byte. On gold they make
+the French premise "la Dre …" abstain. Word forms raise dev MRR from 0.655 to 0.661. On gold, MRR
+falls from 0.458 to 0.436, inside the interval: three English questions find their first answer
+one rank lower.
+
+## Passages on their own page (dev decision of 2026-10-19)
+Decided on `eval/dev.jsonl` and `eval/dev2.jsonl` pooled (65 queries, 53 answerable, 12 invented)
+under the rule of the 2026-10-19 dev2 entry in `eval/PREREGISTRATION.md`: bundle
+`bundle-20261019-3`, a fresh database per run, replay, no model call, thresholds unchanged. Gold
+was not run. The window (300 characters) was fixed before the first run.
+
+| Run | Order | Words | recall@10 [95% CI] | MRR | traceable | invented | invented abstained | false abstentions | en / de / fr recall |
+|---|---|---|---|---|---|---|---|---|---|
+| base | none | | 0.642 [0.51, 0.77] | 0.482 | 6335/6335 | 0 | 11/12 | 1/53 | 0.731 / 0.500 / 0.615 |
+| v1 | after every claim result | 1 | 0.642 [0.51, 0.77] | 0.485 | 6471/6471 | 0 | 11/12 | 1/53 | 0.731 / 0.500 / 0.615 |
+| v2 | by fused score | 1 | 0.679 [0.55, 0.81] | 0.512 | 4897/4897 | 0 | 11/12 | 1/53 | 0.808 / 0.500 / 0.615 |
+| v3 (adopted) | by fused score | 2 | 0.698 [0.57, 0.83] | 0.518 | 5879/5879 | 0 | 11/12 | 1/53 | 0.846 / 0.500 / 0.615 |
+
+| Run | dev recall@10 | dev MRR | dev2 recall@10 | dev2 MRR |
+|---|---|---|---|---|
+| base | 0.909 | 0.661 | 0.452 | 0.356 |
+| v1 | 0.909 | 0.667 | 0.452 | 0.356 |
+| v2 | 0.909 | 0.627 | 0.516 | 0.430 |
+| v3 | 0.909 | 0.638 | 0.548 | 0.433 |
+
+- **v1** changes no score beyond noise: nearly every question has 20 results with a matching
+  claim, so results placed after them rarely reach the top ten. Its one moved question (q910,
+  rank 5 to 3) moves the same way between two loads of the unchanged base.
+- **v2** finds three dev2 questions at rank 1 that no claim reached (q937, q952, q954) and loses
+  q934 (rank 5 to outside the top ten). Single shared words next to a name ("App", "led",
+  "quantitative") put 209 passage results into the top ten of 46 questions.
+- **v3** keeps the three new hits at rank 1 and q934 in the top ten (rank 10), with 75 passage
+  results in the top ten of 29 questions. How the three match (the evaluator counts a name or
+  the proof page): q954's two people are found by name at ranks 1 and 2; q937's rank 1 is
+  another person whose own page is the answer's proof page, and the answer is at rank 2 by name;
+  q952 is found only through that page (another contact of the study), while v2 had its answer
+  at rank 1 by name, through the single word "Moonwalk". Against the base it lowers the first answer of q909
+  (rank 1 to 2), q933 (1 to 2) and q934 (5 to 10); dev MRR falls from 0.661 to 0.638 while
+  pooled MRR rises. A second load of v3 gave the same numbers for every question.
+- The traceable count falls because a result shown through its page has fewer claims than one
+  with matching claims; every claim and every passage span checked is on its page. All 142
+  passage spans of the v3 run are verbatim at their offset, on a page whose text hashes to the
+  cited sha256, and hold the cited name. No abstention changed in any run.
+
 ## Baseline (no model help), bundle `local-8f34ab8c1fba`
 `make eval` on the gold predictions, before and after rule 5:
 
@@ -257,19 +344,25 @@ Latency per query over the 48 gold queries (Apple M-series CPU, local Postgres):
 p95 177 ms, max 219 ms with rule 5, which reads every candidate's profile (p50 69 ms before).
 
 ## Limits
-- No stemming: "sensor" does not match "sensors" in full text; the vectors cover some of it.
-- Cross-language recall stays low (gold de 0.18, fr 0.12 with reasons through a project).
+- Word forms are inflections only: "Genetik" does not match "genetics", and "Schätzung" does not
+  match "schätzt". Full text matches whole word forms, as rule 5 does: "sensor" finds "sensors",
+  not "biosensors".
+- Cross-language recall stays low (gold de 0.20, fr 0.12 with word forms).
 - Known misses on dev: a German question below both thresholds on its plain signals abstains
-  although expansion finds the answer (q918); a person credited through a project ranks 11
-  (q919); a project whose claims share no word with the question cannot vouch, and a word form
-  ("Kohlenhydrate" vs "Kohlenhydraten") does not match (q920).
-- The evaluator's traceability check reads profile claims, not `via`; the `via` spans are checked
-  here instead (563 of 563).
+  although expansion finds the answer (q918); a person credited through a project ranked 11
+  (q919, rank 6 since word forms); a project whose claims share no word with the question
+  cannot vouch: the project behind q920 says "Kohlenhydraten" only in its name, which rule 5
+  never reads.
+- The evaluator's traceability check reads profile claims, the `via` relation and its related
+  claims, and the `passage` span.
 - An invented name without a title, or an invented project, is caught only by weak support.
 - Passages credit profiles only through spans that lie fully inside them, and since rule 5 a
-  credited profile still needs a matching claim of its own to be shown.
-- Rule 5 matches whole words: "sensors" does not match "biosensors", "psychotropes" does not
-  match "psychotroper".
+  credited profile still needs a matching claim of its own, a matching project, or a matching
+  word next to its name on its own page to be shown.
+- The own-page window reads the page's layout only through where names are: on a list that puts
+  a label before each name ("Head: …"), the label of the next name falls in the window of the
+  one before. The window reads only the occurrence of the name its claim cites.
+- Rule 5 matches whole word forms: "sensors" does not match "biosensors".
 - The API contract has no unit filter, so only `sources` filters. `lang` is accepted and unused.
 - 10 expertise values have no enrichment terms (no valid term in the reply).
 - Query vectors are computed where the search runs; another CPU can move the last digits.

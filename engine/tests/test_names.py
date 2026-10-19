@@ -9,6 +9,16 @@ class NamesTest(unittest.TestCase):
         self.assertEqual(display_name("Cara Probst, PhD"), "Cara Probst")
         self.assertEqual(display_name("Dr. phil. nat. Ben Beispiel"), "Ben Beispiel")
 
+    def test_french_and_german_titles_go_too(self):
+        self.assertEqual(display_name("Pre Ada Muster"), "Ada Muster")
+        self.assertEqual(display_name("Dre Dora Demo"), "Dora Demo")
+        self.assertEqual(display_name("Professeure Cleo Beispiel"), "Cleo Beispiel")
+        self.assertEqual(display_name("Prof.in Dr.in Ada Muster"), "Ada Muster")
+        self.assertEqual(display_name("PD Dr. med. Ben Beispiel"), "Ben Beispiel")
+        self.assertEqual(person_key("Prof.in Ada Muster"), "ada muster")
+        self.assertEqual(person_key("Pr Ben Beispiel"), "ben beispiel")
+        self.assertEqual(display_name("Inge Muster"), "Inge Muster")
+
     def test_person_key_ignores_titles_accents_and_case(self):
         self.assertEqual(person_key("Prof. Dr. Ada Muster"), "ada muster")
         self.assertEqual(person_key("ADA MÜSTER"), "ada muster")

@@ -73,6 +73,29 @@ class TraceTest(unittest.TestCase):
             ),
         )
 
+    def test_a_passage_on_the_results_own_page_is_checked_too(self) -> None:
+        shown = result(1, self.ada())
+        shown["passage"] = {
+            "kind": "own_page",
+            "span": "Ada Muster leads the Sensor Lab and builds glucose",
+            "page_url": URL,
+            "page_sha256": self.sha,
+            "start": 10,
+            "fetched_at": "2026-10-18T12:00:00Z",
+        }
+        self.assertEqual(check_claims("q100", [shown], self.index), (2, []))
+
+        shown["passage"] = shown["passage"] | {"span": "Ada Muster builds glucose"}
+        self.assertEqual(
+            check_claims("q100", [shown], self.index),
+            (2, [Miss("q100", "person-ada", "/passage", "span_not_on_page")]),
+        )
+        shown["passage"] = shown["passage"] | {"page_sha256": "f" * 64}
+        self.assertEqual(
+            check_claims("q100", [shown], self.index),
+            (2, [Miss("q100", "person-ada", "/passage", "page_sha256_differs")]),
+        )
+
     def test_a_related_profile_missing_from_snapshot_is_invented(self) -> None:
         shown = result(1, self.ada())
         shown["via"] = self.via()

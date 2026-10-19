@@ -12,7 +12,11 @@ TITLES = frozenset(
     {"prof", "profs", "professor", "professorin", "dr", "drs", "em", "med", "phil", "nat", "rer"}
     | {"pd", "dipl", "ing", "msc", "bsc", "phd", "hc", "dent", "vet", "pharm", "jur", "oec"}
     | {"mag", "lic", "theol", "sc", "techn", "habil", "mme", "mr", "mrs", "ms", "frau", "herr"}
+    # French and German forms: Pr (professeur), Pre (professeure), Dre (docteure), Doktorin
+    | {"pr", "pre", "professeur", "professeure", "dre", "docteur", "docteure", "doktor", "doktorin"}
 )
+# The German gender suffix written onto a title: "Prof.in" and "Dr.in" fold to "prof in", "dr in".
+GENDER_SUFFIX = "in"
 PARTICLES = frozenset({"von", "van", "de", "der", "den", "di", "da", "del", "della", "le", "la"})
 PARTICLES |= frozenset({"du", "des", "dos", "zu", "zum", "ten", "ter", "y", "i", "e", "al", "el"})
 NOT_PEOPLE = frozenset(
@@ -34,15 +38,16 @@ def fold(text: str) -> str:
 def display_name(name: str) -> str:
     """The name without leading titles or a trailing ", PhD"; still a substring of the input."""
     words = name.strip().strip(",").split(" ")
-    while words and _is_title(words[0]):
+    while words and is_title(words[0]):
         words.pop(0)
-    while words and (_is_title(words[-1]) or words[-1] == ","):
+    while words and (is_title(words[-1]) or words[-1] == ","):
         words.pop()
     return " ".join(words).strip().rstrip(",")
 
 
 def person_key(name: str) -> str:
-    return " ".join(word for word in fold(name).split() if word not in TITLES)
+    untitled = " ".join(word for word in name.split() if not is_title(word))
+    return " ".join(word for word in fold(untitled).split() if word not in TITLES)
 
 
 def looks_like_person(name: str) -> bool:
@@ -73,6 +78,7 @@ def twin_key(url: str) -> str:
     return TWIN_SUFFIX.sub(r"\1", url)
 
 
-def _is_title(word: str) -> bool:
+def is_title(word: str) -> bool:
+    """A word of titles only: "Dr.", "med.", "Dr.med.", and "Prof.in" with its gender suffix."""
     parts = fold(word).split()
-    return bool(parts) and all(part in TITLES for part in parts)
+    return bool(parts) and parts[0] in TITLES and all(p in TITLES | {GENDER_SUFFIX} for p in parts)
