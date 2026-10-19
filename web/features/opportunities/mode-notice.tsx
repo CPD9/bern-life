@@ -19,7 +19,7 @@ export function ModeNotice({
   }
   const line =
     mode === "mock"
-      ? "No recorded model answer for this question: plain search over the stored pages"
+      ? "Plain search: your words only. Apertus adds search terms for the recorded questions, or in a live run."
       : mode === "replay"
         ? "Replay · answered from recorded model calls"
         : null;

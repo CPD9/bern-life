@@ -2,10 +2,15 @@
 
 import { type KeyboardEvent, type ReactNode, useEffect, useRef } from "react";
 import { formatBernTime } from "@/infrastructure/bern-time";
+import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
+import { useSettings } from "@/infrastructure/use-settings";
 import type { DesktopApp } from "./desktop-apps";
 import { DesktopWindow } from "./desktop-window";
 import { Dock } from "./dock";
+import { Screensaver } from "./screensaver";
 import type { DesktopController } from "./use-desktop";
+import { type Scheduler, browserScheduler, screensaverDelay, useIdle } from "./use-idle";
+import { Wallpaper } from "./wallpaper";
 import { topWindow } from "./window-manager";
 
 const keyboardStep = 16;
@@ -23,15 +28,27 @@ type DesktopSurfaceProps = {
   now: Date | null;
   /** Leaves the computer; Escape with no window open does the same. */
   onLeave?: () => void;
+  /** The screensaver's idle timer; tests pass a fake. */
+  schedule?: Scheduler;
 };
 
 // Escape closes the front window and puts focus back on its dock button; F6 and Shift+F6 cycle
 // through the open windows; Alt+arrows move the front window.
-export function DesktopSurface({ apps, controller, now, onLeave }: DesktopSurfaceProps) {
+export function DesktopSurface({
+  apps,
+  controller,
+  now,
+  onLeave,
+  schedule = browserScheduler,
+}: DesktopSurfaceProps) {
   const area = useRef<HTMLDivElement>(null);
   const dock = useRef<HTMLDivElement>(null);
   const { windows, setBounds } = controller;
   const front = topWindow(windows);
+  const [settings] = useSettings();
+  const reducedMotion = useReducedMotion();
+  const still = settings.lite || reducedMotion;
+  const { idle, wake } = useIdle(settings.screensaver, screensaverDelay, schedule);
 
   useEffect(() => {
     const element = area.current;
@@ -71,12 +88,19 @@ export function DesktopSurface({ apps, controller, now, onLeave }: DesktopSurfac
   }
 
   return (
-    // The keyboard handler listens for keys bubbling up from the windows and the dock inside.
+    // The keyboard handler listens for keys bubbling up from the windows and the dock inside; the
+    // capture handlers count every pointer, key and wheel event as activity for the screensaver.
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       onKeyDown={onKeyDown}
-      className="from-sky-top to-sky-bottom text-ink flex h-full flex-col bg-linear-to-b"
+      onKeyDownCapture={wake}
+      onPointerMoveCapture={wake}
+      onPointerDownCapture={wake}
+      onClickCapture={wake}
+      onWheelCapture={wake}
+      className="from-sky-top to-sky-bottom text-ink relative isolate flex h-full flex-col bg-linear-to-b"
     >
+      <Wallpaper scene={settings.wallpaper} now={now} still={still} />
       <header className="bg-panel/80 flex items-center gap-3 px-4 py-2 backdrop-blur">
         <p className="flex-1 font-extrabold">Office computer</p>
         {now && <p className="text-muted font-bold tabular-nums">{formatBernTime(now)}</p>}
@@ -92,7 +116,7 @@ export function DesktopSurface({ apps, controller, now, onLeave }: DesktopSurfac
       </header>
       <div ref={area} className="relative min-h-0 flex-1 overflow-hidden">
         {windows.length === 0 && (
-          <p className="text-muted absolute inset-x-4 top-1/3 text-center text-lg font-bold">
+          <p className="text-muted bg-panel/80 rounded-pill absolute top-1/3 left-1/2 -translate-x-1/2 px-5 py-2 text-center text-lg font-bold whitespace-nowrap backdrop-blur">
             Open an app from the dock.
           </p>
         )}
@@ -117,6 +141,7 @@ export function DesktopSurface({ apps, controller, now, onLeave }: DesktopSurfac
       <div ref={dock} className="px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <Dock apps={apps} openIds={windows.map((place) => place.appId)} onOpen={controller.open} />
       </div>
+      {idle && <Screensaver scene={settings.wallpaper} now={now} still={still} />}
     </div>
   );
 }

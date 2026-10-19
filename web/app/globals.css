@@ -23,6 +23,16 @@
   --warn-bg: light-dark(#fff1d6, #3a2a10);
   --warn-ink: light-dark(#6b3a00, #ffd9a0);
   --mark: light-dark(#fff3b0, #4a4120);
+
+  /* The office computer's drawn wallpaper: faint by day, darker at night. */
+  --scene-far: light-dark(rgb(20 32 43 / 0.08), rgb(0 0 0 / 0.22));
+  --scene-near: light-dark(rgb(20 32 43 / 0.16), rgb(0 0 0 / 0.38));
+  --scene-water: light-dark(rgb(29 111 214 / 0.14), rgb(124 182 255 / 0.1));
+  --scene-cloud: light-dark(rgb(255 255 255 / 0.65), rgb(255 255 255 / 0.05));
+  --scene-dusk: light-dark(rgb(13 27 42 / 0.78), rgb(2 7 13 / 0.55));
+  --scene-star: light-dark(rgb(255 255 255 / 0.85), rgb(255 255 255 / 0.8));
+  --scene-face: light-dark(rgb(255 255 255 / 0.85), rgb(238 243 248 / 0.22));
+  --scene-hand: light-dark(rgb(20 32 43 / 0.7), rgb(238 243 248 / 0.75));
 }
 
 :root[data-theme="day"] {
@@ -57,6 +67,10 @@
   --shadow-panel: 0 8px 24px var(--shadow-color);
   --animate-phone-in: phone-in 180ms ease-out;
   --animate-phone-push: phone-push 250ms ease-out;
+  --animate-cloud-drift: cloud-drift 150s linear infinite;
+  --animate-wave-sway: wave-sway 8s ease-in-out infinite alternate;
+  --animate-star-twinkle: star-twinkle 2.5s ease-in-out infinite alternate;
+  --animate-fade-in: fade-in 600ms ease-out;
   --font-sans: var(--font-rounded), ui-rounded, system-ui, sans-serif;
 }
 
@@ -106,5 +120,31 @@ body {
 @keyframes phone-push {
   from {
     transform: translateX(100%);
+  }
+}
+
+/* The office computer's wallpaper and screensaver; the desktop leaves them off under reduced
+   motion and lite graphics. Distances are SVG user units, so they scale with the drawing. */
+@keyframes cloud-drift {
+  to {
+    transform: translateX(-1200px);
+  }
+}
+
+@keyframes wave-sway {
+  to {
+    transform: translateX(-80px);
+  }
+}
+
+@keyframes star-twinkle {
+  to {
+    opacity: 0.2;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
 }
