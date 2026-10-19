@@ -269,4 +269,37 @@ describe("Navigator", () => {
     );
     expect([heard, asked]).toEqual([[], []]);
   });
+
+  test("show() leaves a brief for the question it answers, and a late brief answer stays away", async () => {
+    let answerBrief: (outcome: NavigatorOutcome) => void = () => undefined;
+    const api: NavigatorApi = {
+      search: async () => ({ ok: true, response: resultFixture }),
+      brief: () => new Promise((resolve) => (answerBrief = resolve)),
+    };
+    function Shown() {
+      const controller = useNavigator(api, { emit: () => undefined });
+      return (
+        <>
+          <button type="button" onClick={() => controller.show(resultFixture)}>
+            Show the answer
+          </button>
+          <Navigator controller={controller} fixtureMode={false} />
+        </>
+      );
+    }
+    render(<Shown />);
+    await submitBrief("We build glucose sensors for children.");
+    expect(screen.getByRole("status").textContent).toBe("Reading your brief…");
+    act(() => fireEvent.click(screen.getByRole("button", { name: "Show the answer" })));
+    expect(screen.getByRole("button", { name: "Question" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(screen.queryByLabelText("Or paste the text")).toBeNull();
+    expect((screen.getByLabelText("Ask in your words") as HTMLInputElement).value).toBe(
+      resultFixture.query,
+    );
+    await act(async () => answerBrief({ ok: true, response: briefFixture }));
+    expect(screen.getByRole("status").textContent).toBe("1 result");
+    expect(screen.queryByRole("button", { name: "Find experts" })).toBeNull();
+  });
 });
