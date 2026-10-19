@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { emittedToday } from "@/infrastructure/app-events";
+import {
+  type AppEventName,
+  type OffEvents,
+  emittedToday,
+  offInFixtures,
+} from "@/infrastructure/app-events";
 import { storyFixture } from "@/test/story";
 import { emptyStoryState, storyProgress } from "./engine";
 import { StoryMenu } from "./story-menu";
@@ -9,17 +14,19 @@ import type { StoryController } from "./use-story";
 
 const state = { ...emptyStoryState, choice: "story" as const };
 const noop = () => undefined;
-const controller: StoryController = {
-  story: storyFixture,
-  state,
-  progress: storyProgress(storyFixture, state, emittedToday),
-  start: noop,
-  explore: noop,
-  focus: noop,
-  restart: noop,
-};
+function controllerWith(emitted: readonly AppEventName[], off: OffEvents = {}): StoryController {
+  return {
+    story: storyFixture,
+    state,
+    progress: storyProgress(storyFixture, state, emitted, off),
+    start: noop,
+    explore: noop,
+    focus: noop,
+    restart: noop,
+  };
+}
 
-function Harness() {
+function Harness({ controller = controllerWith(emittedToday) }: { controller?: StoryController }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -40,19 +47,59 @@ function openMenu() {
 
 describe("StoryMenu", () => {
   test("each coming-next row shows its one-line reason, and optional quests say so", () => {
+    const withoutNumbers = emittedToday.filter((event) => event !== "numbers_seen");
+    render(<Harness controller={controllerWith(withoutNumbers)} />);
+    openMenu();
+    const row = (title: string) => screen.getByRole("heading", { name: title }).closest("li")!;
+    const extend = Array.from(row("Add a new source").querySelectorAll("p, span"));
+    expect(extend.map((element) => element.textContent).slice(0, 3)).toEqual([
+      "Coming next · optional",
+      "Add an institution's website with one configuration file.",
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+    ]);
+  });
+
+  test("today every quest is open, and one that cannot be finished yet says why", () => {
     render(<Harness />);
     openMenu();
     const row = (title: string) => screen.getByRole("heading", { name: title }).closest("li")!;
-    const arrive = Array.from(row("Arrive and settle").querySelectorAll("p, span"));
-    expect(arrive.map((element) => element.textContent).slice(0, 3)).toEqual([
-      "Coming next · optional",
-      "Join Bern Life and land in your office, where the desk opens your computer.",
-      "Joining and your office do not report to the story yet.",
-    ]);
-    expect(row("Visit an institute").textContent).toContain("Open · optional");
-    // Sending a message counts toward Grow in Bern, so it is open, not coming next.
-    expect(row("Grow in Bern").textContent).toContain("Open · optional");
+    const lines = (title: string) =>
+      Array.from(row(title).querySelectorAll("p, span")).map((element) => element.textContent);
+    for (const title of ["Arrive and settle", "Visit an institute", "Add a new source"]) {
+      expect(row(title).textContent).toContain("Open · optional");
+    }
+    expect(row("Arrive and settle").querySelectorAll("p")).toHaveLength(1);
     expect(row("Find the right people").querySelectorAll("p")).toHaveLength(1);
+    expect(lines("Add a new source").slice(0, 3)).toEqual([
+      "Open · optional",
+      "Add an institution's website with one configuration file.",
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+    ]);
+    expect(lines("Grow in Bern").slice(0, 3)).toEqual([
+      "Open · optional",
+      "Save opportunities, keep results, message members and meet the models behind the Navigator, in any order.",
+      "A network of labs and experts is not built yet, so its step cannot be done.",
+    ]);
+  });
+
+  test("under the demo fixtures, quests that need a save or the numbers say why those wait", () => {
+    render(<Harness controller={controllerWith(emittedToday, offInFixtures)} />);
+    openMenu();
+    const row = (title: string) => screen.getByRole("heading", { name: title }).closest("li")!;
+    const lines = (title: string) =>
+      Array.from(row(title).querySelectorAll("p, span")).map((element) => element.textContent);
+    expect(lines("Grow in Bern").slice(0, 4)).toEqual([
+      "Open · optional",
+      "Save opportunities, keep results, message members and meet the models behind the Navigator, in any order.",
+      "Saving is off for the invented demo data.",
+      "A network of labs and experts is not built yet, so its step cannot be done.",
+    ]);
+    expect(lines("Add a new source").slice(0, 4)).toEqual([
+      "Coming next · optional",
+      "Add an institution's website with one configuration file.",
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+      "The Garage shows invented demo numbers here; only the engine's own numbers count.",
+    ]);
   });
 
   test("Close gives focus back to what opened the menu", async () => {

@@ -35,3 +35,29 @@ test("every quest that is coming next today says why in one line", () => {
   );
   expect(coming.filter((entry) => !entry.quest.coming).map((entry) => entry.quest.id)).toEqual([]);
 });
+
+test("each step says what completes it, keyed by the event", () => {
+  const said = Object.fromEntries(
+    story.quests.flatMap((quest) => quest.steps.map((step) => [step.done_when, step.text])),
+  );
+  expect(said).toEqual({
+    settled: "Choose a plot for your office and settle there.",
+    office_ready:
+      "After setting up your profile, go to your office on the Home tab or sit down at its desk.",
+    search_answered: "Ask the Navigator in your own words and get a result.",
+    evidence_opened: "Open the sentence that proves a result.",
+    search_answered_other_language: "Ask again in German or French and get a result.",
+    brief_answered: "Upload or paste your brief and get matches back.",
+    report_made: "Make a match report: every match keeps its sentence and source link.",
+    lobby_entered: "Open a place on the map.",
+    abstained_seen: "Ask about a professor who does not exist.",
+    source_added: "Add an institution's website as a new source.",
+    numbers_seen:
+      "Open the Garage on your office computer and see the evaluator's numbers for this snapshot.",
+    opportunity_saved: "Save a funding call, a service or a space to your library.",
+    connection_saved: "Add a lab or an expert to your network.",
+    library_item_saved: "Save a person or an opportunity to your library from a result card.",
+    message_sent: "Send a message to another member in Messages.",
+    garage_visited: "Open the Garage on your office computer.",
+  });
+});
