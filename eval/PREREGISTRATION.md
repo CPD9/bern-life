@@ -345,3 +345,131 @@ Reading:
 The code is adopted as the dev and dev2 rule decided, and nothing was changed after this run. The
 predictions of this run are bundle-20261019-4's `predictions.jsonl`; `make eval` on that bundle
 reproduces this row.
+
+### 2026-10-19: two extraction fixes toward criterion 1, dev3, and the fourth gold run (#283), before any run
+Nothing above changes: the questions, data, metrics and decision rules stay as they are, and
+`eval/gold.jsonl` is unchanged. Written and committed with `eval/dev3.jsonl` before any extraction
+call, enrichment call or search run of this work.
+
+Why. On bundle-20261019-4 recall@10 is 0.39 against the case's 0.80. The stage-level table of gold
+misses that the dev2 entry describes was read again, entity by entity, to choose what to fix: of the
+100 expected gold entities, 62 are missing from the top 10. 21 are units with no profile, because
+their proof pages are classed `other` (UniBE `/forschung/<name>/` pages, the ARTORG research
+index, the IFIK lab page; six of them carry a short-named profile with no claims). 18 are people
+whose profile holds only a role or a unit, so the claim rule (`docs/search.md`, rule 5) never shows
+them; 92% of person profiles carry no topical claim. 9 fall to the unit cap or to passage results,
+11 rank between 11 and 20, and 3 are not in the candidate pool. Had every existing profile been
+ranked perfectly, recall@10 would be 0.75: that is the ceiling of any search lever, and the reason
+the next two changes are to the data, not to the search. Live expansion changes nothing: all 63 gold
+expansions are cache hits. The table was read from gold, so **both fixes are gold-informed**, and
+every gold number from the run at the end of this entry is labelled "gold-informed, not held-out"
+wherever it appears (this file, README block, `docs/metrics.md`, the report).
+
+Fix 3, unit pages by URL (`sources/*.json` `page_types`, `classify.py`). Only the URL decides a
+page's kind, so a kind can be predicted and corrected without reading the page, and the same source
+file gives the same kinds on every machine. The change:
+- UniBE institute hosts: a page one level under `/forschung/` or `/research/`, with or without
+  `index_(eng|ger|fre).html`, is a `unit` page (today `other`). The person, project and listing
+  patterns stay in front of it and keep their pages. Pages whose last path word names a list or an
+  event rather than a group keep their kind: publications, seminars, funding, awards, prizes,
+  conferences, networks, news, archives, dissertations, emeriti, former or adjunct members,
+  internal pages, and index pages of research groups, programs, fields or clusters. The
+  exclusions are written as URL patterns in the source file.
+- The same for the two deeper shapes the stored pages show: the lab pages of the neuroscience
+  host, `/research/research_groups/<lab>/` (stored once with and once without the trailing slash;
+  the same text gives the same cache key, so one call), and the IAP sub-group pages
+  `/research/<group>/<subgroup>/`.
+- ARTORG: the research index `/research/index_eng.html` (the centre's research areas) becomes a
+  unit page. DCB only if a page of the same kind turns up in the list below.
+- Before any call, every page whose kind changes is listed (url, old kind, new kind) and counted,
+  and the list says what happens to the six short-named profiles with no claims. Cached pages are
+  cache hits; only re-classed pages reach the model. Expected: 120 to 190 calls; the stage stops
+  and reports before passing 200.
+
+Fix 4, topical claims for people (`extract_prompt.py`, `extract_command.py`). A second prompt
+version, `extract-topics-v1`, asks a person page only for expertise, projects and
+infrastructure/services values, each with its verbatim span; the page stays data, never
+instructions, in the framing and JSON shape the verifier expects, and the version is part of the
+cache key. It runs once, on person pages (kind `person`) where no profile the page is the source
+of has an expertise claim, and whose text has at least 300 characters. The first condition reads
+every profile whose name claim cites the page: ten pages today give both a bare-name profile
+without claims and a titled twin ("…, MD") with claims, and such a page is not read again. The
+second condition follows from the stored pages: 501 person pages have no expertise claim in any
+of their profiles, 372 of them are under 300 characters (a name, a role and contact lines, nothing
+to extract), 98 are 300 to 499, 31 are longer, and 7 have a research heading and 500 characters or
+more. About 129 pages are read, one call per window of 8,000 characters: about 130 to 260 calls
+rather than the 530 first estimated; if the count before the run differs from 129 by more than a
+fifth, the stage reports before calling. The verifier (`verify.py`) is unchanged: a value is kept
+only if its span is on the page and the value is in the span. Verified claims are merged into the
+existing profile (`merge.py`); nothing else about the profile changes. Then enrichment for the
+new expertise values only (values that already have terms are skipped; 25 values per call, so
+under 40 calls), and embeddings for the new chunk texts, computed locally.
+
+Model calls: every call goes through the cached router (`llm.py`), is counted in
+`llm_cache/audit.jsonl`, and the counts of both stages are reported here. Peter approved about 680
+calls for this path; the work stops and reports before any step that would take the total past
+1,000.
+
+dev3 (`eval/dev3.jsonl`, 20 queries, q970 to q989; dev2 already holds q950 to q967). Why a third
+set: dev and dev2 were written before the two fixes and hold few of the pages they change, so
+pooled dev and dev2 alone could not show them. How it was written:
+- One writer, from the stored pages of bundle-20261019-4 (`pages.jsonl`) and the claim counts of
+  its profiles, never from `eval/gold.jsonl`, search results or predictions. The writer had read
+  `GOLD-NOTES.md`, which names the gold proof pages and their topics, and avoided those topics and
+  the English twins of gold proof pages; the gold queries themselves were not read.
+- Candidates were drawn from two lists made in code: (a) pages classed `other` whose URL is one
+  level under `/forschung/` or `/research/` (116 pages, 4 of them gold or dev proof pages and
+  excluded), and (b) person pages whose profiles hold no expertise claim and whose text states
+  what the person works on (30 pages of 500 characters or more).
+- Every query has two to four expected entities: 49 in all, 28 units and 21 people. 26 of the 49
+  have no profile today (the unit pages classed `other`); 23 have one by name: the 21 people and
+  two IRM divisions whose `/ueber_uns/` page already gives a unit of the same name. Of the 21
+  people, 14 are named only on their group's page, so after fix 3 they gain a role and a relation
+  to the unit, which rule 5 does not read; dev3 measures that limit too. 4 have an own page that
+  states their work and no expertise claim in any profile (the fix 4 case), and 3 have claims
+  today. Three unit pages are the deeper shapes of fix 3 (two neuroscience lab pages, one IAP
+  sub-group page), so the run shows whether those patterns matter.
+- Languages en 9, de 6, fr 5; variants `site` 10 and `translation` 10 (a query in another
+  language than its proof pages). All queries are UniBE: ARTORG's and DCB's unit pages are units
+  already, and their person pages without an expertise claim hold no topical text.
+- `python -m evaluator.dev2_check` was extended before the set was written: `--dev` may be given
+  more than once, and a new check, `gold_text`, refuses a line whose expected name is written
+  anywhere in gold (a query, a note, a name or a span), titles aside. Under the extended checker,
+  with dev and dev2 as the earlier sets, on bundle-4's pages and profiles, the committed file gives:
+  ```
+  dev3.jsonl: 20 lines, 20 pass every check
+    schema 20/20  span 20/20  gold_url 20/20  gold_name 20/20  gold_text 20/20  invented 20/20  personal 20/20  dev 20/20
+    profile: 49 expected entities, 23 by name, 0 by proof page only, 26 with none; widest proof page matches 2 profiles
+  ```
+  dev2, checked the same way, fails `gold_text` on 2 of its 38 lines (q945 and q949): their
+  expected names are written in a gold note or question without being gold entities, which the
+  earlier checks could not see. dev2 is frozen and stays as it is; the two lines are recorded
+  here. `contracts/check.py` validates dev3 against the gold schema.
+- dev3 queries have no recorded expansion: in replay the expansion misses and the query runs as
+  a plain search, as for dev2.
+
+Rule for adopting the data:
+- Measured on dev, dev2 and dev3 pooled: the new data (both fixes, then enrichment and
+  embeddings) against bundle-20261019-4's data, on the same code (this branch, whose search code
+  is unchanged), a fresh database per run, predictions in replay, no model calls.
+- Adopted only if recall@10 and MRR are not lower, traceability stays 100%, invented entities
+  stay 0, invented queries abstained are not fewer and false abstentions are not more. Each set is
+  also reported alone.
+- If the pooled rule rejects the pair, fix 3 alone is measured the same way (its extraction
+  replays from the cache, 0 calls) and adopted or rejected by the same rule; fix 4 alone is not
+  tried. Data the rule rejects is not used; the submission then stays on bundle-20261019-4.
+- Not levers: the evaluator and its matching rules, `GOLD-NOTES.md`, `eval/gold.jsonl`,
+  `eval/dev.jsonl`, `eval/dev2.jsonl`. RRF k stays 60. The search code is not changed in this
+  work.
+
+Gold runs once at the end, on the adopted data, as measurement, in the same setup, and its
+predictions become bundle-20261019-5's `predictions.jsonl`. It is the fourth time gold is scored
+for this work (the dev2 entry counted three), so every gold number is labelled "gold-informed, not
+held-out". The report gives the bundle-4 number (recall@10 0.39 [0.24, 0.56], MRR 0.45) next to the
+new one, with intervals and every slice, whatever the outcome; nothing changes after it. The
+ceiling named above is 0.75, and the gain will be well below it: no promise beyond the tables.
+
+Results
+
+To be filled after the runs: the tables per set and pooled, the decision, the model-call counts
+of both stages, and the gold row, each gold number labelled "gold-informed, not held-out".
