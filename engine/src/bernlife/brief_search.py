@@ -4,7 +4,9 @@ Each verified need is expanded (in parallel, in the request's scope) and searche
 question. A profile found by several needs keeps its best rank, ties going to the higher fused
 score, then to its id; the unit cap then applies to the merged list. A result's reason and
 explanation answer the need that ranked it best, so "why it matches" always names a need the
-company wrote.
+company wrote. A brief whose recorded wording differs only by case or spacing goes to the model
+as recorded, so its needs and expansions replay; an unrecorded brief goes as written, line
+breaks and all, since its needs are checked as spans of that text.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -21,12 +23,19 @@ from bernlife.metrics import Topic, with_metrics
 from bernlife.ranking import Candidate, cap_units
 from bernlife.search import RESULTS, Assessment, assess, cited_pages, model_use, result
 from bernlife.store import Store
+from bernlife.wording import Recorded, from_repository, recorded_wording
 
 
 def brief_search(
-    text: str, sources: list[str] | None, store: Store, embedder: Embedder, llm: Chat
+    text: str,
+    sources: list[str] | None,
+    store: Store,
+    embedder: Embedder,
+    llm: Chat,
+    recorded: Recorded | None = None,
 ) -> dict[str, Any]:
-    needs = read_needs(llm, text)
+    recorded = from_repository() if recorded is None else recorded
+    needs = read_needs(llm, recorded_wording(text, llm.backend, recorded) or text)
     with ThreadPoolExecutor(max_workers=max(1, len(needs))) as pool:
         expansions = map_in_scope(pool, lambda need: expand(llm, need.term), needs)
     assessments = [

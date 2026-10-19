@@ -79,7 +79,7 @@ describe("Navigator", () => {
     await ask("glucose sensors");
     expect(screen.getByRole("status").textContent).toBe("1 result");
     expect(screen.getByText("MOCK")).toBeTruthy();
-    expect(screen.queryByText(/plain search over the stored pages/)).toBeNull();
+    expect(screen.queryByText(/Plain search: your words only/)).toBeNull();
     expect(screen.getByText(/They are not facts about anyone/)).toBeTruthy();
     expect(screen.getByText("CGM")).toBeTruthy();
   });
@@ -91,7 +91,7 @@ describe("Navigator", () => {
     expect(screen.queryByText(/canned test data/)).toBeNull();
     expect(
       screen.getByText(
-        "No recorded model answer for this question: plain search over the stored pages",
+        "Plain search: your words only. Apertus adds search terms for the recorded questions, or in a live run.",
       ),
     ).toBeTruthy();
   });
@@ -195,7 +195,7 @@ describe("Navigator", () => {
     expect(screen.getByRole("status").textContent).toBe(
       "Reading a new brief needs the model; this replay has the recorded briefs only.",
     );
-    expect(screen.queryByText(/plain search over the stored pages/)).toBeNull();
+    expect(screen.queryByText(/Plain search: your words only/)).toBeNull();
   });
 
   test("the FIXTURE label shows only in fixture mode", () => {

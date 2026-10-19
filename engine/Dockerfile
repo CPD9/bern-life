@@ -11,8 +11,11 @@ RUN pip install --no-cache-dir /tmp/engine && rm -rf /tmp/engine
 
 COPY contracts contracts
 COPY sources sources
-# The engine reports the committed eval numbers from the repo root, which is /app here.
+# The engine reports the committed eval numbers from the repo root, which is /app here, and
+# replays a question in its recorded wording from the query files (engine wording.py).
 COPY eval/results eval/results
+COPY eval/*.jsonl eval/
+COPY infra/demo/queries.jsonl infra/demo/queries.jsonl
 
 # data/models exists in the image so a new named volume mounted there is owned by bernlife.
 RUN useradd --system --uid 10001 --home-dir /app bernlife && mkdir -p data/models \

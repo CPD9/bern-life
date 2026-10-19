@@ -36,7 +36,10 @@ export function ModeNotice({
   }
   if (mode === "mock") {
     return (
-      <Chip>No recorded model answer for this question: plain search over the stored pages</Chip>
+      <Chip>
+        Plain search: your words only. Apertus adds search terms for the recorded questions, or in a
+        live run.
+      </Chip>
     );
   }
   if (mode === "replay") return <Chip>Replay · answered from recorded model calls</Chip>;
