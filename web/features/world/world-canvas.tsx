@@ -3,7 +3,7 @@
 import { Canvas } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type SearchResponse } from "@/infrastructure/contract-types.generated";
-import { groupPlacesByBuilding } from "./buildings";
+import { type Building, groupPlacesByBuilding } from "./buildings";
 import { type CameraCommand } from "./camera-moves";
 import { liteTrees, planCity } from "./city-plan";
 import { useWorldDisplay } from "./display";
@@ -38,12 +38,13 @@ const ANCHORS = [...markerAnchors(BUILDINGS), AGENTS_ANCHOR];
 
 export type WorldCanvasProps = {
   onAgentSelect?: (id: AgentId) => void;
+  onSearchHere?: (building: Building) => void;
   /** Shown lit at load: the world fixture, passed only when the app runs with DEMO_FIXTURES=1. */
   demoSearch?: SearchResponse | undefined;
 };
 
 // Transparent so the shell's sky shows through; "demand" renders only when something changes.
-export function WorldCanvas({ onAgentSelect, demoSearch }: WorldCanvasProps) {
+export function WorldCanvas({ onAgentSelect, onSearchHere, demoSearch }: WorldCanvasProps) {
   const display = useWorldDisplay();
   const palette = paletteFor(display.night);
   const shadows = !display.lite;
@@ -150,6 +151,7 @@ export function WorldCanvas({ onAgentSelect, demoSearch }: WorldCanvasProps) {
           light={lighting?.byBuilding.get(selected.key)}
           fixture={fixture}
           onClose={closePanel}
+          onSearchHere={onSearchHere}
         />
       )}
     </div>

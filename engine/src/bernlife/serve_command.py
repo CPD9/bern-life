@@ -17,7 +17,7 @@ import psycopg
 
 from bernlife import config, paths
 from bernlife.brief_search import brief_search
-from bernlife.database import connect
+from bernlife.database import connect_when_ready
 from bernlife.embed import MODEL_ID, Embedder, e5_embedder
 from bernlife.extract_records import PEOPLE_KINDS
 from bernlife.llm import Chat
@@ -84,7 +84,7 @@ def main(argv: Sequence[str], env: Mapping[str, str] = os.environ) -> int:
         print("usage: python -m bernlife serve", file=sys.stderr)
         return 2
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
-    conn = connect(config.database_url(env))
+    conn = connect_when_ready(config.database_url(env))
     conn.autocommit = True
     if PostgresStore(conn).snapshot() == "none":
         print("serve: no bundle loaded; run python -m bernlife load first", file=sys.stderr)

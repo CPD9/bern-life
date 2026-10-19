@@ -1,8 +1,9 @@
 // The quest engine: story + what the player did → where they are. Pure, so every rule is tested.
-// Rules: a step completes only on its event and only after the steps before it in its quest; done
+// Rules: a step completes only on its event. In a required quest it also waits for the steps before
+// it; an optional quest's steps count in any order, since its parts live in separate apps. Done
 // steps never go away, so a finished quest stays finished and repeating an event changes nothing.
-// A quest whose events no feature emits yet is "coming": listed, never current, so nobody waits on
-// a step no one can complete.
+// A quest that cannot be finished with the events features emit today is "coming": listed with its
+// reason, never current, so nobody waits on a step no one can complete.
 import type { AppEventName } from "@/infrastructure/app-events";
 import type { Story } from "@/infrastructure/contract-types.generated";
 
@@ -37,15 +38,29 @@ export function stepKey(quest: Quest, step: QuestStep): string {
   return `${quest.id}/${step.id}`;
 }
 
-function nextStep(quest: Quest, done: ReadonlySet<string>): QuestStep | null {
-  return quest.steps.find((step) => !done.has(stepKey(quest, step))) ?? null;
+/** Said on a "coming next" row when the story gives no reason of its own. */
+export const defaultComingReason = "Its steps do not report to the story yet.";
+
+export function comingReason(quest: Quest): string {
+  return quest.coming ?? defaultComingReason;
+}
+
+function remainingSteps(quest: Quest, done: ReadonlySet<string>): QuestStep[] {
+  return quest.steps.filter((step) => !done.has(stepKey(quest, step)));
+}
+
+/** The step an event completes: the next one in order, or any open one in an optional quest. */
+function stepFor(quest: Quest, done: ReadonlySet<string>, event: AppEventName): QuestStep | null {
+  const remaining = remainingSteps(quest, done);
+  const candidates = quest.optional ? remaining : remaining.slice(0, 1);
+  return candidates.find((step) => step.done_when === event) ?? null;
 }
 
 export function applyEvent(story: Story, state: StoryState, event: AppEventName): StoryState {
   const done = new Set(state.done);
   const completed = story.quests.flatMap((quest) => {
-    const step = nextStep(quest, done);
-    return step?.done_when === event ? [stepKey(quest, step)] : [];
+    const step = stepFor(quest, done, event);
+    return step ? [stepKey(quest, step)] : [];
   });
   if (completed.length === 0) return state;
   return { ...state, done: [...state.done, ...completed] };
@@ -59,11 +74,14 @@ export function storyProgress(
   const done = new Set(state.done);
   const playable = new Set(emitted);
   const base = story.quests.map((quest) => {
-    const next = nextStep(quest, done);
-    const coming = next !== null && quest.steps.some((step) => !playable.has(step.done_when));
+    const remaining = remainingSteps(quest, done);
+    const reachable = remaining.filter((step) => playable.has(step.done_when));
+    // In order, every remaining step must be playable; in any order, one is enough to go on with.
+    const coming = quest.optional ? reachable.length === 0 : reachable.length < remaining.length;
+    const next = (quest.optional ? reachable[0] : undefined) ?? remaining[0] ?? null;
     return {
       quest,
-      stepsDone: next ? quest.steps.indexOf(next) : quest.steps.length,
+      stepsDone: quest.steps.length - remaining.length,
       nextStep: next,
       status: (next === null ? "done" : coming ? "coming" : "ready") as QuestStatus,
     };
