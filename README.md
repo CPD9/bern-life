@@ -101,7 +101,10 @@ over base questions, proportions have Wilson intervals. Every number in the tabl
 Snapshot `bundle-20261019-2`, 48 gold questions. To reproduce: `make fetch && make eval && python3 infra/readme_numbers.py`. CI fails when this block differs from the evaluator's output.
 <!-- numbers:end -->
 
-How the numbers on each result are computed is in [`docs/metrics.md`](docs/metrics.md).
+How the numbers on each result are computed is in [`docs/metrics.md`](docs/metrics.md). It also
+has the evaluator's numbers this table leaves out, with the commands that compute them: the
+case's own wording example for criterion 2, exposure by unit size, and the two-person check of
+criterion 4.
 
 ## How it works
 

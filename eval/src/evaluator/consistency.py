@@ -99,7 +99,8 @@ def wording_set(wording: WordingSet, responses: Mapping[str, Record]) -> dict[st
     pairs = [jaccard(a, b) for a, b in combinations(tops, 2)]
     first = tops[0]
     queries = []
-    for position, (qid, query, top) in enumerate(zip(wording.ids, wording.queries, tops)):
+    wordings = zip(wording.ids, wording.queries, tops, strict=True)
+    for position, (qid, query, top) in enumerate(wordings):
         response = responses[qid]
         found_by_first = len(top & first) / len(top) if position and top else None
         queries.append(

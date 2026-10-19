@@ -15,7 +15,7 @@ define require_lane_name
 endef
 
 .PHONY: help fetch db-up db-migrate db-reset-throwaway db-drop-throwaway test live eval eval-fixture
-.PHONY: pack-cache bundle run live-run stop
+.PHONY: pack-cache bundle run live-run stop predict-consistency
 
 help:
 	@echo "make fetch                    download and verify the snapshot bundle into data/bundle/"
@@ -29,6 +29,7 @@ help:
 	@echo "make test                     contracts, engine, infra, db schema, web (if present)"
 	@echo "make live ARGS=<command>      stop unless the model endpoint in ENV_FILE (.env) answers, then run it"
 	@echo "make eval [PRED=<file>]       score predictions against eval/gold.jsonl (default: the bundle's)"
+	@echo "make predict-consistency      criterion 2's wording sets through search in replay, for make eval"
 	@echo "make eval-fixture             the same on the invented fixture in eval/tests/fixtures/"
 	@echo "make pack-cache               fold recorded model calls into the bundle's cache pack"
 	@echo "make bundle [BUNDLE_VERSION=bundle-YYYYMMDD-N]   check and pack the snapshot bundle"
@@ -87,9 +88,24 @@ BUNDLE ?= $(or $(BERNLIFE_DATA_DIR),data)/bundle
 PRED ?= $(BUNDLE)/predictions.jsonl
 EVALUATOR = PYTHONPATH=eval/src $(PYTHON) -m evaluator --gold eval/gold.jsonl
 FIXTURE = eval/tests/fixtures
+# Criterion 2's wording sets (eval/consistency.jsonl) are not in the bundle: predict-consistency
+# runs them through the engine's own predict in replay, so no model is called and a wording nobody
+# recorded is searched plain. make eval adds them once that file exists, and scores the filled
+# labelling sheets of criterion 4 when LABELS names their folder (kept outside the repository).
+CONSISTENCY_PRED ?= $(or $(BERNLIFE_DATA_DIR),data)/eval/consistency_predictions.jsonl
+CONSISTENCY_QUERIES = $(dir $(CONSISTENCY_PRED))consistency_queries.jsonl
+EVAL_EXTRA = $(if $(wildcard $(CONSISTENCY_PRED)),--consistency eval/consistency.jsonl \
+	--consistency-predictions $(CONSISTENCY_PRED)) $(if $(LABELS),--labels $(LABELS))
 
 eval:
-	$(EVALUATOR) --predictions $(PRED) --pages $(BUNDLE)/pages.jsonl --profiles $(BUNDLE)/profiles.jsonl
+	$(EVALUATOR) --predictions $(PRED) --pages $(BUNDLE)/pages.jsonl --profiles $(BUNDLE)/profiles.jsonl \
+	  $(EVAL_EXTRA)
+
+predict-consistency:
+	@mkdir -p $(dir $(CONSISTENCY_PRED))
+	PYTHONPATH=eval/src $(PYTHON) -m evaluator.consistency eval/consistency.jsonl > $(CONSISTENCY_QUERIES)
+	BERNLIFE_BACKEND=replay PYTHONPATH=engine/src $(PYTHON) -m bernlife predict \
+	  --gold $(CONSISTENCY_QUERIES) --out $(CONSISTENCY_PRED)
 
 eval-fixture:
 	$(EVALUATOR) --predictions $(FIXTURE)/predictions.jsonl --pages $(FIXTURE)/pages.jsonl \

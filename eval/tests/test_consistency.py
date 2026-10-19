@@ -11,6 +11,8 @@ from evaluator.consistency import (
     consistency,
     load_responses,
     load_sets,
+)
+from evaluator.consistency import (
     main as queries_main,
 )
 from evaluator.load import LoadError

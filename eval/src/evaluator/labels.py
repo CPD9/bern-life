@@ -163,7 +163,5 @@ def labelled_completeness(folder: Path, predictions_sha256: str) -> dict[str, ob
     """The scored sheets in `folder`; refused when the key was drawn from other predictions."""
     key = load_key(folder)
     if key.get("predictions_sha256") != predictions_sha256:
-        raise LoadError(
-            f"{folder / KEY}: the sheets were drawn from other predictions than these"
-        )
+        raise LoadError(f"{folder / KEY}: the sheets were drawn from other predictions than these")
     return score_labels(key, load_answers(folder, key))
