@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { LibraryItem } from "./library-items";
+import { createLibraryStore } from "./library-store";
 import { SaveButton } from "./save-button";
 import { demoEntry, memoryStore, savedItem } from "./testing";
 
@@ -29,6 +30,41 @@ describe("SaveButton", () => {
     expect(button.getAttribute("aria-label")).toBe("Saved: Demo demo-ada");
     expect(button.getAttribute("aria-disabled")).toBe("true");
     expect(button.hasAttribute("disabled")).toBe(false);
+  });
+
+  test("with storage that cannot be written, onSaved still fires once per new item", () => {
+    const full = {
+      getItem: (): string | null => null,
+      setItem: () => {
+        throw new Error("quota exceeded");
+      },
+    };
+    const store = createLibraryStore(() => full);
+    const heard: LibraryItem[] = [];
+    const other = demoEntry("demo-bea", "profile");
+    render(
+      <>
+        <SaveButton
+          entry={entry}
+          store={store}
+          now={() => at}
+          onSaved={(item) => heard.push(item)}
+        />
+        <SaveButton
+          entry={other}
+          store={store}
+          now={() => at}
+          onSaved={(item) => heard.push(item)}
+        />
+      </>,
+    );
+    for (const name of ["Save to library: Demo demo-ada", "Save to library: Demo demo-bea"]) {
+      const button = screen.getByRole("button", { name });
+      act(() => fireEvent.click(button));
+      act(() => fireEvent.click(button));
+    }
+    expect(heard.map((item) => item.ref)).toEqual(["demo-ada", "demo-bea"]);
+    expect(store.get().map((item) => item.ref)).toEqual(["demo-ada", "demo-bea"]);
   });
 
   test("something already in the library shows Saved and does not save again", () => {
