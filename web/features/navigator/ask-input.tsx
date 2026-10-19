@@ -3,6 +3,7 @@
 import { type FormEvent, useId, useState } from "react";
 import type { SearchLang } from "@/infrastructure/engine-types";
 import { maxQueryLength } from "@/infrastructure/search-request";
+import { exampleQuestions } from "./example-questions";
 import type { NavigatorController } from "./use-navigator";
 
 const langOptions: { value: SearchLang | "auto"; label: string }[] = [
@@ -22,6 +23,12 @@ export function AskInput({ controller }: { controller: NavigatorController }) {
     const query = controller.draft.trim();
     if (query === "") return;
     controller.search(lang === "auto" ? { query } : { query, lang });
+  }
+
+  // An example fills the box and searches at once, so one tap shows a full answer.
+  function tryExample(query: string) {
+    controller.setDraft(query);
+    controller.search({ query });
   }
 
   return (
@@ -66,6 +73,27 @@ export function AskInput({ controller }: { controller: NavigatorController }) {
           </label>
         ))}
       </fieldset>
+      {controller.state.status === "idle" && (
+        <div className="flex flex-col gap-2">
+          <p className="text-muted text-sm">Or tap one of these to see how an answer looks:</p>
+          <ul aria-label="Example questions" className="flex flex-col gap-2">
+            {exampleQuestions.map((example) => (
+              <li key={example.lang}>
+                <button
+                  type="button"
+                  onClick={() => tryExample(example.query)}
+                  className="bg-chip rounded-2xl focus-visible:outline-focus flex w-full items-start gap-3 px-4 py-2.5 text-left text-sm focus-visible:outline-3"
+                >
+                  <span className="text-muted shrink-0 text-xs font-bold tracking-wide uppercase">
+                    {example.lang}
+                  </span>
+                  <span>{example.query}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </form>
   );
 }

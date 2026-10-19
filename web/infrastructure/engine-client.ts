@@ -4,6 +4,7 @@ import {
   parseAgentReply,
   parseHealth,
   parseNumbers,
+  parsePlacePeople,
   parseSearchResponse,
   parseSourcesList,
 } from "./contract";
@@ -89,6 +90,11 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     agent: (request, callOptions) =>
       call("/api/agent", parseAgentReply, post(request, callOptions)),
     sources: () => call("/api/sources", parseSourcesList),
+    placePeople: (sourceId, host) =>
+      call(
+        `/api/places/${encodeURIComponent(sourceId)}/${encodeURIComponent(host)}/people`,
+        parsePlacePeople,
+      ),
     numbers: () => call("/api/numbers", parseNumbers),
     health: () => call("/api/health", parseHealth),
   };
