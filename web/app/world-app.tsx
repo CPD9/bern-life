@@ -43,7 +43,7 @@ import { useSettings } from "@/infrastructure/use-settings";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
 import { notifyLoop, useOfficeApps } from "./office-apps";
 import { phoneApps } from "./phone-apps";
-import { useUnreadMessages } from "./use-unread-messages";
+import { unreadRefresh, useUnreadMessages } from "./use-unread-messages";
 import { applyWorldAction, searchHereDraft, worldActionFor } from "./world-search-bridge";
 
 // Composes the features. One Navigator controller lives here, above the phone, so a search
@@ -79,10 +79,10 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const desktop = useDesktop();
   const now = useNow();
   const health = useHealth();
-  // Read again when the phone or the desk closes, since reading a thread sends no live notice.
+  // Read again when the phone or the desk's Messages closes: reading sends no live notice.
   const unreadMessages = useUnreadMessages(
     account.state.status === "signed-in",
-    phoneOpen || desktopOpen,
+    unreadRefresh(phoneOpen, desktopOpen, desktop.windows),
   );
   const agents = {
     navigatorApi: httpNavigatorApi,

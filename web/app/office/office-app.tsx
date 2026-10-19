@@ -12,7 +12,7 @@ import { notificationStore } from "@/features/notifications/use-notifications";
 import { useHealth } from "@/features/shell/use-health";
 import { useNow } from "@/infrastructure/bern-time";
 import { notifyLoop, useOfficeApps } from "../office-apps";
-import { useUnreadMessages } from "../use-unread-messages";
+import { unreadRefresh, useUnreadMessages } from "../use-unread-messages";
 
 export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
   const navigator = useNavigator(httpNavigatorApi);
@@ -21,8 +21,10 @@ export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
   const health = useHealth();
   const account = useAccount(httpAccountApi);
   // Read again when the Messages window opens or closes, since reading sends no live notice.
-  const messagesOpen = desktop.windows.some((place) => place.appId === "messages");
-  const unreadMessages = useUnreadMessages(account.state.status === "signed-in", messagesOpen);
+  const unreadMessages = useUnreadMessages(
+    account.state.status === "signed-in",
+    unreadRefresh(false, true, desktop.windows),
+  );
   const apps = useOfficeApps({
     navigator,
     navigatorApi: httpNavigatorApi,

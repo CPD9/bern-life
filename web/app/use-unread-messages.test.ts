@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from "bun:test";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Connect } from "@/features/messages/live-client";
 import { type MessagesApi, httpMessagesApi } from "@/features/messages/messages-api";
-import { useUnreadMessages } from "./use-unread-messages";
+import { unreadRefresh, useUnreadMessages } from "./use-unread-messages";
 
 function fakes(count: number) {
   const unread = mock(async () => ({ ok: true as const, value: count }));
@@ -34,5 +34,28 @@ describe("useUnreadMessages", () => {
     rerender({ refresh: true });
     await waitFor(() => expect(unread).toHaveBeenCalledTimes(2));
     expect(connect).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("unreadRefresh", () => {
+  const messages = [{ appId: "navigator" }, { appId: "messages" }];
+  const others = [{ appId: "navigator" }];
+
+  test("changes with the phone, and with the desk's Messages window while seated", () => {
+    const cases: [boolean, boolean, { appId: string }[]][] = [
+      [true, false, []],
+      [false, false, []],
+      [false, true, others],
+      [false, true, messages],
+      // Left the desk with Messages still open: the window survives, but the desk is closed.
+      [false, false, messages],
+    ];
+    expect(cases.map(([phone, desk, windows]) => unreadRefresh(phone, desk, windows))).toEqual([
+      true,
+      false,
+      false,
+      true,
+      false,
+    ]);
   });
 });
