@@ -1,4 +1,4 @@
-// Lumi, the player's first agent, walks beside you on the map wearing the bear the player made for
+// Bärli, the player's first agent, walks beside you on the map wearing the bear the player made for
 // it. You and your agent are the only figures in the world: people found on public pages are never
 // shown as figures, only as entries with their sources in a place's panel. The bear is another
 // feature, so app/ passes it in.
@@ -7,7 +7,7 @@ import { type ReactNode } from "react";
 import { type Anchor, type AnchorElements, registerAnchor } from "../markers/anchors";
 
 export type MapAgent = {
-  /** The agent's name, Lumi until the player chooses another. */
+  /** The agent's name, Bärli until the player chooses another. */
   readonly name: string;
   /**
    * The agent's bear, feet on y = 0, facing +z and about 1.4 tall, drawn with lite graphics when

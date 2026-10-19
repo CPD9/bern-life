@@ -1,4 +1,4 @@
-// The messages a suggestion chip sends, word for word, because Lumi has recorded answers for exact
+// The messages a suggestion chip sends, word for word, because Bärli has recorded answers for exact
 // strings only. They are the first turns of the conversations in infra/demo/agent.jsonl, recorded
 // live and shipped in the bundle's cache, so they replay with no model.
 

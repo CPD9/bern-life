@@ -1,4 +1,4 @@
-// What your agent says while greeting a new player, in the name the player gave it (Lumi until
+// What your agent says while greeting a new player, in the name the player gave it (Bärli until
 // they choose another). Each tap moves on to the next line and the last one leads back to the
 // first, so a curious player can tap as often as they like. Every line describes something the
 // app has: the Ask app on the phone, and the agent step at the end of onboarding.

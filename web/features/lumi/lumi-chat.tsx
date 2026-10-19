@@ -1,6 +1,6 @@
 "use client";
 
-// Lumi's chat panel. A native modal dialog like the phone: the world behind it is inert and Escape
+// Bärli's chat panel. A native modal dialog like the phone: the world behind it is inert and Escape
 // closes it. Opening puts focus in the message box; closing gives focus back to whatever opened it.
 // The conversation lives in this component's state while it stays mounted, and nowhere else.
 import {
@@ -30,7 +30,7 @@ export type LumiChatProps = LumiActions & {
   agentName?: string;
   /** The agent's bear, drawn small beside its name. */
   bear?: ReactNode;
-  /** How the engine answers, from health, shown as the HUD shows it until Lumi's first reply. */
+  /** How the engine answers, from health, shown as the HUD shows it until Bärli's first reply. */
   engineMode?: AnswerMode | null;
   api?: LumiApi;
 };
@@ -39,7 +39,7 @@ export function LumiChat({
   open,
   onClose,
   fixtureMode,
-  agentName = "Lumi",
+  agentName = "Bärli",
   bear,
   engineMode = null,
   api = httpLumiApi,

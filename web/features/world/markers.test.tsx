@@ -186,8 +186,8 @@ describe("the agent on the map", () => {
 
   test("a tap opens it once; it is a page button, so Enter and Space reach it too", () => {
     const onOpen = mock(() => undefined);
-    render(<AgentButton name="Lumi" onOpen={onOpen} elementsRef={anchors()} />);
-    const button = screen.getByRole("button", { name: "Lumi, your agent" });
+    render(<AgentButton name="Bärli" onOpen={onOpen} elementsRef={anchors()} />);
+    const button = screen.getByRole("button", { name: "Bärli, your agent" });
     act(() => button.focus());
     expect(document.activeElement).toBe(button);
     expect([button.tagName, button.getAttribute("type")]).toEqual(["BUTTON", "button"]);
