@@ -1,8 +1,9 @@
 # Hosting on Exoscale (S3)
 
-One small VM in Geneva runs Bern Life for the three of us: Postgres, the web app and Caddy for
-HTTPS, from `infra/exoscale/compose.yaml`. Only port 443 is open to everyone; SSH is open to one
-IP; the database is reachable on the compose network only. Sign-up stays invite-only.
+One small VM in Geneva runs Bern Life for the three of us: Postgres, the engine replaying the
+snapshot bundle (no GPU, no model key), the web app and Caddy for HTTPS, from
+`infra/exoscale/compose.yaml`. Only port 443 is open to everyone; SSH is open to one IP; the
+database and the engine are reachable on the compose network only. Sign-up stays invite-only.
 
 ## What runs where
 
@@ -11,7 +12,8 @@ IP; the database is reachable on the compose network only. Sign-up stays invite-
 | VM | `bernlife-prod`, zone CH-GVA-2, Ubuntu 24.04 LTS, Standard Medium (2 vCPU, 4 GB), 50 GB disk, 2 GB swap |
 | Address | `https://<ip-with-dashes>.sslip.io` (sslip.io maps the name to the IP; a real domain only needs `SITE_HOST` changed); the address is shared in Messages, not here |
 | Code | `/opt/bernlife`, copied from git (tracked files only) |
-| Settings | `/opt/bernlife/infra/exoscale/.env` (mode 600): `SITE_HOST`, `POSTGRES_PASSWORD` (generated on the VM, never printed), `DEMO_FIXTURES` |
+| Settings | `/opt/bernlife/infra/exoscale/.env` (mode 600): `SITE_HOST`, `POSTGRES_PASSWORD` (generated on the VM, never printed), `DEMO_FIXTURES=0` |
+| Bundle | `/opt/bernlife/data/bundle`, the version in `bundle.lock`, copied by scp (the VM holds no GitHub token) |
 | Backups | `/var/backups/bernlife`, nightly at 02:15 UTC, 14 days kept, root only |
 
 ## Cost (CHF per month, Peter's credits)
@@ -61,31 +63,118 @@ On the VM:
 ```bash
 cd /opt/bernlife/infra/exoscale
 umask 077
-printf "SITE_HOST=<ip-with-dashes>.sslip.io\nPOSTGRES_PASSWORD=%s\nDEMO_FIXTURES=1\n" \
+printf "SITE_HOST=<ip-with-dashes>.sslip.io\nPOSTGRES_PASSWORD=%s\nDEMO_FIXTURES=0\n" \
   "$(openssl rand -hex 24)" > .env
-docker compose up -d --build
+# Install the bundle first: steps 2 and 4 of "Deploy search from the bundle" below.
+docker compose up -d --build --wait
 echo "15 2 * * * root /opt/bernlife/infra/exoscale/backup.sh" | sudo tee /etc/cron.d/bernlife-backup
 ```
 
 Caddy gets the certificate by itself; port 80 stays closed, so it uses the TLS-ALPN challenge on
 443 after the HTTP one fails (a line in its log, not an error).
 
+## Deploy search from the bundle
+
+The VM runs what `make run` runs locally: `migrate`, then `load` puts the bundle into Postgres,
+`serve` answers from it in replay mode, and the web app joins `serve`'s network (the engine takes
+searches from loopback only). Steps in order; each says where it runs. `ssh` and `scp` take
+`-i ~/.ssh/id_ed25519_bernlife_exoscale`; the tarball is the `asset` named in `bundle.lock`.
+
+1. **VM: back up what runs now.** The database, then the code tree with its `.env` (root only,
+   next to the nightly dumps). Note the two file names it prints, for a full revert.
+
+   ```bash
+   cd /opt/bernlife/infra/exoscale
+   docker compose version   # 2.24.4 or later, for the DEMO rollback's override file
+   sudo ./backup.sh && sudo ls -t /var/backups/bernlife | head -1
+   sudo tar -czf "/var/backups/bernlife/code-$(date -u +%Y%m%dT%H%M%SZ).tar.gz" \
+     -C /opt --exclude=bernlife/data bernlife && sudo ls -t /var/backups/bernlife | head -1
+   ```
+
+2. **Your machine: get the verified tarball and copy it over.** `make fetch` checks the download
+   against `bundle.lock`'s sha256 and keeps it in the data folder's `downloads/`, under the name in
+   `bundle.lock`'s `asset`.
+
+   ```bash
+   make fetch
+   asset="$(python3 -c 'import json; print(json.load(open("bundle.lock"))["asset"])')"
+   scp "${BERNLIFE_DATA_DIR:-data}/downloads/$asset" ubuntu@<ip>:
+   ```
+
+3. **Your machine: copy the tracked files** of the `main` that pins that bundle (the command from
+   the set-up; it never copies `.env` or `data/`).
+
+   ```bash
+   git ls-files | COPYFILE_DISABLE=1 tar -czf - -T - | ssh ubuntu@<ip> 'tar -xzf - -C /opt/bernlife'
+   ```
+
+4. **VM: install the bundle.** `--archive` puts the copied tarball through the same checks as a
+   download: its sha256 against `bundle.lock`, then every file against `manifest.json`; the bundle
+   in `data/bundle` is replaced only after both pass. `umask 022` keeps it readable by the
+   engine's user inside the container.
+
+   ```bash
+   cd /opt/bernlife
+   asset="$(python3 -c 'import json; print(json.load(open("bundle.lock"))["asset"])')"
+   (umask 022 && python3 infra/fetch_bundle.py --archive ~/"$asset") && rm ~/"$asset"
+   ```
+
+   It prints `<version> verified and unpacked to /opt/bernlife/data/bundle`, with the version in
+   `bundle.lock`; anything else is a refusal, and nothing was replaced.
+
+5. **VM: switch the settings off DEMO and check that both compose files parse.**
+
+   ```bash
+   cd /opt/bernlife/infra/exoscale
+   sed -i 's/^DEMO_FIXTURES=.*/DEMO_FIXTURES=0/' .env
+   docker compose config --quiet && docker compose -f compose.yaml -f compose.demo.yaml config --quiet
+   ```
+
+6. **VM: build and start.** The first start downloads the embedding model into the `models`
+   volume before `serve` answers (up to 10 minutes); `--wait` returns when `web` is healthy.
+
+   ```bash
+   docker compose up -d --build --wait || docker compose logs --tail 50 load serve web
+   ```
+
+7. **VM: health check.** It asks `https://<site>/api/health`, which travels through Caddy, the web
+   app, the engine and the database, and passes only on replay mode, the version in `bundle.lock`
+   and the page and profile counts in the bundle's manifest. The DEMO fixtures fail it.
+
+   ```bash
+   cd /opt/bernlife
+   python3 -m infra.check_hosted --url "https://$(sed -n 's/^SITE_HOST=//p' infra/exoscale/.env)"
+   ```
+
+   Then sign in and run one search in Ask: results carry source links, and no DEMO label shows.
+
+**Rollback to DEMO, one command** (VM, any time). It stops the engine and restarts the web app on
+its own network with the invented fixtures, labelled DEMO; the database and accounts stay.
+
+```bash
+/opt/bernlife/infra/exoscale/demo.sh
+```
+
+Back to search afterwards: `docker compose up -d --wait` in `infra/exoscale`. A **full revert** to
+the code that ran before step 1: `sudo mv /opt/bernlife /opt/bernlife.search`, then
+`sudo tar -xzf /var/backups/bernlife/<code file from step 1> -C /opt`, then
+`docker compose up -d --build --remove-orphans` in `/opt/bernlife/infra/exoscale`.
+
 ## Day to day
 
 | Task | Command (on the VM, in `/opt/bernlife/infra/exoscale`) |
 |---|---|
 | Invite someone | `./invite.sh 1` prints a one-time code, valid 7 days |
-| Deploy a new `main` | copy the files again (above), then `docker compose up -d --build` |
-| Status and logs | `docker compose ps`, `docker compose logs -f web` |
+| Deploy a new `main` | back up (step 1 above), copy the files again, then `docker compose up -d --build --wait` |
+| New bundle in `bundle.lock` | steps 1 to 4 and 7 above, with `docker compose up -d --build --wait --force-recreate load serve web` as step 6 |
+| Status and logs | `docker compose ps`, `docker compose logs -f web serve` |
+| Web app unreachable after `serve` restarted on its own | `docker compose up -d --force-recreate web` (it shares `serve`'s network, which a restart replaces). A slow database does not cause this: `serve` waits up to two minutes for it instead of exiting |
 | Backup now | `sudo ./backup.sh` |
 | Restore a backup | `sudo sh -c 'gunzip -c /var/backups/bernlife/<file>.sql.gz' \| docker compose exec -T db psql -U bernlife -d bernlife` (into an empty database) |
 | New SSH IP | Exoscale portal → Security Groups → `bernlife-web` → edit the port 22 rule |
 
 ## Not done yet
 
-- **Search:** the engine needs the released bundle. Until then `DEMO_FIXTURES=1` shows the invented
-  fixtures, labelled DEMO. With the bundle: copy it to the VM, add the engine's `load` and `serve`
-  from `compose.yaml`, set `ENGINE_URL`, drop `DEMO_FIXTURES`.
 - **Off-VM backup copy:** needs an SOS bucket and a key allowed to write to it (Peter's decision);
   the nightly file would then be copied there after `backup.sh`.
 - **Credentials:** Peter holds the account; a compute-only IAM key for Yaseen replaces the master

@@ -3,10 +3,13 @@
 The model sees the question, the result's name and those claims (value and verbatim span),
 numbered, as data, and answers with the numbers it used; code maps them back to the JSON
 pointers (asked for pointers, models copied whole claim lines). Code keeps its text only if
-every number it cites was offered, the text is short, and every
-capitalised word inside a sentence comes from the cited claims, the name or the question: a name
-the model brings from memory fails that check. Anything else keeps the plain reason. English only:
-German capitalises every noun, which this check cannot tell from a name.
+every number it cites was offered, the text is short, it contains none of a few fixed phrases
+saying the claims do not answer ("does not mention", "doesn't contain", "no information"), and
+every capitalised word inside a sentence occurs in the result's name or the cited claims. Only
+those capitalised words are checked: a name or place from the model's memory, or one copied from
+the question, fails, while lowercase words and a sentence's first word are not compared with
+anything. Anything else keeps the plain reason. English only: German capitalises every noun,
+which this check cannot tell from a name.
 """
 
 import re
@@ -27,6 +30,12 @@ MAX_TEXT = 400
 MAX_TOKENS = 300
 WORD = re.compile(r"[^\W\d_][\w'’-]*")
 SENTENCE_END = re.compile(r"[.!?:;]\s*$")
+# Whole phrases: single words like "no" or "not" also occur in real explanations. fold() turns
+# "don't" into "don t", so each negation is listed in both spellings.
+NEGATIONS = ("do not", "does not", "don t", "doesn t")
+NON_ANSWERS = tuple(f"{neg} {verb}" for neg in NEGATIONS for verb in ("contain", "mention")) + (
+    "no information",
+)
 PROMPT = """\
 Write one or two short sentences in English saying why this search result matches the question. \
 Use only the facts between <claims> and </claims>; they are copied from public web pages. Add no \
@@ -95,7 +104,13 @@ def cited_pointers(reply: dict[str, Any], profile: Profile, offered: list[str]) 
     return list(dict.fromkeys(items[n - 1][0] for n in numbers))
 
 
-def check(reply: object, question: str, profile: Profile, offered: list[str]) -> str:
+def non_answer(text: str) -> bool:
+    """A reply saying the claims do not answer the question, instead of why the result matches."""
+    folded = f" {fold(text)} "
+    return any(f" {phrase} " in folded for phrase in NON_ANSWERS)
+
+
+def check(reply: object, profile: Profile, offered: list[str]) -> str:
     """The outcome: "kept", or the name of the first check the reply fails."""
     if not isinstance(reply, dict) or not isinstance(reply.get("text"), str):
         return "shape"
@@ -109,9 +124,11 @@ def check(reply: object, question: str, profile: Profile, offered: list[str]) ->
         unicodedata.category(char) == "Cc" for char in text
     ):
         return "length"
+    if non_answer(text):
+        return "non_answer"
     cited = [claim_at(profile, c) for c in cites]
     allowed = " ".join(
-        [question, profile["name"]["value"]]
+        [profile["name"]["value"]]
         + [f"{c['value']} {c['evidence']['span']}" for c in cited if c is not None]
     )
     return "names" if unknown_capitals(text, allowed) else "kept"
@@ -134,7 +151,7 @@ def explain(
         return plain, failure.marker
     except CacheMiss:
         return plain, "cache_miss"
-    outcome = check(reply, question, profile, offered)
+    outcome = check(reply, profile, offered)
     if outcome != "kept":
         return plain, outcome
     cites = cited_pointers(reply, profile, offered) or []

@@ -67,12 +67,21 @@ agents in front of the city hall. People from public pages never appear as figur
 entries with sources in a place's panel. Primitives only; `public/world/manifest.json` pins any asset file added later
 (`assets.test.ts`).
 
+What makes it Bern (`scene/`): the Old Town as east-west rows of sandstone houses under terracotta
+gable roofs, laid along the main street from the Bahnhof under the Zytglogge to the Nydegg
+(`old-town-plan.ts`, seeded); the Zytglogge, Münster, Bundeshaus, University main building and
+Bahnhof from primitives at their points in `LANDMARKS` (`landmark-plan.ts`); five arched bridges
+with piers (`bridge-plan.ts`); the Aare as a smooth curve between darker banks; and district names
+as page text over the canvas (`map-labels.tsx`). Landmarks and bridges are one merged mesh, the
+houses two instanced meshes, and each flat layer one mesh, so the static city costs fewer draw
+calls than before it had any of this. Nothing in it moves.
+
 Settings are read from `<html>`, so the world imports no other feature:
 
-| Attribute                                                | Effect                                          |
-| -------------------------------------------------------- | ----------------------------------------------- |
-| `data-theme="night"` (or the OS dark scheme when absent) | night palette and light                         |
-| `data-graphics="lite"`                                   | no shadows, a third of the trees, pixel ratio 1 |
+| Attribute                                                | Effect                                                                                              |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `data-theme="night"` (or the OS dark scheme when absent) | night palette and light                                                                             |
+| `data-graphics="lite"`                                   | no shadows, a third of the trees, pixel ratio 1, fewer sides on domes, spires, arches and the river |
 
 Light follows the hour in Bern (`sky.ts`). The camera stays between a steep and a shallow view,
 within the map; arrows or WASD pan, Q and E turn by 45°, + and - zoom, and mouse or touch drag,

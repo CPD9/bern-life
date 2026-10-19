@@ -1,20 +1,21 @@
 import { describe, expect, test } from "bun:test";
 import { STILL, eyesOpenAt, idlePose, motionFor, poseAt, walkPose } from "./bear-motion";
 
-const round = (value: number) => Math.round(value * 1000) / 1000;
+// Adding 0 turns -0 into 0, so the sign of a zero never decides a test.
+const round = (value: number) => Math.round(value * 1000) / 1000 + 0;
 
 describe("walkPose", () => {
   test("at the start of a stride the bear stands upright, feet together", () => {
     const pose = walkPose(0);
-    expect([round(pose.rock), round(pose.lift), pose.legs, pose.arms]).toEqual([
-      0,
-      0,
-      [0, -0],
-      [-0, 0],
-    ]);
+    expect([
+      round(pose.rock),
+      round(pose.lift),
+      pose.legs.map(round),
+      pose.arms.map(round),
+    ]).toEqual([0, 0, [0, 0], [0, 0]]);
   });
 
-  test("a quarter stride in, it rocks to one side with legs and arms swinging opposite", () => {
+  test("a quarter stride in, it rocks to its right with legs and arms swinging opposite", () => {
     const pose = walkPose(0.25);
     expect([round(pose.rock), round(pose.legs[0]), round(pose.legs[1])]).toEqual([0.13, 0.5, -0.5]);
     expect([round(pose.arms[0]), round(pose.arms[1])]).toEqual([-0.45, 0.45]);
@@ -52,9 +53,18 @@ describe("eyesOpenAt", () => {
 
 describe("motionFor and poseAt", () => {
   test("reduced motion always gives a still bear", () => {
-    expect(motionFor("walk", true)).toBe("still");
-    expect(motionFor("idle", true)).toBe("still");
-    expect(motionFor("walk", false)).toBe("walk");
+    const reduced = { reducedMotion: true, lite: false };
+    expect(motionFor("walk", reduced)).toBe("still");
+    expect(motionFor("idle", reduced)).toBe("still");
+    expect(motionFor("walk", { reducedMotion: false, lite: false })).toBe("walk");
     expect(poseAt("still", 12.3)).toEqual(STILL);
+  });
+
+  test("lite graphics stands an idle bear still but lets it walk when asked", () => {
+    const lite = { reducedMotion: false, lite: true };
+    expect(motionFor("idle", lite)).toBe("still");
+    expect(motionFor("walk", lite)).toBe("walk");
+    expect(motionFor("idle", { reducedMotion: false, lite: false })).toBe("idle");
+    expect(motionFor("walk", { reducedMotion: true, lite: true })).toBe("still");
   });
 });

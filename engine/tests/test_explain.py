@@ -19,21 +19,42 @@ def reply(text: str, claims: list[object] | None = None) -> dict[str, object]:
 class CheckTest(unittest.TestCase):
     def test_a_grounded_reply_is_kept(self):
         text = "Ada Muster works on continuous glucose monitoring. The Sensor Lab is her unit."
-        self.assertEqual(check(reply(text, [1, 2]), QUESTION, ADA, OFFERED), "kept")
+        self.assertEqual(check(reply(text, [1, 2]), ADA, OFFERED), "kept")
 
     def test_each_failed_check_is_named(self):
         cases = {
             "shape": [reply("ok", []), {"text": 3, "claims": [1]}, {"text": "ok"}, "text"],
             "cites": [reply("Works on glucose.", [3]), reply("x", ["1"]), reply("x", [0])],
             "length": [reply("x" * 401), reply("   "), reply("glu\x00cose")],
+            "non_answer": [
+                reply("The claims do not contain anything about glucose sensors."),
+                reply("Ada Muster's page does not mention sensors."),
+                reply("There is no information on sensors in the claims."),
+                reply("The claims don't mention glucose sensors."),
+                reply("The claims don’t contain anything on sensors."),
+                reply("Ada Muster's page doesn't contain sensors."),
+                reply("Her unit doesn’t mention sensors."),
+            ],
             "names": [reply("Works with Dr. Hugo Brandtner on glucose monitoring.")],
         }
         for outcome, replies in cases.items():
             for bad in replies:
                 with self.subTest(outcome=outcome, reply=str(bad)[:40]):
-                    self.assertEqual(check(bad, QUESTION, ADA, OFFERED), outcome)
+                    self.assertEqual(check(bad, ADA, OFFERED), outcome)
 
-    def test_capitals_that_start_a_sentence_or_come_from_the_question_pass(self):
+    def test_a_capital_outside_the_name_and_the_cited_claims_fails(self):
+        # The cited claim is about glucose monitoring, so the reply must not place the result at
+        # an institute or on a topic the claims never mention.
+        text = "Ada Muster is the researcher at the IRM who works on Time-of-death estimation."
+        self.assertEqual(check(reply(text), ADA, OFFERED), "names")
+
+    def test_a_negative_word_alone_is_not_a_non_answer(self):
+        text = "Ada Muster works on continuous glucose monitoring, not on insulin pumps."
+        self.assertEqual(check(reply(text), ADA, OFFERED), "kept")
+        text = "Ada Muster doesn't stop at sensors: she works on continuous glucose monitoring."
+        self.assertEqual(check(reply(text), ADA, OFFERED), "kept")
+
+    def test_capitals_that_start_a_sentence_or_come_from_the_allowed_text_pass(self):
         self.assertEqual(unknown_capitals("Works on CGM. Also Glucose.", "cgm glucose"), [])
         self.assertEqual(unknown_capitals("Works with Hugo on CGM.", "cgm"), ["hugo"])
 
@@ -69,6 +90,14 @@ class ExplainTest(unittest.TestCase):
                 self.assertEqual(
                     explain(FakeChat({"explain": answer}), QUESTION, ADA, PLAIN), (PLAIN, outcome)
                 )
+
+    def test_a_capital_copied_from_the_question_is_not_evidence(self):
+        # The question is in the prompt but is not evidence about the result: words the reply
+        # copies from it fail the names check.
+        question = "Wer forscht am IRM Bern zur Todeszeitschaetzung?"
+        text = "Ada Muster is the researcher at IRM Bern who works on Todeszeitschaetzung."
+        llm = FakeChat({"explain": reply(text)})
+        self.assertEqual(explain(llm, question, ADA, PLAIN), (PLAIN, "names"))
 
     def test_only_the_top_five_are_explained(self):
         results = [{"rank": n, "profile": ADA, "reason": PLAIN} for n in range(1, 8)]

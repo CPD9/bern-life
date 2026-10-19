@@ -1,11 +1,28 @@
 import { describe, expect, test } from "bun:test";
+import { parseProfile } from "@/features/accounts/input";
+import { agentNameMaxLength } from "@/features/avatar/agent-name";
 import { defaultBear } from "@/features/avatar/bear-config";
-import { saveToAccount } from "./save-to-account";
+import { defaultPerson } from "@/features/avatar/person-config";
+import { type AccountAvatar, saveToAccount } from "./save-to-account";
 
 const profile = { role: "company", goal: "collaborator", visibility: "private" } as const;
+const avatar: AccountAvatar = { person: defaultPerson, agent: { name: "Lumi", bear: defaultBear } };
+
+async function sentBody(look: AccountAvatar): Promise<unknown> {
+  let body: unknown;
+  await saveToAccount(
+    async (_path, init) => {
+      body = JSON.parse(String(init.body));
+      return new Response(null, { status: 204 });
+    },
+    profile,
+    look,
+  );
+  return body;
+}
 
 describe("saveToAccount", () => {
-  test("PUTs the answers and the bear to the profile route", async () => {
+  test("PUTs the answers, the person and the agent with its bear to the profile route", async () => {
     const calls: { path: string; method: string | undefined; body: unknown }[] = [];
     const saved = await saveToAccount(
       async (path, init) => {
@@ -13,7 +30,7 @@ describe("saveToAccount", () => {
         return new Response(null, { status: 204 });
       },
       profile,
-      defaultBear,
+      avatar,
     );
     expect(saved).toBe(true);
     expect(calls).toEqual([
@@ -26,20 +43,43 @@ describe("saveToAccount", () => {
           expertise: [],
           visibility: "private",
           avatar: {
-            kind: "brown-bear",
-            fur: "honey",
-            face: "happy",
-            outfit: "casual",
-            accessory: "scarf",
+            person: {
+              body: "medium",
+              skin: "tone-4",
+              hair: "short",
+              outfit: "casual",
+              accent: "green",
+            },
+            agent: {
+              name: "Lumi",
+              bear: {
+                kind: "brown-bear",
+                fur: "honey",
+                face: "happy",
+                outfit: "casual",
+                accessory: "scarf",
+              },
+            },
           },
         },
       },
     ]);
   });
 
+  test("the profile route accepts the body unchanged, even with the longest agent name", async () => {
+    const longest = { ...avatar, agent: { ...avatar.agent, name: "W".repeat(agentNameMaxLength) } };
+    expect(parseProfile(await sentBody(longest))).toEqual({
+      role: "company",
+      goal: "collaborator",
+      expertise: [],
+      visibility: "private",
+      avatar: longest,
+    });
+  });
+
   test("a refused or failed request reports false and never throws", async () => {
     expect(
-      await saveToAccount(async () => new Response(null, { status: 401 }), profile, defaultBear),
+      await saveToAccount(async () => new Response(null, { status: 401 }), profile, avatar),
     ).toBe(false);
     expect(
       await saveToAccount(
@@ -47,7 +87,7 @@ describe("saveToAccount", () => {
           throw new TypeError("offline");
         },
         profile,
-        defaultBear,
+        avatar,
       ),
     ).toBe(false);
   });
