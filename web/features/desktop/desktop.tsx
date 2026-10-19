@@ -124,7 +124,8 @@ export function DesktopSurface({ apps, controller, now, onLeave }: DesktopSurfac
 type DesktopDialogProps = DesktopSurfaceProps & {
   open: boolean;
   onClose: () => void;
-  /** Shown above the desktop, such as the toasts, which would sit unseen in the inert world. */
+  /** Shown above the desktop, such as the toasts, which would sit unseen in the inert world. It is
+   *  placed below the desktop's header, so a toast never covers "Leave the desk". */
   overlay?: ReactNode;
 };
 
@@ -158,7 +159,15 @@ export function DesktopDialog({ open, onClose, overlay, ...surface }: DesktopDia
       className="m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 backdrop:bg-black/40"
     >
       {open && <DesktopSurface {...surface} onLeave={() => dialog.current?.close()} />}
-      {open && overlay}
+      {open && overlay && (
+        // The transform makes this box the frame for fixed-position overlays, such as the toasts.
+        <div
+          data-desktop-overlay
+          className="pointer-events-none absolute inset-x-0 top-14 bottom-0 z-50 [transform:translateZ(0)]"
+        >
+          {overlay}
+        </div>
+      )}
     </dialog>
   );
 }

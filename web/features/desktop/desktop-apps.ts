@@ -53,7 +53,3 @@ export function desktopApps(contents: DesktopContents, badges: DesktopBadges = {
     return [{ id, ...desktopAppLooks[id], content, ...(badge ? { badge } : {}) }];
   });
 }
-
-export function hasDesktopApp(apps: readonly DesktopApp[], id: string): boolean {
-  return apps.some((app) => app.id === id);
-}

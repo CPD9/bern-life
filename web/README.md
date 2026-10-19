@@ -48,8 +48,8 @@ brief returns `result-brief.json`.
 
 The phone's Settings app stores night mode and lite graphics in `localStorage` (key
 `bernlife.settings`) and mirrors them on `<html>`, where anything can read them:
-`data-theme="day" | "night"` (absent: follow the device) and `data-graphics="lite"`. An inline
-script applies them before the first paint.
+`data-theme="day" | "night"` (absent: follow the device) and `data-graphics="lite"` (absent when
+off). An inline script applies them before the first paint.
 
 ## Layout
 
