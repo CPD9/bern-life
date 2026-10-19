@@ -28,6 +28,25 @@ class NamedPeopleTest(unittest.TestCase):
     def test_particles_are_skipped_and_a_name_stops_at_punctuation(self):
         self.assertEqual(named_people("Dr. Ada von Muster, glucose"), [("ada", "muster")])
 
+    def test_french_and_german_titles_open_a_name(self):
+        self.assertEqual(
+            named_people("Quels sont les travaux de la Pre Ada Muster ?"), [("ada", "muster")]
+        )
+        self.assertEqual(named_people("Publications de la Dre Dora Demo"), [("dora", "demo")])
+        self.assertEqual(
+            named_people("la professeure Ada Muster et le Pr. Ben Beispiel"),
+            [("ada", "muster"), ("ben", "beispiel")],
+        )
+        self.assertEqual(named_people("docteure Cleo Beispiel, Bern"), [("cleo", "beispiel")])
+        self.assertEqual(named_people("Woran forscht Prof.in Ada Muster?"), [("ada", "muster")])
+        self.assertEqual(named_people("Projekte von Professorin Dora Demo"), [("dora", "demo")])
+        self.assertEqual(named_people("PD Dr. med. Ben Beispiel"), [("ben", "beispiel")])
+        self.assertEqual(named_people("Dr.med. Ben Beispiel"), [("ben", "beispiel")])
+        self.assertEqual(named_people("Dr.in Dora Demo forscht"), [("dora", "demo")])
+
+    def test_pr_in_capitals_is_no_title(self):
+        self.assertEqual(named_people("PR Campaigns for Bern hospitals"), [])
+
     def test_no_title_no_name(self):
         self.assertEqual(named_people("Ada Muster glucose sensors"), [])
         self.assertEqual(named_people("Dr. who studies sleep"), [])
@@ -39,6 +58,17 @@ class AbstainTest(unittest.TestCase):
         query = "What does Prof. Hugo Brandtner publish on glucose sensors?"
         self.assertTrue(unmatched_person(query, found))
         self.assertEqual(abstain_reason(query, found), "no_verifiable_source")
+
+    def test_an_invented_name_after_a_french_or_german_title_abstains(self):
+        found = [candidate("Ada Muster")]
+        for query in (
+            "Quels sont les travaux de la Pre Selma Varnholt ?",
+            "Publications de la Dre Selma Varnholt",
+            "Projets de la professeure Selma Varnholt",
+            "Woran forscht Prof.in Selma Varnholt?",
+        ):
+            self.assertEqual(abstain_reason(query, found), "no_verifiable_source", query)
+        self.assertIsNone(abstain_reason("Projets de la Pre Ada Muster", found))
 
     def test_a_named_person_found_among_candidates_passes(self):
         found = [candidate("Prof. Dr. Ada Muster")]
