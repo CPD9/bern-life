@@ -164,8 +164,9 @@ def explain_top(
 ) -> tuple[list[dict[str, Any]], list[str]]:
     """The first EXPLAIN_TOP results explained in parallel, each in the request's scope (the
     router still limits live calls); `questions[i]` is what result i answers. A result shown
-    through a project (`via`) or a passage on its own page (`passage`) keeps its plain reason:
-    its own claims are not what matched. Returns the results and one outcome per call."""
+    through a project (`via`) keeps its relation sentence and one shown through a passage on its
+    own page (`passage`) keeps its plain reason: its own claims are not what matched. Returns the
+    results and one outcome per call."""
     top = [i for i, r in enumerate(results[:EXPLAIN_TOP]) if "via" not in r and "passage" not in r]
     if llm.backend == "mock" or not top:
         return results, []

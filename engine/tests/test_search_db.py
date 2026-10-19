@@ -350,7 +350,18 @@ class SearchDbTest(unittest.TestCase):
         by_id = {r["profile"]["id"]: r for r in response["results"]}
         self.assertEqual(sorted(by_id), ["person-demo-emil-exempel", "project-demo-carb-counter"])
         emil = by_id["person-demo-emil-exempel"]
-        self.assertEqual(emil["reason"], {"text": "Name: Emil Exempel", "cites": ["/name"]})
+        self.assertEqual(
+            emil["reason"],
+            {
+                "text": "Works on Carb Counter: carbohydrate estimation from meal photos",
+                "cites": ["/via/related_claims/0"],
+            },
+        )
+        # The project's claim covers both topics, within 300 characters of Emil's name.
+        self.assertEqual(
+            (emil["metrics"]["relevance"], emil["metrics"]["covers"], emil["metrics"]["evidence"]),
+            (1.0, ["carbohydrate", "estimation"], 1.0),
+        )
         self.assertEqual(
             (emil["via"]["kind"], emil["via"]["span"], emil["via"]["related_name"]),
             ("works_on", "Project team: Emil Exempel", "Carb Counter"),

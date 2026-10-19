@@ -10,7 +10,7 @@ import {
   type SearchResult,
   type Via,
   citedClaims,
-  citesOnlyName,
+  citesNoOwnClaim,
   fieldLabels,
   presentFields,
   relatedKind,
@@ -60,9 +60,10 @@ export function ResultCard({ result, events = appEvents }: ResultCardProps) {
   const cited = new Set(result.reason.cites);
   const { profile, via, passage } = result;
   const nameOpen = open?.group === "name";
-  // A reason that cites only the name adds nothing when a relation or a passage on the result's
-  // own page explains it; without either it is the only explanation the card has, so it stays.
-  const whyShown = !(via || passage) || !citesOnlyName(result);
+  // A reason that cites only the name, or only the project's claims shown under "Through", adds
+  // nothing when a relation or a passage on the result's own page explains it; without either it
+  // is the only explanation the card has, so it stays.
+  const whyShown = !(via || passage) || !citesNoOwnClaim(result);
 
   function claimGroup(
     group: string,

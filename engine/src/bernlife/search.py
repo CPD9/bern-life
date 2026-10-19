@@ -91,23 +91,26 @@ def assess(
 
 
 def result(rank: int, candidate: Candidate, assessment: Assessment) -> dict[str, Any]:
-    """A result shown through a project keeps its plain reason (its own claims are what it can
-    cite) and carries `via`, the relation and the project's matching claims. One shown through a
-    passage on its own page keeps its plain reason too and carries `passage`."""
+    """A result shown through a project carries `via`, the relation and the project's matching
+    claims, and its reason is the relation sentence written from them. One shown through a
+    passage on its own page keeps its plain reason and carries `passage`."""
     profile = assessment.profiles[candidate.profile_id]
+    via = None
+    if candidate.profile_id in assessment.vias:
+        relation, matched = assessment.vias[candidate.profile_id]
+        via = via_record(relation, assessment.profiles[relation.to_profile_id], matched)
     item = {
         "rank": rank,
         "profile": profile,
-        "reason": reason(assessment.question, profile, assessment.enrichment),
+        "reason": reason(assessment.question, profile, assessment.enrichment, via),
         "score": {
             "fused": candidate.fused,
             "lexical_rank": candidate.lexical_rank,
             "vector_rank": candidate.vector_rank,
         },
     }
-    if candidate.profile_id in assessment.vias:
-        relation, matched = assessment.vias[candidate.profile_id]
-        item["via"] = via_record(relation, assessment.profiles[relation.to_profile_id], matched)
+    if via is not None:
+        item["via"] = via
     if candidate.profile_id in assessment.passages:
         item["passage"] = passage_record(assessment.passages[candidate.profile_id])
     return item
