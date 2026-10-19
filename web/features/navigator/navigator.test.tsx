@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import type { AppEventName, AppEventSink } from "@/infrastructure/app-events";
+import type { SearchResult } from "@/infrastructure/claims";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { SearchRequest } from "@/infrastructure/engine-types";
 import { abstainedFixture, briefFixture, copyOf, resultFixture } from "@/test/fixtures";
@@ -12,15 +14,17 @@ type HarnessProps = {
   api: NavigatorApi;
   fixtureMode?: boolean;
   onMakeReport?: (response: SearchResponse) => boolean;
+  renderSave?: (result: SearchResult) => ReactNode;
   events?: AppEventSink;
 };
 
-function Harness({ api, fixtureMode = false, onMakeReport, events }: HarnessProps) {
+function Harness({ api, fixtureMode = false, onMakeReport, renderSave, events }: HarnessProps) {
   return (
     <Navigator
       controller={useNavigator(api, events)}
       fixtureMode={fixtureMode}
       {...(onMakeReport ? { onMakeReport } : {})}
+      {...(renderSave ? { renderSave } : {})}
     />
   );
 }
@@ -209,6 +213,32 @@ describe("Navigator", () => {
     expect(screen.queryByRole("button", { name: "Make a report" })).toBeNull();
   });
 
+  test("the save slot sits under each result card, given that card's result", async () => {
+    const shown: string[] = [];
+    render(
+      <Harness
+        api={answering(resultFixture)}
+        renderSave={(result) => {
+          shown.push(result.profile.id);
+          return <button type="button">Keep {result.profile.name.value}</button>;
+        }}
+      />,
+    );
+    await ask("glucose sensors");
+    expect([...new Set(shown)]).toEqual(resultFixture.results.map((result) => result.profile.id));
+    for (const result of resultFixture.results) {
+      const name = result.profile.name.value;
+      const item = screen.getByRole("button", { name: `Keep ${name}` }).closest("li")!;
+      expect(item.querySelector("article, section, div")?.textContent).toContain(name);
+    }
+  });
+
+  test("no save slot without a renderer", async () => {
+    render(<Harness api={answering(resultFixture)} />);
+    await ask("glucose sensors");
+    expect(screen.queryByRole("button", { name: /^Keep / })).toBeNull();
+  });
+
   test("answers become story events through the injected sink", async () => {
     const heard: AppEventName[] = [];
     const sink = { emit: (name: AppEventName) => void heard.push(name) };
@@ -219,5 +249,75 @@ describe("Navigator", () => {
     render(<Harness api={answering(abstainedFixture)} events={sink} />);
     await ask("Prof. Nobody");
     expect(heard).toEqual(["search_answered", "search_answered_other_language", "abstained_seen"]);
+  });
+
+  test("show() puts an answer on screen without asking the engine or telling the story", () => {
+    const heard: AppEventName[] = [];
+    const asked: string[] = [];
+    const api: NavigatorApi = {
+      search: async (request) => {
+        asked.push(request.query);
+        return { ok: true, response: resultFixture };
+      },
+      brief: async () => ({ ok: true, response: briefFixture }),
+    };
+    function Shown() {
+      const controller = useNavigator(api, { emit: (name) => void heard.push(name) });
+      return (
+        <>
+          <button type="button" onClick={() => controller.show(resultFixture)}>
+            Show the answer
+          </button>
+          <Navigator controller={controller} fixtureMode={false} />
+        </>
+      );
+    }
+    render(<Shown />);
+    // Left on the brief form, the answer still shows under the question it answers.
+    fireEvent.click(screen.getByRole("button", { name: "Project brief" }));
+    act(() => fireEvent.click(screen.getByRole("button", { name: "Show the answer" })));
+    expect(screen.getByRole("button", { name: "Question" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    const name = resultFixture.results[0]!.profile.name.value;
+    expect(screen.getByRole("status").textContent).toBe("1 result");
+    expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+    expect((screen.getByLabelText("Ask in your words") as HTMLInputElement).value).toBe(
+      resultFixture.query,
+    );
+    expect([heard, asked]).toEqual([[], []]);
+  });
+
+  test("show() leaves a brief for the question it answers, and a late brief answer stays away", async () => {
+    let answerBrief: (outcome: NavigatorOutcome) => void = () => undefined;
+    const api: NavigatorApi = {
+      search: async () => ({ ok: true, response: resultFixture }),
+      brief: () => new Promise((resolve) => (answerBrief = resolve)),
+    };
+    function Shown() {
+      const controller = useNavigator(api, { emit: () => undefined });
+      return (
+        <>
+          <button type="button" onClick={() => controller.show(resultFixture)}>
+            Show the answer
+          </button>
+          <Navigator controller={controller} fixtureMode={false} />
+        </>
+      );
+    }
+    render(<Shown />);
+    await submitBrief("We build glucose sensors for children.");
+    expect(screen.getByRole("status").textContent).toBe("Reading your brief…");
+    act(() => fireEvent.click(screen.getByRole("button", { name: "Show the answer" })));
+    expect(screen.getByRole("button", { name: "Question" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(screen.queryByLabelText("Or paste the text")).toBeNull();
+    expect((screen.getByLabelText("Ask in your words") as HTMLInputElement).value).toBe(
+      resultFixture.query,
+    );
+    await act(async () => answerBrief({ ok: true, response: briefFixture }));
+    expect(screen.getByRole("status").textContent).toBe("1 result");
+    expect(screen.queryByRole("button", { name: "Find experts" })).toBeNull();
   });
 });

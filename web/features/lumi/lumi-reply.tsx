@@ -8,7 +8,7 @@ import { ResultCard } from "@/infrastructure/ui/result-card";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import type { AgentAction, AgentReply } from "./agent-reply";
 import { answerCards, splitMentions } from "./conversation";
-import { heldActionLabels } from "./reply-actions";
+import { heldActionLabels, reportNotKept } from "./reply-actions";
 
 export function ResultCards({
   cards,
@@ -61,14 +61,54 @@ function HeldActions({
   );
 }
 
+/**
+ * Actions that never run on their own, such as a match report, each one click away. A report the
+ * browser would not keep says so under its button, which stays for another try.
+ */
+function OfferedActions({
+  offered,
+  notDone,
+  onRun,
+}: {
+  offered: readonly AgentAction[];
+  notDone: readonly AgentAction[];
+  onRun: (action: AgentAction) => void;
+}) {
+  const reportNotDone = notDone.some((action) => action.type === "start_match_report");
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
+        {offered.map((action, index) => (
+          <button
+            key={index}
+            type="button"
+            onClick={() => onRun(action)}
+            className="bg-chip-selected text-chip-selected-ink rounded-pill px-4 py-2 text-sm font-bold"
+          >
+            {heldActionLabels[action.type]}
+          </button>
+        ))}
+      </div>
+      {reportNotDone && (
+        <p role="alert" className="text-sm">
+          {reportNotKept}
+        </p>
+      )}
+    </div>
+  );
+}
+
 type LumiReplyProps = {
   reply: AgentReply;
   name: string;
   held: readonly AgentAction[];
+  offered: readonly AgentAction[];
+  /** Offered actions clicked but not done. */
+  notDone: readonly AgentAction[];
   onRunHeld: (action: AgentAction) => void;
 };
 
-export function LumiReply({ reply, name, held, onRunHeld }: LumiReplyProps) {
+export function LumiReply({ reply, name, held, offered, notDone, onRunHeld }: LumiReplyProps) {
   const baseId = useId();
   const reducedMotion = useReducedMotion();
   const cards = answerCards(reply.results);
@@ -105,6 +145,9 @@ export function LumiReply({ reply, name, held, onRunHeld }: LumiReplyProps) {
         )}
       </p>
       {held.length > 0 && <HeldActions held={held} onRun={onRunHeld} />}
+      {offered.length > 0 && (
+        <OfferedActions offered={offered} notDone={notDone} onRun={onRunHeld} />
+      )}
       {cards.length > 0 && <ResultCards cards={cards} cardId={cardId} />}
     </div>
   );

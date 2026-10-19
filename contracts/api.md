@@ -32,6 +32,13 @@ evidence: a reply names only profiles in its own `results`, and the web app drop
 mentions (under the profile's name, or the related name a result is shown through) or actions
 point anywhere else.
 
+A reply the model did not write is a summary of searches. When the model ran no search (no model,
+a failure, or text that holds no step), it is a plain search: of the last user message, or of the
+latest earlier one when the last only asks to see those results again ("Show them on the map",
+"Zeig sie auf der Karte"), and its `mode` is that search's, `mock` unless the model's expansion
+was used. When the model searched and then failed, wrote no answer or wrote a reply the checks
+refuse, it summarises the model's own searches and no plain search runs.
+
 `POST /api/agent` is served once the engine's agent lands. Until then the web proxy at
 `/api/agent` checks the body and passes it on; the engine's 404 reaches the browser as
 `{ "error": "not_found" }`, and with `DEMO_FIXTURES=1` the proxy answers with
