@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { criterionTags } from "./criteria";
-import type { QuestStatus } from "./engine";
+import { type QuestStatus, comingReason } from "./engine";
 import { ProgressDots } from "./progress-dots";
 import type { StoryController } from "./use-story";
 
@@ -15,14 +15,21 @@ const statusLabels: Record<QuestStatus, string> = {
 
 type StoryMenuProps = { controller: StoryController; open: boolean; onClose: () => void };
 
+// Focus goes back to whatever opened the menu, explicitly, rather than trusting each browser to;
+// if that control is gone (the quest panel changed), the browser's default stands.
 export function StoryMenu({ controller, open, onClose }: StoryMenuProps) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const [confirmRestart, setConfirmRestart] = useState(false);
 
   useEffect(() => {
     const element = dialog.current;
     if (!element) return;
-    if (open && !element.open) element.showModal();
+    if (open && !element.open) {
+      opener.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      element.showModal();
+    }
     if (!open && element.open) element.close();
   }, [open]);
 
@@ -33,6 +40,8 @@ export function StoryMenu({ controller, open, onClose }: StoryMenuProps) {
       onClose={() => {
         setConfirmRestart(false);
         onClose();
+        if (opener.current?.isConnected) opener.current.focus();
+        opener.current = null;
       }}
       className="bg-panel text-ink m-auto w-[min(36rem,calc(100vw-2rem))] rounded-3xl p-0 backdrop:bg-black/40"
     >
@@ -64,9 +73,13 @@ export function StoryMenu({ controller, open, onClose }: StoryMenuProps) {
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="font-extrabold">{quest.title}</h3>
-                <span className="text-muted text-xs font-bold">{statusLabels[status]}</span>
+                <span className="text-muted text-xs font-bold">
+                  {statusLabels[status]}
+                  {quest.optional && " · optional"}
+                </span>
               </div>
               <p className="text-muted text-sm">{quest.goal}</p>
+              {status === "coming" && <p className="text-sm">{comingReason(quest)}</p>}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="bg-chip rounded-pill px-2.5 py-0.5 text-xs font-bold">
                   {criterionTags[quest.criterion]}

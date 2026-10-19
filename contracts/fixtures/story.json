@@ -5,18 +5,20 @@
     {
       "id": "arrive",
       "title": "Arrive and settle",
-      "goal": "Choose the district where your office will be.",
-      "criterion": "c5-sources",
+      "goal": "Join Bern Life and land in your office, where the desk opens your computer.",
+      "criterion": "stretch",
+      "optional": true,
+      "coming": "Joining and your office do not report to the story yet.",
       "steps": [
         {
           "id": "settle",
-          "text": "Pick a district on the map. Every fact shown has its source and date.",
-          "hint": "Tap a district to see its facts, then choose one.",
+          "text": "Join Bern Life and say who you are and what you need.",
+          "hint": "Lumi walks you through it after you join.",
           "done_when": "settled"
         },
         {
           "id": "office",
-          "text": "Set up your office.",
+          "text": "Land in your office and sit down at the desk.",
           "done_when": "office_ready"
         }
       ]
@@ -43,12 +45,13 @@
     {
       "id": "other-words",
       "title": "Ask it differently",
-      "goal": "Ask the same need in German or French, or in lay terms.",
+      "goal": "Ask the same need in German or French.",
       "criterion": "c2-wording",
       "steps": [
         {
           "id": "ask-again",
-          "text": "Ask again in another language or in everyday words.",
+          "text": "Ask again in German or French.",
+          "hint": "Try 'Sensoren für Blutzucker' or 'capteurs pour le diabète'.",
           "done_when": "search_answered_other_language"
         }
       ]
@@ -56,7 +59,7 @@
     {
       "id": "brief",
       "title": "Bring your project brief",
-      "goal": "Upload a project description and see matched experts with evidence.",
+      "goal": "Upload a project description and keep the matched experts with their evidence.",
       "criterion": "c3-traceable",
       "steps": [
         {
@@ -66,7 +69,7 @@
         },
         {
           "id": "report",
-          "text": "Make a match report to share.",
+          "text": "Make a match report: every match keeps its sentence and source link.",
           "done_when": "report_made"
         }
       ]
@@ -76,10 +79,12 @@
       "title": "Visit an institute",
       "goal": "Walk to a place and see who works there.",
       "criterion": "c4-structured",
+      "optional": true,
+      "coming": "Opening a place on the map does not report to the story yet.",
       "steps": [
         {
           "id": "lobby",
-          "text": "Walk to an institute and enter its lobby.",
+          "text": "Walk to an institute and open it.",
           "done_when": "lobby_entered"
         }
       ]
@@ -103,6 +108,8 @@
       "title": "Add a new source",
       "goal": "Add an institution's website with one configuration file.",
       "criterion": "c6-extend",
+      "optional": true,
+      "coming": "The sources admin and the numbers screen are not in the game yet; a new site is one file in sources/.",
       "steps": [
         {
           "id": "source",
@@ -119,8 +126,10 @@
     {
       "id": "grow",
       "title": "Grow in Bern",
-      "goal": "Find opportunities, connections and partners for your business in Bern.",
+      "goal": "Find opportunities, connections and partners for your business in Bern, in any order.",
       "criterion": "stretch",
+      "optional": true,
+      "coming": "Opportunities, Library, Garage and saving to your network are not built yet.",
       "steps": [
         {
           "id": "opportunity",
