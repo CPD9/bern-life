@@ -1,8 +1,8 @@
 "use client";
 
-// One exchange: what the player wrote, Lumi's reply or the plain sentence for why there is none,
-// and, when Lumi could not answer, the plain search answer, labelled so it is never taken for
-// Lumi's own.
+// One exchange: what the player wrote, Bärli's reply or the plain sentence for why there is none,
+// and, when Bärli could not answer, the plain search answer, labelled so it is never taken for
+// Bärli's own.
 import { useId } from "react";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { AgentAction } from "./agent-reply";

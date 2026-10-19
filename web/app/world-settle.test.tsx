@@ -83,7 +83,7 @@ function YouThenSettle() {
       {youOpen && (
         <YouSheet
           profile={emptyProfile}
-          agent={{ name: "Lumi", bear: defaultBear }}
+          agent={{ name: "Bärli", bear: defaultBear }}
           story={storyProgress(storyFixture, emptyStoryState, emittedToday)}
           onClose={() => setYouOpen(false)}
           onMoveOffice={settle.open}

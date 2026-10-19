@@ -61,9 +61,9 @@ describe("createLocalValue", () => {
 });
 
 describe("agent name", () => {
-  test("it starts as Lumi, and a blank name still reads as Lumi", () => {
-    expect(defaultAgentName).toBe("Lumi");
-    expect(shownAgentName("   ")).toBe("Lumi");
+  test("it starts as Bärli, and a blank name still reads as Bärli", () => {
+    expect(defaultAgentName).toBe("Bärli");
+    expect(shownAgentName("   ")).toBe("Bärli");
     expect(shownAgentName("  Bärli ")).toBe("Bärli");
   });
 

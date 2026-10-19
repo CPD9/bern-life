@@ -44,7 +44,7 @@ afterEach(() => {
 // The floatie that opens the chat, so the chat has something to give focus back to.
 function floatie() {
   const button = document.createElement("button");
-  button.textContent = "Lumi";
+  button.textContent = "Bärli";
   document.body.append(button);
   button.focus();
   return button;
@@ -65,7 +65,7 @@ function setUp(api: LumiApi, { reportSaved = true, mapDrawn = true } = {}) {
   };
   const { result } = renderHook(() =>
     useWorldLumi({
-      agentName: "Lumi",
+      agentName: "Bärli",
       bear: defaultBear,
       lite: true,
       engineMode: "mock",
@@ -86,7 +86,7 @@ function setUp(api: LumiApi, { reportSaved = true, mapDrawn = true } = {}) {
 async function ask(refresh: () => void, open: () => void, text: string) {
   act(() => open());
   refresh();
-  fireEvent.change(screen.getByLabelText("Message Lumi"), { target: { value: text } });
+  fireEvent.change(screen.getByLabelText("Message Bärli"), { target: { value: text } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
   });
@@ -95,7 +95,7 @@ async function ask(refresh: () => void, open: () => void, text: string) {
   await act(async () => undefined);
 }
 
-test("show on map closes the chat and shows Lumi's answer on the map, once", async () => {
+test("show on map closes the chat and shows Bärli's answer on the map, once", async () => {
   const opener = floatie();
   const { result, refresh, calls, focusWhen } = setUp(
     lumiAnswering([{ type: "show_on_map", result: 0 }]),
@@ -108,7 +108,7 @@ test("show on map closes the chat and shows Lumi's answer on the map, once", asy
   expect(document.activeElement).toBe(opener);
 });
 
-test("without a map to draw, Lumi's show on map leaves the chat open", async () => {
+test("without a map to draw, Bärli's show on map leaves the chat open", async () => {
   floatie();
   const { result, refresh } = setUp(lumiAnswering([{ type: "show_on_map", result: 0 }]), {
     mapDrawn: false,
@@ -126,7 +126,7 @@ for (const mapDrawn of [true, false]) {
     const { result, refresh } = setUp(api, { mapDrawn });
     act(() => result.current.open());
     refresh();
-    fireEvent.change(screen.getByLabelText("Message Lumi"), {
+    fireEvent.change(screen.getByLabelText("Message Bärli"), {
       target: { value: "glucose sensors" },
     });
     await act(async () => {
@@ -147,7 +147,7 @@ for (const mapDrawn of [true, false]) {
   });
 }
 
-test("open profile shows Lumi's answer in Ask once the chat has given focus back", async () => {
+test("open profile shows Bärli's answer in Ask once the chat has given focus back", async () => {
   const opener = floatie();
   const { result, refresh, shown, calls, focusWhen } = setUp(
     lumiAnswering([{ type: "open_profile", profile_id: profileId }]),
@@ -199,11 +199,11 @@ test("a report the browser cannot keep leaves the chat open, says why and keeps 
   expect(screen.getByRole("button", { name: "Make a match report" })).toBeTruthy();
 });
 
-/** Lumi's floatie, the phone and the chat, wired as the world app wires them. */
+/** Bärli's floatie, the phone and the chat, wired as the world app wires them. */
 function World({ api, shown }: { api: LumiApi; shown: SearchResponse[] }) {
   const phone = useWorldPhone();
   const lumi = useWorldLumi({
-    agentName: "Lumi",
+    agentName: "Bärli",
     bear: defaultBear,
     lite: true,
     engineMode: "mock",
@@ -237,10 +237,10 @@ test("open profile from the floatie: Ask shows in the phone, and closing it focu
   render(
     <World api={lumiAnswering([{ type: "open_profile", profile_id: profileId }])} shown={shown} />,
   );
-  const floatie = screen.getByRole("button", { name: "Lumi, your agent" });
+  const floatie = screen.getByRole("button", { name: "Bärli, your agent" });
   act(() => floatie.focus());
   act(() => fireEvent.click(floatie));
-  fireEvent.change(screen.getByLabelText("Message Lumi"), { target: { value: "glucose" } });
+  fireEvent.change(screen.getByLabelText("Message Bärli"), { target: { value: "glucose" } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
   });
