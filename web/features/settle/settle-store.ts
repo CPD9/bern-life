@@ -12,6 +12,7 @@ type PlotStorage = Pick<Storage, "getItem" | "setItem">;
 export type SettleStore = {
   get(): Plot | null;
   set(plot: Plot): void;
+  subscribe(listener: () => void): () => void;
 };
 
 function readPlot(raw: string | null): Plot | null {
@@ -32,6 +33,7 @@ export function createSettleStore(storage: () => PlotStorage): SettleStore {
   } catch {
     current = null;
   }
+  const listeners = new Set<() => void>();
   return {
     get: () => current,
     set: (plot) => {
@@ -41,6 +43,11 @@ export function createSettleStore(storage: () => PlotStorage): SettleStore {
       } catch {
         // Kept in memory for this visit only.
       }
+      for (const listener of listeners) listener();
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
     },
   };
 }

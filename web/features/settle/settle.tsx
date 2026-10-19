@@ -4,8 +4,10 @@
 // Escape closes it; it opens on mount and gives focus back to whatever opened it. Each plot lists
 // the nearest places with their sourced addresses; there is nothing to pay and nothing to rent.
 // Confirming a plot stores it on this device and reports it once; the same plot again is no news.
+// The stored plot is read as an external store with nothing stored on the server, so the first
+// render in the browser matches the server's and the stored plot arrives just after.
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { NearbyList } from "./nearby-list";
 import { type MapPlace, nearbyPlaces } from "./nearby";
 import { FIRST_PLOT, type Plot, type PlotId, PLOTS, plotById } from "./plots";
@@ -24,9 +26,9 @@ export function Settle({ places, onSettled, onClose, store = browserSettleStore(
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const titleId = useId();
-  const [settled, setSettled] = useState<Plot | null>(() => store.get());
-  const [chosenId, setChosenId] = useState<PlotId>(() => (settled ?? FIRST_PLOT).id);
-  const chosen = plotById(chosenId) ?? FIRST_PLOT;
+  const settled = useSyncExternalStore(store.subscribe, store.get, () => null);
+  const [chosenId, setChosenId] = useState<PlotId | null>(null);
+  const chosen = plotById(chosenId) ?? settled ?? FIRST_PLOT;
   const nearby = useMemo(() => nearbyPlaces(chosen, places), [chosen, places]);
   const settledHere = settled?.id === chosen.id;
 
@@ -43,9 +45,8 @@ export function Settle({ places, onSettled, onClose, store = browserSettleStore(
   }
 
   function settle() {
-    if (settledHere) return;
+    if (store.get()?.id === chosen.id) return;
     store.set(chosen);
-    setSettled(chosen);
     onSettled(chosen);
   }
 

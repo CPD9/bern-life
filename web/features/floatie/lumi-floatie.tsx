@@ -29,9 +29,10 @@ export function LumiFloatie({
   return (
     <div className="flex w-28 flex-col items-center">
       <Floatie name={name} figure={figure} onSelect={onOpen} state={state} lite={lite} />
+      {/* The name overlaps the bottom of the button, so taps go through it to the button. */}
       <span
         aria-hidden="true"
-        className="rounded-pill bg-panel text-ink shadow-panel -mt-3 max-w-full truncate px-2.5 py-0.5 text-xs font-extrabold"
+        className="rounded-pill bg-panel text-ink shadow-panel pointer-events-none -mt-3 max-w-full truncate px-2.5 py-0.5 text-xs font-extrabold"
       >
         {name}
       </span>

@@ -20,7 +20,8 @@ export function NearbyList({
         Nearest places to {district}
       </h3>
       <p className="text-muted text-sm">
-        Distances are approximate: straight lines on the map, rounded to 50 m.
+        Only places with an address on their own page are listed. Distances are approximate:
+        straight lines on the map, rounded to 50 m.
       </p>
       <ol className="flex flex-col gap-2">
         {places.map((place) => (
