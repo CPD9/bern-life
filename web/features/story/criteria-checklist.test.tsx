@@ -30,11 +30,8 @@ describe("criterionRows", () => {
       ["c3-traceable", false, null],
       ["c4-structured", false, null],
       ["c5-sources", false, noQuestYet],
-      [
-        "c6-extend",
-        false,
-        "The sources admin and the numbers screen are not in the game yet; a new site is one file in sources/.",
-      ],
+      // The garage's measured numbers count toward Add a new source, so it is playable.
+      ["c6-extend", false, null],
       ["ethics-abstain", true, null],
     ]);
   });

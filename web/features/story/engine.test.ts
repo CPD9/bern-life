@@ -62,15 +62,18 @@ describe("optional quests in any order", () => {
   const grow = (state: StoryState, emitted: readonly AppEventName[]) =>
     storyProgress(story, state, emitted).quests.find((q) => q.quest.id === "grow")!;
 
+  // Finding experts stays open, so Grow is merely ready, not current.
+  const messagesOnly: AppEventName[] = ["search_answered", "evidence_opened", "message_sent"];
+
   test("one playable step is enough to open the quest, and that step is offered next", () => {
-    const entry = grow(started, [...emittedToday, "message_sent"]);
+    const entry = grow(started, messagesOnly);
     expect(entry.status).toBe("ready");
     expect(entry.nextStep?.id).toBe("message");
     expect(entry.stepsDone).toBe(0);
   });
 
   test("once its playable steps are done it waits again, counting what was done", () => {
-    const entry = grow(play(["message_sent"]), [...emittedToday, "message_sent"]);
+    const entry = grow(play(["message_sent"]), messagesOnly);
     expect(entry.status).toBe("coming");
     expect(entry.nextStep?.id).toBe("opportunity");
     expect(entry.stepsDone).toBe(1);
@@ -96,7 +99,7 @@ describe("comingReason", () => {
   test("uses the story's own line and falls back to a plain one", () => {
     const extend = story.quests.find((q) => q.id === "extend")!;
     expect(comingReason(extend)).toBe(
-      "The sources admin and the numbers screen are not in the game yet; a new site is one file in sources/.",
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
     );
     const withoutReason = { ...extend };
     delete withoutReason.coming;
@@ -108,25 +111,29 @@ describe("comingReason", () => {
     expect(visit.coming).toBeUndefined();
   });
 
-  test("Arrive waits only on settling once the office is ready, and says so", () => {
+  test("Arrive carries no coming reason now that settling reports to the story", () => {
+    const arrive = story.quests.find((q) => q.id === "arrive")!;
+    expect(arrive.coming).toBeUndefined();
+  });
+
+  test("Arrive is open in full: once the office is ready, settling is offered next", () => {
     const arrive = (state: StoryState) =>
       storyProgress(story, state, emittedToday).quests.find((q) => q.quest.id === "arrive")!;
     expect(arrive(started).status).toBe("ready");
-    expect(arrive(started).nextStep?.id).toBe("office");
     const afterOffice = arrive(play(["office_ready"]));
     expect([afterOffice.status, afterOffice.nextStep?.id, afterOffice.stepsDone]).toEqual([
-      "coming",
+      "ready",
       "settle",
       1,
     ]);
-    expect(comingReason(afterOffice.quest)).toBe(
-      "Settling in Bern does not report to the story yet.",
-    );
+    expect(arrive(play(["office_ready", "settled"])).status).toBe("done");
   });
 });
 
 describe("storyProgress", () => {
   test("quests whose events nothing emits yet are coming next and never current", () => {
+    const withoutNumbers = emittedToday.filter((event) => event !== "numbers_seen");
+    expect(statuses(started, withoutNumbers)["extend"]).toBe("coming");
     expect(statuses(started)).toEqual({
       arrive: "ready",
       "find-experts": "current",
@@ -134,7 +141,7 @@ describe("storyProgress", () => {
       brief: "ready",
       visit: "ready",
       honest: "ready",
-      extend: "coming",
+      extend: "ready",
       grow: "ready",
     });
   });
@@ -170,10 +177,16 @@ describe("storyProgress", () => {
       "lobby_entered",
       "message_sent",
       "office_ready",
+      "settled",
+      "opportunity_saved",
+      "library_item_saved",
+      "garage_visited",
+      "numbers_seen",
     ]);
     const progress = storyProgress(story, state, emittedToday);
     expect(progress.current).toBeNull();
     expect(progress.finishedCriteria).toEqual([
+      "stretch",
       "c1-right-people",
       "c2-wording",
       "c3-traceable",

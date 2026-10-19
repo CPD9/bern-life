@@ -5,15 +5,14 @@
     {
       "id": "arrive",
       "title": "Arrive and settle",
-      "goal": "Join Bern Life and land in your office, where the desk opens your computer.",
+      "goal": "Choose where your office stands in Bern and land in it, where the desk opens your computer.",
       "criterion": "stretch",
       "optional": true,
-      "coming": "Settling in Bern does not report to the story yet.",
       "steps": [
         {
           "id": "settle",
-          "text": "Join Bern Life and say who you are and what you need.",
-          "hint": "Lumi walks you through it after you join.",
+          "text": "Choose a plot for your office and see which institutes are near it.",
+          "hint": "Every place near the plot shows its address with the page it comes from.",
           "done_when": "settled"
         },
         {
@@ -108,7 +107,7 @@
       "goal": "Add an institution's website with one configuration file.",
       "criterion": "c6-extend",
       "optional": true,
-      "coming": "The sources admin and the numbers screen are not in the game yet; a new site is one file in sources/.",
+      "coming": "Adding a source does not report to the story yet; a new site is one file in sources/.",
       "steps": [
         {
           "id": "source",
@@ -128,11 +127,11 @@
       "goal": "Find opportunities, connections and partners for your business in Bern, in any order.",
       "criterion": "stretch",
       "optional": true,
-      "coming": "Saving opportunities, connections and library items, and visiting the garage, do not report to the story yet.",
+      "coming": "Adding a lab or an expert to your network does not report to the story yet.",
       "steps": [
         {
           "id": "opportunity",
-          "text": "Save a funding call or a service for your business.",
+          "text": "Save a funding call, a service or a space for your business.",
           "done_when": "opportunity_saved"
         },
         {

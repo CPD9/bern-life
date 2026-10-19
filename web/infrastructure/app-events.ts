@@ -36,6 +36,11 @@ export const appEvents: AppEvents = createAppEvents();
  * - lobby_entered: features/world/place-panel.tsx (opening a place on the map)
  * - message_sent: features/messages/use-messages.ts
  * - office_ready: features/shell/use-office-ready.ts (the office after onboarding, or the desk)
+ * - opportunity_saved, library_item_saved: app/shared-apps.tsx (the Library's save button, through
+ *   features/library/library-items.ts savedEventNames)
+ * - garage_visited, numbers_seen: app/shared-apps.tsx (features/garage/garage-app.tsx; numbers only
+ *   when the engine measured them, never a fixture)
+ * - settled: app/world-settle.tsx (features/settle/settle.tsx, choosing a plot)
  */
 export const emittedToday: readonly AppEventName[] = [
   "search_answered",
@@ -47,4 +52,9 @@ export const emittedToday: readonly AppEventName[] = [
   "lobby_entered",
   "message_sent",
   "office_ready",
+  "opportunity_saved",
+  "library_item_saved",
+  "garage_visited",
+  "numbers_seen",
+  "settled",
 ];
