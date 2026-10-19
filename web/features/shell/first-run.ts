@@ -1,8 +1,9 @@
 // Which card a newcomer sees beside the map, following the first-run order: the map first, then
-// a gentle invitation to join after a real action, then onboarding, then the story. Pure, so the
+// a gentle invitation to join after a real action, then onboarding, settling, then the story. Pure, so the
 // order is tested; nothing here blocks the map.
 
-export type FirstRunCard = "greeting" | "join" | "onboarding" | "story-start" | "quest" | null;
+export type FirstRunCard =
+  "greeting" | "join" | "onboarding" | "settle" | "story-start" | "quest" | null;
 
 export type FirstRunInput = {
   readonly account: "checking" | "signed-out" | "signed-in";
@@ -12,10 +13,15 @@ export type FirstRunInput = {
   readonly actedAlready: boolean;
   readonly greetingDismissed: boolean;
   readonly joinDismissed: boolean;
+  /** An office plot is chosen on this device. */
+  readonly settled: boolean;
+  readonly settleDismissed: boolean;
 };
 
 export function firstRunCard(input: FirstRunInput): FirstRunCard {
+  // In the story, the quest panel leads to settling; outside it, the card does once.
   if (input.storyChoice === "story") return "quest";
+  if (input.onboarded && !input.settled && !input.settleDismissed) return "settle";
   if (input.storyChoice === "free") return null;
   if (input.onboarded) return "story-start";
   if (input.account === "signed-in") return "onboarding";

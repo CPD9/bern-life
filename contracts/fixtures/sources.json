@@ -1,0 +1,50 @@
+{
+  "snapshot": "fixture",
+  "sources": [
+    {
+      "id": "example",
+      "name": "Example Institute (fixture, not a real site)",
+      "hosts": [
+        "www.example-institute.test"
+      ],
+      "kinds": [
+        "infrastructure",
+        "person",
+        "project",
+        "unit"
+      ],
+      "pages": 48,
+      "profiles": 63,
+      "newest_fetched_at": "2026-10-18T12:00:00Z"
+    },
+    {
+      "id": "example-clinic",
+      "name": "Example Clinic (fixture, not a real site)",
+      "hosts": [
+        "research.example-clinic.test",
+        "www.example-clinic.test"
+      ],
+      "kinds": [
+        "call",
+        "person",
+        "service",
+        "space",
+        "unit"
+      ],
+      "pages": 21,
+      "profiles": 17,
+      "newest_fetched_at": "2026-10-18T09:30:00Z"
+    },
+    {
+      "id": "example-foundation",
+      "name": "Example Foundation (fixture, not a real site)",
+      "hosts": [
+        "www.example-foundation.test"
+      ],
+      "kinds": [],
+      "pages": 0,
+      "profiles": 0,
+      "newest_fetched_at": null
+    }
+  ]
+}

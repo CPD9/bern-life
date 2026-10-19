@@ -54,16 +54,22 @@ export function Dock({ apps, openIds, onOpen }: DockProps) {
             tabIndex={index === active ? 0 : -1}
             onFocus={() => setActive(index)}
             onClick={() => onOpen(app.id)}
-            className="flex w-[4.5rem] flex-col items-center gap-1 rounded-2xl p-1 text-[0.7rem] font-bold"
+            className="flex w-16 flex-col items-center gap-1 rounded-2xl p-1 text-[0.7rem] font-bold sm:w-[4.5rem]"
           >
             <span
               aria-hidden="true"
               style={{ backgroundColor: app.tile }}
-              className="shadow-panel flex size-11 items-center justify-center rounded-2xl text-white"
+              className="shadow-panel relative flex size-11 items-center justify-center rounded-2xl text-white"
             >
               <AppIcon app={app.icon} />
+              {app.badge !== undefined && (
+                <span className="bg-primary text-primary-ink rounded-pill absolute -top-1 -right-1 min-w-5 px-1.5 text-xs leading-5 font-bold">
+                  {app.badge > 9 ? "9+" : app.badge}
+                </span>
+              )}
             </span>
             {app.label}
+            {app.badge !== undefined && <span className="sr-only">, {app.badge} unread</span>}
             <span
               aria-hidden="true"
               className={`size-1.5 rounded-full ${isOpen ? "bg-ink" : "bg-transparent"}`}

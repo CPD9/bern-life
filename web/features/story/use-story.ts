@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import { type AppEventName, type AppEvents, appEvents } from "@/infrastructure/app-events";
+import {
+  type AppEventName,
+  type AppEvents,
+  type OffEvents,
+  appEvents,
+} from "@/infrastructure/app-events";
 import type { Story } from "@/infrastructure/contract-types.generated";
 import {
   type StoryProgress,
@@ -26,6 +31,8 @@ type UseStoryOptions = {
   story: Story;
   demo: boolean;
   emitted: readonly AppEventName[];
+  /** Emitted events that are off in this mode, with why; their steps wait. */
+  off?: OffEvents;
   events?: Pick<AppEvents, "subscribe">;
   store?: StoryStore;
 };
@@ -47,6 +54,7 @@ export function useStory({
   story,
   demo,
   emitted,
+  off = {},
   events = appEvents,
   store,
 }: UseStoryOptions): StoryController {
@@ -71,7 +79,7 @@ export function useStory({
   return {
     story,
     state,
-    progress: storyProgress(story, state, emitted),
+    progress: storyProgress(story, state, emitted, off),
     start: () => set({ ...state, choice: "story" }),
     explore: () => set({ ...state, choice: "free" }),
     focus: (questId) => set({ ...state, choice: "story", focus: questId }),

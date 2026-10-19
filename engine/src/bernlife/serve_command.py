@@ -1,7 +1,8 @@
 """`python -m bernlife serve`: the API over the loaded snapshot, on 127.0.0.1 only.
 
 One database connection behind a lock: a search takes tens of milliseconds and the web app is
-the only caller, so queueing is simpler than a pool and keeps every read on one snapshot.
+the only caller, so queueing is simpler than a pool and keeps every read on one snapshot. A request
+allowed to go live holds the lock while the model answers, so live demos queue the rest.
 """
 
 import logging
@@ -9,33 +10,69 @@ import os
 import sys
 import threading
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
+from contextlib import AbstractContextManager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import psycopg
 
 from bernlife import config, paths
+from bernlife.agent import EngineTools, answer
+from bernlife.api_requests import SearchRequest
 from bernlife.brief_search import brief_search
+from bernlife.cache import Message, cache_roots
+from bernlife.catalog import read_loaded, source_list
 from bernlife.database import connect_when_ready
 from bernlife.embed import MODEL_ID, Embedder, e5_embedder
 from bernlife.extract_records import PEOPLE_KINDS
-from bernlife.llm import Chat
+from bernlife.health import service_health
+from bernlife.llm import MockLLM, Router
 from bernlife.llm import connect as connect_model
+from bernlife.llm_gate import request_scope
+from bernlife.numbers import numbers_report, results_dir
+from bernlife.request_log import Tally
 from bernlife.search import search
-from bernlife.server import SearchRequest, make_server
+from bernlife.server import make_server
+from bernlife.sources import Source, load_sources
 from bernlife.store import PostgresStore
 
 log = logging.getLogger("bernlife.serve")
 
 
+def utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
 class EngineApi:
-    def __init__(self, conn: psycopg.Connection, embedder: Embedder, llm: Chat):
+    def __init__(
+        self,
+        conn: psycopg.Connection,
+        embedder: Embedder,
+        llm: Router | MockLLM,
+        *,
+        configured: Sequence[Source] = (),
+        recorded: Path | None = None,
+        clock: Callable[[], float] = time.monotonic,
+        now: Callable[[], datetime] = utc_now,
+    ):
         self._store = PostgresStore(conn)
         self._llm = llm
         self._conn = conn
         self._embedder = embedder
+        self._configured = tuple(configured)
+        self._recorded = recorded or cache_roots(paths.data_dir())[1]
+        self._clock, self._now = clock, now
+        self._started = clock()
         self._lock = threading.Lock()
+
+    @property
+    def backend(self) -> str:
+        return self._llm.backend
+
+    def scope(self, *, live: bool) -> AbstractContextManager[Tally]:
+        return request_scope(live=live)
 
     def health(self) -> dict[str, Any]:
         with self._lock:
@@ -44,17 +81,20 @@ class EngineApi:
                 " (SELECT count(DISTINCT source_id) FROM profile)"
             ).fetchone()
             snapshot = self._store.snapshot()
-        return {
+        base = {
             "mode": self._llm.backend,
             "models": {**self._llm.models(), "embed": MODEL_ID},
             "snapshot": snapshot,
             "counts": {"pages": pages, "profiles": profiles, "sources": sources},
         }
+        uptime_s = int(self._clock() - self._started)
+        return service_health(
+            base, uptime_s, self._llm.recent_failures(), self._llm.budget_status()
+        )
 
     def search(self, request: SearchRequest) -> dict[str, Any]:
-        started = time.monotonic()
         with self._lock:
-            response = search(
+            return search(
                 request.query,
                 request.sources,
                 self._store,
@@ -62,17 +102,30 @@ class EngineApi:
                 self._llm,
                 request.kinds or PEOPLE_KINDS,
             )
-        elapsed_ms = (time.monotonic() - started) * 1000
-        log.info("search %.0f ms, %d results", elapsed_ms, len(response["results"]))
-        return response
 
     def brief(self, text: str) -> dict[str, Any]:
         with self._lock:
             return brief_search(text, None, self._store, self._embedder, self._llm)
 
+    def agent(self, messages: list[Message]) -> dict[str, Any]:
+        with self._lock:
+            tools = EngineTools(self._store, self._embedder, self._llm)
+            return answer(messages, tools, self._llm)
+
     def profile(self, profile_id: str) -> dict[str, Any] | None:
         with self._lock:
             return self._store.profiles([profile_id]).get(profile_id)
+
+    def sources(self) -> dict[str, Any]:
+        with self._lock:
+            snapshot = self._store.snapshot()
+            loaded = read_loaded(self._conn)
+        return {"snapshot": snapshot, "sources": source_list(loaded, self._configured)}
+
+    def numbers(self) -> dict[str, Any]:
+        with self._lock:
+            snapshot = self._store.snapshot()
+        return numbers_report(snapshot, self._now(), self._recorded, results_dir())
 
     def source_ids(self) -> set[str]:
         with self._lock:
@@ -83,13 +136,22 @@ def main(argv: Sequence[str], env: Mapping[str, str] = os.environ) -> int:
     if argv:
         print("usage: python -m bernlife serve", file=sys.stderr)
         return 2
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, stream=sys.stdout, format="%(asctime)s %(name)s %(message)s"
+    )
     conn = connect_when_ready(config.database_url(env))
     conn.autocommit = True
     if PostgresStore(conn).snapshot() == "none":
         print("serve: no bundle loaded; run python -m bernlife load first", file=sys.stderr)
         return 1
-    api = EngineApi(conn, e5_embedder(Path(paths.data_dir(env))), connect_model(env))
+    data = paths.data_dir(env)
+    api = EngineApi(
+        conn,
+        e5_embedder(data),
+        connect_model(env, serving=True),
+        configured=load_sources(),
+        recorded=cache_roots(data)[1],
+    )
     server = make_server(api, config.engine_port(env))
     log.info("serving on http://127.0.0.1:%d", server.server_address[1])
     try:

@@ -12,6 +12,7 @@ bun run format:check
 bun run test
 bun run build
 bun run contract:types   # regenerate types after a change in contracts/
+bun run contract:validators   # and the validators
 ```
 
 Each lane runs the dev server on its own port (`CONTRIBUTING.md`). The server binds to 127.0.0.1.
@@ -31,9 +32,12 @@ Accounts are invite-only: `bun run invite:create --count 3` prints codes once an
 
 ## Contract
 
-Engine responses are checked with Ajv against `contracts/*.schema.json`; a body that does not match
-is shown as an error, never half rendered. TypeScript types are generated from the same schemas into
-`infrastructure/contract-types.generated.ts`; a test fails when they are out of date.
+Engine responses are checked against `contracts/*.schema.json`; a body that does not match is shown
+as an error, never half rendered. Ajv compiles the validators ahead of time into
+`infrastructure/contract-validators.generated.js`, so no schema is compiled at run time and the
+Content-Security-Policy needs no `'unsafe-eval'` (only `next dev` allows it, for React's error
+stacks). TypeScript types are generated from the same schemas into
+`infrastructure/contract-types.generated.ts`; a test fails when either is out of date.
 
 The browser talks only to this app's routes: `POST /api/search` (JSON), `POST /api/brief` (form
 data with `text` or a PDF `file`, at most 5 MB and 20 pages, read in memory and not kept; a larger
@@ -46,18 +50,23 @@ brief returns `result-brief.json`.
 
 ## Settings
 
-The phone's Settings app stores night mode, lite graphics and data saver in `localStorage` (key
+The phone's Settings app stores night mode and lite graphics in `localStorage` (key
 `bernlife.settings`) and mirrors them on `<html>`, where anything can read them:
-`data-theme="day" | "night"` (absent: follow the device), `data-graphics="lite"` and
-`data-saver="on"` (absent when off). An inline script applies them before the first paint.
+`data-theme="day" | "night"` (absent: follow the device) and `data-graphics="lite"` (absent when
+off). An inline script applies them before the first paint.
 
 ## Layout
 
 - `app/` routes and the global design tokens (`globals.css`, day and night).
 - `app/navigator/` the Navigator on its own page, for the jury.
 - `features/shell/` HUD, tab bar and the full-screen frame (lane 2a).
-- `features/phone/` the phone overlay, its app grid, Settings and the coming-next sheets.
+- `features/phone/` the phone overlay: status bar, home screen and dock, notification centre,
+  Settings. `app/phone-apps.tsx` mounts the apps; each is real, none is a placeholder.
+- `features/desktop/` the office computer; `app/office-apps.tsx` mounts its apps.
 - `features/navigator/` Ask: question and project brief, result cards with evidence, aspect matrix.
+- `features/lumi/` the chat with Lumi, your agent; `features/floatie/` Lumi floating beside you.
+- `features/opportunities/`, `features/library/`, `features/garage/`, `features/sources/` the apps
+  of the same names. `features/settle/` choosing where your office stands.
 - `features/world/` the 3D scene that fills the frame (lane 2b).
 - `infrastructure/` code shared between features; the only place that reads `process.env`.
 

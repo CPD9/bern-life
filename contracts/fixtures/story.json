@@ -5,20 +5,19 @@
     {
       "id": "arrive",
       "title": "Arrive and settle",
-      "goal": "Join Bern Life and land in your office, where the desk opens your computer.",
+      "goal": "Choose where your office stands in Bern and land in it, where the desk opens your computer.",
       "criterion": "stretch",
       "optional": true,
-      "coming": "Joining and your office do not report to the story yet.",
       "steps": [
         {
           "id": "settle",
-          "text": "Join Bern Life and say who you are and what you need.",
-          "hint": "Lumi walks you through it after you join.",
+          "text": "Choose a plot for your office and settle there.",
+          "hint": "Every place near the plot shows its address with the page it comes from.",
           "done_when": "settled"
         },
         {
           "id": "office",
-          "text": "Land in your office and sit down at the desk.",
+          "text": "After setting up your profile, go to your office on the Home tab or sit down at its desk.",
           "done_when": "office_ready"
         }
       ]
@@ -31,7 +30,7 @@
       "steps": [
         {
           "id": "ask",
-          "text": "Ask the Navigator in your own words.",
+          "text": "Ask the Navigator in your own words and get a result.",
           "hint": "Try 'glucose sensors' or 'blood sugar monitoring'.",
           "done_when": "search_answered"
         },
@@ -50,7 +49,7 @@
       "steps": [
         {
           "id": "ask-again",
-          "text": "Ask again in German or French.",
+          "text": "Ask again in German or French and get a result.",
           "hint": "Try 'Sensoren für Blutzucker' or 'capteurs pour le diabète'.",
           "done_when": "search_answered_other_language"
         }
@@ -64,7 +63,7 @@
       "steps": [
         {
           "id": "upload",
-          "text": "Upload or paste your brief.",
+          "text": "Upload or paste your brief and get matches back.",
           "done_when": "brief_answered"
         },
         {
@@ -77,14 +76,13 @@
     {
       "id": "visit",
       "title": "Visit an institute",
-      "goal": "Walk to a place and see who works there.",
+      "goal": "Open a place on the map to see its units, each with its source.",
       "criterion": "c4-structured",
       "optional": true,
-      "coming": "Opening a place on the map does not report to the story yet.",
       "steps": [
         {
           "id": "lobby",
-          "text": "Walk to an institute and open it.",
+          "text": "Open a place on the map.",
           "done_when": "lobby_entered"
         }
       ]
@@ -109,16 +107,17 @@
       "goal": "Add an institution's website with one configuration file.",
       "criterion": "c6-extend",
       "optional": true,
-      "coming": "The sources admin and the numbers screen are not in the game yet; a new site is one file in sources/.",
+      "coming": "Adding a source does not report to the story yet; a new site is one file in sources/.",
       "steps": [
         {
           "id": "source",
-          "text": "Add a source in the sources admin.",
+          "text": "Add an institution's website as a new source.",
           "done_when": "source_added"
         },
         {
           "id": "numbers",
-          "text": "Look at the measured numbers.",
+          "text": "Open the Garage on your office computer and see the evaluator's numbers for this snapshot.",
+          "hint": "Only numbers the engine serves count; invented demo numbers do not.",
           "done_when": "numbers_seen"
         }
       ]
@@ -126,14 +125,14 @@
     {
       "id": "grow",
       "title": "Grow in Bern",
-      "goal": "Find opportunities, connections and partners for your business in Bern, in any order.",
+      "goal": "Save opportunities, keep results, message members and meet the models behind the Navigator, in any order.",
       "criterion": "stretch",
       "optional": true,
-      "coming": "Opportunities, Library, Garage and saving to your network are not built yet.",
+      "coming": "A network of labs and experts is not built yet, so its step cannot be done.",
       "steps": [
         {
           "id": "opportunity",
-          "text": "Save a funding call or a service for your business.",
+          "text": "Save a funding call, a service or a space to your library.",
           "done_when": "opportunity_saved"
         },
         {
@@ -143,17 +142,18 @@
         },
         {
           "id": "library",
-          "text": "Keep a source or a document in your office library.",
+          "text": "Save a person or an opportunity to your library from a result card.",
           "done_when": "library_item_saved"
         },
         {
           "id": "message",
-          "text": "Send a message to a member of your lab or network.",
+          "text": "Send a message to another member in Messages.",
           "done_when": "message_sent"
         },
         {
           "id": "garage",
-          "text": "Visit the garage and meet the models behind the Navigator.",
+          "text": "Open the Garage on your office computer.",
+          "hint": "Sit down at the desk in your office; the Garage is on its dock.",
           "done_when": "garage_visited"
         }
       ]

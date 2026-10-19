@@ -6,9 +6,14 @@ export function failureMessage(failure: NavigatorFailure): string {
     case "network":
       return "We could not reach the Bern Life server. Check your connection and try again.";
     case "engine":
-      return failure.error === "bad_request"
-        ? "The search could not read this request. Try rephrasing it."
-        : "The search is not answering right now. Try again in a moment.";
+      switch (failure.error) {
+        case "bad_request":
+          return "The search could not read this request. Try rephrasing it.";
+        case "rate_limited":
+          return "Too many requests from here right now; try again in a few minutes.";
+        default:
+          return "The search is not answering right now. Try again in a moment.";
+      }
     case "brief":
       switch (failure.reason) {
         case "empty":
@@ -27,8 +32,11 @@ export function failureMessage(failure: NavigatorFailure): string {
   }
 }
 
+/** A brief the app refused needs a new file, and a request over the limit would be refused again. */
 export function canRetry(failure: NavigatorFailure): boolean {
-  return failure.kind !== "brief";
+  return (
+    failure.kind === "network" || (failure.kind === "engine" && failure.error !== "rate_limited")
+  );
 }
 
 /**

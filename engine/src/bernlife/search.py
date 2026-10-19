@@ -22,6 +22,7 @@ from bernlife.expand import EXPAND_PROMPT_VERSION, Expansion, expand, expanded_t
 from bernlife.explain import EXPLAIN_PROMPT_VERSION, explain_top
 from bernlife.extract_records import PEOPLE_KINDS
 from bernlife.llm import Chat
+from bernlife.llm_gate import request_mode
 from bernlife.matching import Asked, asked, can_explain
 from bernlife.metrics import query_topics, with_metrics
 from bernlife.ranking import Candidate, candidates, cap_units
@@ -141,7 +142,7 @@ def model_use(llm: Chat | None, used: dict[str, bool], snapshot: str) -> dict[st
     if llm is not None:
         models |= {role: llm.models()[role] for role in roles}
     return {
-        "mode": llm.backend if llm is not None and roles else NO_MODEL,
+        "mode": request_mode(llm.backend) if llm is not None and roles else NO_MODEL,
         "versions": {
             "engine": version("bernlife"),
             "snapshot": snapshot,

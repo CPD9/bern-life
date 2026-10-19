@@ -1,0 +1,66 @@
+{
+  "snapshot": "fixture",
+  "generated_at": "2026-10-19T04:00:00Z",
+  "eval": {
+    "queries": 48,
+    "recall_at_10": {
+      "value": 0.5,
+      "low": 0.35,
+      "high": 0.65
+    },
+    "mrr": 0.4,
+    "invented_abstained": {
+      "n": 9,
+      "of": 10
+    },
+    "false_abstention": {
+      "n": 3,
+      "of": 38
+    },
+    "traceable": {
+      "n": 412,
+      "of": 412
+    },
+    "invented_entities": 0,
+    "slices": [
+      {
+        "name": "lang:de",
+        "recall_at_10": 0.4
+      },
+      {
+        "name": "lang:en",
+        "recall_at_10": 0.6
+      },
+      {
+        "name": "lang:fr",
+        "recall_at_10": 0.3
+      }
+    ]
+  },
+  "models": [
+    {
+      "role": "brief",
+      "model": "example-llm-70b",
+      "calls": 6,
+      "ok": 6,
+      "median_ms": 2400,
+      "p95_ms": 5100
+    },
+    {
+      "role": "expand",
+      "model": "example-llm-70b",
+      "calls": 48,
+      "ok": 48,
+      "median_ms": 900,
+      "p95_ms": 1800
+    },
+    {
+      "role": "explain",
+      "model": "example-llm-70b",
+      "calls": 120,
+      "ok": 120,
+      "median_ms": 1300,
+      "p95_ms": 2900
+    }
+  ]
+}

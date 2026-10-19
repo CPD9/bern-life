@@ -1,7 +1,13 @@
 // HTTP client for the engine (contracts/api.md). Every failure collapses to one of the API's
 // markers; the underlying error goes to the server log and never into a response.
-import { parseHealth, parseSearchResponse } from "./contract";
-import type { EngineClient, EngineError, EngineResult } from "./engine-types";
+import {
+  parseAgentReply,
+  parseHealth,
+  parseNumbers,
+  parseSearchResponse,
+  parseSourcesList,
+} from "./contract";
+import type { EngineCallOptions, EngineClient, EngineError, EngineResult } from "./engine-types";
 
 type Fetch = (url: URL, init?: RequestInit) => Promise<Response>;
 
@@ -12,27 +18,41 @@ type EngineClientOptions = {
   readonly timeoutMs: number;
 };
 
+type Post = { readonly body: unknown; readonly live: boolean };
+
 function errorForStatus(status: number): EngineError {
   if (status === 400) return "bad_request";
   if (status === 404) return "not_found";
+  if (status === 429) return "rate_limited";
   return "engine_error";
+}
+
+// The engine lets a request reach a model only when this header is present, so it is set from the
+// caller's decision alone and never copied from an incoming request.
+function post(body: unknown, options: EngineCallOptions | undefined): Post {
+  return { body, live: options?.live === true };
+}
+
+function postHeaders(live: boolean): Record<string, string> {
+  const json = { "content-type": "application/json" };
+  return live ? { ...json, "x-bernlife-live": "1" } : json;
 }
 
 export function createEngineClient(options: EngineClientOptions): EngineClient {
   async function call<T>(
     path: string,
     parse: (body: unknown) => T | null,
-    body?: unknown,
+    request?: Post,
   ): Promise<EngineResult<T>> {
     const url = new URL(path, options.baseUrl);
     const signal = AbortSignal.timeout(options.timeoutMs);
     const init: RequestInit =
-      body === undefined
+      request === undefined
         ? { method: "GET", signal }
         : {
             method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(body),
+            headers: postHeaders(request.live),
+            body: JSON.stringify(request.body),
             signal,
           };
     let response: Response;
@@ -62,8 +82,14 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
   }
 
   return {
-    search: (request) => call("/api/search", parseSearchResponse, request),
-    brief: (text) => call("/api/brief", parseSearchResponse, { text }),
+    search: (request, callOptions) =>
+      call("/api/search", parseSearchResponse, post(request, callOptions)),
+    brief: (text, callOptions) =>
+      call("/api/brief", parseSearchResponse, post({ text }, callOptions)),
+    agent: (request, callOptions) =>
+      call("/api/agent", parseAgentReply, post(request, callOptions)),
+    sources: () => call("/api/sources", parseSourcesList),
+    numbers: () => call("/api/numbers", parseNumbers),
     health: () => call("/api/health", parseHealth),
   };
 }

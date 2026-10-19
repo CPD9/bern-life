@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+import type { SearchResult } from "@/infrastructure/claims";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { AskInput } from "./ask-input";
 import { BriefInput } from "./brief-input";
@@ -13,6 +15,8 @@ type NavigatorProps = {
   onShowOnMap?: (response: SearchResponse) => void;
   /** Saves the answer as a match report; false when the browser blocks storage. */
   onMakeReport?: (response: SearchResponse) => boolean;
+  /** A control under each result card, such as the Library's save button. */
+  renderSave?: (result: SearchResult) => ReactNode;
 };
 
 const inputModes: { mode: InputMode; label: string }[] = [
@@ -20,7 +24,13 @@ const inputModes: { mode: InputMode; label: string }[] = [
   { mode: "brief", label: "Project brief" },
 ];
 
-export function Navigator({ controller, fixtureMode, onShowOnMap, onMakeReport }: NavigatorProps) {
+export function Navigator({
+  controller,
+  fixtureMode,
+  onShowOnMap,
+  onMakeReport,
+  renderSave,
+}: NavigatorProps) {
   const { inputMode, setInputMode } = controller;
   return (
     <div className="flex flex-col gap-5">
@@ -53,6 +63,7 @@ export function Navigator({ controller, fixtureMode, onShowOnMap, onMakeReport }
         onRetry={controller.retry}
         onShowOnMap={onShowOnMap}
         onMakeReport={onMakeReport}
+        renderSave={renderSave}
       />
     </div>
   );
