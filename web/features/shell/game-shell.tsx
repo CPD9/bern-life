@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { TabBar } from "./tab-bar";
+import { TabBar, type TabBadges } from "./tab-bar";
 import type { ShellTab } from "./tabs";
 
 export type WorldView = Exclude<ShellTab, "phone">;
@@ -8,6 +8,8 @@ type GameShellProps = {
   view: WorldView;
   phoneOpen: boolean;
   onSelectTab: (tab: ShellTab) => void;
+  /** Counts on the tabs, such as unread messages on the Phone. */
+  tabBadges?: TabBadges;
   hud: ReactNode;
   /** Cards that float at the side of the world, such as the story quest. */
   side: ReactNode;
@@ -21,6 +23,7 @@ export function GameShell({
   view,
   phoneOpen,
   onSelectTab,
+  tabBadges = {},
   hud,
   side,
   canvas,
@@ -42,7 +45,7 @@ export function GameShell({
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="pointer-events-auto">
-          <TabBar selected={phoneOpen ? "phone" : view} onSelect={onSelectTab} />
+          <TabBar selected={phoneOpen ? "phone" : view} onSelect={onSelectTab} badges={tabBadges} />
         </div>
       </div>
       {overlay}
