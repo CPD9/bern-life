@@ -43,12 +43,13 @@ describe("StoryMenu", () => {
     render(<Harness />);
     openMenu();
     const row = (title: string) => screen.getByRole("heading", { name: title }).closest("li")!;
-    const visit = Array.from(row("Visit an institute").querySelectorAll("p, span"));
-    expect(visit.map((element) => element.textContent).slice(0, 3)).toEqual([
+    const arrive = Array.from(row("Arrive and settle").querySelectorAll("p, span"));
+    expect(arrive.map((element) => element.textContent).slice(0, 3)).toEqual([
       "Coming next · optional",
-      "Walk to a place and see who works there.",
-      "Opening a place on the map does not report to the story yet.",
+      "Join Bern Life and land in your office, where the desk opens your computer.",
+      "Joining and your office do not report to the story yet.",
     ]);
+    expect(row("Visit an institute").textContent).toContain("Open · optional");
     expect(row("Grow in Bern").textContent).toContain(
       "Opportunities, Library, Garage and saving to your network are not built yet.",
     );
