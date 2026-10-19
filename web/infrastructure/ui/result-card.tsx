@@ -57,11 +57,11 @@ export function ResultCard({ result, events = appEvents }: ResultCardProps) {
   }
   const baseId = useId();
   const cited = new Set(result.reason.cites);
-  const { profile, via } = result;
+  const { profile, via, passage } = result;
   const nameOpen = open?.group === "name";
-  // A reason that cites only the name adds nothing when the relation explains the result; without
-  // a relation it is the only explanation the card has, so it stays.
-  const whyShown = !via || !citesOnlyName(result);
+  // A reason that cites only the name adds nothing when a relation or a passage on the result's
+  // own page explains it; without either it is the only explanation the card has, so it stays.
+  const whyShown = !(via || passage) || !citesOnlyName(result);
 
   function claimGroup(
     group: string,
@@ -138,6 +138,18 @@ export function ResultCard({ result, events = appEvents }: ResultCardProps) {
           />
           <p className="text-muted text-sm">{via.related_name} matches on:</p>
           {claimGroup("via", viaClaims(via), () => true)}
+        </section>
+      )}
+
+      {passage && (
+        <section aria-labelledby={`${baseId}-passage`} className="flex flex-col gap-2">
+          <h4 id={`${baseId}-passage`} className="font-extrabold">
+            On their page
+          </h4>
+          <SpanEvidence
+            evidence={passage}
+            note="A passage next to the name on its own page, not a claim of the profile."
+          />
         </section>
       )}
 
