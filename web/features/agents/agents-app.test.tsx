@@ -7,8 +7,10 @@ import type { AgentNotice } from "./loops";
 import type { Skill } from "./skills";
 import { memoryStorage, responseWith } from "./testing";
 
+type Answer = SearchResponse | "rate_limited" | null | Error;
+
 /** A search that answers from a queue, in order, and records what it was asked. */
-function fakeSearch(answers: (SearchResponse | null | Error)[]) {
+function fakeSearch(answers: Answer[]) {
   const queries: string[] = [];
   const search = async (query: string) => {
     queries.push(query);
@@ -21,7 +23,7 @@ function fakeSearch(answers: (SearchResponse | null | Error)[]) {
 }
 
 function setup(
-  answers: (SearchResponse | null | Error)[],
+  answers: Answer[],
   snapshot: string | null = "s1",
   store: LoopStore = createLoopStore(() => memoryStorage()),
 ) {
@@ -147,6 +149,19 @@ describe("AgentsApp loops", () => {
     const before = store.get();
     await runNow("insulin pumps");
     expect(screen.getByRole("alert").textContent).toBe("The search did not answer. Try again.");
+    expect(store.get()).toBe(before);
+    expect(notices).toEqual([]);
+  });
+
+  test("a search over the limit says to wait, not to try again now", async () => {
+    const { store, notices } = setup([responseWith("s1", [["a", "unit"]]), "rate_limited"]);
+    saveLoop("insulin pumps");
+    await runNow("insulin pumps");
+    const before = store.get();
+    await runNow("insulin pumps");
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Too many requests from here right now; try again in a few minutes.",
+    );
     expect(store.get()).toBe(before);
     expect(notices).toEqual([]);
   });

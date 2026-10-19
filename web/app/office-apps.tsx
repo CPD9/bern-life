@@ -15,6 +15,7 @@ import { SettingsApp } from "@/features/phone/settings-app";
 import { browserReportDeps, openReport } from "@/features/report/open-report";
 import { ReportsApp } from "@/features/report/reports-app";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import { loopSearch } from "./loop-search";
 
 /** A loop's news goes to the same store as the bell and the toasts. */
 export function notifyLoop(notice: AgentNotice): void {
@@ -68,11 +69,6 @@ export function useOfficeApps({
     else desktop.open(skill.id === "report" ? "reports" : "opportunities");
   }
 
-  async function search(query: string): Promise<SearchResponse | null> {
-    const outcome = await navigatorApi.search({ query });
-    return outcome.ok ? outcome.response : null;
-  }
-
   return desktopApps({
     navigator: (
       <Navigator controller={navigator} fixtureMode={fixtureMode} onMakeReport={makeReport} />
@@ -80,7 +76,7 @@ export function useOfficeApps({
     agents: (
       <AgentsApp
         agent={{ name: agentName }}
-        search={search}
+        search={loopSearch(navigatorApi)}
         onTrySkill={trySkill}
         notify={notify}
         snapshot={snapshot}

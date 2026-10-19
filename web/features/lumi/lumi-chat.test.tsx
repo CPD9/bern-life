@@ -203,5 +203,19 @@ describe("LumiChat", () => {
     expect(
       screen.getAllByText("Too many requests from here right now; try again in a few minutes."),
     ).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  test("a plain search over the limit offers no Try again either", async () => {
+    const api = scripted([failed("engine_error")], [failed("rate_limited")]);
+    render(<Harness api={api} />);
+    openPanel();
+    await say("CGM");
+    expect(
+      screen.getByText("Too many requests from here right now; try again in a few minutes."),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(api.calls.asked).toHaveLength(1);
+    expect(api.calls.searched).toEqual(["CGM"]);
   });
 });

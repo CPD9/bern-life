@@ -16,7 +16,8 @@ ENV NEXT_TELEMETRY_DISABLED=1 DATABASE_URL=postgresql://db:5432/bernlife
 RUN bun run build
 
 FROM node:24-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+# Uploads go to /data/uploads, which node owns; the default data folder under /app is root's.
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 BERNLIFE_DATA_DIR=/data
 # Docker fills a new, empty named volume from the image's folder, owner included, so the uploads
 # volume mounted here is writable by node from the start.
 RUN mkdir -p /data/uploads && chown node:node /data/uploads
