@@ -4,19 +4,21 @@ The 3D Bern that fills the shell's canvas (lane 2b).
 
 ## Places (`places.json`)
 
-One place per unit in `sources/*.json`, sorted by `id`. `places.ts` parses it at load and fails with
-a named error on a broken entry; `places.test.ts` checks it against `sources/`.
+One place per unit in `sources/*.json`, sorted by `id`, except the sources `off-map.json` lists with
+a reason. `places.ts` and `off-map.ts` parse them at load and fail with a named error on a broken
+entry; `places.test.ts` checks both against `sources/`, so a new source without a place fails until
+it gets one or an off-map reason.
 
-| Field                                       | Meaning                                                                |
-| ------------------------------------------- | ---------------------------------------------------------------------- |
-| `id`, `name`, `source_id`, `host`           | the unit as listed in `sources/`                                       |
-| `kind`                                      | `institute`, `platform` or `centre`; picks the map pictogram           |
-| `address`                                   | written only from `address_span`                                       |
-| `address_span`                              | verbatim line from the unit's own contact block                        |
-| `address_url`                               | the page the span was read from, on the unit's own host                |
-| `address_fetched_at`, `address_page_sha256` | `fetched_at` and `sha256` of the crawl snapshot's record for that page |
-| `x`, `z`                                    | position in the map frame of `geography.ts` (1 unit ≈ 20 m)            |
-| `position_method`                           | `address`, or `district` when the unit publishes no address of its own |
+| Field                                       | Meaning                                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------------------- |
+| `id`, `name`, `source_id`, `host`           | the unit as listed in `sources/`                                                |
+| `kind`                                      | `institute`, `platform`, `centre`, `agency` or `space`; picks the map pictogram |
+| `address`                                   | written only from `address_span`                                                |
+| `address_span`                              | verbatim text from a stored page of the unit's own host                         |
+| `address_url`                               | the page the span was read from, on the unit's own host                         |
+| `address_fetched_at`, `address_page_sha256` | `fetched_at` and `sha256` of the crawl snapshot's record for that page          |
+| `x`, `z`                                    | position in the map frame of `geography.ts` (1 unit ≈ 20 m)                     |
+| `position_method`                           | `address`, or `district` when the unit publishes no address of its own          |
 
 **Positions are placed by hand from the address and are approximate (street level).** They are not
 survey data. A `district` place has no address fields and stands in its district.
@@ -30,6 +32,31 @@ not kept. The fetch date and hash come from the crawl snapshot's stored page for
 text the span is checked against.
 
 Units at one street address share a building and one marker with a count (`buildings.ts`).
+
+### Opportunity places
+
+The opportunity sources (funders, agencies, rooms to rent) that are in Bern stand on the map as an
+`agency` (flag) or a `space` (open door). Each address is a span of the source's page in the E4
+crawl (`pages.jsonl`), checked by `python -m bernlife check-places`:
+
+| Place        | Span                       | Page                                                                      |
+| ------------ | -------------------------- | ------------------------------------------------------------------------- |
+| `beda`       | `Münsterplatz 3a`          | `www.berninvest.be.ch/en/start/dienstleistungen.html` (Bern office block) |
+| `effinger`   | `Effingerstrasse 10, Bern` | `www.effinger.ch/coworking/`                                              |
+| `innosuisse` | `Einsteinstrasse 2`        | `www.innosuisse.admin.ch/en/privacy-policy` (postal address)              |
+| `progr`      | `Speichergasse 4`          | `www.progr.ch/de/vermietung/`, inside a sentence, not a whole line        |
+
+Positions follow the frame's own definition: the address's coordinates in the federal building
+address register (geo.admin.ch, LV95) minus those of the Zytglogge (Bim Zytglogge 1), divided by
+20 m, east to `+x`, north to `-z`. Near the centre this agrees with the hand-drawn landmarks to
+within about 100 m. Two places are then moved to the drawn map so they stand on the right side of
+it: `beda` 2.2 units west, onto Münsterplatz and clear of the drawn Münster's footprint, and
+`innosuisse` 9.5 units east, by the gap between the drawn and the real Aare at that latitude, so it
+stays on the east bank where its address is (160 m from the river).
+
+`off-map.json` keeps two sources off the map: SIP Biel/Bienne (`outside-bern`) and SNSF
+(`no-stored-address`: none of its 94 stored pages carries a street address, and an address is never
+typed from memory). Their results still count as "not on the map".
 
 ## Scene
 

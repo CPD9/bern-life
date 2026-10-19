@@ -1,10 +1,11 @@
-// Every unit in sources/ is a place on the map. The address fields are copied verbatim from the
-// unit's own contact block; x and z are placed by hand from that address and are approximate
-// (street level), not survey data. A unit without its own address sits in its district.
+// Every unit in sources/ is a place on the map, except the few `off-map.json` lists with a reason.
+// The address fields are copied verbatim from a stored page of the unit's own host; x and z are
+// placed from that address and are approximate (street level), not survey data. A unit without its
+// own address sits in its district.
 
 import rawPlaces from "./places.json";
 
-export type PlaceKind = "institute" | "platform" | "centre";
+export type PlaceKind = "institute" | "platform" | "centre" | "agency" | "space";
 
 type PlaceCommon = {
   readonly id: string;
@@ -46,7 +47,7 @@ export class InvalidPlaceError extends Error {
   }
 }
 
-const KINDS: readonly string[] = ["institute", "platform", "centre"];
+const KINDS: readonly string[] = ["institute", "platform", "centre", "agency", "space"];
 const ADDRESS_FIELDS = [
   "address",
   "address_url",

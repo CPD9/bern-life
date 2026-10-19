@@ -15,6 +15,21 @@
     "position_method": "address"
   },
   {
+    "id": "beda",
+    "name": "Bern Economic Development Agency",
+    "source_id": "beda",
+    "host": "www.berninvest.be.ch",
+    "kind": "agency",
+    "address": "Münsterplatz 3a",
+    "address_url": "https://www.berninvest.be.ch/en/start/dienstleistungen.html",
+    "address_span": "Münsterplatz 3a",
+    "address_fetched_at": "2026-10-18T21:22:52Z",
+    "address_page_sha256": "194946967cd196c83b07e2186b7eadcb0b37b43e2fd3f752a7d6d691df0f11d7",
+    "x": 9.0,
+    "z": 5.1,
+    "position_method": "address"
+  },
+  {
     "id": "csh",
     "name": "Center for Space and Habitability (CSH)",
     "source_id": "unibe",
@@ -72,6 +87,21 @@
     "address_page_sha256": "f5d53b9b7d0b24383ef51e5fdff3753c819154f98fd834f2303dd8d63c74a20a",
     "x": -56.3,
     "z": -31.5,
+    "position_method": "address"
+  },
+  {
+    "id": "effinger",
+    "name": "Effinger coworking",
+    "source_id": "effinger",
+    "host": "www.effinger.ch",
+    "kind": "space",
+    "address": "Effingerstrasse 10, Bern",
+    "address_url": "https://www.effinger.ch/coworking/",
+    "address_span": "Effingerstrasse 10, Bern",
+    "address_fetched_at": "2026-10-18T21:21:04Z",
+    "address_page_sha256": "bf3b46bf2e2949fb0b2969235bf79b1b458d1312b5683a542ebc928a545d7038",
+    "x": -45.7,
+    "z": 10.4,
     "position_method": "address"
   },
   {
@@ -177,6 +207,21 @@
     "address_page_sha256": "e261e2f7d75824059f0ceadc837f65af5e332cf0ede34228adb9a8882631aefd",
     "x": -31.3,
     "z": -27.6,
+    "position_method": "address"
+  },
+  {
+    "id": "innosuisse",
+    "name": "Innosuisse",
+    "source_id": "innosuisse",
+    "host": "www.innosuisse.admin.ch",
+    "kind": "agency",
+    "address": "Einsteinstrasse 2",
+    "address_url": "https://www.innosuisse.admin.ch/en/privacy-policy",
+    "address_span": "Einsteinstrasse 2",
+    "address_fetched_at": "2026-10-18T21:23:11Z",
+    "address_page_sha256": "890a7662a4e34cabfb28d3fd9728c170962d61c2b6d32bf505d5208666dd5926",
+    "x": 4.2,
+    "z": 57.4,
     "position_method": "address"
   },
   {
@@ -297,6 +342,21 @@
     "address_page_sha256": "f94e9aa1d07bd05c83e9ea54651684b357db9f8d7e3f1a3d3d3ce62b181c2490",
     "x": -83.3,
     "z": 8.6,
+    "position_method": "address"
+  },
+  {
+    "id": "progr",
+    "name": "PROGR, rooms and studios for rent",
+    "source_id": "progr",
+    "host": "www.progr.ch",
+    "kind": "space",
+    "address": "Speichergasse 4",
+    "address_url": "https://www.progr.ch/de/vermietung/",
+    "address_span": "Speichergasse 4",
+    "address_fetched_at": "2026-10-18T21:27:35Z",
+    "address_page_sha256": "5eaf18de4cdb7c5ede1e32e3bb11c0f08e15990e075eabf8eb3e9a1a617e8f19",
+    "x": -15.3,
+    "z": -14.0,
     "position_method": "address"
   },
   {
