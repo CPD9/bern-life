@@ -64,10 +64,22 @@ export function useWalk({ map, start, inside, doors, framePoints }: WalkOptions)
     setFramed(framePoints);
     if (framePoints.length > 0) setFollowing(false);
   }
+  const [wasInside, setWasInside] = useState(inside);
+  if (inside !== wasInside) {
+    setWasInside(inside);
+    // Coming out, the door you stand at is offered at once, so focus can go straight to it.
+    if (inside) setPreview(null);
+    else setDoor(doorNear(doors, start));
+  }
 
-  // Arriving drops any path; the frame loop then sees it gone and clears the preview.
+  // Going in ends the walk, and no key held as the door closed is still walking you when you come
+  // out. Arriving drops any path; the frame loop then sees it gone.
   useEffect(() => {
-    if (inside) return;
+    if (inside) {
+      session.current = withPath(session.current, []);
+      held.current.clear();
+      return;
+    }
     session.current = arrive(map, start);
     wake.current();
   }, [inside, map, start]);

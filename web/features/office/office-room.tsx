@@ -153,6 +153,7 @@ export function OfficeRoom({
           </button>
           <button
             type="button"
+            data-office-exit
             onClick={onGoOutside}
             className="bg-chip rounded-pill px-5 py-2.5 font-bold"
           >

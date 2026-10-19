@@ -42,7 +42,13 @@ export function WalkControls({
       aria-label="Walking"
       className="bg-panel shadow-panel rounded-panel absolute bottom-[calc(6rem+env(safe-area-inset-bottom))] left-3 z-10 flex max-w-[calc(100%-6.5rem)] flex-wrap items-center gap-2 p-2 sm:left-4 sm:max-w-[calc(100%-2rem)]"
     >
-      <button type="button" aria-pressed={walking} onClick={onToggleWalking} className={TOGGLE}>
+      <button
+        type="button"
+        aria-pressed={walking}
+        data-walk-toggle
+        onClick={onToggleWalking}
+        className={TOGGLE}
+      >
         Walk
       </button>
       {walking && (

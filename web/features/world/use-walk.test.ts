@@ -85,16 +85,20 @@ describe("click-to-walk", () => {
 });
 
 describe("arriving", () => {
-  test("coming out of the office puts you back at your door", () => {
+  test("going in ends the walk and lets go of held keys; coming out puts you back at your door", () => {
     const { result, rerender } = walkFrom();
-    result.current.session.current = {
-      ...result.current.session.current,
-      walker: { at: [6, -6], heading: 1, path: [[7, -7]] },
-    };
+    act(() => result.current.toggleWalking());
+    act(() => result.current.goTo([6, -6]));
+    result.current.keys?.press("w");
+    act(() => result.current.setDoor(null));
     rerender({ inside: true, framePoints: NONE });
-    expect(result.current.session.current.walker.at).toEqual([6, -6]);
+    expect(result.current.session.current.walker.path).toEqual([]);
+    expect(result.current.preview).toBeNull();
+    expect(result.current.held.current.size).toBe(0);
     rerender({ inside: false, framePoints: NONE });
     expect(result.current.session.current.walker).toEqual({ at: [-5, 0], heading: 0, path: [] });
+    // Offered at once, before any frame has noticed you standing there.
+    expect(result.current.door).toBe(HOME);
   });
 
   test("a search shown on the map lets go of the follow camera", () => {
