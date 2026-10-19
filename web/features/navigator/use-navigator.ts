@@ -6,7 +6,7 @@ import { useCallback, useRef, useState } from "react";
 import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { SearchRequest } from "@/infrastructure/engine-types";
-import type { BriefInput, NavigatorApi, NavigatorFailure } from "./navigator-api";
+import type { BriefInput, NavigatorApi, NavigatorFailure, NavigatorOutcome } from "./navigator-api";
 import { answerEvents } from "./navigator-events";
 
 export type NavigatorRequest =
@@ -37,6 +37,13 @@ export type NavigatorController = {
   retry(): void;
 };
 
+// A brief the engine read no need from ran no search: its answer says why in `brief_unread` and
+// nothing about the pages, so it is a failure with that reason, not an abstention or a story event.
+function settled(outcome: NavigatorOutcome): NavigatorOutcome {
+  if (!outcome.ok || outcome.response.brief_unread === undefined) return outcome;
+  return { ok: false, failure: { kind: "unread", reason: outcome.response.brief_unread } };
+}
+
 export function useNavigator(
   api: NavigatorApi,
   events: AppEventSink = appEvents,
@@ -50,10 +57,11 @@ export function useNavigator(
     async (request: NavigatorRequest) => {
       const id = ++latest.current;
       setState({ status: "loading", request });
-      const outcome =
+      const outcome = settled(
         request.kind === "search"
           ? await api.search(request.search)
-          : await api.brief(request.brief);
+          : await api.brief(request.brief),
+      );
       if (id !== latest.current) return;
       if (!outcome.ok) {
         setState({ status: "failed", request, failure: outcome.failure });

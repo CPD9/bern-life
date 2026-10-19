@@ -30,5 +30,10 @@ describe("httpNavigatorApi", () => {
       ok: false,
       failure: { kind: "brief", reason: "no_text" },
     });
+    const long = Response.json({ error: "bad_request", reason: "too_long" }, { status: 400 });
+    expect(await answering(long).brief({ kind: "text", text: "x".repeat(20_001) })).toEqual({
+      ok: false,
+      failure: { kind: "brief", reason: "too_long" },
+    });
   });
 });

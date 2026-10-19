@@ -8,7 +8,7 @@ against a schema in this folder. POST is accepted from loopback only.
 |---|---|---|
 | `GET /api/health` | — | `health.schema.json` (mode, models per role, snapshot version, counts of pages, profiles, sources; optionally `status`, `uptime_s`, `failures_last_hour` per role and marker, and today's live call `budget`) |
 | `POST /api/search` | `{ "query": string, "lang"?: "de" \| "en" \| "fr", "sources"?: [source ids], "kinds"?: ["person" \| "unit" \| "project" \| "infrastructure" \| "call" \| "service" \| "space"] }`; without `kinds`, only person, unit, project and infrastructure are searched | `result.schema.json` |
-| `POST /api/brief` | `{ "text": string }` (plain text; the web app extracts it from an uploaded PDF and does not keep the file) | `result.schema.json` with `brief_terms` |
+| `POST /api/brief` | `{ "text": string }` (plain text, 1 to 20,000 characters; the web app extracts it from an uploaded PDF of at most 5 MB and 20 pages, joins words a line break split with a hyphen, collapses whitespace, refuses a longer text with a plain message and does not keep the file) | `result.schema.json` with `brief_terms`, and `brief_unread` saying why when no need was read |
 | `GET /api/profile/{id}` | — | `profile.schema.json` |
 | `POST /api/agent` | `{ "messages": [{ "role": "user" \| "assistant", "content": string }] }` (1 to 12, newest last, the last from the user; body at most 16 KB) | `agent.schema.json` |
 | `GET /api/sources` | — | `sources.schema.json` (each source with its hosts, profile kinds, page and profile counts, newest fetch) |

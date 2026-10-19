@@ -74,14 +74,20 @@ from a name.
 `versions.prompts` lists the prompt versions used (`expand-v1+explain-v2`).
 
 ## Project briefs (`POST /api/brief`, role `brief`, prompt `brief-v1`)
-`{"text": "..."}` (1 to 20,000 characters; the web app extracts it from the PDF and keeps no file)
-goes to the model as data and gives up to 6 needs, each a short term with a span copied from the
-brief. A need is kept only if its span occurs in the brief word for word, whitespace aside. Each
+`{"text": "..."}` (1 to 20,000 characters; the web app extracts it from the PDF, joins words a
+line break split with a hyphen, collapses whitespace, refuses a longer text with a plain message
+and keeps no file) goes to the model as data and gives up to 6 needs, each a short term with a
+span copied from the brief. A need is kept only if its span occurs in the brief word for word
+after the same normalisation on both sides (whitespace collapsed, hyphenated line breaks joined),
+and the stored span is cut from the normalised brief, never taken from the model's reply. Each
 kept need is expanded and searched like a question. A profile found by several needs keeps its
 best rank (then the higher fused score, then its id), and the unit cap applies to the merged list.
 A result's reason and explanation answer the need that ranked it best. `brief_terms` lists the
 kept needs with their spans, and `query` is the need terms joined by "; ". No kept need, or no
-need with a result, abstains with `no_verifiable_source`.
+need with a result, abstains with `no_verifiable_source`. When no need was read, `brief_unread`
+says why (`no_model`, `not_recorded` for a new brief whose call could not go live, `budget_used`,
+`model_failed`, `no_need_found`), and the web app shows one sentence per reason instead of "no
+verifiable source".
 
 ## Kinds: people and opportunities
 `POST /api/search` takes an optional `kinds` list. Without it, search covers person, unit,

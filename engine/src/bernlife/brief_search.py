@@ -5,8 +5,9 @@ question. A profile found by several needs keeps its best rank, ties going to th
 score, then to its id; the unit cap then applies to the merged list. A result's reason and
 explanation answer the need that ranked it best, so "why it matches" always names a need the
 company wrote. A brief whose recorded wording differs only by case or spacing goes to the model
-as recorded, so its needs and expansions replay; an unrecorded brief goes as written, line
-breaks and all, since its needs are checked as spans of that text.
+as recorded, so its needs and expansions replay; an unrecorded brief goes as written, since its
+needs are checked as spans of that text under the same normalisation. A brief no need was read
+from says why in `brief_unread`.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -35,7 +36,8 @@ def brief_search(
     recorded: Recorded | None = None,
 ) -> dict[str, Any]:
     recorded = from_repository() if recorded is None else recorded
-    needs = read_needs(llm, recorded_wording(text, llm.backend, recorded) or text)
+    reading = read_needs(llm, recorded_wording(text, llm.backend, recorded) or text)
+    needs = reading.needs
     with ThreadPoolExecutor(max_workers=max(1, len(needs))) as pool:
         expansions = map_in_scope(pool, lambda need: expand(llm, need.term), needs)
     assessments = [
@@ -60,6 +62,7 @@ def brief_search(
     response = {
         "query": "; ".join(need.term for need in needs),
         "brief_terms": [need.as_record() for need in needs],
+        **({"brief_unread": reading.unread} if reading.unread else {}),
         "abstained": not results,
         "abstain_reason": None if results else NO_SOURCE,
         "expanded_terms": list({t["term"]: t for t in terms}.values()),
