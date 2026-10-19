@@ -23,6 +23,7 @@ CHECKS = [
     ("health.schema.json", ["contracts/fixtures/health.json"]),
     ("agent.schema.json", ["contracts/fixtures/agent.json"]),
     ("sources.schema.json", ["contracts/fixtures/sources.json"]),
+    ("place-people.schema.json", ["contracts/fixtures/place-people.json"]),
     ("numbers.schema.json", ["contracts/fixtures/numbers.json"]),
     ("metrics.schema.json", ["eval/results/*/metrics.json"]),
     ("quest.schema.json", ["contracts/fixtures/story.json"]),

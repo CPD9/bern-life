@@ -6,6 +6,7 @@ import type {
   AgentReply,
   Health,
   Numbers,
+  PlacePeople,
   SearchResponse,
   SourcesList,
 } from "./contract-types.generated";
@@ -19,6 +20,7 @@ export type Fixtures = {
   readonly brief: SearchResponse;
   readonly agent: AgentReply;
   readonly sources: SourcesList;
+  readonly placePeople: PlacePeople;
   readonly numbers: Numbers;
   readonly health: Health;
 };
@@ -49,6 +51,7 @@ export function createFixtureClient(fixtures: Fixtures): EngineClient {
     brief: async () => ({ ok: true, value: fixtures.brief }),
     agent: async () => ({ ok: true, value: fixtures.agent }),
     sources: async () => ({ ok: true, value: fixtures.sources }),
+    placePeople: async () => ({ ok: true, value: fixtures.placePeople }),
     numbers: async () => ({ ok: true, value: fixtures.numbers }),
     health: async () => ({ ok: true, value: fixtures.health }),
   };

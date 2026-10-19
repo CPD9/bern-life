@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "place-people.schema.json",
+  "title": "PlacePeople",
+  "description": "GET /api/places/{source}/{host}/people. The person profiles of one place on the map (one host of a source), read from the loaded snapshot without a search: at most 30, ordered by name, with how many the place holds in all. Each profile carries its claims with evidence, like a search result.",
+  "type": "object",
+  "required": ["snapshot", "people", "total"],
+  "additionalProperties": false,
+  "properties": {
+    "snapshot": {
+      "type": "string"
+    },
+    "people": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "$ref": "profile.schema.json"
+      }
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

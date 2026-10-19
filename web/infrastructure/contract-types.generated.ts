@@ -484,3 +484,15 @@ export interface Tally {
   n: number;
   of: number;
 }
+
+/**
+ * GET /api/places/{source}/{host}/people. The person profiles of one place on the map (one host of a source), read from the loaded snapshot without a search: at most 30, ordered by name, with how many the place holds in all. Each profile carries its claims with evidence, like a search result.
+ */
+export interface PlacePeople {
+  snapshot: string;
+  /**
+   * @maxItems 30
+   */
+  people: Profile[];
+  total: number;
+}

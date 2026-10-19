@@ -25,6 +25,7 @@ const checkedSchemas = [
   "agent.schema.json",
   "sources.schema.json",
   "numbers.schema.json",
+  "place-people.schema.json",
 ];
 const referencedSchemas = ["profile.schema.json"];
 

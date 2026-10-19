@@ -5,6 +5,7 @@ import healthFixture from "../../contracts/fixtures/health.json";
 import numbersFixture from "../../contracts/fixtures/numbers.json";
 import abstainedFixture from "../../contracts/fixtures/result-abstained.json";
 import briefFixture from "../../contracts/fixtures/result-brief.json";
+import placePeopleFixture from "../../contracts/fixtures/place-people.json";
 import opportunitiesFixture from "../../contracts/fixtures/result-opportunities.json";
 import resultFixture from "../../contracts/fixtures/result.json";
 import sourcesFixture from "../../contracts/fixtures/sources.json";
@@ -12,6 +13,7 @@ import {
   parseAgentReply,
   parseHealth,
   parseNumbers,
+  parsePlacePeople,
   parseSearchResponse,
   parseSourcesList,
 } from "./contract";
@@ -36,6 +38,7 @@ function fixtureClient(): EngineClient {
     agent: required(parseAgentReply(agentFixture), "agent.json"),
     sources: required(parseSourcesList(sourcesFixture), "sources.json"),
     numbers: required(parseNumbers(numbersFixture), "numbers.json"),
+    placePeople: required(parsePlacePeople(placePeopleFixture), "place-people.json"),
     health: required(parseHealth(healthFixture), "health.json"),
   });
 }
