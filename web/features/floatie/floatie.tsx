@@ -32,7 +32,7 @@ export function Floatie({ name, figure, onSelect, state = "idle", lite = false }
   return (
     <button
       type="button"
-      aria-label={`${name}, your Navigator`}
+      aria-label={`${name}, your agent`}
       onClick={onSelect}
       onPointerEnter={() => setPointedAt(true)}
       onPointerLeave={() => setPointedAt(false)}
