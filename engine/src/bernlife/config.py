@@ -63,6 +63,23 @@ def engine_port(env: Mapping[str, str] = os.environ) -> int:
     return int(raw)
 
 
+def call_budget(env: Mapping[str, str] = os.environ, *, serving: bool) -> int | None:
+    """Live model calls allowed per UTC day, or None for no cap.
+
+    The server fails closed: with no budget, or one it cannot read, it makes no live call at all,
+    so nothing is spent that nobody decided to spend. A command run by hand keeps no cap unless
+    one is set, and a bad value stops it by name.
+    """
+    raw = env.get("LLM_CALL_BUDGET", "").strip()
+    if raw.isdecimal():
+        return int(raw)
+    if serving:
+        return 0
+    if not raw:
+        return None
+    raise ConfigError(f"LLM_CALL_BUDGET must be a whole number, not {raw!r}")
+
+
 def max_concurrency(env: Mapping[str, str] = os.environ) -> int:
     raw = env.get("LLM_MAX_CONCURRENCY", "")
     if not raw:

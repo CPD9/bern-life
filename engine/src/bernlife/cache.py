@@ -13,7 +13,7 @@ import json
 import lzma
 import os
 import threading
-from collections.abc import Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -40,13 +40,14 @@ def cache_roots(data_dir: Path) -> tuple[Path, Path]:
 
 def cache_key(
     model: str,
-    messages: Sequence[Message],
+    messages: Sequence[Mapping[str, Any]],
     temperature: float,
     seed: int | None,
     max_tokens: int,
     prompt_version: str,
+    tools: Sequence[Mapping[str, Any]] | None = None,
 ) -> str:
-    request = {
+    request: dict[str, Any] = {
         "model": model,
         "messages": list(messages),
         "temperature": temperature,
@@ -54,6 +55,9 @@ def cache_key(
         "max_tokens": max_tokens,
         "prompt_version": prompt_version,
     }
+    if tools is not None:
+        # Only a call offering tools carries the field, so every key recorded before stays valid.
+        request["tools"] = list(tools)
     return hashlib.sha256(
         json.dumps(request, sort_keys=True, ensure_ascii=False).encode()
     ).hexdigest()
@@ -123,6 +127,22 @@ def append_audit(root: Path, record: dict[str, object]) -> None:
     line = json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n"
     with _audit_lock, (root / AUDIT).open("a", encoding="utf-8") as audit:
         audit.write(line)
+
+
+def audit_records(root: Path) -> Iterator[dict[str, Any]]:
+    """The audit's records in order; a line cut off by a stopped run is skipped."""
+    try:
+        lines = (root / AUDIT).open(encoding="utf-8")
+    except FileNotFoundError:
+        return
+    with lines:
+        for line in lines:
+            try:
+                record = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(record, dict):
+                yield record
 
 
 def count_entries(roots: Sequence[Path]) -> dict[str, int]:

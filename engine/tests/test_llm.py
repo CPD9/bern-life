@@ -1,3 +1,4 @@
+import http.client
 import json
 import tempfile
 import threading
@@ -131,6 +132,8 @@ class RouterTest(unittest.TestCase):
             (TimeoutError(SECRET), "timeout"),
             (urllib.error.URLError(TimeoutError(SECRET)), "timeout"),
             (urllib.error.URLError(ConnectionRefusedError(SECRET)), "unreachable"),
+            (http.client.IncompleteRead(SECRET.encode()), "unreachable"),
+            (http.client.BadStatusLine(f"HTTP/1.1 9xx {SECRET}"), "unreachable"),
             (http_error(401, SECRET), "http_401"),
             (f"<html>{SECRET}</html>".encode(), "bad_json"),
             (json.dumps({"detail": SECRET}).encode(), "bad_json"),
