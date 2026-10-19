@@ -7,7 +7,7 @@ import { currentUser } from "@/features/accounts/accounts";
 import { admit } from "@/features/accounts/rate-limit";
 import type { User } from "@/features/accounts/store";
 import { type Sql, db } from "@/infrastructure/db";
-import { accountsEnv } from "@/infrastructure/env";
+import { accountsEnv, env, hasDatabase } from "@/infrastructure/env";
 import { fromOwnOrigin, sessionToken } from "@/infrastructure/session";
 
 export type MemberRouteDeps = {
@@ -69,6 +69,15 @@ export async function admittedFor(
     return { ok: false, response: failure("rate_limited") };
   }
   return signedIn;
+}
+
+/**
+ * True under DEMO_FIXTURES with no DATABASE_URL, as `PORT=3012 DEMO_FIXTURES=1 bun run dev` runs:
+ * there are no accounts, so nobody is signed in and the directory holds only the demo members.
+ * Without DEMO_FIXTURES a missing database stays an error.
+ */
+export function withoutAccounts(): boolean {
+  return env().demoFixtures && !hasDatabase();
 }
 
 export function appMemberDeps(): MemberRouteDeps {

@@ -1,8 +1,9 @@
-import { appMemberDeps } from "../member-route";
+import { appMemberDeps, failure, withoutAccounts } from "../member-route";
 import { askToConnect, listRequests } from "./handlers";
 
 /** Every connection request you sent or received, newest first. */
-export function GET(request: Request): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
+  if (withoutAccounts()) return failure("unauthenticated");
   return listRequests(request, appMemberDeps());
 }
 

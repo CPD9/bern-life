@@ -34,6 +34,12 @@ describe.skipIf(testDb === null)("connection routes against a throwaway database
         requests: { person: { handle: string }; status: string; direction: string }[];
       }
     ).requests.map((r) => `${r.person.handle}:${r.status}:${r.direction}`);
+  const unread = async (as: TestMember) =>
+    (
+      (await json(await listRequests(request("/api/connections", { as }), deps))) as {
+        requests: { unread: boolean }[];
+      }
+    ).requests.map((r) => r.unread);
   const told = async (as: TestMember) =>
     (
       (await json(await listNotifications(request("/api/notifications", { as }), deps))) as {
@@ -100,6 +106,9 @@ describe.skipIf(testDb === null)("connection routes against a throwaway database
     expect(await requests(ada)).toEqual(["bea:accepted:outgoing"]);
     expect(await told(ada)).toEqual(["Bea accepted your request"]);
     expect(await told(bea)).toEqual(["You and Ada are connected (read)"]);
+    expect([await unread(ada), await unread(bea)]).toEqual([[true], [false]]);
+    await sql`update notification set read_at = ${NOW} where user_id = ${ada.id}`;
+    expect(await unread(ada)).toEqual([false]);
     const again = await ask(ada, { handle: "bea" });
     expect([again.status, await again.json()]).toEqual([409, { error: "connected" }]);
   });

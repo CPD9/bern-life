@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { connectedPeople, gainedConnection, relationTo, waitingForYou } from "./network";
+import {
+  acceptedWhileAway,
+  connectedPeople,
+  gainedConnection,
+  relationTo,
+  waitingForYou,
+} from "./network";
 import type { ConnectionView } from "./types";
 
 function request(
@@ -16,6 +22,7 @@ function request(
     note: direction === "incoming" ? "Hello" : null,
     createdAt: "2026-10-19T08:00:00.000Z",
     respondedAt: null,
+    unread: false,
   };
 }
 
@@ -55,5 +62,15 @@ describe("network", () => {
       true,
       false,
     ]);
+  });
+
+  test("accepted while away means one you sent, accepted, with its notification unread", () => {
+    const unread = (id: string) => requests.map((r) => (r.id === id ? { ...r, unread: true } : r));
+    expect([
+      acceptedWhileAway(requests),
+      acceptedWhileAway(unread("r6")),
+      acceptedWhileAway(unread("r5")),
+      acceptedWhileAway(unread("r1")),
+    ]).toEqual([false, true, false, false]);
   });
 });

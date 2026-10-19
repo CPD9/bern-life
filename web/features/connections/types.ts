@@ -12,4 +12,6 @@ export type ConnectionView = {
   note: string | null;
   createdAt: string;
   respondedAt: string | null;
+  /** You have an unread notification about it, as when it was accepted while you were away. */
+  unread: boolean;
 };

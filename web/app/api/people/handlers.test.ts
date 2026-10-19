@@ -1,9 +1,27 @@
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
+import { HANDLE } from "@/features/accounts/input";
+import { DEMO_MEMBERS } from "@/features/people/demo-members";
 import { saveOffice } from "@/features/people/store";
 import type { Sql } from "@/infrastructure/db";
 import { SKIPPED, emptyTables, openTestDb } from "@/infrastructure/test-database";
 import { NOW, type TestMember, member, request, testDeps } from "../testing";
-import { listPeople, officeOf } from "./handlers";
+import { demoOfficeOf, demoPeople, listPeople, officeOf } from "./handlers";
+
+describe("demo members", () => {
+  test("no demo handle can be taken at sign-up", () => {
+    expect(DEMO_MEMBERS.map((m) => m.handle).filter((handle) => HANDLE.test(handle))).toEqual([]);
+  });
+
+  test("with no database the directory is the demo members alone, and only theirs open", async () => {
+    const { people } = (await demoPeople().json()) as { people: { handle: string; demo?: true }[] };
+    expect(people.map((p) => `${p.handle}:${p.demo === true}`)).toEqual([
+      "demo-lena:true",
+      "demo-marco:true",
+      "demo-sophie:true",
+    ]);
+    expect([demoOfficeOf("demo-lena").status, demoOfficeOf("bea").status]).toEqual([200, 404]);
+  });
+});
 
 const testDb = openTestDb();
 if (testDb === null) test.skip(SKIPPED, () => {});
@@ -50,11 +68,11 @@ describe.skipIf(testDb === null)("people routes against a throwaway database", (
   test("demo members exist only under DEMO_FIXTURES, marked demo, with offices open to visit", async () => {
     expect(await listed(null, fixtures)).toEqual([
       "bea:-",
-      "demo_lena:visit:demo",
-      "demo_marco:visit:demo",
-      "demo_sophie:visit:demo",
+      "demo-lena:visit:demo",
+      "demo-marco:visit:demo",
+      "demo-sophie:visit:demo",
     ]);
-    expect([await visit(null, "demo_lena", fixtures), await visit(null, "demo_lena")]).toEqual([
+    expect([await visit(null, "demo-lena", fixtures), await visit(null, "demo-lena")]).toEqual([
       200, 404,
     ]);
     expect(await listed(null)).toEqual(["bea:-"]);

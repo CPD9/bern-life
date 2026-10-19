@@ -4,7 +4,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Button } from "@/infrastructure/ui/button";
 import { type ConnectionsApi, FAILURE_TEXT, type Member } from "./connections-api";
 import type { Answer } from "./input";
-import { MemberRow } from "./member-row";
+import { AnswerButtons, MemberRow } from "./member-row";
 import { connectedPeople, relationTo, waitingForYou } from "./network";
 import { OfficeVisit } from "./office-visit";
 import type { ConnectionsController } from "./use-connections";
@@ -55,7 +55,9 @@ export function ConnectionsApp({ controller, api, onMessage, renderRoom }: Conne
   if (controller.status === "failed") {
     return (
       <div className="flex flex-col items-start gap-2">
-        <p role="alert">Members could not be loaded. {FAILURE_TEXT.network}</p>
+        <p role="alert">
+          Members could not be loaded. {FAILURE_TEXT[controller.failure ?? "network"]}
+        </p>
         <Button onClick={() => void refresh()}>Try again</Button>
       </div>
     );
@@ -99,10 +101,10 @@ export function ConnectionsApp({ controller, api, onMessage, renderRoom }: Conne
                 </span>
                 {request.note && <p className="text-sm whitespace-pre-line">{request.note}</p>}
                 <div className="flex gap-2">
-                  <Button variant="primary" onClick={() => void respond(request.id, "accept")}>
-                    Accept
-                  </Button>
-                  <Button onClick={() => void respond(request.id, "decline")}>Decline</Button>
+                  <AnswerButtons
+                    name={request.person.displayName}
+                    onAnswer={(answer) => void respond(request.id, answer)}
+                  />
                 </div>
               </li>
             ))}

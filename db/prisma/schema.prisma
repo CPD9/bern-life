@@ -3,8 +3,9 @@
 // check and the evidence-span trigger) is written by hand in the migration SQL; see db/README.md.
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/client"
+  provider        = "prisma-client"
+  output          = "../generated/client"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -530,8 +531,9 @@ model ConnectionRequest {
 
 // In-app notifications (B3): whom, what kind, and the id of what it is about (a conversation, a
 // connection request), never what was said. `ref` is a uuid column, so no text can be kept in it;
-// the app reads the current state of what it points at when it lists them. Nothing here leaves
-// the app: there is no push subscription, no email address and no outbox.
+// the app reads the current state of what it points at when it lists them, and holds at most one
+// unread notification per member and thing. Nothing here leaves the app: there is no push
+// subscription, no email address and no outbox.
 enum NotificationKind {
   message
   connection
@@ -546,6 +548,7 @@ model Notification {
   readAt    DateTime?        @map("read_at") @db.Timestamptz(3)
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, kind, ref], map: "notification_unread_key", where: raw("read_at IS NULL"))
   @@index([userId, createdAt])
   @@index([kind, ref])
   @@map("notification")

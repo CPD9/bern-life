@@ -30,6 +30,30 @@ type MemberRowProps = {
   onAnswer: (id: string, answer: Answer) => void;
 };
 
+/** Accept and Decline, each naming whose request it answers, so a list of several reads apart. */
+export function AnswerButtons({
+  name,
+  onAnswer,
+}: {
+  name: string;
+  onAnswer: (answer: "accept" | "decline") => void;
+}) {
+  return (
+    <>
+      <Button
+        variant="primary"
+        onClick={() => onAnswer("accept")}
+        aria-label={`Accept ${name}'s request`}
+      >
+        Accept
+      </Button>
+      <Button onClick={() => onAnswer("decline")} aria-label={`Decline ${name}'s request`}>
+        Decline
+      </Button>
+    </>
+  );
+}
+
 function RelationControls({
   member,
   relation,
@@ -38,6 +62,7 @@ function RelationControls({
 }: Pick<MemberRowProps, "member" | "relation" | "onAsk" | "onAnswer">) {
   const [asking, setAsking] = useState(false);
   const connect = useRef<HTMLButtonElement>(null);
+  const name = member.displayName;
   const cancelled = useRef(false);
   // Cancel gives focus back to the Connect button that opened the form.
   useEffect(() => {
@@ -70,21 +95,19 @@ function RelationControls({
       return (
         <>
           <StatusChip tone="neutral">Request sent</StatusChip>
-          <Button onClick={() => onAnswer(relation.id, "withdraw")}>Withdraw</Button>
+          <Button
+            onClick={() => onAnswer(relation.id, "withdraw")}
+            aria-label={`Withdraw your request to ${name}`}
+          >
+            Withdraw
+          </Button>
         </>
       );
     case "asks-you":
-      return (
-        <>
-          <Button variant="primary" onClick={() => onAnswer(relation.id, "accept")}>
-            Accept
-          </Button>
-          <Button onClick={() => onAnswer(relation.id, "decline")}>Decline</Button>
-        </>
-      );
+      return <AnswerButtons name={name} onAnswer={(answer) => onAnswer(relation.id, answer)} />;
     default:
       return (
-        <Button ref={connect} onClick={() => setAsking(true)}>
+        <Button ref={connect} onClick={() => setAsking(true)} aria-label={`Connect with ${name}`}>
           Connect
         </Button>
       );

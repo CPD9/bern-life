@@ -2,9 +2,9 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 import { Sheet } from "@/infrastructure/ui/sheet";
-import type { ConnectionsApi, Member } from "./connections-api";
+import { type ConnectionsApi, FAILURE_TEXT, type Member } from "./connections-api";
 
-type Door = "knocking" | "open" | "closed" | "unreachable";
+type Door = "knocking" | "open" | "closed" | "network" | "unavailable";
 
 type OfficeVisitProps = {
   member: Member;
@@ -24,7 +24,9 @@ export function OfficeVisit({ member, api, renderRoom, onClose }: OfficeVisitPro
     void api.office(member.handle).then((outcome) => {
       if (!current) return;
       if (outcome.ok) setDoor("open");
-      else setDoor(outcome.failure === "network" ? "unreachable" : "closed");
+      else if (outcome.failure === "network" || outcome.failure === "unavailable") {
+        setDoor(outcome.failure);
+      } else setDoor("closed");
     });
     return () => {
       current = false;
@@ -40,8 +42,8 @@ export function OfficeVisit({ member, api, renderRoom, onClose }: OfficeVisitPro
           </p>
         )}
         {door === "closed" && <p role="status">This office is not open to you.</p>}
-        {door === "unreachable" && (
-          <p role="status">The server could not be reached. Try again in a moment.</p>
+        {(door === "network" || door === "unavailable") && (
+          <p role="status">{FAILURE_TEXT[door]}</p>
         )}
         {door === "open" && (
           <>

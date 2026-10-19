@@ -18,6 +18,7 @@ type Row = {
   respondedAt: Date | null;
   handle: string;
   displayName: string;
+  unread: boolean;
 };
 
 function view(row: Row): ConnectionView {
@@ -29,6 +30,7 @@ function view(row: Row): ConnectionView {
     note: row.note,
     createdAt: row.createdAt.toISOString(),
     respondedAt: row.respondedAt === null ? null : row.respondedAt.toISOString(),
+    unread: row.unread,
   };
 }
 
@@ -90,12 +92,16 @@ export async function withdrawRequest(
   return row?.toId ?? null;
 }
 
-/** Every request you sent or received, newest first; withdrawn ones are gone for both sides. */
+/** Every request you sent or received, newest first; withdrawn ones are gone for both sides.
+ *  Each says whether a notification of yours about it is still unread. */
 export async function requestsOf(db: Db, me: string): Promise<ConnectionView[]> {
   const rows = await db<Row[]>`
     select r.id, r.status::text as status, r.from_id = ${me} as outgoing, r.note,
            r.created_at as "createdAt", r.responded_at as "respondedAt",
-           u.handle, u.display_name as "displayName"
+           u.handle, u.display_name as "displayName",
+           exists (select 1 from notification n
+                   where n.user_id = ${me} and n.kind = 'connection' and n.ref = r.id
+                     and n.read_at is null) as unread
     from connection_request r
     join app_user u on u.id = case when r.from_id = ${me} then r.to_id else r.from_id end
     where (r.from_id = ${me} or r.to_id = ${me}) and r.status <> 'withdrawn'

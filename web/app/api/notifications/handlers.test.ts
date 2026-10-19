@@ -1,5 +1,6 @@
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { startConversation } from "@/features/messages/store";
+import { notifyUser } from "@/features/notifications/server-store";
 import type { Sql } from "@/infrastructure/db";
 import { SKIPPED, emptyTables, openTestDb } from "@/infrastructure/test-database";
 import { postAndTell, readArrivals } from "../messages/arrivals";
@@ -94,6 +95,13 @@ describe.skipIf(testDb === null)("notification routes against a throwaway databa
     expect((await list(bea)).map((n) => n.read)).toEqual([true]);
     await postAndTell(sql, ada.id, id, "A third", new Date(NOW.getTime() + 60_000));
     expect((await list(bea)).map((n) => n.read)).toEqual([false, true]);
+  });
+
+  test("notifications about one thing at the same moment leave one unread", async () => {
+    const id = await directWith(ada, bea);
+    await Promise.all([1, 2, 3, 4].map(() => notifyUser(sql, bea.id, "message", id, NOW)));
+    const rows = await sql`select read_at from notification where user_id = ${bea.id}`;
+    expect(rows.map((row) => row.read_at)).toEqual([null]);
   });
 
   test("a notification that cannot be written is logged and the message still counts", async () => {

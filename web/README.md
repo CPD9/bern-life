@@ -21,12 +21,12 @@ Each lane runs the dev server on its own port (`CONTRIBUTING.md`). The server bi
 
 Read only in `infrastructure/env.ts`.
 
-| Variable        | Meaning                                                                                                                                                              |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ENGINE_URL`    | Engine base URL, e.g. `http://127.0.0.1:8100`. Required unless `DEMO_FIXTURES=1`.                                                                                    |
-| `DEMO_FIXTURES` | `1` renders the invented fixtures from `contracts/fixtures/` instead of calling the engine.                                                                          |
-| `DATABASE_URL`  | Postgres for accounts and messages. Needed only by `/api/auth/*`; tests run against it only when it names a throwaway database (`bernlife_l1`..`l3`, `bernlife_ci`). |
-| `APP_ORIGIN`    | The app's own origin for the CSRF origin check, default `http://127.0.0.1:3000`.                                                                                     |
+| Variable        | Meaning                                                                                                                                                                                                                                                               |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ENGINE_URL`    | Engine base URL, e.g. `http://127.0.0.1:8100`. Required unless `DEMO_FIXTURES=1`.                                                                                                                                                                                     |
+| `DEMO_FIXTURES` | `1` renders the invented fixtures from `contracts/fixtures/` instead of calling the engine.                                                                                                                                                                           |
+| `DATABASE_URL`  | Postgres for accounts, messages, connections and notifications; without it nobody can sign in, and under `DEMO_FIXTURES` Connections lists the DEMO members alone. Tests run against it only when it names a throwaway database (`bernlife_l1`..`l3`, `bernlife_ci`). |
+| `APP_ORIGIN`    | The app's own origin for the CSRF origin check, default `http://127.0.0.1:3000`.                                                                                                                                                                                      |
 
 Accounts are invite-only: `bun run invite:create --count 3` prints codes once and stores only their hashes.
 
@@ -58,7 +58,7 @@ message or a request leaves an in-app notification (`GET /api/notifications`,
 `POST /api/notifications/read`, `PUT /api/notifications/preferences`) that holds a kind and an id,
 never text; nothing is sent outside the app. Every change checks the origin, the session and a
 per-member limit. Under `DEMO_FIXTURES` three invented members, labelled DEMO, can be visited but
-not messaged or asked.
+not messaged or asked; their handles (`demo-lena`) hold a hyphen, which sign-up refuses.
 
 ## Settings
 

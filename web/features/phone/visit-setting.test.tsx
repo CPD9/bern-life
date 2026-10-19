@@ -28,6 +28,21 @@ describe("VisitSetting", () => {
     expect(screen.getByText("Saved.")).toBeTruthy();
   });
 
+  test("a stored Public is shown as Public, and the text says visitors must see your profile", async () => {
+    const api: VisitApi = {
+      load: async () => ({
+        status: "ready",
+        handle: "bea",
+        office: { plot, layout: null, visitVisibility: "public" },
+      }),
+      save: async () => true,
+    };
+    await act(async () => render(<VisitSetting api={api} />));
+    expect((screen.getByLabelText("Public") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Members") as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByText(/Members who can see your profile/)).toBeTruthy();
+  });
+
   test("signed out there is nothing to choose", async () => {
     const api: VisitApi = { load: async () => ({ status: "signed-out" }), save: async () => true };
     await act(async () => render(<VisitSetting api={api} />));

@@ -92,14 +92,18 @@ export function VisitSetting({ api }: { api: VisitApi }) {
     setNotice(saved ? "Saved." : "Not saved. Try again in a moment.");
   }
 
-  const visible = office.visitVisibility === "public" ? "members" : office.visitVisibility;
+  // A stored `public` is shown as it is, as the profile setting does, rather than as Members.
+  const shown =
+    office.visitVisibility === "public"
+      ? [...choices, { value: "public" as const, label: "Public" }]
+      : choices;
   return (
     <div className="flex flex-col gap-1">
       <ChoiceRow
         title="Who may visit your office"
-        description="Members can look around your office from Connections. Nothing in it can be changed by a visitor."
-        choices={choices}
-        value={visible}
+        description="Members who can see your profile can look around your office from Connections, so with your profile on Only me nobody can. A visitor cannot change anything."
+        choices={shown}
+        value={office.visitVisibility}
         onChange={(next) => void change(next)}
       />
       <p aria-live="polite" className="text-muted min-h-5 text-sm">

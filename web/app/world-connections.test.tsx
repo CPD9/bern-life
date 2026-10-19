@@ -5,7 +5,7 @@ import type { ConnectionView } from "@/features/connections/types";
 import type { AppEventName } from "@/infrastructure/app-events";
 import { useMessageWith, useWorldConnections } from "./world-connections";
 
-function asked(status: ConnectionView["status"]): ConnectionView {
+function asked(status: ConnectionView["status"], unread = false): ConnectionView {
   return {
     id: "r1",
     person: { handle: "bea", displayName: "Bea Example" },
@@ -14,13 +14,14 @@ function asked(status: ConnectionView["status"]): ConnectionView {
     note: null,
     createdAt: "2026-10-19T08:00:00.000Z",
     respondedAt: null,
+    unread,
   };
 }
 
 const renderRoom = (ownerName: string) => `room of ${ownerName}`;
 
-function fakeApi(signedIn: boolean) {
-  let requests = [asked("pending")];
+function fakeApi(signedIn: boolean, first = asked("pending")) {
+  let requests = [first];
   const api: ConnectionsApi = {
     people: async () => ({ ok: true, value: [] }),
     requests: async () =>
@@ -51,6 +52,21 @@ describe("useWorldConnections", () => {
     await act(async () => result.current.wiring.controller.refresh());
     expect(heard).toEqual(["connection_saved"]);
     expect(result.current.people).toEqual([{ handle: "bea", displayName: "Bea Example" }]);
+  });
+
+  test("a request accepted while you were away completes connection_saved on the first read", async () => {
+    const heard: AppEventName[] = [];
+    const told = (unread: boolean) => {
+      const { api } = fakeApi(true, asked("accepted", unread));
+      const events = { emit: (name: AppEventName) => void heard.push(name) };
+      return renderHook(() => useWorldConnections({ signedIn: true, renderRoom, api, events }));
+    };
+    told(false);
+    await act(async () => {});
+    expect(heard).toEqual([]);
+    told(true);
+    await act(async () => {});
+    expect(heard).toEqual(["connection_saved"]);
   });
 
   test("signed out there are no people, and the host's room is what a visit shows", async () => {

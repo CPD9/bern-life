@@ -37,6 +37,11 @@ export function waitingForYou(requests: readonly ConnectionView[]): ConnectionVi
   return requests.filter((r) => r.status === "pending" && r.direction === "incoming");
 }
 
+/** True when a request you sent was accepted while you were away: its notification is unread. */
+export function acceptedWhileAway(requests: readonly ConnectionView[]): boolean {
+  return requests.some((r) => r.status === "accepted" && r.direction === "outgoing" && r.unread);
+}
+
 /** True when `after` holds an accepted connection that `before` did not. */
 export function gainedConnection(
   before: readonly ConnectionView[],

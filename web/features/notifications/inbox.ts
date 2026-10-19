@@ -1,7 +1,8 @@
 // The bell's one list: notifications this browser raised itself (a loop's news) and those the
 // server keeps for a signed-in member (a message arrived, someone asked to connect). Both read
 // and mark the same way. What the server already held when this visit began is marked `earlier`,
-// so it waits in the bell instead of popping up as a toast. Signed out, the server part is empty.
+// so it waits in the bell instead of popping up as a toast. Signed out, the server part is empty;
+// a read that fails (a restart, a laptop waking) keeps what the bell holds until the next one.
 import type { AppNotification, NotificationStore } from "./notification-store";
 
 /** What GET /api/notifications lists: names and fixed words only, never a message's text. */
@@ -9,9 +10,11 @@ export type InboxItem = Pick<AppNotification, "id" | "title" | "body" | "at" | "
   kind: "message" | "connection";
 };
 
+/** One read of the server's list: the items, signed out (401), or not read this time. */
+export type InboxRead = InboxItem[] | "signed-out" | "unreachable";
+
 export type InboxApi = {
-  /** Null when signed out or unreachable. */
-  list(): Promise<InboxItem[] | null>;
+  list(): Promise<InboxRead>;
   read(ids: readonly string[] | "all"): Promise<void>;
 };
 
@@ -80,12 +83,13 @@ export function createInbox(local: NotificationStore, api: InboxApi): Inbox {
     },
     refresh: async () => {
       const items = await api.list();
+      if (items === "unreachable") return;
       const before = new Map(server.map((item) => [item.id, item]));
-      const next = (items ?? []).map((item) => {
+      const next = (items === "signed-out" ? [] : items).map((item) => {
         const earlier = !loaded || before.get(item.id)?.earlier === true;
         return earlier ? { ...item, earlier: true } : item;
       });
-      loaded = items !== null;
+      loaded = items !== "signed-out";
       const same =
         next.length === server.length &&
         next.every((item, index) => {
@@ -104,10 +108,11 @@ export function inboxApiOver(
     list: async () => {
       try {
         const response = await send("/api/notifications", { method: "GET" });
-        if (!response.ok) return null;
+        if (response.status === 401) return "signed-out";
+        if (!response.ok) return "unreachable";
         return ((await response.json()) as { notifications: InboxItem[] }).notifications;
       } catch {
-        return null;
+        return "unreachable";
       }
     },
     read: async (ids) => {

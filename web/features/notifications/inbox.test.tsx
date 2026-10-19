@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { act, render, renderHook, screen } from "@testing-library/react";
-import { type InboxApi, type InboxItem, createInbox, inboxApiOver } from "./inbox";
+import { type InboxApi, type InboxItem, type InboxRead, createInbox, inboxApiOver } from "./inbox";
 import { createNotificationStore } from "./notification-store";
 import { Toasts } from "./toasts";
 import { INBOX_POLL_MS, useInboxSync } from "./use-notifications";
@@ -10,19 +10,19 @@ function item(id: string, minute: number, title = `Note ${id}`): InboxItem {
   return { id, kind: "message", title, body: "Open Messages to read it.", at, read: false };
 }
 
-function fakeServer(initial: InboxItem[] | null) {
+function fakeServer(initial: InboxRead) {
   let items = initial;
   const reads: (readonly string[] | "all")[] = [];
   const api: InboxApi = {
-    list: async () => (items === null ? null : items.map((entry) => ({ ...entry }))),
+    list: async () => (typeof items === "string" ? items : items.map((entry) => ({ ...entry }))),
     read: async (ids) => {
       reads.push(ids);
     },
   };
-  return { api, reads, set: (next: InboxItem[] | null) => (items = next) };
+  return { api, reads, set: (next: InboxRead) => (items = next) };
 }
 
-function setup(initial: InboxItem[] | null) {
+function setup(initial: InboxRead) {
   let count = 0;
   const storage = { getItem: () => null, setItem: () => {} };
   const local = createNotificationStore(() => storage, {
@@ -73,9 +73,22 @@ describe("createInbox", () => {
   test("signed out, the server's part is empty", async () => {
     const { inbox, server } = setup([item("s1", 1)]);
     await inbox.refresh();
-    server.set(null);
+    server.set("signed-out");
     await inbox.refresh();
     expect(inbox.list()).toEqual([]);
+  });
+
+  test("a failed read keeps the bell, and what arrived meanwhile still pops up", async () => {
+    const { inbox, server } = setup([item("s1", 1, "Ada asks to connect")]);
+    render(<Toasts store={inbox} reducedMotion />);
+    await act(async () => inbox.refresh());
+    server.set("unreachable");
+    await act(async () => inbox.refresh());
+    expect(inbox.list().map((n) => n.id)).toEqual(["s1"]);
+    server.set([item("s2", 7, "New message from Bea"), item("s1", 1, "Ada asks to connect")]);
+    await act(async () => inbox.refresh());
+    expect(screen.getByText("New message from Bea")).toBeTruthy();
+    expect(screen.queryByText("Ada asks to connect")).toBeNull();
   });
 });
 
@@ -100,21 +113,29 @@ describe("useInboxSync", () => {
 });
 
 describe("inboxApiOver", () => {
-  test("lists from the route, null when refused, and posts reads", async () => {
+  test("lists from the route, tells signed out from unreachable, and posts reads", async () => {
     const sent: [string, string | undefined, unknown][] = [];
+    let listed = 401;
     const api = inboxApiOver(async (path, init) => {
       sent.push([path, init.method, init.body ?? null]);
       return path === "/api/notifications"
-        ? new Response(null, { status: 401 })
+        ? new Response(null, { status: listed })
         : new Response(null, { status: 204 });
     });
-    expect(await api.list()).toBeNull();
+    expect(await api.list()).toBe("signed-out");
+    listed = 500;
+    expect(await api.list()).toBe("unreachable");
     await api.read(["n1"]);
     await api.read("all");
     expect(sent).toEqual([
       ["/api/notifications", "GET", null],
+      ["/api/notifications", "GET", null],
       ["/api/notifications/read", "POST", '{"ids":["n1"]}'],
       ["/api/notifications/read", "POST", '{"all":true}'],
     ]);
+    const down = inboxApiOver(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    expect(await down.list()).toBe("unreachable");
   });
 });

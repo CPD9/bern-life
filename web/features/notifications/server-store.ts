@@ -1,7 +1,8 @@
 // The SQL behind in-app notifications kept for an account. A row says whom, what kind and the id
 // of what it is about; listing reads the current state of that thing (who asked, who wrote) and
 // never a message's text. One unread notification per thing is enough: a second message in the
-// same conversation does not add another. Someone who turned in-app notifications off gets none.
+// same conversation does not add another, and a unique index on the unread ones keeps it so when
+// two arrive at once. Someone who turned in-app notifications off gets none.
 import type { Db } from "@/infrastructure/db";
 
 export type ServerKind = "message" | "connection";
@@ -30,8 +31,7 @@ export async function notifyUser(
   await db`insert into notification (id, user_id, kind, ref, created_at)
     select gen_random_uuid(), ${userId}, ${kind}, ${ref}, ${now}
     where coalesce((select in_app from notification_preference where user_id = ${userId}), true)
-      and not exists (select 1 from notification
-                      where user_id = ${userId} and kind = ${kind} and ref = ${ref} and read_at is null)`;
+    on conflict (user_id, kind, ref) where read_at is null do nothing`;
 }
 
 /** Marks what one person was told about a thing as read, as reading the conversation does. */

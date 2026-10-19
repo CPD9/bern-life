@@ -20,6 +20,7 @@ export type ConnectionsFailure =
   | "connected"
   | "bad_request"
   | "rate_limited"
+  | "unavailable"
   | "network";
 export type Outcome<T> = { ok: true; value: T } | { ok: false; failure: ConnectionsFailure };
 export type Fetch = (path: string, init: RequestInit) => Promise<Response>;
@@ -56,6 +57,7 @@ async function call<T>(send: Fetch, path: string, body?: unknown): Promise<Outco
     const payload: unknown =
       response.status === 204 ? null : await response.json().catch(() => null);
     if (response.ok) return { ok: true, value: payload as T };
+    if (response.status >= 500) return { ok: false, failure: "unavailable" };
     const marker = (payload as { error?: unknown } | null)?.error;
     return { ok: false, failure: KNOWN.find((known) => known === marker) ?? "network" };
   } catch {
@@ -93,5 +95,6 @@ export const FAILURE_TEXT: Record<ConnectionsFailure, string> = {
   connected: "You are already connected.",
   bad_request: "Check the note: it can be up to 280 characters.",
   rate_limited: "That was a lot at once. Wait a few minutes and try again.",
+  unavailable: "The server is up, but members are not available on it right now.",
   network: "The server could not be reached. Try again in a moment.",
 };

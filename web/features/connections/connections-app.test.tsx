@@ -19,7 +19,7 @@ const BEA: Member = {
 };
 const CEM: Member = { handle: "cem", displayName: "Cem Example", role: null, canVisit: true };
 const DEMO: Member = {
-  handle: "demo_lena",
+  handle: "demo-lena",
   displayName: "Lena Beispiel",
   role: "company",
   canVisit: true,
@@ -40,6 +40,7 @@ function request(
     note: direction === "incoming" ? "Shall we talk about sensors?" : null,
     createdAt: "2026-10-19T08:00:00.000Z",
     respondedAt: null,
+    unread: false,
   };
 }
 
@@ -124,7 +125,7 @@ describe("ConnectionsApp", () => {
       "Invented for the demo: no messages or requests.",
     );
     expect(screen.queryByRole("button", { name: /^Message/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Connect" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Connect/ })).toBeNull();
     expect(screen.getAllByRole("button", { name: /^Visit office of/ }).length).toBe(2);
     expect(screen.queryByText("Your connections")).toBeNull();
   });
@@ -132,7 +133,7 @@ describe("ConnectionsApp", () => {
   test("Connect sends a note with the request, then offers to withdraw", async () => {
     const server = fakeServer();
     await shown(server.api);
-    await click("Connect", row("Bea Example"));
+    await click("Connect with Bea Example", row("Bea Example"));
     const note = screen.getByLabelText("A note for Bea Example (optional)");
     expect(document.activeElement).toBe(note);
     expect(note.getAttribute("maxlength")).toBe("280");
@@ -142,9 +143,11 @@ describe("ConnectionsApp", () => {
     expect(server.asked).toEqual([{ handle: "bea", note: "Glucose sensors?" }]);
     expect(row("Bea Example").textContent).toContain("Request sent");
     expect(document.activeElement).toBe(screen.getByText("Request sent to Bea Example."));
-    await click("Withdraw", row("Bea Example"));
+    await click("Withdraw your request to Bea Example", row("Bea Example"));
     expect(server.answered).toEqual([{ id: "r-bea", answer: "withdraw" }]);
-    expect(within(row("Bea Example")).getByRole("button", { name: "Connect" })).toBeTruthy();
+    expect(
+      within(row("Bea Example")).getByRole("button", { name: "Connect with Bea Example" }),
+    ).toBeTruthy();
   });
 
   test("accepting a request connects you once, and Message opens the thread by handle", async () => {
@@ -154,7 +157,10 @@ describe("ConnectionsApp", () => {
     const asking = screen.getByRole("heading", { name: "Asking to connect" })
       .parentElement as HTMLElement;
     expect(asking.textContent).toContain("Shall we talk about sensors?");
-    await click("Accept", asking);
+    expect(
+      within(asking).getByRole("button", { name: "Decline Cem Example's request" }),
+    ).toBeTruthy();
+    await click("Accept Cem Example's request", asking);
     expect(server.answered).toEqual([{ id: "r1", answer: "accept" }]);
     expect(connected).toBe(1);
     expect(screen.queryByRole("heading", { name: "Asking to connect" })).toBeNull();
@@ -177,23 +183,23 @@ describe("ConnectionsApp", () => {
     await click("Visit office of Cem Example");
     expect(screen.getByText("This office is not open to you.")).toBeTruthy();
     expect(screen.queryByText("Room of Cem Example")).toBeNull();
-    expect(server.visited).toEqual(["demo_lena", "cem"]);
+    expect(server.visited).toEqual(["demo-lena", "cem"]);
   });
 
   test("Cancel closes the note and gives focus back to Connect", async () => {
     const server = fakeServer();
     await shown(server.api);
-    await click("Connect", row("Bea Example"));
+    await click("Connect with Bea Example", row("Bea Example"));
     await click("Cancel");
     expect(document.activeElement).toBe(
-      within(row("Bea Example")).getByRole("button", { name: "Connect" }),
+      within(row("Bea Example")).getByRole("button", { name: "Connect with Bea Example" }),
     );
     expect(server.asked).toEqual([]);
   });
 
   test("a refused request says why in plain words", async () => {
     await shown(fakeServer({ askFails: true }).api);
-    await click("Connect", row("Bea Example"));
+    await click("Connect with Bea Example", row("Bea Example"));
     await click("Send request");
     expect(screen.getByRole("alert").textContent).toBe(FAILURE_TEXT.request_exists);
   });

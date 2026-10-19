@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ConnectionsApi, ConnectionsFailure, Member, Outcome } from "./connections-api";
 import type { Answer } from "./input";
-import { gainedConnection } from "./network";
+import { acceptedWhileAway, gainedConnection } from "./network";
 import type { ConnectionView } from "./types";
 
 export type ConnectionsController = {
@@ -27,7 +27,8 @@ function read(api: ConnectionsApi): Promise<Lists> {
 type Options = {
   /** Reads again when this changes, as when a connection notification arrives. */
   refreshKey?: unknown;
-  /** A connection was made: you accepted one, or one you asked for was accepted since. */
+  /** A connection was made: you accepted one, or one you asked for was accepted since; on the
+   *  first read, one you asked for was accepted while you were away and you have not read that. */
   onConnected?: () => void;
 };
 
@@ -56,7 +57,9 @@ export function useConnections(
     }
     setMembers(people.value);
     const next = mine.ok ? mine.value : [];
-    if (known.current !== null && gainedConnection(known.current, next)) connected.current?.();
+    const made =
+      known.current === null ? acceptedWhileAway(next) : gainedConnection(known.current, next);
+    if (made) connected.current?.();
     known.current = mine.ok ? next : null;
     setSignedIn(mine.ok);
     setRequests(next);

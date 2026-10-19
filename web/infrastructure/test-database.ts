@@ -1,6 +1,6 @@
 // The throwaway database the database tests run against. Tests empty the account, message,
-// connection and notification tables, so a database whose name is not a throwaway one is refused, the same rule as
-// make db-reset-throwaway.
+// connection and notification tables, so a database whose name is not a throwaway one is refused,
+// the same rule as make db-reset-throwaway.
 import postgres from "postgres";
 import type { Sql } from "./db";
 import { testDatabaseUrl } from "./env";

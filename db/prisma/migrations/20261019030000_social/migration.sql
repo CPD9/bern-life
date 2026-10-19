@@ -49,6 +49,9 @@ CREATE INDEX "connection_request_from_id_status_idx" ON "connection_request"("fr
 CREATE INDEX "connection_request_to_id_status_idx" ON "connection_request"("to_id", "status");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "notification_unread_key" ON "notification"("user_id", "kind", "ref") WHERE (read_at IS NULL);
+
+-- CreateIndex
 CREATE INDEX "notification_user_id_created_at_idx" ON "notification"("user_id", "created_at");
 
 -- CreateIndex
