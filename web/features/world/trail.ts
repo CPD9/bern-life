@@ -57,9 +57,10 @@ export function pointBehind(trail: Trail, distance: number): MapPoint | null {
 export function besideSpot(map: WalkMap, at: MapPoint, heading: number, radius: number): MapPoint {
   const right: MapPoint = [-Math.cos(heading), Math.sin(heading)];
   const behind: MapPoint = [-Math.sin(heading), -Math.cos(heading)];
-  const spots = [right, [-right[0], -right[1]] as const, behind].map(
-    ([dx, dz]): MapPoint => [at[0] + dx * BESIDE, at[1] + dz * BESIDE],
-  );
+  const spots = [right, [-right[0], -right[1]] as const, behind].map(([dx, dz]): MapPoint => [
+    at[0] + dx * BESIDE,
+    at[1] + dz * BESIDE,
+  ]);
   return spots.find((spot) => !blocked(map, spot, radius)) ?? at;
 }
 

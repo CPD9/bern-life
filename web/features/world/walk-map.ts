@@ -8,8 +8,8 @@ import { type Footprint } from "./scene/footprint";
 
 /** About a city block: few obstacles per cell, few cells per obstacle. */
 const CELL = 4;
-/** The widest walker a check is asked about; obstacles are filed with this much room around them. */
-export const MAX_RADIUS = 0.5;
+/** The widest walker a check is asked about; obstacles are filed with this much room round them. */
+const MAX_RADIUS = 0.5;
 
 type Box = {
   readonly x: number;
@@ -25,7 +25,11 @@ type Water = { readonly ax: number; readonly az: number; readonly bx: number; re
 type Cell = { readonly boxes: Box[]; readonly water: Water[] };
 
 /** A bridge deck's height along it: up a short ramp from each end, then level. */
-export type DeckProfile = { readonly height: number; readonly endHeight: number; readonly ramp: number };
+export type DeckProfile = {
+  readonly height: number;
+  readonly endHeight: number;
+  readonly ramp: number;
+};
 
 export type WalkMapInput = {
   readonly bounds: Bounds;
@@ -134,7 +138,7 @@ function onDeck(map: WalkMap, x: number, z: number): Box | undefined {
   return map.decks.find((deck) => inBox(deck, x, z, 0));
 }
 
-/** True when a walker of `radius` centred at `point` would stand in a wall, the river or off the map. */
+/** True when a walker of `radius` at `point` would stand in a wall, in the river or off the map. */
 export function blocked(map: WalkMap, [x, z]: MapPoint, radius: number): boolean {
   const { bounds } = map;
   if (x - radius < bounds.minX || x + radius > bounds.maxX) return true;

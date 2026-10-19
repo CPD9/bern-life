@@ -35,7 +35,15 @@ type WorldSceneProps = {
 
 // The map always, with the office over it on Home: the player is a person, the agent a bear. On the
 // map you walk from your office door with your agent beside you; at home you stand on the rug.
-export function WorldScene({ view, person, bear, agentName, plot, lite, ...props }: WorldSceneProps) {
+export function WorldScene({
+  view,
+  person,
+  bear,
+  agentName,
+  plot,
+  lite,
+  ...props
+}: WorldSceneProps) {
   const { reducedMotion } = props;
   const home = useMemo((): MapPoint | null => (plot === null ? null : [plot.x, plot.z]), [plot]);
   const moving = (walking: boolean, liteFigure: boolean) =>

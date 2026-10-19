@@ -1,7 +1,7 @@
-// How a person moves, as plain numbers for a moment in time, like the bear (bear-motion.ts). Walking
-// is an easy stride: legs swing from the hip, arms swing against them, and the body bobs a little
-// on each step. Standing idle it only breathes. The same Motion and motionFor rules as the bear:
-// still under reduced motion, and no idle loop with lite graphics.
+// How a person moves, as plain numbers for a moment in time, like the bear (bear-motion.ts).
+// Walking is an easy stride: legs swing from the hip, arms swing against them, and the body bobs a
+// little on each step. Standing idle it only breathes. The same Motion and motionFor rules as the
+// bear: still under reduced motion, and no idle loop with lite graphics.
 
 import { type Motion } from "./bear-motion";
 
@@ -38,7 +38,12 @@ export function personWalkPose(seconds: number): PersonPose {
 
 export function personIdlePose(seconds: number): PersonPose {
   const breath = Math.sin((seconds / BREATH_SECONDS) * TAU);
-  return { lift: 0.004 * (breath + 1), lean: 0, legs: [0, 0], arms: [0.03 * breath, 0.03 * breath] };
+  return {
+    lift: 0.004 * (breath + 1),
+    lean: 0,
+    legs: [0, 0],
+    arms: [0.03 * breath, 0.03 * breath],
+  };
 }
 
 export function personPoseAt(motion: Motion, seconds: number): PersonPose {

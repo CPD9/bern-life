@@ -118,11 +118,7 @@ export function MapCamera({
     setGestures(current, follow !== null);
     if (follow !== null) {
       const at = follow();
-      void current.setLookAt(
-        ...followPosition(at, current.azimuthAngle),
-        ...at,
-        !reducedMotion,
-      );
+      void current.setLookAt(...followPosition(at, current.azimuthAngle), ...at, !reducedMotion);
     }
     invalidate();
   }, [follow, invalidate, reducedMotion]);

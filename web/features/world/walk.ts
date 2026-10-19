@@ -1,7 +1,7 @@
 // Walking as plain numbers, so every step can be checked without three.js. Kinematic, no physics:
-// a step that would end in a wall or the river is tried again along x and along z alone, so you
-// slide along a facade instead of stopping dead. Long steps are cut into short ones, so a slow
-// frame never carries you through a thin wall.
+// a step that would end in a wall or the river goes as far as it can along x and along z in turn,
+// so you slide along a facade instead of stopping dead, and stop against it, not short of it. Long
+// steps are cut into short ones, so a slow frame never carries you through a thin wall.
 
 import { panOffset } from "./camera-moves";
 import { type MapPoint } from "./geography";
@@ -17,6 +17,8 @@ export const WALKER_RADIUS = 0.3;
 /** Radians a second: a full about-turn in a quarter of a second. */
 const TURN_SPEED = 12;
 const ARRIVED = 1e-6;
+/** Halvings when closing in on a wall: within 1/32 of a short step. */
+const CLOSING_IN = 5;
 
 export type Walker = {
   readonly at: MapPoint;
@@ -26,14 +28,30 @@ export type Walker = {
   readonly path: readonly MapPoint[];
 };
 
+/** The farthest free point on the straight line from `from` to `to`. */
+function farthest(map: WalkMap, from: MapPoint, to: MapPoint, radius: number): MapPoint {
+  if (!blocked(map, to, radius)) return to;
+  const at = (t: number): MapPoint => [
+    from[0] + (to[0] - from[0]) * t,
+    from[1] + (to[1] - from[1]) * t,
+  ];
+  let free = 0;
+  let stuck = 1;
+  for (let halving = 0; halving < CLOSING_IN; halving++) {
+    const middle = (free + stuck) / 2;
+    if (blocked(map, at(middle), radius)) stuck = middle;
+    else free = middle;
+  }
+  return free === 0 ? from : at(free);
+}
+
 export function slide(map: WalkMap, from: MapPoint, to: MapPoint, radius: number): MapPoint {
   if (!blocked(map, to, radius)) return to;
-  const alongX: MapPoint = [to[0], from[1]];
-  const alongZ: MapPoint = [from[0], to[1]];
   // The longer part of the step first, so a glancing hit keeps most of the motion.
-  const tries =
-    Math.abs(to[0] - from[0]) >= Math.abs(to[1] - from[1]) ? [alongX, alongZ] : [alongZ, alongX];
-  return tries.find((point) => !blocked(map, point, radius)) ?? from;
+  const xFirst = Math.abs(to[0] - from[0]) >= Math.abs(to[1] - from[1]);
+  const alongX = (at: MapPoint) => farthest(map, at, [to[0], at[1]], radius);
+  const alongZ = (at: MapPoint) => farthest(map, at, [at[0], to[1]], radius);
+  return xFirst ? alongZ(alongX(from)) : alongX(alongZ(from));
 }
 
 export function move(map: WalkMap, from: MapPoint, [dx, dz]: MapPoint, radius: number): MapPoint {
@@ -45,7 +63,7 @@ export function move(map: WalkMap, from: MapPoint, [dx, dz]: MapPoint, radius: n
   return at;
 }
 
-/** A unit direction on the ground from held keys, relative to the camera as the map's panning is. */
+/** A unit direction on the ground from held keys, relative to the camera, as map panning is. */
 export function keyDirection(azimuth: number, right: number, forward: number): MapPoint {
   const [x, z] = panOffset(azimuth, right, forward);
   const length = Math.hypot(x, z);
@@ -77,7 +95,7 @@ function turned(walker: Walker, [dx, dz]: MapPoint, input: WalkInput): number {
   return input.snapTurn ? target : turn(walker.heading, target, TURN_SPEED * input.seconds);
 }
 
-/** One frame of walking: keys steer and drop any path; otherwise the walker heads for the next point. */
+/** One frame of walking: keys steer and drop any path; otherwise you head for the next point. */
 export function walkTick(map: WalkMap, walker: Walker, input: WalkInput): Walker {
   const reach = WALK_SPEED * input.seconds;
   const [kx, kz] = input.direction;

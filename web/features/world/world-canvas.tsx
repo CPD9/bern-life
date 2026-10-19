@@ -74,7 +74,13 @@ const KEYS = {
 } as const;
 
 // Transparent so the shell's sky shows through; "demand" renders only when something changes.
-export function WorldCanvas({ agent, player, onAgentOpen, onPlacePanel, ...props }: WorldCanvasProps) {
+export function WorldCanvas({
+  agent,
+  player,
+  onAgentOpen,
+  onPlacePanel,
+  ...props
+}: WorldCanvasProps) {
   const display = useWorldDisplay();
   const palette = paletteFor(display.night);
   const shadows = !display.lite;
@@ -109,7 +115,13 @@ export function WorldCanvas({ agent, player, onAgentOpen, onPlacePanel, ...props
           ),
     [lighting],
   );
-  const walk = useWalk({ map: world.map, start: world.start, inside: player.inside, framePoints });
+  const walk = useWalk({
+    map: world.map,
+    start: world.start,
+    inside: player.inside,
+    doors: world.doors,
+    framePoints,
+  });
   const { session, stop, goTo } = walk;
   const agentAt = useCallback((): readonly [number, number, number] => {
     const at = session.current.agent.at;
@@ -225,17 +237,15 @@ export function WorldCanvas({ agent, player, onAgentOpen, onPlacePanel, ...props
         <AgentButton name={agent.name} onOpen={onAgentOpen} elementsRef={anchorsRef} />
       </div>
       <SearchSummary state={search} lighting={lighting} onClear={worldSearch.clear} />
-      {!panelOpen && (
-        <WalkControls
-          walking={walk.walking}
-          onToggleWalking={walk.toggleWalking}
-          following={walk.following}
-          onToggleFollowing={walk.toggleFollowing}
-          door={walk.door}
-          onEnter={enter}
-          onWalkHome={player.home === null ? undefined : () => walkToDoor(HOME_DOOR_KEY)}
-        />
-      )}
+      <WalkControls
+        walking={walk.walking}
+        onToggleWalking={walk.toggleWalking}
+        following={walk.following}
+        onToggleFollowing={walk.toggleFollowing}
+        door={walk.door}
+        onEnter={enter}
+        onWalkHome={player.home === null ? undefined : () => walkToDoor(HOME_DOOR_KEY)}
+      />
       {selected !== null && (
         <PlacePanel
           building={selected}

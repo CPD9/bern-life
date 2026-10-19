@@ -13,7 +13,7 @@ import { type House } from "./scene/old-town-plan";
 import { AARE_CURVE, BRIDGE_FOOTPRINTS, CLAIMED, OLD_TOWN_HOUSES } from "./scene/town";
 import { type WalkMap, walkMap } from "./walk-map";
 
-/** Every place's building is the same box, so a small institute is as easy to find as a large one. */
+/** Every place's building is the same box: a small institute is as easy to find as a large one. */
 export const PLACE_BUILDING = { size: 2.6, height: 2.8, plate: 4.6 } as const;
 
 /** Your office: a small house at the back of a square lot, its door toward the default camera. */

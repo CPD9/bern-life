@@ -17,7 +17,7 @@ const LONGEST_FRAME = 0.05;
 
 const looking = new Vector3();
 
-/** The camera's azimuth, from the way it looks, in camera-controls' convention (camera-moves.ts). */
+/** The camera's azimuth from the way it looks, as camera-controls counts it (camera-moves.ts). */
 export function viewAzimuth(camera: Camera): number {
   camera.getWorldDirection(looking);
   return Math.atan2(-looking.x, -looking.z);
@@ -45,7 +45,15 @@ type WalkersProps = {
   onPathEnd: () => void;
 };
 
-export function Walkers({ map, sessionRef, heldRef, wakeRef, doors, snapTurn, ...props }: WalkersProps) {
+export function Walkers({
+  map,
+  sessionRef,
+  heldRef,
+  wakeRef,
+  doors,
+  snapTurn,
+  ...props
+}: WalkersProps) {
   const person = useRef<Group>(null);
   const agent = useRef<Group>(null);
   const doorKey = useRef<string | null>(null);

@@ -26,10 +26,14 @@ function heap(cost: Float64Array) {
       const last = items.pop() ?? -1;
       if (items.length === 0) return top;
       items[0] = last;
-      for (let at = 0; ; ) {
+      for (let at = 0; ;) {
         const left = 2 * at + 1;
         const smaller =
-          left + 1 < items.length && less(left + 1, left) ? left + 1 : left < items.length ? left : -1;
+          left + 1 < items.length && less(left + 1, left)
+            ? left + 1
+            : left < items.length
+              ? left
+              : -1;
         if (smaller === -1 || !less(smaller, at)) break;
         swap(at, smaller);
         at = smaller;
@@ -67,7 +71,7 @@ function search(grid: WalkGrid, start: number, goal: number): number[] {
     });
   }
   const cells = [goal];
-  for (let at = goal; at !== start; ) {
+  for (let at = goal; at !== start;) {
     at = cameFrom[at] ?? start;
     cells.push(at);
   }

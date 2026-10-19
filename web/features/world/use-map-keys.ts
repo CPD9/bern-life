@@ -1,6 +1,7 @@
 // Map keys work without first focusing the map: on the page body or anywhere in the world, but not
 // while typing in a field, inside a place panel, or in an overlay like the phone that holds focus.
-// In walk mode the movement keys walk you while held instead of panning the map.
+// In walk mode the movement keys walk you while held instead of panning the map. Escape closes a
+// place and stops a walk, also after a click on the ground left focus on the page.
 
 import { type RefObject, useEffect } from "react";
 import { type CameraCommand, commandForKey } from "./camera-moves";
@@ -25,7 +26,9 @@ export function useMapKeys({ containerRef, onCommand, onEscape, walk = null }: M
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented) return;
       if (event.key === "Escape") {
-        if (containerRef.current?.contains(document.activeElement) === true) onEscape();
+        const active = document.activeElement;
+        const onPage = active === null || active === document.body;
+        if (onPage || containerRef.current?.contains(active) === true) onEscape();
         return;
       }
       if (event.altKey || event.ctrlKey || event.metaKey) return;
@@ -41,7 +44,7 @@ export function useMapKeys({ containerRef, onCommand, onEscape, walk = null }: M
       event.preventDefault();
       onCommand(command);
     }
-    // A key let go anywhere stops you, even after focus has moved on, and so does leaving the window.
+    // A key let go anywhere stops you, even after focus has moved on; so does leaving the window.
     function onKeyUp(event: KeyboardEvent) {
       const held = walkKey(event.key);
       if (walk !== null && held !== null) walk.release(held);

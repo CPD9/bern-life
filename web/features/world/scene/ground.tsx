@@ -1,6 +1,6 @@
-// The flat layers: ground, district plates, roads, the Aare's banks and its water. Each layer is one
-// merged geometry, so the whole floor of the city costs six draw calls. In walk mode a click on the
-// ground (not a drag) says where to walk; only then is the ground hit-tested at all.
+// The flat layers: ground, district plates, roads, the Aare's banks and its water. Each layer is
+// one merged geometry, so the whole floor of the city costs six draw calls. In walk mode a click on
+// the ground (not a drag) says where to walk; only then is the ground hit-tested at all.
 
 import { useEffect, useMemo } from "react";
 import { type ThreeEvent } from "@react-three/fiber";
@@ -62,11 +62,13 @@ const DISTRICT_PLATES = merged(
 );
 const ROAD_LAYER = merged(ROADS.map((road) => ribbonGeometry(road, ROAD_WIDTH, ROAD_Y)));
 
-/** Pixels the pointer may travel between press and release for a click; more is a drag of the map. */
+/** Pixels the pointer may travel between press and release of a click; more is a drag. */
 export const CLICK_SLOP = 6;
 
 /** The ground point of a click, or null for a drag. */
-export function pickedPoint(event: Pick<ThreeEvent<MouseEvent>, "delta" | "point">): MapPoint | null {
+export function pickedPoint(
+  event: Pick<ThreeEvent<MouseEvent>, "delta" | "point">,
+): MapPoint | null {
   return event.delta > CLICK_SLOP ? null : [event.point.x, event.point.z];
 }
 

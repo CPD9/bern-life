@@ -5,7 +5,7 @@
 // never re-renders React; only a new door, a new path or a mode change does.
 
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { type Door } from "./doors";
+import { type Door, doorNear } from "./doors";
 import { type MapPoint } from "./geography";
 import { type FollowTarget } from "./map-camera";
 import { WALKER_RADIUS } from "./walk";
@@ -46,18 +46,20 @@ type WalkOptions = {
   start: MapPoint;
   /** In the office. Coming out, and moving house, put you at `start`. */
   inside: boolean;
+  doors: readonly Door[];
   /** Places a search lit; showing them takes the camera there, so the follow camera lets go. */
   framePoints: readonly MapPoint[];
 };
 
-export function useWalk({ map, start, inside, framePoints }: WalkOptions): Walk {
+export function useWalk({ map, start, inside, doors, framePoints }: WalkOptions): Walk {
   const session = useRef<WalkSession>(arrive(map, start));
   const held = useRef(new Set<string>());
   const wake = useRef<() => void>(() => undefined);
   const grid = useRef<{ map: WalkMap; grid: WalkGrid } | null>(null);
   const [walking, setWalking] = useState(false);
   const [following, setFollowing] = useState(true);
-  const [door, setDoor] = useState<Door | null>(null);
+  // Known before the first frame, so your own door's "Go home" is there as the map appears.
+  const [door, setDoor] = useState(() => doorNear(doors, start));
   const [preview, setPreview] = useState<readonly MapPoint[] | null>(null);
   const [framed, setFramed] = useState(framePoints);
   if (framePoints !== framed) {

@@ -52,7 +52,11 @@ export function homeDoor([x, z]: MapPoint): Door {
 }
 
 /** The nearest door within reach of `at`, or null. */
-export function doorNear(doors: readonly Door[], [x, z]: MapPoint, reach = DOOR_REACH): Door | null {
+export function doorNear(
+  doors: readonly Door[],
+  [x, z]: MapPoint,
+  reach = DOOR_REACH,
+): Door | null {
   let nearest: Door | null = null;
   let nearestDistance = reach;
   for (const door of doors) {

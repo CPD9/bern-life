@@ -56,7 +56,11 @@ export function WalkControls({
         </button>
       )}
       {walking && onWalkHome !== undefined && door?.kind !== "home" && (
-        <button type="button" onClick={onWalkHome} className="bg-chip rounded-pill px-3 py-1.5 text-sm font-bold">
+        <button
+          type="button"
+          onClick={onWalkHome}
+          className="bg-chip rounded-pill px-3 py-1.5 text-sm font-bold"
+        >
           Walk home
         </button>
       )}

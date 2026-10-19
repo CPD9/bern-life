@@ -1,7 +1,7 @@
 // A place's panel: the units in the building with their verbatim addresses, and, after a search,
 // the results found there. People from public pages appear only here, as entries with sources:
 // the same result card as Ask, so every claim opens its evidence; fixture results get a plain list.
-// Walked in through the door, the same panel is the place's lobby, and you leave it by going outside.
+// Walked in through the door, the same panel is the place's lobby; you leave it by going outside.
 
 import { useEffect, useRef } from "react";
 import { type AppEventSink, appEvents } from "@/infrastructure/app-events";

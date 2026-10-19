@@ -183,6 +183,47 @@ describe("while a search runs", () => {
   });
 });
 
+describe("a place's lobby", () => {
+  test("walked into, the panel is the lobby and you leave it by going outside", () => {
+    const onClose = mock(() => undefined);
+    const emit = mock((name: string) => name);
+    render(
+      <PlacePanel
+        building={shared}
+        light={undefined}
+        fixture={false}
+        lobby
+        onClose={onClose}
+        onSearchHere={undefined}
+        onWalkHere={() => undefined}
+        events={{ emit }}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Lobby: 2 units here" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Walk here" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Go outside" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(emit.mock.calls).toEqual([["lobby_entered"]]);
+  });
+
+  test("opened from its marker while walking, it offers to walk you to the door", () => {
+    const onWalkHere = mock((building: Building) => building.key);
+    render(
+      <PlacePanel
+        building={shared}
+        light={undefined}
+        fixture={false}
+        onClose={() => undefined}
+        onSearchHere={undefined}
+        onWalkHere={onWalkHere}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "2 units here" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Walk here" }));
+    expect(onWalkHere.mock.calls).toEqual([[shared]]);
+  });
+});
+
 describe("after a search", () => {
   const buildings = groupPlacesByBuilding(PLACES);
   const lighting = lightUp(worldDemoSearch(), buildings);
