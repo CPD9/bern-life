@@ -3,10 +3,11 @@
 // with results glow from inside by their best rank.
 
 import { type Building } from "../buildings";
+import { PLACE_BUILDING } from "../drawn-city";
 import { type Lighting } from "../light";
 import { type WorldPalette } from "../palette";
 
-const BUILDING_HEIGHT = 2.8;
+const { size, height, plate } = PLACE_BUILDING;
 const GLOW_COLOUR = "#2fb36b";
 
 export function PlaceBuildings({
@@ -25,11 +26,11 @@ export function PlaceBuildings({
     return (
       <group key={building.key} position={[building.x, 0, building.z]}>
         <mesh position-y={0.05} receiveShadow={shadows}>
-          <boxGeometry args={[4.6, 0.1, 4.6]} />
+          <boxGeometry args={[plate, 0.1, plate]} />
           <meshLambertMaterial color={palette.campus} />
         </mesh>
-        <mesh position-y={BUILDING_HEIGHT / 2} castShadow={shadows} receiveShadow={shadows}>
-          <boxGeometry args={[2.6, BUILDING_HEIGHT, 2.6]} />
+        <mesh position-y={height / 2} castShadow={shadows} receiveShadow={shadows}>
+          <boxGeometry args={[size, height, size]} />
           <meshLambertMaterial
             color={palette.placeBuilding[building.kind]}
             emissive={GLOW_COLOUR}

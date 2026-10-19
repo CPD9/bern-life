@@ -1,14 +1,17 @@
 // A map camera that never free-falls: the tilt stays between a steep and a shallow bird's-eye view,
 // zoom has a floor and a ceiling, and the target cannot leave the map. Mouse and touch drag the map
-// like paper; the keyboard moves it in steps through the handle the world view holds.
+// like paper; the keyboard moves it in steps through the handle the world view holds. While you
+// walk it can follow you instead: the target stays on you, and a drag turns the view round you.
 
 import { CameraControls, CameraControlsImpl } from "@react-three/drei";
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { type ComponentRef, type RefObject, useEffect, useRef } from "react";
 import { Box3, Vector3 } from "three";
 import {
   type CameraCommand,
+  FOLLOW_VIEW,
   focusTarget,
+  followPosition,
   frameBox,
   MAX_DISTANCE,
   panOffset,
@@ -26,21 +29,33 @@ export type CameraHandle = {
 
 type Controls = ComponentRef<typeof CameraControls>;
 
+/** Where the walker's feet are; the follow camera looks at this point. */
+export type FollowTarget = () => readonly [number, number, number];
+
 const target = new Vector3();
 const FRAME_MARGIN = 12;
 const FRAME_MIN_SPAN = 60;
+const MIN_DISTANCE = 35;
+/** Closer than this the camera is already on you. */
+const ON_TARGET = 1e-3;
+
+/** The map drags like paper; following, a drag or one finger turns the view round you instead. */
+function setGestures(controls: Controls, following: boolean) {
+  const { ACTION } = CameraControlsImpl;
+  controls.minDistance = following ? FOLLOW_VIEW.minDistance : MIN_DISTANCE;
+  controls.maxDistance = following ? FOLLOW_VIEW.maxDistance : MAX_DISTANCE;
+  controls.dollyToCursor = !following;
+  controls.mouseButtons.left = following ? ACTION.ROTATE : ACTION.TRUCK;
+  controls.touches.one = following ? ACTION.TOUCH_ROTATE : ACTION.TOUCH_TRUCK;
+}
 
 function configure(controls: Controls) {
   const { ACTION } = CameraControlsImpl;
   controls.minPolarAngle = 0.45;
   controls.maxPolarAngle = 1.05;
-  controls.minDistance = 35;
-  controls.maxDistance = MAX_DISTANCE;
-  controls.dollyToCursor = true;
-  controls.mouseButtons.left = ACTION.TRUCK;
+  setGestures(controls, false);
   controls.mouseButtons.right = ACTION.ROTATE;
   controls.mouseButtons.wheel = ACTION.DOLLY;
-  controls.touches.one = ACTION.TOUCH_TRUCK;
   controls.touches.two = ACTION.TOUCH_DOLLY_ROTATE;
   controls.setBoundary(
     new Box3(
@@ -76,14 +91,18 @@ export function MapCamera({
   handleRef,
   reducedMotion,
   framePoints,
+  follow,
 }: {
   handleRef: RefObject<CameraHandle | null>;
   reducedMotion: boolean;
   framePoints: readonly MapPoint[];
+  /** Present while the camera follows the walker. */
+  follow: FollowTarget | null;
 }) {
   const controls = useRef<Controls>(null);
   const invalidate = useThree((state) => state.invalidate);
   const size = useThree((state) => state.size);
+  const following = follow !== null;
 
   useEffect(() => {
     const current = controls.current;
@@ -91,6 +110,33 @@ export function MapCamera({
     configure(current);
     invalidate();
   }, [invalidate]);
+
+  // Starting to follow swings in behind you; stopping leaves the view where it is.
+  useEffect(() => {
+    const current = controls.current;
+    if (current === null) return;
+    setGestures(current, follow !== null);
+    if (follow !== null) {
+      const at = follow();
+      void current.setLookAt(
+        ...followPosition(at, current.azimuthAngle),
+        ...at,
+        !reducedMotion,
+      );
+    }
+    invalidate();
+  }, [follow, invalidate, reducedMotion]);
+
+  // Runs only on frames something else asked for: while you walk, and while the camera settles.
+  useFrame(() => {
+    const current = controls.current;
+    if (current === null || follow === null) return;
+    const [x, y, z] = follow();
+    current.getTarget(target);
+    if (Math.hypot(target.x - x, target.y - y, target.z - z) <= ON_TARGET) return;
+    void current.moveTo(x, y, z, !reducedMotion);
+    invalidate();
+  });
 
   useEffect(() => {
     const current = controls.current;
@@ -112,7 +158,7 @@ export function MapCamera({
       },
       focus: (x, z) => {
         const current = controls.current;
-        if (current === null) return;
+        if (current === null || following) return;
         const portrait = size.height > size.width;
         const [tx, tz] = focusTarget(x, z, current.azimuthAngle, portrait);
         void current.moveTo(tx, 0, tz, !reducedMotion);
@@ -122,7 +168,7 @@ export function MapCamera({
     return () => {
       handleRef.current = null;
     };
-  }, [handleRef, invalidate, reducedMotion, size]);
+  }, [following, handleRef, invalidate, reducedMotion, size]);
 
   return <CameraControls ref={controls} makeDefault smoothTime={reducedMotion ? 0 : 0.25} />;
 }

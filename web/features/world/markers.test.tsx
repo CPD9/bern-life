@@ -7,7 +7,7 @@ import { lightUp } from "./light";
 import { PlaceMarkers } from "./markers/place-markers";
 import { PlacePanel } from "./place-panel";
 import { PLACES, type Place } from "./places";
-import { AGENT_ANCHOR, AgentButton, AgentFigure } from "./scene/agents";
+import { AGENT_KEY, AgentButton, agentAnchor } from "./scene/agents";
 
 const addressed: Place = {
   id: "example-lab",
@@ -137,15 +137,13 @@ describe("PlaceMarkers", () => {
 });
 
 describe("the agent on the map", () => {
-  test("is one bear, the figure passed in, standing in front of the city hall", () => {
-    const bear = <mesh name="the player's bear" />;
-    const figure = mock((lite: boolean) => (lite ? bear : <group />));
-    const drawn = AgentFigure({ agent: { name: "Lumi", figure }, lite: true });
-    expect(figure.mock.calls).toEqual([[true]]);
-    expect(drawn.type).toBe("group");
-    const props = drawn.props as { position: unknown; children: unknown };
-    expect(props.position).toEqual([21.9, 0, -7]);
-    expect(props.children).toBe(bear);
+  test("its label follows the agent: read again on every frame, above its ears", () => {
+    let feet: [number, number, number] = [21.9, 0, -7];
+    const anchor = agentAnchor(() => feet);
+    expect(anchor.key).toBe(AGENT_KEY);
+    expect(anchor.position).toEqual([21.9, 2.9, -7]);
+    feet = [3, 1.5, 12];
+    expect(anchor.position).toEqual([3, 4.4, 12]);
   });
 
   test("has one button, named for the agent, registered at one anchor", () => {
@@ -154,7 +152,7 @@ describe("the agent on the map", () => {
     expect(
       screen.getAllByRole("button").map((button) => button.getAttribute("aria-label")),
     ).toEqual(["Bärli, your agent"]);
-    expect([...elements.current.keys()]).toEqual([AGENT_ANCHOR.key]);
+    expect([...elements.current.keys()]).toEqual([AGENT_KEY]);
   });
 
   test("a tap opens it once; it is a page button, so Enter and Space reach it too", () => {

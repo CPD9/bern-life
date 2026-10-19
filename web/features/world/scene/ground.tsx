@@ -1,7 +1,9 @@
 // The flat layers: ground, district plates, roads, the Aare's banks and its water. Each layer is one
-// merged geometry, so the whole floor of the city costs six draw calls.
+// merged geometry, so the whole floor of the city costs six draw calls. In walk mode a click on the
+// ground (not a drag) says where to walk; only then is the ground hit-tested at all.
 
 import { useEffect, useMemo } from "react";
+import { type ThreeEvent } from "@react-three/fiber";
 import { BufferAttribute, BufferGeometry, DoubleSide, Shape, ShapeGeometry } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import {
@@ -60,7 +62,22 @@ const DISTRICT_PLATES = merged(
 );
 const ROAD_LAYER = merged(ROADS.map((road) => ribbonGeometry(road, ROAD_WIDTH, ROAD_Y)));
 
-export function Ground({ palette, shadows }: { palette: WorldPalette; shadows: boolean }) {
+/** Pixels the pointer may travel between press and release for a click; more is a drag of the map. */
+export const CLICK_SLOP = 6;
+
+/** The ground point of a click, or null for a drag. */
+export function pickedPoint(event: Pick<ThreeEvent<MouseEvent>, "delta" | "point">): MapPoint | null {
+  return event.delta > CLICK_SLOP ? null : [event.point.x, event.point.z];
+}
+
+type GroundProps = {
+  palette: WorldPalette;
+  shadows: boolean;
+  /** Where a click on the ground lands, in walk mode. */
+  onPick?: ((point: MapPoint) => void) | undefined;
+};
+
+export function Ground({ palette, shadows, onPick }: GroundProps) {
   const { lite } = useWorldDisplay();
   const width = MAP_BOUNDS.maxX - MAP_BOUNDS.minX;
   const depth = MAP_BOUNDS.maxZ - MAP_BOUNDS.minZ;
@@ -79,6 +96,12 @@ export function Ground({ palette, shadows }: { palette: WorldPalette; shadows: b
         rotation-x={-Math.PI / 2}
         position={[MAP_BOUNDS.minX + width / 2, 0, MAP_BOUNDS.minZ + depth / 2]}
         receiveShadow={shadows}
+        {...(onPick !== undefined && {
+          onClick: (event: ThreeEvent<MouseEvent>) => {
+            const point = pickedPoint(event);
+            if (point !== null) onPick(point);
+          },
+        })}
       >
         <planeGeometry args={[width, depth]} />
         <meshLambertMaterial color={palette.ground} />

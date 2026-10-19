@@ -46,6 +46,9 @@ export const LANDMARKS: Readonly<Record<LandmarkId, MapPoint>> = {
 /** Where the agent characters stand: the square in front of the city hall. */
 export const RATHAUSPLATZ: MapPoint = [21.9, -7];
 
+/** Where the roads meet in front of the station: where you arrive before you have an office. */
+export const BAHNHOFPLATZ: MapPoint = [-31.3, -5.3];
+
 /** The Aare downstream, from Schönau past Marzili, round the Old Town, to the Engehalde. */
 export const AARE_PATH: readonly MapPoint[] = [
   [17.4, 83.6],
