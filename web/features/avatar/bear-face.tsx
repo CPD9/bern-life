@@ -4,7 +4,7 @@
 import { type FaceId } from "./bear-config";
 import { DARK_EYES } from "./bear-look";
 import { headSurfaceZ } from "./bear-shape";
-import { Ball } from "./plush";
+import { Ball, Gloss, useSegments } from "./plush";
 import { PART } from "./use-bear-motion";
 
 const EYE_X = 0.13;
@@ -16,16 +16,26 @@ type EyeStyle = "open" | "closed-happy" | "closed-sleepy";
 
 type EyeProps = { side: 1 | -1; style: EyeStyle; colour: string };
 
+function GlossyBall({ colour }: { colour: string }) {
+  const segments = useSegments();
+  return (
+    <mesh scale={[0.9, 1, 0.55]}>
+      <sphereGeometry args={[0.038, segments, Math.round(segments * 0.75)]} />
+      <Gloss colour={colour} />
+    </mesh>
+  );
+}
+
 function Eye({ side, style, colour }: EyeProps) {
   const x = side * EYE_X;
   const z = headSurfaceZ(x, EYE_Y);
   if (style === "open") {
-    // Open eyes blink by squashing in height; the pose maths sets the scale.
+    // Small and glossy. Open eyes blink by squashing in height; the pose maths sets the scale.
     return (
-      <group name={PART.eyes[side === -1 ? 0 : 1]} position={[x, EYE_Y, z - 0.01]}>
-        <Ball colour={colour} radius={0.05} scale={[0.85, 1, 0.5]} />
+      <group name={PART.eyes[side === -1 ? 0 : 1]} position={[x, EYE_Y, z - 0.008]}>
+        <GlossyBall colour={colour} />
         {colour === DARK_EYES && (
-          <Ball colour={CATCHLIGHT} radius={0.016} position={[0.015, 0.02, 0.025]} />
+          <Ball colour={CATCHLIGHT} radius={0.011} position={[0.012, 0.014, 0.017]} />
         )}
       </group>
     );
@@ -68,7 +78,7 @@ export function BearFace({ face, eyes, mouth }: FaceProps) {
           scale={[1.2, 0.75, 0.3]}
         />
       ))}
-      <mesh position={[0, -0.135, headSurfaceZ(0, -0.135) + 0.075]} rotation-z={Math.PI}>
+      <mesh position={[0, -0.13, headSurfaceZ(0, -0.13) + 0.018]} rotation-z={Math.PI}>
         <torusGeometry args={[0.03, 0.009, 6, 14, Math.PI]} />
         <meshLambertMaterial color={mouth} />
       </mesh>

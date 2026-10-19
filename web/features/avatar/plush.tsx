@@ -44,14 +44,23 @@ export function Plush({
   return (
     <meshPhysicalMaterial
       color={colour}
-      roughness={0.85}
-      sheen={cloth ? 0.25 : 1}
-      sheenRoughness={0.55}
+      roughness={0.9}
+      sheen={cloth ? 0.15 : 0.3}
+      sheenRoughness={0.8}
       sheenColor={SHEEN}
       side={side}
       transparent={transparent}
       opacity={opacity}
     />
+  );
+}
+
+/** Small glossy surfaces such as open eyes: a clear coat catches the light; lite stays plain. */
+export function Gloss({ colour }: { colour: string }) {
+  const { lite } = useContext(QualityContext);
+  if (lite) return <meshLambertMaterial color={colour} />;
+  return (
+    <meshPhysicalMaterial color={colour} roughness={0.25} clearcoat={1} clearcoatRoughness={0.1} />
   );
 }
 

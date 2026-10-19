@@ -11,6 +11,9 @@ import { PART } from "./use-bear-motion";
 
 type EarShape = "round" | "pointed" | "small" | "long";
 
+/** The muzzle's centre sits just inside the head's surface, so only a thin layer shows. */
+const MUZZLE_Z = headSurfaceZ(0, -0.1) - 0.05;
+
 const EARS: Readonly<Record<KindId, EarShape>> = {
   "brown-bear": "round",
   "polar-bear": "round",
@@ -24,9 +27,15 @@ function Ear({ side, shape, look }: { side: 1 | -1; shape: EarShape; look: BearL
   switch (shape) {
     case "round":
       return (
-        <group position={[side * 0.26, 0.25, -0.02]}>
-          <Ball colour={look.ears} radius={0.12} />
-          <Ball colour={look.innerEars} radius={0.07} position={[0, 0, 0.08]} scale={[1, 1, 0.4]} />
+        // Sunk into the head and flattened, so the ear grows out of it; the inner ear is painted on.
+        <group position={[side * 0.245, 0.235, -0.04]}>
+          <Ball colour={look.ears} radius={0.12} scale={[1, 1, 0.7]} />
+          <Ball
+            colour={look.innerEars}
+            radius={0.072}
+            position={[0, -0.005, 0.075]}
+            scale={[1, 1, 0.18]}
+          />
         </group>
       );
     case "pointed":
@@ -112,17 +121,18 @@ export function BearHead({ config, look }: { config: BearConfig; look: BearLook 
             />
           </group>
         ))}
+      {/* A flat oval laid on the face, so the muzzle reads as painted fur, not a snout. */}
       <Ball
         colour={look.muzzle}
         radius={0.15}
-        position={[0, -0.1, 0.3]}
-        scale={[1.25, 0.85, 0.75]}
+        position={[0, -0.1, MUZZLE_Z]}
+        scale={[1.2, 0.8, 0.4]}
       />
       <Ball
         colour={look.nose}
-        radius={0.05}
-        position={[0, -0.045, 0.405]}
-        scale={[1.35, 0.95, 0.8]}
+        radius={0.042}
+        position={[0, -0.06, MUZZLE_Z + 0.06]}
+        scale={[1.35, 0.9, 0.7]}
       />
       <BearFace face={config.face} eyes={look.eyes} mouth={look.nose} />
       <HeadAccessory accessory={config.accessory} />
