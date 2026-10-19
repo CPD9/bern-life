@@ -13,6 +13,7 @@ from pathlib import Path
 from bernlife.abstain import NO_SOURCE
 from bernlife.brief_search import brief_search
 from bernlife.database import connect
+from bernlife.extract_records import PEOPLE_KINDS
 from bernlife.llm import MockLLM
 from bernlife.load_command import load
 from bernlife.search import search
@@ -90,6 +91,14 @@ class SearchDbTest(unittest.TestCase):
         self.assertEqual(only["profile"]["id"], "person-example-ada-muster")
         self.assertEqual(only["reason"]["cites"], ["/fields/expertise/1"])
         self.assertEqual(only["metrics"]["covers"], ["wearable"])
+
+    def lexical(self, query: str) -> list[tuple[str, float]]:
+        hits = self.store.hits(query, fake_embedder().query(query), None, PEOPLE_KINDS)
+        return sorted({(h.profile_id, h.strength) for h in hits if h.signal == "lexical"})
+
+    def test_full_text_finds_another_form_of_a_word_and_coverage_stays_exact(self):
+        self.assertEqual(self.lexical("biosensor"), [("person-example-ada-muster", 0.0)])
+        self.assertEqual(self.lexical("biosensors"), [("person-example-ada-muster", 1.0)])
 
     def test_a_bare_name_is_shown_only_when_the_query_names_it(self):
         self.assertEqual(self.ids("Ben Beispiel skin-worn patch"), ["person-example-ben-beispiel"])

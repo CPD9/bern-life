@@ -2,8 +2,11 @@
 
 Full text uses the `simple` configuration (no stemming, no language guess), weighted per query
 word by BM25's inverse document frequency, so common words in any language weigh little without a
-stopword list. `coverage` is the share of the query's word weight a chunk matches; a word found
-nowhere in the corpus keeps its full weight, so a query about something absent covers little.
+stopword list. A query word also matches other forms of itself: its light word form
+(word_forms.py) as a prefix, so "Kohlenhydrate" finds "Kohlenhydraten". `coverage` is the share
+of the query's word weight a chunk matches with the exact words, as when the abstention
+thresholds were set; a word found nowhere in the corpus keeps its full weight, so a query about
+something absent covers little.
 The vector half is an HNSW cosine scan. Source and kind filters sit inside both scans, and the
 word statistics count only the chunks a search over those kinds may read, so adding
 opportunities leaves a people search's numbers as they were.
@@ -21,6 +24,7 @@ import psycopg
 from bernlife.chunks import chunk_prefixes
 from bernlife.extract_records import PEOPLE_KINDS
 from bernlife.load_rows import vector_literal
+from bernlife.word_forms import prefix_form
 
 POOL = 200
 # A search that includes people reads the vector index unfiltered, as it always did, and drops
@@ -31,18 +35,21 @@ OVERFETCH = 3
 
 STATEMENT = """
 WITH query_terms AS (
-    SELECT DISTINCT lexeme
-      FROM unnest(tsvector_to_array(to_tsvector('simple', %(query)s))) AS lexeme
+    SELECT lexeme, form FROM unnest(%(lexemes)s::text[], %(forms)s::text[]) AS t(lexeme, form)
 ),
 corpus AS (
     SELECT count(*)::float8 AS n FROM chunk
      WHERE split_part(id, '-', 1) = ANY(%(prefixes)s::text[])
 ),
 weighted AS (
-    SELECT t.lexeme, q.tq, ln(1 + (corpus.n - df.n + 0.5) / (df.n + 0.5)) AS idf
+    SELECT t.lexeme, q.tq, q.fq, ln(1 + (corpus.n - df.n + 0.5) / (df.n + 0.5)) AS idf
       FROM query_terms t
      CROSS JOIN corpus
-     CROSS JOIN LATERAL (SELECT to_tsquery('simple', quote_literal(t.lexeme)) AS tq) q
+     CROSS JOIN LATERAL (
+           SELECT to_tsquery('simple', quote_literal(t.lexeme)) AS tq,
+                  to_tsquery('simple', coalesce(quote_literal(t.form) || ':*',
+                                                quote_literal(t.lexeme))) AS fq
+     ) q
      CROSS JOIN LATERAL (
            SELECT count(*)::float8 AS n FROM chunk
             WHERE tsv @@ q.tq AND split_part(id, '-', 1) = ANY(%(prefixes)s::text[])
@@ -50,8 +57,9 @@ weighted AS (
 ),
 total AS (SELECT sum(idf) AS idf FROM weighted),
 lexical AS (
-    SELECT c.id, sum(w.idf * ts_rank(c.tsv, w.tq, 1)) AS score, sum(w.idf) AS matched
-      FROM chunk c JOIN weighted w ON c.tsv @@ w.tq
+    SELECT c.id, sum(w.idf * ts_rank(c.tsv, w.fq, 1)) AS score,
+           coalesce(sum(w.idf) FILTER (WHERE c.tsv @@ w.tq), 0) AS matched
+      FROM chunk c JOIN weighted w ON c.tsv @@ w.fq
      WHERE split_part(c.id, '-', 1) = ANY(%(prefixes)s::text[])
        AND (%(sources)s::text[] IS NULL OR c.page_url = ANY(ARRAY(
            SELECT url FROM page WHERE source_id = ANY(%(sources)s::text[]))))
@@ -111,6 +119,12 @@ SELECT o.signal, o.profile_id, min(o.rank) AS best_rank, max(o.strength) AS stre
 """
 
 
+LEXEMES = """
+SELECT DISTINCT lexeme FROM unnest(tsvector_to_array(to_tsvector('simple', %(query)s))) AS lexeme
+ ORDER BY lexeme
+"""
+
+
 @dataclass(frozen=True)
 class Hit:
     signal: str  # "lexical" or "vector"
@@ -130,8 +144,10 @@ def fetch_hits(
     kinds: Sequence[str],
 ) -> list[Hit]:
     people_free = not set(kinds) & set(PEOPLE_KINDS)
+    lexemes = [row[0] for row in conn.execute(LEXEMES, {"query": query}).fetchall()]
     params = {
-        "query": query,
+        "lexemes": lexemes,
+        "forms": [prefix_form(lexeme) for lexeme in lexemes],
         "vector": vector_literal(vector),
         "sources": sources,
         "kinds": list(kinds),

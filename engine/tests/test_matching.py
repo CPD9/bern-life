@@ -1,6 +1,6 @@
 import unittest
 
-from bernlife.matching import asked, can_explain, matched_claims, names_profile, words
+from bernlife.matching import asked, can_explain, forms, matched_claims, names_profile, words
 from search_fakes import PROFILES
 
 CLEO, ADA, BEN, DORA, PATCH = PROFILES[:5]
@@ -11,6 +11,12 @@ class WordsTest(unittest.TestCase):
         self.assertEqual(
             words("Who in Bern does research on the Glukose-Überwachung für Kinder?"),
             {"glukose", "uberwachung", "kinder"},
+        )
+
+    def test_forms_drop_function_words_in_any_of_their_forms(self):
+        self.assertEqual(
+            forms("Welche Forscher untersuchen Kohlenhydraten in diesen Mahlzeiten?"),
+            {"untersuch", "kohlenhydrat", "mahlzeit"},
         )
 
     def test_a_shared_function_word_is_not_a_reason(self):
@@ -41,6 +47,12 @@ class CanExplainTest(unittest.TestCase):
         self.assertEqual(
             matched_claims(asked("Sensor Lab glucose"), ADA), [("expertise", 0), ("unit", 0)]
         )
+
+    def test_a_claim_matches_another_form_of_a_question_word(self):
+        self.assertEqual(matched_claims(asked("sensors"), ADA), [("unit", 0)])
+        self.assertEqual(matched_claims(asked("biosensor patch"), ADA), [("expertise", 1)])
+        self.assertEqual(matched_claims(asked("proteines"), DORA), [("expertise", 0)])
+        self.assertEqual(matched_claims(asked("Kohlenhydraten"), ADA), [])
 
     def test_a_claim_matches_through_its_enrichment_terms(self):
         enrichment = {"wearable biosensors": ["smart skin patches"]}
