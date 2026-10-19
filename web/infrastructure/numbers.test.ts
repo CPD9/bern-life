@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { formatInterval, formatMeasure, formatMillis, formatTally } from "./format";
+import { formatInterval, formatMeasure, formatMillis, formatTally } from "./number-format";
 import { parseNumbers } from "./numbers";
 import { readNumbers } from "./numbers-api";
-import { jsonResponse, numbersBody } from "./testing";
+import { jsonResponse, numbersBody } from "@/test/numbers";
 
 function omit(body: object, key: string): Record<string, unknown> {
   return Object.fromEntries(Object.entries(body).filter(([name]) => name !== key));

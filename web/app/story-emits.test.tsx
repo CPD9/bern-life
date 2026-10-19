@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
-import { type ReactElement, type ReactNode, cloneElement } from "react";
-import { parseNumbers } from "@/features/garage/numbers";
-import type { NumbersOutcome } from "@/features/garage/numbers-api";
-import { numbersBody, queuedApi } from "@/features/garage/testing";
+import type { ReactElement, ReactNode } from "react";
 import { type LibraryStore, createLibraryStore } from "@/features/library/library-store";
 import { memoryStorage } from "@/features/library/testing";
 import { callResult } from "@/features/opportunities/testing";
 import type { OpportunitiesAppProps } from "@/features/opportunities/opportunities-app";
 import { createSettleStore } from "@/features/settle/settle-store";
 import type { AppEventName } from "@/infrastructure/app-events";
+import { parseNumbers } from "@/infrastructure/numbers";
+import type { NumbersOutcome } from "@/infrastructure/numbers-api";
 import { resultFixture } from "@/test/fixtures";
+import { numbersBody, queuedApi } from "@/test/numbers";
 import { garageApp, opportunitiesApp } from "./shared-apps";
 import { useWorldSettle } from "./world-settle";
 
@@ -61,12 +61,9 @@ describe("the garage", () => {
     outcome: NumbersOutcome = { status: "ok", numbers: measured },
   ) {
     const { emitted, events } = recorder();
-    const api = queuedApi([outcome]);
-    const garage = cloneElement(garageApp(fixtureMode, events) as ReactElement<{ api: unknown }>, {
-      api,
-    });
-    const view = render(garage);
-    return { emitted, rerender: () => view.rerender(garage) };
+    const garage = garageApp(fixtureMode, events, queuedApi([outcome]));
+    const view = render(<>{garage}</>);
+    return { emitted, rerender: () => view.rerender(<>{garage}</>) };
   }
 
   test("opening it is a visit, and the engine's numbers on screen are seen, each once", async () => {
