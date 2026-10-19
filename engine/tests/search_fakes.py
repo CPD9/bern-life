@@ -244,9 +244,10 @@ def write_bundle(
     profiles: list[dict[str, object]] = PROFILES,
     terms: list[dict[str, object]] = (),
     opportunities: bool = False,
+    pages: list[dict[str, object]] = PAGES,
 ) -> None:
     folder.mkdir(parents=True, exist_ok=True)
-    pages = [*PAGES, CALL_PAGE] if opportunities else PAGES
+    pages = [*pages, CALL_PAGE] if opportunities else pages
     profiles = [*profiles, CALL] if opportunities else profiles
     files = (("pages", pages), ("profiles", profiles), ("relations", RELATIONS), ("terms", terms))
     for name, records in files:

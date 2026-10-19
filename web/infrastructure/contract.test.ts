@@ -5,6 +5,7 @@ import numbers from "../../contracts/fixtures/numbers.json";
 import abstained from "../../contracts/fixtures/result-abstained.json";
 import brief from "../../contracts/fixtures/result-brief.json";
 import opportunities from "../../contracts/fixtures/result-opportunities.json";
+import passage from "../../contracts/fixtures/result-passage.json";
 import via from "../../contracts/fixtures/result-via.json";
 import result from "../../contracts/fixtures/result.json";
 import sources from "../../contracts/fixtures/sources.json";
@@ -34,6 +35,15 @@ describe("parseSearchResponse", () => {
       "service",
       "space",
     ]);
+  });
+
+  test("accepts a result shown through a passage on its own page, and only that kind", () => {
+    expect(parseSearchResponse(passage)?.results[0]?.passage?.span).toBe(
+      "Ben Beispiel\nPhD student, sweat patches",
+    );
+    const mutated = copyOf(passage) as { results: { passage: { kind: string } }[] };
+    mutated.results[0]!.passage.kind = "claim";
+    expect(parseSearchResponse(mutated)).toBeNull();
   });
 
   test("rejects a via without the related profile's matching claims", () => {

@@ -9,8 +9,12 @@ is, so it adds no prominence signal.
 A claim matches through its own words or its enrichment terms; the question matches through its
 own words or its expansion terms. Either way the reason cites the verbatim claim, never a term.
 
-Words are folded (case, accents) and need three letters. Function words and the generic words of
-a search ("research", "who", "forscht") are left out: sharing "and" or "der" is not a reason.
+Words are folded (case, accents), need three letters and are compared by their light word form
+(word_forms.py), so "Kohlenhydrate" matches a claim on "Kohlenhydraten". Function words and the
+generic words of a search ("research", "who", "forscht"), in any of their forms, are left out:
+sharing "and" or "der" is not a reason. A reason cites the claims sharing an exact word first, and
+the claims sharing only a form when there are none, so its claims, and the explanation written
+from them, stay those an exact match would give.
 """
 
 import re
@@ -20,6 +24,7 @@ from typing import Any
 
 from bernlife.abstain import named_people
 from bernlife.names import PARTICLES, TITLES, display_name, fold
+from bernlife.word_forms import word_form
 
 Profile = Mapping[str, Any]
 ORDER = ("expertise", "projects", "infrastructure", "services", "role", "unit")
@@ -51,30 +56,54 @@ STOPWORDS = frozenset(
 )
 
 
+STOPWORD_FORMS = frozenset(word_form(word) for word in STOPWORDS)
+
+
 def words(text: str) -> set[str]:
     return set(WORD.findall(fold(text))) - STOPWORDS
+
+
+def forms(text: str) -> set[str]:
+    """The word forms of the content words: what a question and a claim are compared on."""
+    return {word_form(word) for word in words(text)} - STOPWORD_FORMS
+
+
+def exact_words(text: str) -> set[str]:
+    """The content words whose form counts, as written: an exact match is also a form match."""
+    return {word for word in words(text) if word_form(word) not in STOPWORD_FORMS}
 
 
 @dataclass(frozen=True)
 class Asked:
     query: str
+    forms: frozenset[str]
     words: frozenset[str]
 
 
 def asked(query: str, terms: Iterable[str] = ()) -> Asked:
-    """The question's content words, plus those of its expansion terms."""
-    return Asked(query, frozenset(words(query).union(*(words(term) for term in terms))))
+    """The forms and words of the question's content words, plus those of its expansion terms."""
+    texts = (query, *terms)
+    return Asked(
+        query,
+        frozenset().union(*(forms(text) for text in texts)),
+        frozenset().union(*(exact_words(text) for text in texts)),
+    )
 
 
 def matched_claims(
-    question: Asked, profile: Profile, enrichment: Mapping[str, Sequence[str]] | None = None
+    question: Asked,
+    profile: Profile,
+    enrichment: Mapping[str, Sequence[str]] | None = None,
+    exact: bool = False,
 ) -> list[tuple[str, int]]:
-    """(field, index) of every non-name claim sharing a content word with the question."""
+    """(field, index) of every non-name claim sharing a content word form with the question, or
+    with `exact`, a content word as written."""
     terms = enrichment or {}
+    keys, asked_keys = (exact_words, question.words) if exact else (forms, question.forms)
     return [
         (field, index)
         for field, index, value in _values(profile)
-        if (words(value).union(*(words(t) for t in terms.get(value, ())))) & question.words
+        if (keys(value).union(*(keys(t) for t in terms.get(value, ())))) & asked_keys
     ]
 
 

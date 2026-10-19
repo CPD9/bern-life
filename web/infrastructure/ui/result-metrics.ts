@@ -13,7 +13,17 @@ export const metricMeanings = {
 } as const;
 
 export type MetricLabel = keyof typeof metricMeanings;
-export type MetricRow = { readonly label: MetricLabel; readonly value: string };
+
+/**
+ * One bar: the value as text, exactly as the engine sent it, and the raw number with its scale
+ * for the track. `now` is null when the engine could not compute it: the track stays empty.
+ */
+export type MetricBar = {
+  readonly label: MetricLabel;
+  readonly value: string;
+  readonly now: number | null;
+  readonly max: number;
+};
 
 type Metrics = NonNullable<SearchResult["metrics"]>;
 
@@ -21,27 +31,47 @@ export function percent(value: number | null): string {
   return value === null ? notComputed : `${Math.round(value * 100)}%`;
 }
 
-/** The four numbers, in the report's order; none when the engine sent no metrics. */
-export function metricRows(metrics: Metrics | null | undefined): MetricRow[] {
+export function confidenceText(value: number | null): string {
+  return value === null ? "not yet calibrated" : percent(value);
+}
+
+function share(label: MetricLabel, value: number | null): MetricBar {
+  return { label, value: percent(value), now: value, max: 1 };
+}
+
+/**
+ * The bars of the card, in the report's order. Confidence joins as a fourth bar once the engine
+ * has calibrated it; while it is null the card says nothing and the report says so in words.
+ */
+export function metricBars(metrics: Metrics | null | undefined): MetricBar[] {
   if (!metrics) return [];
-  return [
-    { label: "Relevance", value: percent(metrics.relevance) },
-    { label: "Evidence", value: percent(metrics.evidence) },
-    {
-      label: "Completeness",
-      value: `${metrics.completeness.filled} of ${metrics.completeness.of}`,
-    },
-    {
-      label: "Confidence",
-      value: metrics.confidence === null ? "not yet calibrated" : percent(metrics.confidence),
-    },
+  const { filled, of } = metrics.completeness;
+  const bars = [
+    share("Relevance", metrics.relevance),
+    share("Evidence", metrics.evidence),
+    { label: "Completeness" as const, value: `${filled} of ${of}`, now: filled, max: of },
   ];
+  if (metrics.confidence !== null) bars.push(share("Confidence", metrics.confidence));
+  return bars;
+}
+
+function addsText(metrics: Metrics): string | null {
+  return metrics.novelty.adds.length > 0 ? `Adds: ${metrics.novelty.adds.join(", ")}` : null;
 }
 
 /** Whether the result brings a unit not seen above it, and which topics it adds. */
 export function noveltyTags(metrics: Metrics | null | undefined): string[] {
   if (!metrics) return [];
   const tags = [metrics.novelty.new_unit ? "New unit" : "Unit already above"];
-  if (metrics.novelty.adds.length > 0) tags.push(`Adds: ${metrics.novelty.adds.join(", ")}`);
+  const adds = addsText(metrics);
+  if (adds) tags.push(adds);
   return tags;
+}
+
+/** The same as one chip for the card; nothing when the result adds nothing new. */
+export function noveltyChip(metrics: Metrics): string | null {
+  const parts = [metrics.novelty.new_unit ? "New unit" : null, addsText(metrics)].filter(
+    (part) => part !== null,
+  );
+  return parts.length > 0 ? parts.join(" · ") : null;
 }

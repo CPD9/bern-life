@@ -34,6 +34,8 @@ MAX_BRIEF_BODY = 65_536
 LIVE_HEADER = "X-Bernlife-Live"
 PROFILE_PATH = re.compile(r"^/api/profile/([a-z0-9-]+)$")
 PROFILE_ROUTE = "/api/profile/{id}"
+PLACE_PEOPLE_PATH = re.compile(r"^/api/places/([a-z0-9-]+)/([a-z0-9.-]+)/people$")
+PLACE_PEOPLE_ROUTE = "/api/places/{source}/{host}/people"
 ROUTES = ("/api/health", "/api/sources", "/api/numbers", "/api/search", "/api/brief", "/api/agent")
 log = logging.getLogger("bernlife.server")
 
@@ -59,6 +61,7 @@ class Api(Protocol):
     def brief(self, text: str) -> dict[str, Any]: ...
     def agent(self, messages: list[Message]) -> dict[str, Any]: ...
     def profile(self, profile_id: str) -> dict[str, Any] | None: ...
+    def place_people(self, source_id: str, host: str) -> dict[str, Any]: ...
     def sources(self) -> dict[str, Any]: ...
     def numbers(self) -> dict[str, Any]: ...
     def source_ids(self) -> set[str]: ...
@@ -85,6 +88,8 @@ def is_local_host(host: str | None) -> bool:
 def route_template(path: str) -> str:
     if path in ROUTES:
         return path
+    if PLACE_PEOPLE_PATH.match(path):
+        return PLACE_PEOPLE_ROUTE
     return PROFILE_ROUTE if PROFILE_PATH.match(path) else "unknown"
 
 
@@ -95,6 +100,9 @@ def route_get(api: Api, path: str) -> dict[str, Any]:
         return api.sources()
     if path == "/api/numbers":
         return api.numbers()
+    place = PLACE_PEOPLE_PATH.match(path)
+    if place:
+        return api.place_people(place.group(1), place.group(2))
     match = PROFILE_PATH.match(path)
     if match:
         profile = api.profile(match.group(1))

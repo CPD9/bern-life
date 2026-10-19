@@ -4,7 +4,8 @@ A claim is traceable when its page is in the snapshot, the page text hashes to t
 `page_sha256`, and the span appears in that text after whitespace normalisation. The hash is
 recomputed from the text rather than read from the page record, so a stale record cannot vouch
 for a span. A result shown through a related project or unit (`via`) is held to the same bar: the
-relation's own span and every related claim are checked, and the related profile must exist.
+relation's own span and every related claim are checked, and the related profile must exist. So
+is a result shown through a passage on its own page (`passage`): the passage's span is checked.
 """
 
 import hashlib
@@ -56,7 +57,8 @@ def check_claims(query: str, results: Sequence[Record], index: PageIndex) -> tup
 
 
 def evidence_of(result: Record) -> list[tuple[str, Record]]:
-    """Each piece of evidence a result shows, with its JSON pointer: profile claims, then `via`."""
+    """Each piece of evidence a result shows, with its JSON pointer: profile claims, then `via`,
+    then `passage`."""
     shown = [(pointer, claim["evidence"]) for pointer, claim in claims(result["profile"])]
     via = result.get("via")
     if via is not None:
@@ -65,6 +67,9 @@ def evidence_of(result: Record) -> list[tuple[str, Record]]:
             (f"/via/related_claims/{i}", claim["evidence"])
             for i, claim in enumerate(via["related_claims"])
         ]
+    passage = result.get("passage")
+    if passage is not None:
+        shown.append(("/passage", passage))
     return shown
 
 

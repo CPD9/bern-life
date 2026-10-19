@@ -22,6 +22,7 @@ const schemaFiles = [
   { file: "agent.schema.json", declaresShared: false, plainArrays: true },
   { file: "sources.schema.json", declaresShared: false, plainArrays: false },
   { file: "numbers.schema.json", declaresShared: true, plainArrays: false },
+  { file: "place-people.schema.json", declaresShared: false, plainArrays: true },
 ];
 
 async function generateContractTypes(): Promise<string> {

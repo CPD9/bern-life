@@ -82,6 +82,17 @@ export interface SearchResponse {
        */
       related_claims: [Claim, ...Claim[]];
     };
+    /**
+     * When neither the result's own claims nor a related project's match the question, but its own page (the page its name claim cites) does next to its name: the verbatim span from the name to the nearest words matching two distinct word forms of the question, within 300 characters and never across the name of another profile cited on that page. A passage on their page, not a claim of their profile; the reason stays the plain one from the profile's own claims.
+     */
+    passage?: {
+      kind: "own_page";
+      span: string;
+      page_url: string;
+      page_sha256: string;
+      start: number;
+      fetched_at: string;
+    };
   }[];
   timings_ms?: {
     [k: string]: number;
@@ -483,4 +494,16 @@ export interface EvalNumbers {
 export interface Tally {
   n: number;
   of: number;
+}
+
+/**
+ * GET /api/places/{source}/{host}/people. The person profiles of one place on the map (one host of a source), read from the loaded snapshot without a search: at most 30, ordered by name, with how many the place holds in all. Each profile carries its claims with evidence, like a search result.
+ */
+export interface PlacePeople {
+  snapshot: string;
+  /**
+   * @maxItems 30
+   */
+  people: Profile[];
+  total: number;
 }
