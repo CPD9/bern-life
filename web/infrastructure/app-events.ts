@@ -33,6 +33,7 @@ export const appEvents: AppEvents = createAppEvents();
  *   features/navigator/navigator-events.ts
  * - evidence_opened: infrastructure/ui/result-card.tsx
  * - report_made: features/report/open-report.ts
+ * - message_sent: features/messages/use-messages.ts
  */
 export const emittedToday: readonly AppEventName[] = [
   "search_answered",
@@ -41,4 +42,5 @@ export const emittedToday: readonly AppEventName[] = [
   "brief_answered",
   "report_made",
   "abstained_seen",
+  "message_sent",
 ];

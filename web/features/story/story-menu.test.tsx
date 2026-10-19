@@ -49,9 +49,8 @@ describe("StoryMenu", () => {
       "Walk to a place and see who works there.",
       "Opening a place on the map does not report to the story yet.",
     ]);
-    expect(row("Grow in Bern").textContent).toContain(
-      "Opportunities, Library, Garage and saving to your network are not built yet.",
-    );
+    // Sending a message counts toward Grow in Bern, so it is open, not coming next.
+    expect(row("Grow in Bern").textContent).toContain("Open · optional");
     expect(row("Find the right people").querySelectorAll("p")).toHaveLength(1);
   });
 

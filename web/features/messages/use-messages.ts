@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import type { Start } from "./input";
 import { type Connect, POLL_MS } from "./live-client";
 import type { MessagesApi, MessagesFailure, MessagesOutcome } from "./messages-api";
@@ -32,6 +33,7 @@ export function useMessages(
   api: MessagesApi,
   connect: Connect,
   schedule: Every = every,
+  events: AppEventSink = appEvents,
 ): MessagesController {
   const [status, setStatus] = useState<MessagesController["status"]>("loading");
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
@@ -112,6 +114,7 @@ export function useMessages(
       const posted = await api.post(id, body);
       setFailure(posted.ok ? null : posted.failure);
       if (!posted.ok) return false;
+      events.emit("message_sent");
       setThread((current) =>
         current.some((m) => m.id === posted.value.id) ? current : [...current, posted.value],
       );
