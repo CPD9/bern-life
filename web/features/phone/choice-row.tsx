@@ -8,7 +8,8 @@ type ChoiceRowProps<T> = {
   choices: readonly Choice<T>[];
   value: T;
   onChange: (value: T) => void;
-  disabled?: boolean;
+  /** A change is being saved: the group says so, and stays focusable. */
+  busy?: boolean;
 };
 
 /** One setting with a few exclusive choices, as a segmented radio group. */
@@ -18,11 +19,11 @@ export function ChoiceRow<T extends string | boolean>({
   choices,
   value,
   onChange,
-  disabled = false,
+  busy = false,
 }: ChoiceRowProps<T>) {
   const name = useId();
   return (
-    <fieldset disabled={disabled} className="flex flex-col gap-2">
+    <fieldset aria-busy={busy} className="flex flex-col gap-2">
       <legend className="pb-1 font-bold">{title}</legend>
       <p className="text-muted text-sm">{description}</p>
       <div className="bg-chip rounded-pill flex gap-1 p-1">

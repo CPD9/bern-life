@@ -22,10 +22,13 @@ export function keepTabInside(event: KeyboardEvent | ReactKeyboardEvent, contain
   const first = items[0]!;
   const last = items[items.length - 1]!;
   const active = document.activeElement;
-  if (event.shiftKey && (active === first || !container.contains(active))) {
+  // Focus on something that is not in the Tab order (the heading a dialog opens on, or <body>)
+  // counts as outside, so the next Tab or Shift+Tab lands on the first or last control.
+  const outside = !(active instanceof HTMLElement && items.includes(active));
+  if (event.shiftKey && (active === first || outside)) {
     event.preventDefault();
     last.focus();
-  } else if (!event.shiftKey && (active === last || !container.contains(active))) {
+  } else if (!event.shiftKey && (active === last || outside)) {
     event.preventDefault();
     first.focus();
   }

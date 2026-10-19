@@ -84,4 +84,21 @@ describe("Sheet", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(opener);
   });
+
+  test("Shift+Tab straight after opening, from the heading, wraps to the last control", async () => {
+    render(<SheetHarness />);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Open sheet" })));
+    const heading = screen.getByRole("heading", { name: "Notifications" });
+    expect(document.activeElement).toBe(heading);
+    fireEvent.keyDown(heading, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Last inside" }));
+  });
+
+  test("Escape with focus on <body> closes it", async () => {
+    render(<SheetHarness />);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Open sheet" })));
+    (document.activeElement as HTMLElement).blur();
+    await act(async () => fireEvent.keyDown(document.body, { key: "Escape" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
 });

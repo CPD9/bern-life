@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type React from "react";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { type PhoneApp, type PhoneHealth, type PhoneNotification, Phone } from "./phone";
@@ -16,6 +17,7 @@ const apps: PhoneApp[] = [
 ];
 
 type HarnessProps = {
+  overlay?: React.ReactNode;
   health?: PhoneHealth;
   unreadMessages?: number;
   notifications?: readonly PhoneNotification[];
@@ -24,9 +26,25 @@ type HarnessProps = {
   phoneApps?: PhoneApp[];
 };
 
-function Harness({ phoneApps = apps, ...rest }: HarnessProps) {
+function Harness({ phoneApps = apps, onOpenNotification, ...rest }: HarnessProps) {
   const [open, setOpen] = useState(false);
   const [appId, setAppId] = useState<string | null>(null);
+  // Ask can send the player to Settings from inside, the way an app's "Try" link does.
+  const wired = phoneApps.map((app) =>
+    app.id === "ask"
+      ? {
+          ...app,
+          content: (
+            <>
+              {app.content}
+              <button type="button" onClick={() => setAppId("settings")}>
+                Try settings
+              </button>
+            </>
+          ),
+        }
+      : app,
+  );
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
@@ -39,10 +57,14 @@ function Harness({ phoneApps = apps, ...rest }: HarnessProps) {
       <Phone
         open={open}
         onClose={() => setOpen(false)}
-        apps={phoneApps}
+        apps={wired}
         appId={appId}
         onAppChange={setAppId}
         now={new Date("2026-10-19T02:05:00Z")}
+        onOpenNotification={(notification) => {
+          onOpenNotification?.(notification);
+          setAppId("messages");
+        }}
         {...rest}
       />
     </>
@@ -123,6 +145,34 @@ describe("Phone", () => {
     expect(screen.getByTestId("state").textContent).toBe("open");
   });
 
+  test("Escape with focus on <body> still goes back inside an app", async () => {
+    render(<Harness />);
+    openPhone();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
+    (document.activeElement as HTMLElement).blur();
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => fireEvent.keyDown(document.body, { key: "Escape" }));
+    expect(screen.queryByText("Ask content")).toBeNull();
+    expect(document.querySelector("dialog")!.open).toBe(true);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Ask" }));
+  });
+
+  test("switching apps from inside an app moves focus to the new app's title", async () => {
+    render(<Harness />);
+    openPhone();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Try settings" })));
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Settings" }));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Back" })));
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Ask" }));
+  });
+
+  test("an overlay renders inside the phone's dialog", () => {
+    render(<Harness overlay={<p>Toast here</p>} />);
+    openPhone();
+    expect(document.querySelector("dialog")!.contains(screen.getByText("Toast here"))).toBe(true);
+  });
+
   test("Close shuts the phone and gives focus back to what opened it", async () => {
     render(<Harness />);
     const opener = openPhone();
@@ -192,9 +242,27 @@ describe("Notification centre", () => {
       "Unread: demo-bea wroteMessage03:40",
       "Loop found 2 new labsLoopSat 17 Oct, 23:40",
     ]);
-    fireEvent.click(within(sheet).getByRole("button", { name: /demo-bea wrote/ }));
     fireEvent.click(within(sheet).getByRole("button", { name: "Mark all read" }));
-    expect(opened).toEqual(["n1"]);
     expect(marked).toBe(1);
+    await act(async () =>
+      fireEvent.click(within(sheet).getByRole("button", { name: /demo-bea wrote/ })),
+    );
+    expect(opened).toEqual(["n1"]);
+    expect(screen.queryByRole("dialog", { name: "Notifications" })).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Messages" }));
+  });
+
+  test("Escape in the centre over an app closes only the centre", async () => {
+    render(<Harness notifications={[unread]} />);
+    openPhone();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
+    const bell = screen.getByRole("button", { name: "Notifications, 1 unread" });
+    bell.focus();
+    await act(async () => fireEvent.click(bell));
+    const sheet = screen.getByRole("dialog", { name: "Notifications" });
+    await act(async () => fireEvent.keyDown(within(sheet).getByRole("heading"), { key: "Escape" }));
+    expect(screen.queryByRole("dialog", { name: "Notifications" })).toBeNull();
+    expect(screen.getByText("Ask content")).toBeTruthy();
+    expect(document.activeElement).toBe(bell);
   });
 });
