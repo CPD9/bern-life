@@ -3,7 +3,7 @@
 Newest first. Each entry: date, decision, why, who.
 
 ## 2026-10-19 01:10 — Players are people, agents are bears, the office after onboarding (Peter, conductor)
-- **Players are people; agents are bears.** Lumi is your first agent. This supersedes "players are
+- **Players are people; agents are bears.** Bärnli is your first agent. This supersedes "players are
   Bern bears" (18 Oct 21:00) and "Agents (Navigator, Scout, Matchmaker) are the characters in the
   world" (18 Oct afternoon). Peter.
 - **After onboarding you land in your office** (the Home tab). The desktop is a feature of the
@@ -63,7 +63,7 @@ Newest first. Each entry: date, decision, why, who.
   night. The engine still stands alone for the jury (`/navigator`, `make run`).
 - **People from public pages are never avatars.** They appear as entries with sources in a place's
   panel; an avatar is for a person who joins and claims a profile. Agents (Navigator, Scout,
-  Matchmaker) are the characters in the world (superseded on 19 Oct: agents are bears, and Lumi
+  Matchmaker) are the characters in the world (superseded on 19 Oct: agents are bears, and Bärnli
   is the first). (Raised in Yaseen's plan; adopted by the conductor; Peter may overrule.)
 - **Honest HUD:** real counts only; no money, no "online" numbers, no invented activity.
 - **Map without tiles:** a hand-simplified Bern (Aare loop, districts) in three.js, no map service,
