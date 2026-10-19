@@ -25,6 +25,8 @@ const progress = storyProgress(
   emittedToday,
 );
 
+const moves: (Element | null)[] = [];
+
 function Harness({ profile, person }: { profile: YouProfile; person?: PersonLook | undefined }) {
   const [open, setOpen] = useState(false);
   return (
@@ -39,6 +41,7 @@ function Harness({ profile, person }: { profile: YouProfile; person?: PersonLook
           agent={lumi}
           story={progress}
           onClose={() => setOpen(false)}
+          onMoveOffice={() => moves.push(document.activeElement)}
         />
       )}
     </>
@@ -177,6 +180,27 @@ describe("YouSheet", () => {
     });
     expect(document.querySelector("dialog")).toBeNull();
     expect(document.activeElement).toBe(opener);
+  });
+});
+
+describe("Move your office", () => {
+  test("closes the sheet, puts focus back on its opener, then asks for Settle once", async () => {
+    moves.length = 0;
+    const opener = openSheet();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Move your office" }));
+    });
+    expect(document.querySelector("dialog")).toBeNull();
+    expect(moves).toEqual([opener]);
+  });
+
+  test("closing the sheet any other way does not open Settle", async () => {
+    moves.length = 0;
+    openSheet();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    });
+    expect(moves).toEqual([]);
   });
 });
 
