@@ -34,15 +34,16 @@ export type CriterionRow = {
 };
 
 // A criterion is met only by a finished quest. An unmet one says why it waits: the reason of its
-// quest that is coming next, or that no quest covers it, so the checklist never implies more.
+// quest that cannot be finished today, or that no quest covers it, so the checklist never implies
+// more. A quest open for some steps but not all still waits, since only finishing it meets it.
 export function criterionRows(progress: StoryProgress): CriterionRow[] {
   const finished = new Set(progress.finishedCriteria);
   return checklistCriteria.map(({ criterion, label }) => {
     const quests = progress.quests.filter((entry) => entry.quest.criterion === criterion);
     const met = finished.has(criterion);
-    const playable = quests.some((entry) => entry.status !== "coming");
-    const coming = quests.find((entry) => entry.status === "coming");
-    const note = met || playable ? null : coming ? comingReason(coming.quest) : noQuestYet;
+    const finishable = quests.some((entry) => entry.finishable);
+    const waiting = quests.find((entry) => !entry.finishable);
+    const note = met || finishable ? null : waiting ? comingReason(waiting.quest) : noQuestYet;
     return { criterion, label, met, note };
   });
 }

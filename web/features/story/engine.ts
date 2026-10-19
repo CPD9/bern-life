@@ -3,7 +3,8 @@
 // it; an optional quest's steps count in any order, since its parts live in separate apps. Done
 // steps never go away, so a finished quest stays finished and repeating an event changes nothing.
 // A quest that cannot be finished with the events features emit today is "coming": listed with its
-// reason, never current, so nobody waits on a step no one can complete.
+// reason, never current, so nobody waits on a step no one can complete. An optional quest with some
+// steps playable is open for those, and says why the rest wait (`finishable`).
 import type { AppEventName } from "@/infrastructure/app-events";
 import type { Story } from "@/infrastructure/contract-types.generated";
 
@@ -26,6 +27,8 @@ export type QuestProgress = {
   readonly status: QuestStatus;
   readonly stepsDone: number;
   readonly nextStep: QuestStep | null;
+  /** Every step left can be done with today's events; false while one waits on a later feature. */
+  readonly finishable: boolean;
 };
 
 export type StoryProgress = {
@@ -83,6 +86,7 @@ export function storyProgress(
       quest,
       stepsDone: quest.steps.length - remaining.length,
       nextStep: next,
+      finishable: reachable.length === remaining.length,
       status: (next === null ? "done" : coming ? "coming" : "ready") as QuestStatus,
     };
   });

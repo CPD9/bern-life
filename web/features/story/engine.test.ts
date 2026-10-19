@@ -131,6 +131,26 @@ describe("comingReason", () => {
 });
 
 describe("storyProgress", () => {
+  test("an open quest with a step nothing emits yet is not finishable; the others are", () => {
+    const finishable = Object.fromEntries(
+      storyProgress(story, started, emittedToday).quests.map((q) => [q.quest.id, q.finishable]),
+    );
+    expect(finishable).toEqual({
+      arrive: true,
+      "find-experts": true,
+      "other-words": true,
+      brief: true,
+      visit: true,
+      honest: true,
+      extend: false,
+      grow: false,
+    });
+    const done = play(["abstained_seen"]);
+    expect(
+      storyProgress(story, done, []).quests.find((q) => q.quest.id === "honest"),
+    ).toMatchObject({ status: "done", finishable: true });
+  });
+
   test("quests whose events nothing emits yet are coming next and never current", () => {
     const withoutNumbers = emittedToday.filter((event) => event !== "numbers_seen");
     expect(statuses(started, withoutNumbers)["extend"]).toBe("coming");

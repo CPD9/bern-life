@@ -51,7 +51,7 @@ describe("QuestPanel", () => {
     render(
       <Harness events={events} store={memoryStore()} onShowMe={(target) => targets.push(target)} />,
     );
-    expect(screen.getByText("Ask the Navigator in your own words.")).toBeTruthy();
+    expect(screen.getByText("Ask the Navigator in your own words and get a result.")).toBeTruthy();
     expect(screen.getByText("Case: the right people")).toBeTruthy();
     expect(screen.getAllByRole("img", { name: "0 of 2 steps done" })).toHaveLength(1);
 

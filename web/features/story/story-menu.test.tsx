@@ -54,16 +54,27 @@ describe("StoryMenu", () => {
     ]);
   });
 
-  test("today every quest is open: none waits on an event nothing emits", () => {
+  test("today every quest is open, and one that cannot be finished yet says why", () => {
     render(<Harness />);
     openMenu();
     const row = (title: string) => screen.getByRole("heading", { name: title }).closest("li")!;
+    const lines = (title: string) =>
+      Array.from(row(title).querySelectorAll("p, span")).map((element) => element.textContent);
     for (const title of ["Arrive and settle", "Visit an institute", "Add a new source"]) {
       expect(row(title).textContent).toContain("Open · optional");
     }
-    expect(row("Arrive and settle").textContent).not.toContain("does not report");
-    expect(row("Grow in Bern").textContent).toContain("Open · optional");
+    expect(row("Arrive and settle").querySelectorAll("p")).toHaveLength(1);
     expect(row("Find the right people").querySelectorAll("p")).toHaveLength(1);
+    expect(lines("Add a new source").slice(0, 3)).toEqual([
+      "Open · optional",
+      "Add an institution's website with one configuration file.",
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+    ]);
+    expect(lines("Grow in Bern").slice(0, 3)).toEqual([
+      "Open · optional",
+      "Save opportunities, keep results, message members and meet the models behind the Navigator, in any order.",
+      "A network of labs and experts is not built yet, so its step cannot be done.",
+    ]);
   });
 
   test("Close gives focus back to what opened the menu", async () => {
