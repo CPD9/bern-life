@@ -1,88 +1,145 @@
 # Bern Life
 
-Bern Life is the Research & Expertise Navigator for Bern: ask in your own words and get the people,
-units, projects and facilities of the University of Bern, the ARTORG Center and Diabetes Center
-Berne, each with a link to the public page it comes from. You use it inside a small life-sim of
-Bern, built on Apertus v1.5, and every fact it shows about anyone is a sentence copied word for
-word from that page and checked in code.
+Bern Life finds the people in Bern who work on what you need, and shows you the sentence from
+their own institution's page that proves it.
 
-## Try it
+It is the Research & Expertise Navigator for Bern, built for the HackApertus case. Ask in your own
+words and get the people, units, projects and facilities of the University of Bern, the ARTORG
+Center and Diabetes Center Berne, each with a link to the public page it comes from. You use it
+inside a small life-sim of Bern (a drawn, walkable model of the city). The language model behind it
+is Apertus v1.5, the Swiss open model. Every fact it shows about anyone is a sentence copied word
+for word from a public page and checked in code.
 
-You need Docker with Compose, `make` and Python 3.12. `make fetch` uses the `gh` command when it
-is installed (needed while the repository is private) and a plain download otherwise.
+**What it does for you**
+
+- **Ask in your own words.** "Blood sugar sensors" works as well as the medical term. Apertus adds
+  search terms (synonyms, lay terms, translations), and they are shown as search terms, never as
+  facts.
+- **Every answer shows its proof.** Each role, unit or expertise on a result opens the sentence
+  from the institution's own page, with the link and the date the page was read.
+- **It says so when there is no proof.** A question with no page behind it gets "no verifiable
+  source" instead of a guess.
+
+<img src="docs/assets/screenshot-bern.png" alt="Bern Life: the drawn map of Bern with the phone's Ask app open" width="800">
+
+## Try it in five minutes
+
+You need Docker with Compose (it runs the app in containers, so nothing else is installed on your
+machine), `make` and Python 3.12. `make fetch` uses the `gh` command when it is installed (needed
+while the repository is private) and a plain download otherwise.
 
 ```bash
-make fetch    # download the pinned snapshot bundle, check its sha256 and every file in it
-make run      # Postgres, the engine and the web app, replaying the bundle: no GPU, no model key
+make fetch    # download the pinned snapshot bundle (the stored copy of the public pages), check its sha256 and every file in it
+make run      # start Postgres, the engine and the web app, replaying the bundle: no GPU, no model key
 ```
 
-Open **http://127.0.0.1:3000**. `make stop` stops it again. The search without the world is at
-http://127.0.0.1:3000/navigator, and the office computer without the 3D room at
-http://127.0.0.1:3000/office. In a browser without 3D graphics (WebGL), the map and the office
-room give way to a short note, and Ask, the office desk and every app still work.
+Open **http://127.0.0.1:3000** and:
 
-**A short tour**
-
-1. **Land on the map.** A drawn Bern with the Aare, the old town and the bridges. Institutes stand
-   at the street address their own pages give (in their district when no page gives one), and so
-   do places for business in Bern such as the Bern Economic Development Agency, Innosuisse,
-   Effinger coworking and PROGR. There are no map tiles and nothing loads from elsewhere.
-2. **Ask.** Tap **Phone**, then **Ask**, and paste
+1. **Tap Phone, then Ask**, and tap one of the three example questions, or paste
    `Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?`
    The answer lists the extra search terms Apertus added (labelled as search terms, never as
-   facts) and the results. Then try
-   `Results of the ALPENHITZE cohort study led by Prof. Beat Zurbriggen at ISPM`: the professor and
-   the study are invented, so it says that no verifiable source exists instead of guessing.
-3. **Open the evidence.** Tap any role, unit or expertise on a result card. The sentence from the
-   page opens with its link and the date it was fetched. "Why it matches" cites only those claims.
-   **Show on map** lights the places that hold results; open a place to see its units, each with
-   its address and source page (or its district, when its pages give no address), and the matches
-   found there.
-4. **Join.** Joining is by invite. Make a code with
-   `cd web && bun install && DATABASE_URL=postgresql://bernlife:bernlife@127.0.0.1:5433/bernlife bun run invite:create`
-   (needs [Bun](https://bun.sh)), then choose **Join Bern Life**.
-5. **Onboarding.** Bärnli, your first agent, greets you. Five short steps follow: who you are in
-   Bern, your look (players are people), what brings you here, who sees what, and your agent:
-   Bärnli is a bear you can rename and restyle. A card then offers to choose where your office
-   stands; each plot lists the nearest places with their sourced addresses.
-6. **Your office.** Onboarding ends in your office, the **Home** tab. Sit at the desk to use the
-   computer, nine apps: **Navigator** (the same search as Ask, and a project brief), **Agents**
-   (Bärnli's skills, each with its evidence, and loops: saved searches you run again, whose new and
-   dropped results reach the bell), **Reports** (match reports with their sources), **Messages** (to
-   members who joined), **Library** (what you saved, and your documents with their trace),
-   **Opportunities** (funding calls, services and spaces; an amount or deadline appears only inside
-   the sentence it was read from), **Garage** (the Apertus models and the evaluator's numbers for
-   this snapshot, as the engine serves them, and the skills with their evidence), **Sources** (the
-   institutions crawled, and how to add one) and **Settings**. The door leads back to the map; the
-   phone carries Ask, Messages, Agents, Opportunities, Library and Settings.
-7. **Bärnli.** Your agent floats beside you as the bear you made, and walks beside you on the map;
-   either opens its chat. Bärnli searches with the engine's own tools and answers
-   with the same source cards as Ask. A person it names must be among those results, a reply it
-   cannot support is replaced by a summary of the cited claims, and with nothing behind it Bärnli
-   says it found no verifiable source. An answer stays in the chat, with buttons to light its places
-   on the map, open its card in Ask or make a match report (it opens in the desk's Reports window);
-   nothing happens until you click.
-8. **The story.** A card offers **Start the story**, quests about moving a business to Bern that
-   each walk through one part of the case and complete only when you actually do the step in the
-   app, or **Explore freely**. Your badge opens the **You** sheet: profile, goals, skills, people
-   and agents, with real content only.
-9. **Walk Bern.** Out of the office you stand at your office door (at the station before you
-   settle), Bärnli beside you. Press **Walk** on the map: the arrows or W A S D walk you and the
-   camera follows; a click on the ground or a bridge finds the way round the houses and over the
-   bridges, and a click on a place's building or your office, or **Walk here** on a place, walks
-   you to its door. At a place's door **Enter** opens its lobby; at your own door **Go home**
-   takes you inside. The city's clock runs about 85 times faster than walking pace.
+   facts) and the results.
+2. **Tap a role, unit or expertise on a result card.** The sentence from the page opens with its
+   link and the date it was fetched.
+3. **Tap Show on map.** The places that hold results light up. Open one to see its units and the
+   matches found there.
+4. **Walk the case.** The phone has one app per case criterion, numbered **1 People** to
+   **7 Honest no**. Each says what the case asks, runs a recorded question with one tap, tells you
+   what to look for, shows the number the evaluator measured for it, and **Next** takes you to
+   the following one.
+
+<img src="docs/assets/screenshot-phone.png" alt="The phone's home screen: the case, step by step, as seven numbered apps above the other apps" width="800">
+
+Then paste `Results of the ALPENHITZE cohort study led by Prof. Beat Zurbriggen at ISPM`. The
+professor and the study are invented, so the app says that no verifiable source exists instead of
+guessing.
+
+`make stop` stops it again. The search without the world is at http://127.0.0.1:3000/navigator,
+and the office computer without the 3D room at http://127.0.0.1:3000/office. In a browser without
+3D graphics (WebGL), the map and the office room give way to a short note, and Ask, the office desk
+and every app still work.
+
+## How to read what you see
+
+**The chip on every answer** says where the help came from:
+
+- **Live**: Apertus answered just now.
+- **Replay**: Apertus's recorded answer for this exact question. The search itself still runs live
+  over the stored pages; only Apertus's part, the search terms and the explanation, is played back
+  from a recording that ships with the bundle.
+- **Plain search**: your words only, no recorded Apertus terms. In replay, every question that was
+  not recorded gets this, and the app says so.
+
+**The evidence panel.** Tap any role, unit or expertise on a result card. The sentence from the
+page opens with its link and the date it was fetched. "Why it matches" cites only those claims.
+Every claim and every map address has a **Wrong or outdated?** note (see
+[Corrections and removal](#corrections-and-removal)).
+
+**The map.** A drawn Bern with the Aare, the old town and the bridges. Institutes stand at the
+street address their own pages give (in their district when no page gives one), and so do places
+for business in Bern such as the Bern Economic Development Agency, Innosuisse, Effinger coworking
+and PROGR. There are no map tiles and nothing loads from elsewhere. **Show on map** lights the
+places that hold results; open a place to see its units, each with its address and source page (or
+its district, when its pages give no address), and the matches found there.
+
+**"No verifiable source."** When no stored page supports an answer, the app says so instead of
+inventing one. The same rule holds for Bärnli, your agent: a person it names must be among the
+search results, a reply it cannot support is replaced by a summary of the cited claims, and with
+nothing behind it Bärnli says it found no verifiable source.
 
 Replay is the default. Questions recorded in the bundle's model cache get Apertus's search terms
 and explanations; any other question still gets plain search over the stored pages, and the app
 says so. A new project brief needs the model: replay has only the briefs recorded in the bundle,
 and the app says so for any other. In replay Bärnli searches your message and summarises the cited
-claims; its own recorded answers ship with the next bundle. Only `make live-run` (in place of
-`make run`) calls Apertus: it starts only when the model endpoint set in `.env` answers, and the
-model is called only for signed-in members under their limits, at most `LLM_CALL_BUDGET` calls a
-day (unset: none). Everyone else is answered from the recordings.
+claims; its own recorded answers ship with the next bundle.
+
+## Live Apertus
+
+In the demo, Apertus is called live for every question. Start the app with `make live-run` in
+place of `make run`, then sign in. It starts only when the model endpoint set in `.env` answers.
+The model is called only for signed-in members under their limits, at most `LLM_CALL_BUDGET` calls
+a day (unset: none). Everyone else is answered from the recordings.
+
+## The world around the search
+
+- **Join.** Joining is by invite. Make a code with
+  `cd web && bun install && DATABASE_URL=postgresql://bernlife:bernlife@127.0.0.1:5433/bernlife bun run invite:create`
+  (needs [Bun](https://bun.sh)), then choose **Join Bern Life**.
+- **Onboarding.** Bärnli, your first agent, greets you. Five short steps follow: who you are in
+  Bern, your look (players are people), what brings you here, who sees what, and your agent:
+  Bärnli is a bear you can rename and restyle. A card then offers to choose where your office
+  stands; each plot lists the nearest places with their sourced addresses.
+- **Your office** is the **Home** tab. Sit at the desk to use the computer, nine apps:
+  **Navigator** (the same search as Ask, and a project brief), **Agents** (Bärnli's skills, each
+  with its evidence, and loops: saved searches you run again, whose new and dropped results reach
+  the bell), **Reports** (match reports with their sources), **Messages** (to members who joined),
+  **Library** (what you saved, and your documents with their trace), **Opportunities** (funding
+  calls, services and spaces; an amount or deadline appears only inside the sentence it was read
+  from), **Garage** (the Apertus models and the evaluator's numbers for this snapshot, as the
+  engine serves them, and the skills with their evidence), **Sources** (the institutions crawled,
+  and how to add one) and **Settings**. The door leads back to the map; the phone carries Ask,
+  Messages, Agents, Opportunities, Library, Sources, Settings and the seven case steps.
+- **Bärnli** floats beside you as the bear you made, and walks beside you on the map; either opens
+  its chat. Bärnli searches with the engine's own tools and answers with the same source cards as
+  Ask. An answer stays in the chat, with buttons to light its places on the map, open its card in
+  Ask or make a match report (it opens in the desk's Reports window); nothing happens until you
+  click.
+- **The story.** A card offers **Start the story**, quests about moving a business to Bern that
+  each walk through one part of the case and complete only when you actually do the step in the
+  app, or **Explore freely**. Your badge opens the **You** sheet: profile, goals, skills, people
+  and agents, with real content only.
+- **Walk Bern.** Out of the office you stand at your office door (at the station before you
+  settle), Bärnli beside you. Press **Walk** on the map: the arrows or W A S D walk you and the
+  camera follows; a click on the ground or a bridge finds the way round the houses and over the
+  bridges, and a click on a place's building or your office, or **Walk here** on a place, walks
+  you to its door. At a place's door **Enter** opens its lobby; at your own door **Go home**
+  takes you inside. The city's clock runs about 85 times faster than walking pace.
 
 ## Against the case
+
+The table below is measured by a separate program (the evaluator) on a frozen set of questions,
+and CI (the check that runs on every change) refuses a README whose numbers differ from what it
+measured.
 
 Measured by the evaluator on the frozen gold set: questions in English, German and French, written
 from public pages before search existed, scored on the pinned snapshot bundle. The evaluator is
@@ -116,38 +173,45 @@ exposure by unit size, and the two-person check of criterion 4.
 
 ## How it works
 
+Public pages are read, each fact is pulled out with its sentence, checked in code, widened with
+search terms, searched, and explained from the cited sentences only:
+
 ```
 public pages ─► crawl ─► extract with evidence ─► verify in code ─► enrich ─► hybrid search ─► explain from cited claims
 ```
 
 <img src="docs/assets/explain-page-to-profile.svg" alt="From page to profile: a sentence on a page passes the verifier and becomes a claim; a model proposal that is not on the page is dropped" width="800">
 
-1. **Crawl.** Each institution is a JSON file in `sources/` with its hosts, seeds and allowed
-   paths. The crawler reads robots.txt first, waits between requests and stores every page with
-   its URL, fetch date and sha256. E-mail addresses and phone numbers are removed before the text
-   is stored.
-2. **Extract with evidence.** Selectors read names, roles and units from the page layout. Apertus
-   70B proposes further values, each with the sentence it came from, and sees the page only as
-   data.
-3. **Verify in code.** A proposal is kept only if its sentence occurs in the stored page text
-   exactly. The stored sentence is always cut from the page, never taken from the model. A
-   database trigger checks the same again on load, and the evaluator checks it a third time
+1. **Crawl (read the public pages).** Each institution is a JSON file (a small settings file) in
+   `sources/` with its hosts (web addresses), seeds (start pages) and allowed paths. The crawler
+   reads robots.txt first (the file where a site says what may be read), waits between requests
+   and stores every page with its URL, fetch date and sha256 (a fingerprint that shows whether the
+   page changed). E-mail addresses and phone numbers are removed before the text is stored.
+2. **Extract with evidence (pull facts out, each with its sentence).** Selectors (rules tied to the
+   page layout) read names, roles and units. Apertus 70B (the large Apertus model) proposes further
+   values, each with the sentence it came from, and sees the page only as data, never as
+   instructions.
+3. **Verify in code (check every sentence against the page).** A proposal is kept only if its
+   sentence occurs in the stored page text exactly. The stored sentence is always cut from the
+   page, never taken from the model. A database trigger (a rule the database applies by itself)
+   checks the same again on load, and the evaluator checks it a third time
    ([extraction](docs/extraction.md)).
-4. **Enrich.** Apertus adds retrieval terms to each expertise value (synonyms, lay terms,
-   translations, acronyms). They help search find pages and are never shown as facts.
-5. **Hybrid search.** Full-text (BM25-weighted) and vector search (multilingual-e5-small, on CPU)
-   run in one Postgres statement and are fused by reciprocal rank. A result is shown only if one
-   of its own cited claims, or a project it works on, matches the question. At most 4 people of
-   one unit fill the top 10, and there is no popularity signal
-   ([search](docs/search.md)).
+4. **Enrich (add search terms).** Apertus adds retrieval terms to each expertise value: synonyms,
+   lay terms, translations, acronyms. They help search find pages and are never shown as facts.
+5. **Hybrid search (search by words and by meaning at once).** Full-text search (matching words,
+   BM25-weighted) and vector search (matching meaning, with the multilingual-e5-small model on an
+   ordinary processor, no GPU) run in one Postgres statement and are fused by reciprocal rank (the
+   two rankings are combined into one). A result is shown only if one of its own cited claims, or
+   a project it works on, matches the question. At most 4 people of one unit fill the top 10, and
+   there is no popularity signal ([search](docs/search.md)).
 6. **Explain from cited claims only.** For the top 5, Apertus writes "why it matches" from the
    question, the name and the cited claims, nothing else. Code rejects the text if it cites a
    claim it was not given or capitalises a word found in neither those claims nor the name; the
    plain reason listing the claims stays instead.
 
-<img src="docs/assets/explain-ask.svg" alt="Ask in your words: the question becomes search terms, full-text and meaning search merge into one ranking, and each result keeps its evidence" width="800">
+<img src="docs/assets/explain-ask.svg" alt="Ask in your words: the question is typed, Apertus adds search terms that are not facts, and each result card shows a sentence quoted from the institute's own page" width="800">
 
-<img src="docs/assets/explain-brief.svg" alt="A project brief: a PDF becomes needs tied to their sentences, matched experts with coverage and gaps" width="800">
+<img src="docs/assets/explain-brief.svg" alt="A company's brief: sentences of a PDF lift out as needs, each expert shows which needs they cover, partly cover or miss, and the gap is named" width="800">
 
 A company can also upload a project PDF. Each need keeps the sentence of the PDF it came from, and
 each matched expert shows which needs their cited claims cover. The PDF is read once and not kept.
@@ -159,16 +223,17 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
   the Swiss National Supercomputing Centre ([`infra/cscs.md`](infra/cscs.md)). Models are reached
   only through the endpoints set in `.env`, and every call goes through the cache.
 - **Replay with no model.** Every model call goes through a cache that ships in the snapshot
-  bundle, so `make run` answers without a GPU, a key or a network connection to any model.
-- **Your own hardware.** The vLLM scripts in [`infra/runpod/`](infra/runpod/README.md) serve
-  Apertus 70B (FP8) or 8B at pinned revisions on GPUs you control, behind a loopback tunnel, and
-  the bundle replays on a machine with no network at all. Both paths are in
+  bundle. So `make run` answers without a GPU, a key or a network connection to any model.
+- **Your own hardware.** The vLLM scripts (a program that serves a model) in
+  [`infra/runpod/`](infra/runpod/README.md) serve Apertus 70B (FP8) or 8B at pinned revisions on
+  GPUs you control, behind a loopback tunnel (a connection that never leaves the machine). The
+  bundle replays on a machine with no network at all. Both paths are in
   [`infra/sovereign.md`](infra/sovereign.md); they are documented, not yet rehearsed end to end.
-- **Self-hosted.** Postgres with pgvector, the engine and the web app run in Docker. The embedding
-  model is downloaded once on the first start, at a pinned revision checked by sha256. The map is
-  drawn in three.js without tiles, and the app loads no fonts or scripts from elsewhere. A hosted
-  copy runs on Exoscale in Geneva, invite-only, with nightly backups and an uptime check
-  (`python3 -m infra.check_hosted --watch`, [`infra/exoscale.md`](infra/exoscale.md)).
+- **Self-hosted.** Postgres with pgvector (the database), the engine and the web app run in Docker.
+  The embedding model is downloaded once on the first start, at a pinned revision checked by
+  sha256. The map is drawn in three.js without tiles, and the app loads no fonts or scripts from
+  elsewhere. A hosted copy runs on Exoscale in Geneva, invite-only, with nightly backups and an
+  uptime check (`python3 -m infra.check_hosted --watch`, [`infra/exoscale.md`](infra/exoscale.md)).
 
 ## Data protection
 
@@ -176,8 +241,8 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
 - **No e-mail addresses or phone numbers are stored.** The contact is the source page.
 - **People from public pages are entries with sources, never avatars or characters** in the world.
 - **The snapshot bundle never enters git.** It is a sha256-pinned release asset
-  ([`bundle.lock`](bundle.lock)) that carries the pages so that the replay demo, the hosted copy
-  and the evaluation all run from the same snapshot; it grants no licence to reuse them. A page is
+  ([`bundle.lock`](bundle.lock)) that carries the pages, so that the replay demo, the hosted copy
+  and the evaluation all run from the same snapshot. It grants no licence to reuse them. A page is
   removed on request by publishing a new bundle without it and reloading the hosted copy, whose
   nightly backups age out after 14 days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)).
 - **Accounts are invite-only**, and a project PDF is read once and not kept.
@@ -188,11 +253,11 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
 
 ### Corrections and removal
 
-Bern Life removes on request; the Swiss Federal Act on Data Protection (nDSG) gives the people
+Bern Life removes on request. The Swiss Federal Act on Data Protection (nDSG) gives the people
 named the right to ask. Every claim is a sentence quoted from an institution's public page on the
 date shown beside it. Every quote and map address in the app has a **Wrong or outdated?** note
 that links to the app's own [`/corrections`](web/app/corrections/page.tsx) page, which says what
-this section says; the note only explains, and nothing is sent from the app.
+this section says. The note only explains, and nothing is sent from the app.
 
 - **Wrong or outdated sentence:** the institution corrects its own page, and the change reaches
   Bern Life with the next snapshot bundle.
@@ -205,7 +270,7 @@ this section says; the note only explains, and nothing is sent from the app.
   plain mail link that opens your own mail program; the app sends and keeps nothing. If you do
   not mind others reading the request, open an issue on this repository instead.
 - **What happens:** the page is left out. Its path goes into `deny_paths` in its source's file in
-  [`sources/`](sources/), and a new bundle is built without it and pinned; the earlier release
+  [`sources/`](sources/), and a new bundle is built without it and pinned. The earlier release
   assets that hold it are withdrawn and the hosted copy is reloaded. Its nightly backups age out
   after 14 days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)). Git holds no page, so
   nothing in its history needs rewriting. Sentences someone saved to the Library, and the match
@@ -214,18 +279,18 @@ this section says; the note only explains, and nothing is sent from the app.
 
 ## Limits and roadmap
 
-- **Recall is below the case's bar** (criterion 1 in the table). A candidate is shown only when a
-  claim it cites shares a word with the question, so someone found only through a passage or a
-  phrase in another language stays hidden rather than shown without a reason.
-- **German and French questions find less than English** (criterion 2). There is no stemming, so
-  word forms such as "Kohlenhydrate" and "Kohlenhydraten" do not match.
-- **Not every invented question abstains:** 8 of 10, where the pre-registered rule asks 9 (the
-  ethics row). The two that still get results ask in French, one about an invented project and one
-  with a title the premise check does not know.
+- **Recall is below the case's bar** (criterion 1 in the table). A result is shown only when a
+  claim it cites, or a passage on its own page, shares a word with the question. So someone found
+  only through a phrase in another language stays hidden rather than shown without a reason.
+- **German and French questions find less than English** (criterion 2). Word endings such as
+  "Kohlenhydrate" and "Kohlenhydraten" are matched, but a claim in one language is found by a
+  question in another only when Apertus's search terms bridge it.
+- **Not every invented question abstains.** The ethics row of the table says how many of the 10
+  do; the ones that still get results ask in French, about an invented project or with a title
+  the premise check does not know.
 - **UniBE is found least often** of the three sources (criterion 5).
 - Explanations are written in English only, and field completeness still needs its human check.
-- **In the game:** you walk the drawn map but not yet inside the office, and on a phone-width screen
-  (390 px) the HUD covers the map's search summary. Two optional quests say why one of their steps
+- **In the game:** you walk the drawn map but not yet inside the office. Two optional quests say why one of their steps
   cannot be done yet: adding a source is a file in `sources/`, not an action in the app, and there
   is no network of labs and experts. What you save to the Library and your office plot stay on this
   device. A map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the
@@ -234,8 +299,10 @@ this section says; the note only explains, and nothing is sent from the app.
   asking for one sentence to go takes its whole page out of the next bundle.
 - **Notifications stay in the app** (the bell). Opt-in e-mail or push notifications are not
   decided yet.
-- **The next bundle is not pinned yet.** Replay and every number above come from
-  `bundle-20261019-2`, which holds no recorded answers of Bärnli's own.
+- **Replay knows only recorded questions.** Every number above comes from the snapshot named
+  under the table. Apertus's recorded search terms and explanations exist only for the questions
+  recorded in it (capitals and spacing do not matter); any other question gets plain search, and
+  the chip says so. Only a live run (`make live-run`) asks Apertus about a new question.
 - Next: matching word forms and claims across languages, the human completeness labels, and a
   calibrated confidence per result.
 

@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { act, fireEvent, render, renderHook, screen, within } from "@testing-library/react";
 import { type ReactElement, isValidElement } from "react";
 import { AgentsApp } from "@/features/agents/agents-app";
+import { CaseStepApp } from "@/features/case/case-step-app";
+import { alarmQuestion } from "@/features/case/case-steps";
 import { useDesktop } from "@/features/desktop/use-desktop";
 import { GarageApp } from "@/features/garage/garage-app";
 import { LibraryApp } from "@/features/library/library-app";
@@ -20,7 +22,7 @@ import type { NumbersApi } from "@/infrastructure/numbers-api";
 import { healthFixture, resultFixture } from "@/test/fixtures";
 import { numbersBody, queuedApi } from "@/test/numbers";
 import { useOfficeApps } from "./office-apps";
-import { phoneApps } from "./phone-apps";
+import { caseGroup, phoneApps } from "./phone-apps";
 
 const offline: NavigatorApi = {
   search: async () => ({ ok: false, failure: { kind: "network" } }),
@@ -90,7 +92,7 @@ describe("phone apps", () => {
     return { result, opened };
   }
 
-  test("every app is real: the desk's apps, and nothing is coming next", () => {
+  test("every app is real: the desk's apps, then the case's seven steps", () => {
     const { apps } = setUp().result.current;
     expect(apps.map((app) => app.label)).toEqual([
       "Ask",
@@ -98,19 +100,62 @@ describe("phone apps", () => {
       "Agents",
       "Opportunities",
       "Library",
+      "Sources",
       "Settings",
+      "1 People",
+      "2 Wording",
+      "3 Proof",
+      "4 Fields",
+      "5 Sources",
+      "6 Add a site",
+      "7 Honest no",
     ]);
     const byId = Object.fromEntries(apps.map((app) => [app.id, typeOf(app.content)]));
     expect(byId["messages"]).toBe(StandaloneMessagesPage);
     expect(byId["agents"]).toBe(AgentsApp);
     expect(byId["opportunities"]).toBe(OpportunitiesApp);
     expect(byId["library"]).toBe(LibraryApp);
+    expect(byId["sources"]).toBe(SourcesApp);
     expect(byId["settings"]).toBe(SettingsApp);
+    expect(byId["case-1"]).toBe(CaseStepApp);
+    expect(byId["case-7"]).toBe(CaseStepApp);
+  });
+
+  test("only the case's steps are grouped, under one heading", () => {
+    const { apps } = setUp().result.current;
+    expect(apps.filter((app) => app.group !== undefined).map((app) => [app.id, app.group])).toEqual(
+      [1, 2, 3, 4, 5, 6, 7].map((number) => [`case-${number}`, caseGroup]),
+    );
+    expect(caseGroup).toBe("The case, step by step");
+  });
+
+  test("Try it on a case step runs its question in Ask, in search mode, and opens Ask", async () => {
+    const { result, opened } = setUp();
+    act(() => result.current.navigator.setInputMode("brief"));
+    render(<>{result.current.apps.find((app) => app.id === "case-1")!.content}</>);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Try it" })));
+    expect(opened).toEqual(["ask"]);
+    expect(result.current.navigator.inputMode).toBe("search");
+    expect(result.current.navigator.draft).toBe(alarmQuestion);
+    const { state } = result.current.navigator;
+    expect(state.status === "failed" && state.request.kind === "search" && state.request).toEqual({
+      kind: "search",
+      search: { query: alarmQuestion },
+    });
+  });
+
+  test("Next on a case step opens the next step's app", () => {
+    const { result, opened } = setUp();
+    render(<>{result.current.apps.find((app) => app.id === "case-1")!.content}</>);
+    act(() => fireEvent.click(screen.getByRole("button", { name: "Next: 2 Wording" })));
+    expect(opened).toEqual(["case-2"]);
   });
 
   test("Messages carries the unread count, and Settings the engine's health", () => {
     const { apps } = setUp().result.current;
-    expect(apps.map((app) => app.badge ?? null)).toEqual([null, 2, null, null, null, null]);
+    expect(apps.flatMap((app) => (app.badge === undefined ? [] : [[app.id, app.badge]]))).toEqual([
+      ["messages", 2],
+    ]);
     const settings = apps.find((app) => app.id === "settings")!.content as ReactElement<{
       health: unknown;
     }>;

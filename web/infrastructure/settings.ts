@@ -4,18 +4,35 @@
 
 export type NightMode = "off" | "on" | "auto";
 
+export type Wallpaper = "bern" | "aare" | "night" | "plain";
+
 export type Settings = {
   readonly night: NightMode;
   readonly lite: boolean;
+  /** The scene behind the office computer's windows. */
+  readonly wallpaper: Wallpaper;
+  /** The office computer shows the scene and the time after 90 seconds without activity. */
+  readonly screensaver: boolean;
 };
 
-export const defaultSettings: Settings = { night: "auto", lite: false };
+export const defaultSettings: Settings = {
+  night: "auto",
+  lite: false,
+  wallpaper: "bern",
+  screensaver: true,
+};
 
 export const settingsKey = "bernlife.settings";
 
 type SettingsStorage = Pick<Storage, "getItem" | "setItem">;
 
 const nightModes: readonly NightMode[] = ["off", "on", "auto"];
+
+const wallpapers: readonly Wallpaper[] = ["bern", "aare", "night", "plain"];
+
+function flag(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
 
 export function parseSettings(raw: string | null): Settings {
   let value: unknown = null;
@@ -25,13 +42,14 @@ export function parseSettings(raw: string | null): Settings {
     return defaultSettings;
   }
   // Fields this version no longer has (an old `dataSaver`) are dropped, not refused.
-  const { night, lite } = (typeof value === "object" && value !== null ? value : {}) as Record<
-    string,
-    unknown
-  >;
+  const { night, lite, wallpaper, screensaver } = (
+    typeof value === "object" && value !== null ? value : {}
+  ) as Record<string, unknown>;
   return {
     night: nightModes.find((mode) => mode === night) ?? defaultSettings.night,
-    lite: typeof lite === "boolean" ? lite : defaultSettings.lite,
+    lite: flag(lite, defaultSettings.lite),
+    wallpaper: wallpapers.find((scene) => scene === wallpaper) ?? defaultSettings.wallpaper,
+    screensaver: flag(screensaver, defaultSettings.screensaver),
   };
 }
 

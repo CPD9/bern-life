@@ -59,11 +59,42 @@ describe("Settings", () => {
       fireEvent.click(lite);
       expect(lite.getAttribute("aria-checked")).toBe(String(before));
       expect(root.getAttribute("data-graphics")).toBe(before ? "lite" : null);
-      expect(JSON.parse(localStorage.getItem(settingsKey)!)).toEqual({ night: "on", lite: before });
+      expect(JSON.parse(localStorage.getItem(settingsKey)!)).toEqual({
+        night: "on",
+        lite: before,
+        wallpaper: "bern",
+        screensaver: true,
+      });
     } finally {
       fireEvent.click(within(night).getByLabelText("Auto"));
       if (lite.getAttribute("aria-checked") === "true") fireEvent.click(lite);
       applySettings(root, defaultSettings);
+    }
+  });
+
+  test("the desktop background and the screensaver are saved with the other settings", async () => {
+    const { api } = fakeServer({ status: 401 });
+    await act(async () => render(<SettingsApp profileApi={api} />));
+    const background = screen.getByRole("group", { name: "Desktop background" });
+    const screensaver = screen.getByRole("switch", {
+      name: "Screensaver after 90 seconds on the desk",
+    });
+    expect(checked(background, "Bern")).toBe(true);
+    expect(screensaver.getAttribute("aria-checked")).toBe("true");
+    try {
+      fireEvent.click(within(background).getByLabelText("Night sky"));
+      fireEvent.click(screensaver);
+      expect(checked(background, "Night sky")).toBe(true);
+      expect(screensaver.getAttribute("aria-checked")).toBe("false");
+      expect(JSON.parse(localStorage.getItem(settingsKey)!)).toEqual({
+        night: "auto",
+        lite: false,
+        wallpaper: "night",
+        screensaver: false,
+      });
+    } finally {
+      fireEvent.click(within(background).getByLabelText("Bern"));
+      if (screensaver.getAttribute("aria-checked") === "false") fireEvent.click(screensaver);
     }
   });
 

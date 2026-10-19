@@ -52,12 +52,34 @@ async function submitBrief(text: string) {
 }
 
 describe("Navigator", () => {
+  test("tapping an example question searches it at once, and the examples leave with the answer", async () => {
+    const asked: SearchRequest[] = [];
+    const api: NavigatorApi = {
+      search: async (request) => {
+        asked.push(request);
+        return { ok: true, response: resultFixture };
+      },
+      brief: async () => ({ ok: true, response: resultFixture }),
+    };
+    render(<Harness api={api} />);
+    const examples = screen.getByRole("list", { name: "Example questions" });
+    expect(examples.querySelectorAll("button").length).toBe(3);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^de Blutzucker messen$/ }));
+    });
+    expect(asked).toEqual([{ query: "Blutzucker messen" }]);
+    expect((screen.getByLabelText("Ask in your words") as HTMLInputElement).value).toBe(
+      "Blutzucker messen",
+    );
+    expect(screen.queryByRole("list", { name: "Example questions" })).toBeNull();
+  });
+
   test("a mock answer in fixture mode shows the MOCK banner and the expanded terms", async () => {
     render(<Harness api={answering(resultFixture)} fixtureMode />);
     await ask("glucose sensors");
     expect(screen.getByRole("status").textContent).toBe("1 result");
     expect(screen.getByText("MOCK")).toBeTruthy();
-    expect(screen.queryByText(/plain search over the stored pages/)).toBeNull();
+    expect(screen.queryByText(/Plain search: your words only/)).toBeNull();
     expect(screen.getByText(/They are not facts about anyone/)).toBeTruthy();
     expect(screen.getByText("CGM")).toBeTruthy();
   });
@@ -69,7 +91,7 @@ describe("Navigator", () => {
     expect(screen.queryByText(/canned test data/)).toBeNull();
     expect(
       screen.getByText(
-        "No recorded model answer for this question: plain search over the stored pages",
+        "Plain search: your words only. Apertus adds search terms for the recorded questions, or in a live run.",
       ),
     ).toBeTruthy();
   });
@@ -173,7 +195,7 @@ describe("Navigator", () => {
     expect(screen.getByRole("status").textContent).toBe(
       "Reading a new brief needs the model; this replay has the recorded briefs only.",
     );
-    expect(screen.queryByText(/plain search over the stored pages/)).toBeNull();
+    expect(screen.queryByText(/Plain search: your words only/)).toBeNull();
   });
 
   test("the FIXTURE label shows only in fixture mode", () => {

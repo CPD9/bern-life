@@ -150,7 +150,7 @@ searches from loopback only). Steps in order; each says where it runs. `ssh` and
 7. **VM: health check.** It asks `https://<site>/api/health`, which travels through Caddy, the web
    app, the engine and the database, and passes only on replay mode, the version in `bundle.lock`
    and the page and profile counts in the bundle's manifest. The DEMO fixtures fail it, and so does
-   live mode, which this VM must never be in (`--mode live` is for a stack meant to call models).
+   live mode unless asked with `--mode live` ("Live mode" below).
    When the engine reports them, it also prints its status, uptime and failed model calls in the
    last hour per role and marker.
 
@@ -172,6 +172,35 @@ Back to search afterwards: `docker compose up -d --wait` in `infra/exoscale`. A 
 the code that ran before step 1: `sudo mv /opt/bernlife /opt/bernlife.search`, then
 `sudo tar -xzf /var/backups/bernlife/<code file from step 1> -C /opt`, then
 `docker compose up -d --build --remove-orphans` in `/opt/bernlife/infra/exoscale`.
+
+## Live mode (optional)
+
+Replay answers Apertus's search terms and explanations only for questions recorded word for word;
+any other wording, or the same question in other capitals, gets plain search. Live mode calls
+Apertus for requests from signed-in members (under the web app's per-member limits) and at most
+`LLM_CALL_BUDGET` calls per UTC day; visitors who are not signed in are still answered from the
+recordings. Facts still come only from the stored pages; the model only adds search terms and
+explains the top results from their cited sentences.
+
+1. **VM: add the model settings to `.env`,** typed on the VM, never pasted into git, an issue or
+   chat: `EXPAND_LLM_BASE_URL`, `EXPAND_LLM_MODEL`, `EXPAND_LLM_API_KEY` (and `LLM_*` if the
+   explainer uses another endpoint), and `LLM_CALL_BUDGET`, a whole number of calls per day.
+   `APP_ORIGIN` comes from `SITE_HOST` and `TRUST_PROXY=1` is set by `compose.yaml` already.
+2. **VM: start live and check it.**
+
+   ```bash
+   cd /opt/bernlife/infra/exoscale
+   docker compose -f compose.yaml -f compose.live.yaml up -d --wait
+   cd /opt/bernlife
+   python3 -m infra.check_hosted --url "https://$(sed -n 's/^SITE_HOST=//p' infra/exoscale/.env)" --mode live
+   ```
+
+3. **Signed in as a member:** a question not in the recordings shows "Also searched for", and the
+   agent's chat answers. With the budget used up (set `LLM_CALL_BUDGET=0` and run step 2 again),
+   the same kind of question falls back to plain search and says so.
+4. **Back to replay,** any time, one command: `docker compose up -d --wait` in `infra/exoscale`.
+   Live calls stay in the volume `bernlife-prod_llm_cache` with what members typed; once live mode
+   is over, `docker volume rm bernlife-prod_llm_cache` (with the stack in replay) deletes them.
 
 ## Day to day
 
