@@ -15,7 +15,7 @@ import { markerAnchors, PlaceMarkers } from "./markers/place-markers";
 import { paletteFor } from "./palette";
 import { PlacePanel } from "./place-panel";
 import { PLACES } from "./places";
-import { AGENTS_ANCHOR, AgentButtons, AgentFigures, type AgentId } from "./scene/agents";
+import { AGENT_ANCHOR, AgentButton, AgentFigure, type MapAgent } from "./scene/agents";
 import { City } from "./scene/city";
 import { Ground } from "./scene/ground";
 import { Lights } from "./scene/lights";
@@ -25,7 +25,7 @@ import { useMapKeys } from "./use-map-keys";
 import { useWorldSearch, worldSearch } from "./world-search";
 
 const BUILDINGS = groupPlacesByBuilding(PLACES);
-/** The square in front of the city hall stays open for the agents. */
+/** The square in front of the city hall stays open for the agent. */
 const CITY = planCity({
   districts: DISTRICTS,
   river: AARE_PATH,
@@ -34,17 +34,20 @@ const CITY = planCity({
   bounds: MAP_BOUNDS,
   seed: 1291,
 });
-const ANCHORS = [...markerAnchors(BUILDINGS), AGENTS_ANCHOR];
+const ANCHORS = [...markerAnchors(BUILDINGS), AGENT_ANCHOR];
 
 export type WorldCanvasProps = {
-  onAgentSelect?: (id: AgentId) => void;
+  /** The player's first agent, standing in front of the city hall. */
+  agent: MapAgent;
+  /** A tap, Enter or Space on the agent. */
+  onAgentOpen: () => void;
   onSearchHere?: (building: Building) => void;
   /** Shown lit at load: the world fixture, passed only when the app runs with DEMO_FIXTURES=1. */
   demoSearch?: SearchResponse | undefined;
 };
 
 // Transparent so the shell's sky shows through; "demand" renders only when something changes.
-export function WorldCanvas({ onAgentSelect, onSearchHere, demoSearch }: WorldCanvasProps) {
+export function WorldCanvas({ agent, onAgentOpen, onSearchHere, demoSearch }: WorldCanvasProps) {
   const display = useWorldDisplay();
   const palette = paletteFor(display.night);
   const shadows = !display.lite;
@@ -124,7 +127,7 @@ export function WorldCanvas({ onAgentSelect, onSearchHere, demoSearch }: WorldCa
           shadows={shadows}
           lighting={lighting}
         />
-        <AgentFigures shadows={shadows} />
+        <AgentFigure agent={agent} lite={display.lite} />
         <AnchorProjector anchors={ANCHORS} elementsRef={anchorsRef} />
         <MapCamera
           handleRef={cameraRef}
@@ -142,7 +145,7 @@ export function WorldCanvas({ onAgentSelect, onSearchHere, demoSearch }: WorldCa
           searching={search.status === "searching"}
           lighting={lighting}
         />
-        <AgentButtons onSelect={onAgentSelect} elementsRef={anchorsRef} />
+        <AgentButton name={agent.name} onOpen={onAgentOpen} elementsRef={anchorsRef} />
       </div>
       <SearchSummary state={search} lighting={lighting} onClear={worldSearch.clear} />
       {selected !== null && (

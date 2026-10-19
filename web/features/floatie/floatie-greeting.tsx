@@ -1,6 +1,6 @@
 "use client";
 
-// The Navigator beside a speech bubble. Tapping it moves on to its next line. The figure is passed
+// Your agent beside a speech bubble. Tapping it moves on to its next line. The figure is passed
 // in so this stays free of three.js and can be tested with Bun; app/ gives it the real floatie.
 
 import { type ReactNode, useState } from "react";
