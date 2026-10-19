@@ -15,7 +15,8 @@ lands in the neighbour. An address point sits on its entrance wall, and a stored
 simplified by 1 m and rounded to 1.25 m steps, so a point can miss its own building by about a
 metre: a point in no footprint but within WALL_TOLERANCE_M of one is anchored at the centre of the
 nearest, as `build` anchors a point that lies outside its own building's footprint. A place the
-search does not find, or whose point is farther from every footprint, is named and nothing is
+search does not find, whose point is farther from every footprint, or whose nearest footprint
+has its centre outside itself (an L-shaped building), is named with that reason and nothing is
 written (no anchor with building -1): every addressed place must stand inside a building
 (web/features/world/bern-geo.test.ts).
 """
@@ -64,21 +65,24 @@ def stored_point(e: float, n: float) -> MapPoint:
 
 def place_in(
     footprints: tuple[FootprintItem, ...], point: MapPoint
-) -> tuple[int, MapPoint, float | None] | None:
-    """(building, anchor point, metres to its wall or None when inside), or None."""
+) -> tuple[int, MapPoint, float | None] | str:
+    """(building, anchor point, metres to its wall or None when inside), or why there is none."""
     for index, footprint in enumerate(footprints):
         if inside(point, list(footprint.ring)):
             return index, point, None
+    too_far = f"is more than {WALL_TOLERANCE_M} m from every footprint"
     if not footprints:
-        return None
+        return too_far
     distance, index = min(
         (distance_to_ring(point, list(f.ring)), i) for i, f in enumerate(footprints)
     )
+    metres = distance * METRES_PER_UNIT
+    if metres > WALL_TOLERANCE_M:
+        return too_far
     ring = footprints[index].ring
     centre = _stored(sum(p[0] for p in ring) / len(ring), sum(p[1] for p in ring) / len(ring))
-    metres = distance * METRES_PER_UNIT
-    if metres > WALL_TOLERANCE_M or not inside(centre, list(ring)):
-        return None
+    if not inside(centre, list(ring)):
+        return f"is {metres:.2f} m outside building {index}, whose centre is outside its footprint"
     return index, centre, metres
 
 
@@ -100,21 +104,20 @@ def add_anchors(
     placed: list[Placed] = []
     problems: list[str] = []
     for place_id, query in sorted(missing.items()):
-        hit = hits.get(query) if query is not None else None
-        found = place_in(geo.footprints, stored_point(hit.e, hit.n)) if hit else None
         if query is None:
             problems.append(f"{place_id}: its address has no street and number to look up")
-        elif hit is None:
+            continue
+        hit = hits.get(query)
+        if hit is None:
             problems.append(f"{place_id}: geo.admin search found no address for {query!r}")
-        elif found is None:
-            problems.append(
-                f"{place_id}: the address point of {query!r} is more than "
-                f"{WALL_TOLERANCE_M} m from every footprint"
-            )
-        else:
-            building, point, on_wall_m = found
-            anchor = AnchorItem(place_id=place_id, point=point, building=building)
-            placed.append(Placed(anchor=anchor, query=query, on_wall_m=on_wall_m))
+            continue
+        found = place_in(geo.footprints, stored_point(hit.e, hit.n))
+        if isinstance(found, str):
+            problems.append(f"{place_id}: the address point of {query!r} {found}")
+            continue
+        building, point, on_wall_m = found
+        anchor = AnchorItem(place_id=place_id, point=point, building=building)
+        placed.append(Placed(anchor=anchor, query=query, on_wall_m=on_wall_m))
     if problems:
         raise SystemExit("\n".join([f"{out.name} unchanged:", *problems]))
     if placed:

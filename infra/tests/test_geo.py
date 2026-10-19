@@ -9,7 +9,18 @@ from pathlib import Path
 from infra.geo.addresses import parse_hit, query_for
 from infra.geo.anchors import add_anchors
 from infra.geo.citygml import iter_buildings, outline
-from infra.geo.encode import AnchorItem, FootprintItem, GeoFormatError, LineItem, decode, encode
+from infra.geo.encode import (
+    HEADER,
+    MAGIC,
+    SECTION,
+    AnchorItem,
+    FootprintItem,
+    GeoFormatError,
+    LineItem,
+    anchor_item,
+    decode,
+    encode,
+)
 from infra.geo.frame import ORIGIN_E, ORIGIN_N, FrameError, quantize, to_map
 from infra.geo.simplify import ring_area, simplify_line, simplify_ring
 from infra.geo.tlm import cells, fetch_all, read_lines
@@ -159,12 +170,31 @@ class DecodeTest(unittest.TestCase):
         )
         self.assertEqual(len(geo.line_items), 2)
 
-    def test_another_format_frame_a_cut_off_file_and_trailing_bytes_are_refused(self):
+    def test_another_format_frame_layout_a_cut_off_file_and_trailing_bytes_are_refused(self):
         data = self.tiny()
+        buildings = len(MAGIC) + HEADER.size  # the first section's kind, count, byte length
+        (length,) = struct.unpack_from("<I", data, buildings + 5)
+        first_line = buildings + SECTION.size + length + SECTION.size
         for broken, reason in [
             (b"XGEO" + data[4:], "not a bern.geo file"),
             (data[:4] + struct.pack("<H", 2) + data[6:], "bern.geo version 2 is not 1"),
             (data[:8] + struct.pack("<f", 25.0) + data[12:], "bern.geo is in another map frame"),
+            (
+                data[: buildings - 2] + struct.pack("<H", 4) + data[buildings:],
+                "bern.geo has 4 sections, not 3",
+            ),
+            (
+                data[:buildings] + bytes([2]) + data[buildings + 1 :],
+                "bern.geo section 2 where section 1 belongs",
+            ),
+            (
+                data[: buildings + 5] + struct.pack("<I", length + 1) + data[buildings + 9 :],
+                "bern.geo section 1 length does not match",
+            ),
+            (
+                data[:first_line] + bytes([9]) + data[first_line + 1 :],
+                "bern.geo has a line of unknown category 9",
+            ),
             (data[:-1], "bern.geo is truncated"),
             (data + b"\0", "bern.geo has bytes after the last section"),
         ]:
@@ -179,7 +209,8 @@ def _search_answer(e: float, n: float) -> bytes:
 
 
 class AddAnchorsTest(unittest.TestCase):
-    """Invented map: two 40 m squares, a road, and a place already anchored in the first one."""
+    """Invented map: two 40 m squares, an L whose centre is outside it, a road, and a place
+    already anchored in the first square."""
 
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
@@ -195,6 +226,11 @@ class AddAnchorsTest(unittest.TestCase):
                     FootprintItem(
                         ring=((10, 0), (12, 0), (12, 2), (10, 2)), height_m=9, landmark=False
                     ),
+                    FootprintItem(
+                        ring=((20, 0), (24, 0), (24, 1), (21, 1), (21, 4), (20, 4)),
+                        height_m=6,
+                        landmark=False,
+                    ),
                 ],
                 [LineItem(category=1, width_m=7, objektart=8, points=((0, 3), (12, 3)))],
                 [AnchorItem(place_id="kept", point=(0.5, 0.5), building=0)],
@@ -204,11 +240,14 @@ class AddAnchorsTest(unittest.TestCase):
         self.urls: list[str] = []
         self.sleeps: list[float] = []
         # Map units to LV95: x east by 20 m, z south by 20 m. Neustrasse 2 is in the first
-        # square, Wandweg 3 1.25 m east of the second as stored, Feldweg 9 far from both.
+        # square, Wandweg 3 1.25 m east of the second as stored, Eckweg 5 1.25 m east of the L,
+        # Feldweg 9 far from all three; the search finds no Leerweg 1.
         self.answers = {
             "Neustrasse 2 Bern": _search_answer(ORIGIN_E + 30, ORIGIN_N - 20),
             "Wandweg 3 Bern": _search_answer(ORIGIN_E + 241, ORIGIN_N - 20),
+            "Eckweg 5 Bern": _search_answer(ORIGIN_E + 481, ORIGIN_N - 10),
             "Feldweg 9 Bern": _search_answer(ORIGIN_E + 120, ORIGIN_N - 200),
+            "Leerweg 1 Bern": json.dumps({"results": []}).encode(),
         }
 
     def write_places(self, *addresses: tuple[str, str | None]) -> None:
@@ -265,17 +304,49 @@ class AddAnchorsTest(unittest.TestCase):
         self.assertEqual(self.out.read_bytes(), data)
         self.assertEqual(len(self.urls), 2)
 
-    def test_a_point_far_from_every_footprint_leaves_the_file_unchanged(self):
-        self.write_places(("inner", "Neustrasse 2"), ("field", "Feldweg 9"))
+    def test_each_place_that_cannot_be_anchored_is_named_and_the_file_is_unchanged(self):
+        self.write_places(
+            ("inner", "Neustrasse 2"),
+            ("field", "Feldweg 9"),
+            ("corner", "Eckweg 5"),
+            ("nameless", "Inselspital"),
+            ("unknown", "Leerweg 1"),
+        )
         data = self.out.read_bytes()
         with self.assertRaises(SystemExit) as caught:
             self.add()
         self.assertEqual(
-            str(caught.exception),
-            "bern.geo unchanged:\nfield: the address point of 'Feldweg 9 Bern' is more than "
-            "2.5 m from every footprint",
+            str(caught.exception).splitlines(),
+            [
+                "bern.geo unchanged:",
+                "corner: the address point of 'Eckweg 5 Bern' is 1.25 m outside building 2, "
+                "whose centre is outside its footprint",
+                "field: the address point of 'Feldweg 9 Bern' is more than "
+                "2.5 m from every footprint",
+                "nameless: its address has no street and number to look up",
+                "unknown: geo.admin search found no address for 'Leerweg 1 Bern'",
+            ],
         )
         self.assertEqual(self.out.read_bytes(), data)
+
+    def test_a_file_that_does_not_encode_back_to_itself_is_refused_before_any_lookup(self):
+        kept = AnchorItem(place_id="kept", point=(0.5, 0.5), building=0)
+        stored = self.out.read_bytes()
+        anchors_at = len(stored) - SECTION.size - len(anchor_item(kept))
+        # Anchors out of order: encode() sorts them, so writing this file again would move them.
+        body = anchor_item(AnchorItem(place_id="zed", point=(11, 1), building=1))
+        body += anchor_item(kept)
+        unsorted = stored[:anchors_at] + SECTION.pack(3, 2, len(body)) + body
+        self.out.write_bytes(unsorted)
+        self.write_places(("inner", "Neustrasse 2"))
+        with self.assertRaises(GeoFormatError) as caught:
+            self.add()
+        self.assertEqual(
+            str(caught.exception),
+            "bern.geo does not encode back to itself; rebuild it with `build`",
+        )
+        self.assertEqual(self.out.read_bytes(), unsorted)
+        self.assertEqual(self.urls, [])
 
 
 class AddressTest(unittest.TestCase):
