@@ -3,6 +3,7 @@ import { CorrectionNote } from "@/infrastructure/ui/claim-evidence";
 import { highlightParts } from "./highlight";
 import type { ReportCard as Card } from "./report-model";
 import { TopicChips } from "./topic-chips";
+import { type MetricLabel, metricMeanings } from "@/infrastructure/ui/result-metrics";
 
 const kindLabels: Record<Card["kind"], string> = {
   person: "Person",
@@ -19,19 +20,12 @@ const fetchedFormat = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Zurich",
 });
 
-const metricMeanings = {
-  Relevance: "Share of your topics found in this result's verified claims",
-  Evidence: "How directly the public pages tie this result to the topics",
-  Completeness: "Profile fields the public pages fill, out of five",
-  Confidence: "How often results like this were right on hand-checked questions",
-} as const;
-
 function pageLabel(pageUrl: string): string {
   const url = new URL(pageUrl);
   return `${url.host}${url.pathname === "/" ? "" : url.pathname}`;
 }
 
-function Metric({ label, value }: { label: keyof typeof metricMeanings; value: string }) {
+function Metric({ label, value }: { label: MetricLabel; value: string }) {
   return (
     <div title={metricMeanings[label]}>
       <dt className="text-muted inline">{label} </dt>

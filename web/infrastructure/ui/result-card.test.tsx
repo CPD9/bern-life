@@ -17,6 +17,52 @@ describe("ResultCard", () => {
     expect(labels).toEqual(["Role", "Unit", "Expertise", "Projects", "Infrastructure"]);
   });
 
+  test("shows the engine's metrics exactly, each with its meaning, and what the result adds", () => {
+    render(<ResultCard result={firstResult()} />);
+    const row = within(screen.getByRole("region", { name: "How well this result fits" }));
+    const items = row.getAllByRole("listitem");
+    expect(items.map((li) => li.textContent)).toEqual([
+      "Relevance 100%",
+      "Evidence 100%",
+      "Completeness 5 of 5",
+      "Confidence not yet calibrated",
+      "New unit",
+      "Adds: glucose sensors",
+    ]);
+    expect(items[0]!.getAttribute("title")).toBe(
+      "Share of your topics found in this result's verified claims",
+    );
+    expect(row.getByText("Covers: glucose sensors")).toBeTruthy();
+  });
+
+  test("a value the engine could not compute is a dash, never 0; a missing topic is named", () => {
+    const result = firstResult();
+    result.metrics = {
+      ...result.metrics!,
+      relevance: 0.5,
+      covers: ["glucose sensors"],
+      missing: ["sweat"],
+      evidence: null,
+      confidence: 0.734,
+      novelty: { new_unit: false, adds: [] },
+    };
+    render(<ResultCard result={result} />);
+    const row = within(screen.getByRole("region", { name: "How well this result fits" }));
+    expect(row.getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Relevance 50%",
+      "Evidence —",
+      "Completeness 5 of 5",
+      "Confidence 73%",
+      "Unit already above",
+    ]);
+    expect(row.getByText("Covers: glucose sensors · Missing: sweat")).toBeTruthy();
+  });
+
+  test("a result the engine sent without metrics shows none", () => {
+    render(<ResultCard result={leadResult()} />);
+    expect(screen.queryByRole("region", { name: "How well this result fits" })).toBeNull();
+  });
+
   test("a claim opens its span, page, fetch date and a link to the sentence", () => {
     render(<ResultCard result={firstResult()} />);
     fireEvent.click(screen.getAllByRole("button", { name: "Group Leader" })[0]!);
