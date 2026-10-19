@@ -10,8 +10,10 @@ export type PhoneApp = {
   readonly dock?: boolean;
   /** A count on the tile (unread messages, say). No badge for 0 or when unknown. */
   readonly badge?: number | undefined;
-  /** Apps with the same group sit together under this heading, above the ungrouped ones. */
-  readonly group?: string;
+  /** Apps with the same folder name share one folder tile on the home grid, in the order given. */
+  readonly folder?: string;
+  /** One line under the folder's name when it opens, set on the folder's first app. */
+  readonly folderHint?: string;
 };
 
 /** The engine's state, the same shape the HUD reads from /api/health. */

@@ -22,7 +22,7 @@ import type { NumbersApi } from "@/infrastructure/numbers-api";
 import { healthFixture, resultFixture } from "@/test/fixtures";
 import { numbersBody, queuedApi } from "@/test/numbers";
 import { useOfficeApps } from "./office-apps";
-import { caseGroup, phoneApps } from "./phone-apps";
+import { caseFolder, caseFolderHint, phoneApps, workFolder } from "./phone-apps";
 
 const offline: NavigatorApi = {
   search: async () => ({ ok: false, failure: { kind: "network" } }),
@@ -121,12 +121,26 @@ describe("phone apps", () => {
     expect(byId["case-7"]).toBe(CaseStepApp);
   });
 
-  test("only the case's steps are grouped, under one heading", () => {
+  test("the dock holds Ask, Messages, Agents and Settings; two folders hold the rest", () => {
     const { apps } = setUp().result.current;
-    expect(apps.filter((app) => app.group !== undefined).map((app) => [app.id, app.group])).toEqual(
-      [1, 2, 3, 4, 5, 6, 7].map((number) => [`case-${number}`, caseGroup]),
-    );
-    expect(caseGroup).toBe("The case, step by step");
+    expect(apps.filter((app) => app.dock).map((app) => app.id)).toEqual([
+      "ask",
+      "messages",
+      "agents",
+      "settings",
+    ]);
+    const inFolder = (folder: string) =>
+      apps.filter((app) => app.folder === folder).map((app) => app.id);
+    expect(inFolder(workFolder)).toEqual(["opportunities", "library", "sources"]);
+    expect(inFolder(caseFolder)).toEqual([1, 2, 3, 4, 5, 6, 7].map((number) => `case-${number}`));
+    expect(apps.filter((app) => !app.dock && app.folder === undefined)).toEqual([]);
+    expect(apps.map((app) => app.folderHint).filter(Boolean)).toEqual([caseFolderHint]);
+    expect(apps.find((app) => app.folderHint)?.id).toBe("case-1");
+    expect([caseFolder, workFolder, caseFolderHint]).toEqual([
+      "The case",
+      "Work",
+      "Tap 1 and follow the steps.",
+    ]);
   });
 
   test("Try it on a case step runs its question in Ask, in search mode, and opens Ask", async () => {

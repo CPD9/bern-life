@@ -41,11 +41,15 @@ type PhoneAppsInput = AgentsInput & {
   onMessageStarted?: () => void;
 };
 
-/** The heading over the seven case steps on the home screen. */
-export const caseGroup = "The case, step by step";
+/** The folder on the home screen holding the seven case steps, and the line under its name. */
+export const caseFolder = "The case";
+export const caseFolderHint = "Tap 1 and follow the steps.";
+/** The folder holding the apps that are not in the dock. */
+export const workFolder = "Work";
 
 // The phone's apps: the same apps as the desk, fewer of them, each real; nothing is a placeholder.
-// After them, the case's seven steps, one app each, grouped on the home screen.
+// Ask, Messages, Agents and Settings sit in the dock, the rest in the Work folder; after them, the
+// case's seven steps, one app each, in their own folder.
 export function phoneApps({
   navigator,
   fixtureMode,
@@ -85,6 +89,7 @@ export function phoneApps({
       label: "Ask",
       icon: <AppIcon app="ask" />,
       tile: "#13804a",
+      dock: true,
       content: (
         <Navigator
           controller={navigator}
@@ -100,6 +105,7 @@ export function phoneApps({
       label: "Messages",
       icon: <AppIcon app="messages" />,
       tile: "#1d6fd6",
+      dock: true,
       content: <StandaloneMessagesPage startWith={messageWith} onStarted={onMessageStarted} />,
       ...(unreadMessages ? { badge: unreadMessages } : {}),
     },
@@ -110,6 +116,7 @@ export function phoneApps({
             label: "Connections",
             icon: <AppIcon app="connections" />,
             tile: "#be185d",
+            folder: workFolder,
             content: connections,
           },
         ]
@@ -119,6 +126,7 @@ export function phoneApps({
       label: "Agents",
       icon: <AppIcon app="agents" />,
       tile: "#6d4bd8",
+      dock: true,
       content: agentsApp(agents, fixtureMode, trySkill),
     },
     {
@@ -126,6 +134,7 @@ export function phoneApps({
       label: "Opportunities",
       icon: <AppIcon app="opportunities" />,
       tile: "#b45309",
+      folder: workFolder,
       content: opportunitiesApp(save),
     },
     {
@@ -133,6 +142,7 @@ export function phoneApps({
       label: "Library",
       icon: <AppIcon app="library" />,
       tile: "#9a3412",
+      folder: workFolder,
       content: libraryApp(library),
     },
     {
@@ -140,6 +150,7 @@ export function phoneApps({
       label: "Sources",
       icon: <AppIcon app="sources" />,
       tile: "#0f766e",
+      folder: workFolder,
       content: <SourcesApp fixtureMode={fixtureMode} />,
     },
     {
@@ -147,14 +158,16 @@ export function phoneApps({
       label: "Settings",
       icon: <AppIcon app="settings" />,
       tile: "#475569",
+      dock: true,
       content: <SettingsApp health={health} />,
     },
-    ...caseSteps.map((step) => ({
+    ...caseSteps.map((step, index) => ({
       id: caseStepAppId(step),
       label: step.label,
       icon: <span className="text-2xl font-extrabold">{step.number}</span>,
       tile: "#0e7490",
-      group: caseGroup,
+      folder: caseFolder,
+      ...(index === 0 ? { folderHint: caseFolderHint } : {}),
       content: (
         <CaseStepApp
           step={step}
