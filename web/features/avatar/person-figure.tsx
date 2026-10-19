@@ -1,14 +1,17 @@
 // A low-poly toy figure from three.js primitives only, feet on y = 0 and facing +z: a big head on a
 // small body, short wide legs in chunky shoes, and big round hands. Low segment counts and flat
-// shading give the faceted look and keep it cheap enough to stand on the map later.
+// shading give the faceted look and keep it cheap enough to walk the map. Legs hang from the hip
+// and arms from the shoulder, so the walk can swing them (person-motion.ts).
 
 import { type ThreeElements } from "@react-three/fiber";
 import { type ReactNode } from "react";
 import { DoubleSide } from "three";
+import { type Motion } from "./bear-motion";
 import { type PersonConfig } from "./person-config";
 import { PersonFace } from "./person-face";
 import { Hair } from "./person-hair";
 import { meshParameters } from "./person-mesh";
+import { PERSON_PART, usePersonMotion } from "./use-person-motion";
 
 const SEGMENTS = 8;
 /** Feet are squashed low-poly spheres: round, chunky and slightly turned out. */
@@ -55,13 +58,17 @@ function OpenCylinder({
   );
 }
 
-export function PersonFigure({ config, shadows }: { config: PersonConfig; shadows: boolean }) {
+type PersonFigureProps = { config: PersonConfig; shadows: boolean; motion?: Motion };
+
+export function PersonFigure({ config, shadows, motion = "still" }: PersonFigureProps) {
+  const root = usePersonMotion(motion);
   const p = meshParameters(config);
   const footRadius = p.legs.radius * 1.45;
   const footHeight = footRadius * 2 * FOOT_SQUASH;
   const legBottom = footHeight * 0.6;
   const legCentre = legBottom + p.legs.radius + p.legs.length / 2;
   const hipTop = legBottom + p.legs.length + p.legs.radius * 2;
+  const hip = legCentre + p.legs.length / 2;
   const torsoCentre = hipTop - p.torso.radius * 0.5 + p.torso.radius + p.torso.length / 2;
   const shoulder = torsoCentre + p.torso.length / 2 + p.torso.radius * 0.3;
   const headCentre = torsoCentre + p.torso.length / 2 + p.torso.radius + p.head.radius * 0.75;
@@ -69,22 +76,25 @@ export function PersonFigure({ config, shadows }: { config: PersonConfig; shadow
   const armLength = p.arms.length + p.arms.radius * 2;
 
   return (
-    <group>
+    <group ref={root}>
       {[-1, 1].map((side) => (
         <group key={side}>
-          <Solid
-            colour={p.shoes}
-            shadows={shadows}
-            position={[side * legX, footHeight / 2, 0.05]}
-            rotation-y={side * 0.2}
-            scale={[1, FOOT_SQUASH, 1.3]}
-          >
-            <sphereGeometry args={[footRadius, 6, 4]} />
-          </Solid>
-          <Solid colour={p.legs.colour} shadows={shadows} position={[side * legX, legCentre, 0]}>
-            <capsuleGeometry args={[p.legs.radius, p.legs.length, 2, SEGMENTS]} />
-          </Solid>
+          <group name={PERSON_PART.legs[side < 0 ? 0 : 1]} position={[side * legX, hip, 0]}>
+            <Solid
+              colour={p.shoes}
+              shadows={shadows}
+              position={[0, footHeight / 2 - hip, 0.05]}
+              rotation-y={side * 0.2}
+              scale={[1, FOOT_SQUASH, 1.3]}
+            >
+              <sphereGeometry args={[footRadius, 6, 4]} />
+            </Solid>
+            <Solid colour={p.legs.colour} shadows={shadows} position={[0, legCentre - hip, 0]}>
+              <capsuleGeometry args={[p.legs.radius, p.legs.length, 2, SEGMENTS]} />
+            </Solid>
+          </group>
           <group
+            name={PERSON_PART.arms[side < 0 ? 0 : 1]}
             position={[side * p.torso.radius * 0.85, shoulder, 0]}
             rotation-z={side * ARM_SPREAD}
           >

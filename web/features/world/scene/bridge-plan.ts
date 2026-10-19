@@ -7,8 +7,8 @@ import { angleToward, type Footprint } from "./footprint";
 
 export const DECK_HEIGHT = 1.5;
 export const BRIDGE_WIDTH = 1.3;
-const END_HEIGHT = 0.2;
-const RAMP = 1;
+export const END_HEIGHT = 0.2;
+export const RAMP = 1;
 const ABUTMENT = 0.8;
 const PIER = 0.6;
 const CROWN = 0.3;

@@ -1,5 +1,6 @@
-// The flat layers: ground, district plates, roads, the Aare's banks and its water. Each layer is one
-// merged geometry, so the whole floor of the city costs six draw calls.
+// The flat layers: ground, district plates, roads, the Aare's banks and its water. Each layer is
+// one merged geometry, so the whole floor of the city costs six draw calls. In walk mode a click on
+// the ground (not a drag) says where to walk (walk-click.ts); only then is it hit-tested at all.
 
 import { useEffect, useMemo } from "react";
 import { BufferAttribute, BufferGeometry, DoubleSide, Shape, ShapeGeometry } from "three";
@@ -18,6 +19,7 @@ import { useWorldDisplay } from "../display";
 import { type WorldPalette } from "../palette";
 import { ribbon, smoothPath } from "../ribbon";
 import { AARE_CURVE, AARE_SAMPLES } from "./town";
+import { type OnWalkClick, walkClick } from "./walk-click";
 
 // Layers sit a few millimetres apart so they never flicker against each other.
 const PLATE_Y = 0.02;
@@ -60,7 +62,14 @@ const DISTRICT_PLATES = merged(
 );
 const ROAD_LAYER = merged(ROADS.map((road) => ribbonGeometry(road, ROAD_WIDTH, ROAD_Y)));
 
-export function Ground({ palette, shadows }: { palette: WorldPalette; shadows: boolean }) {
+type GroundProps = {
+  palette: WorldPalette;
+  shadows: boolean;
+  /** Walks you to where a click on the ground lands, in walk mode. */
+  onWalk: OnWalkClick;
+};
+
+export function Ground({ palette, shadows, onWalk }: GroundProps) {
   const { lite } = useWorldDisplay();
   const width = MAP_BOUNDS.maxX - MAP_BOUNDS.minX;
   const depth = MAP_BOUNDS.maxZ - MAP_BOUNDS.minZ;
@@ -79,6 +88,7 @@ export function Ground({ palette, shadows }: { palette: WorldPalette; shadows: b
         rotation-x={-Math.PI / 2}
         position={[MAP_BOUNDS.minX + width / 2, 0, MAP_BOUNDS.minZ + depth / 2]}
         receiveShadow={shadows}
+        {...walkClick(onWalk)}
       >
         <planeGeometry args={[width, depth]} />
         <meshLambertMaterial color={palette.ground} />

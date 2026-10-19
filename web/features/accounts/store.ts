@@ -97,6 +97,23 @@ export async function sessionUser(db: Db, idHash: string, now: Date): Promise<Us
   return user ?? null;
 }
 
+/** A user created by the operator, without an invite (the team and demo accounts); "handle_taken"
+ *  when the handle exists, so seeding twice changes nothing. */
+export async function insertSeededUser(
+  sql: Sql,
+  user: { handle: string; displayName: string; passwordHash: string },
+): Promise<User | "handle_taken"> {
+  return sql.begin(async (tx) => {
+    const [created] = await tx<User[]>`insert into app_user (id, handle, display_name)
+      values (gen_random_uuid(), ${user.handle}, ${user.displayName})
+      on conflict (handle) do nothing
+      returning id, handle, display_name as "displayName"`;
+    if (created === undefined) return "handle_taken" as const;
+    await tx`insert into credential (user_id, hash) values (${created.id}, ${user.passwordHash})`;
+    return created;
+  });
+}
+
 /** Everything of the user goes with the row: credential, sessions, profile, the invites they
  *  made, their memberships and messages (foreign keys cascade); an invite they redeemed keeps no
  *  link to them, and a conversation nobody is left in goes too. */

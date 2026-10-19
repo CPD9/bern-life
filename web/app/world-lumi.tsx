@@ -1,6 +1,5 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
 import { type ReactNode, useRef, useState } from "react";
 import { shownAgentName } from "@/features/avatar/agent-name";
 import type { BearConfig } from "@/features/avatar/bear-config";
@@ -11,6 +10,7 @@ import { type LumiApi, httpLumiApi } from "@/features/lumi/lumi-api";
 import { LumiChat } from "@/features/lumi/lumi-chat";
 import type { NavigatorController } from "@/features/navigator/use-navigator";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import { SceneCanvas } from "@/infrastructure/ui/scene-guard";
 
 type WorldLumiInput = {
   agentName: string;
@@ -19,11 +19,12 @@ type WorldLumiInput = {
   /** How the engine answers, from health; null while unknown. */
   engineMode: SearchResponse["mode"] | null;
   fixtureMode: boolean;
-  /** The Ask app's Navigator, which shows the answer holding a profile Lumi opens. */
+  /** The Ask app's Navigator, which shows the answer holding a profile Bärli opens. */
   navigator: Pick<NavigatorController, "show">;
-  onShowOnMap: (response: SearchResponse) => void;
+  /** Shows an answer on the map; absent when the map cannot be drawn, so Bärli does not offer it. */
+  onShowOnMap: ((response: SearchResponse) => void) | undefined;
   onOpenAsk: () => void;
-  /** Saves Lumi's answer as a match report for the desk's Reports window; false when it cannot. */
+  /** Saves Bärli's answer as a match report for the desk's Reports window; false when it cannot. */
   onMakeReport: (response: SearchResponse) => boolean;
   /** Opens the desk, where the Reports window shows the report just made. */
   onOpenReports: () => void;
@@ -32,13 +33,13 @@ type WorldLumiInput = {
 
 export type WorldLumi = {
   open: () => void;
-  /** Lumi floating beside the player, in the office and on the map. */
+  /** Bärli floating beside the player, in the office and on the map. */
   floatie: ReactNode;
   /** The chat, kept mounted so the conversation survives closing it. */
   chat: ReactNode;
 };
 
-// Lumi in the world: the floatie and the bear on the map open one chat. Lumi's actions go where
+// Bärli in the world: the floatie and the bear on the map open one chat. Bärli's actions go where
 // the player would go by hand: the map, Ask, or the desk's Reports window. A report waits for the
 // player's click on the reply (features/lumi) and opens in the desk, never in a new tab.
 export function useWorldLumi(input: WorldLumiInput): WorldLumi {
@@ -67,7 +68,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
   }
 
   function showOnMap(response: SearchResponse) {
-    closeThen(() => input.onShowOnMap(response));
+    closeThen(() => input.onShowOnMap?.(response));
   }
 
   // Ask shows the answer that lists the profile, as it came, without asking the engine again.
@@ -111,7 +112,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
         bear={open && <SmallBear config={bear} />}
         engineMode={input.engineMode}
         api={input.api ?? httpLumiApi}
-        onShowOnMap={showOnMap}
+        onShowOnMap={input.onShowOnMap && showOnMap}
         onOpenProfile={openProfile}
         onStartMatchReport={startMatchReport}
       />
@@ -123,7 +124,9 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
 function SmallBear({ config }: { config: BearConfig }) {
   // The default camera looks at the origin, so the bear moves down instead of the camera up.
   return (
-    <Canvas
+    <SceneCanvas
+      // Without 3D the chat's header shows the name alone.
+      fallback={() => null}
       frameloop="demand"
       dpr={1}
       gl={{ alpha: true }}
@@ -134,6 +137,6 @@ function SmallBear({ config }: { config: BearConfig }) {
       <group position={[0, -0.9, 0]}>
         <BearFigure config={config} lite motion="still" />
       </group>
-    </Canvas>
+    </SceneCanvas>
   );
 }

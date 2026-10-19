@@ -1,6 +1,7 @@
-// Reports live only in the browser that made them until shared storage exists. Storage can be
-// missing or throw (private windows, blocked site data), so every access is guarded, and a stored
-// response is parsed against the contract again before it is rendered.
+// Reports live only in the browser that made them until shared storage exists: each is a frozen
+// copy of the answer, kept until the player removes it. Storage can be missing or throw (private
+// windows, blocked site data), so every access is guarded, and a stored response is parsed against
+// the contract again before it is rendered.
 import { parseSearchResponse } from "@/infrastructure/contract";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 
@@ -10,7 +11,7 @@ export type StoredReport = {
   readonly fixture: boolean;
 };
 
-type ReportStorage = Pick<Storage, "getItem" | "setItem" | "key" | "length">;
+type ReportStorage = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
 
 const keyPrefix = "bernlife.report.";
 
@@ -21,6 +22,8 @@ export type ReportStore = {
   load(id: string): StoredReport | null;
   /** Every readable report in this browser, newest first; broken entries are left out. */
   list(): ListedReport[];
+  /** Drops the report from this browser; false when storage could not be reached. */
+  remove(id: string): boolean;
 };
 
 function parseStored(raw: string | null): StoredReport | null {
@@ -69,6 +72,14 @@ export function createReportStore(storage: () => ReportStorage, newId: () => str
         return [];
       }
       return listed.sort((a, b) => b.report.madeAt.localeCompare(a.report.madeAt));
+    },
+    remove: (id) => {
+      try {
+        storage().removeItem(keyPrefix + id);
+        return true;
+      } catch {
+        return false;
+      }
     },
   };
 }

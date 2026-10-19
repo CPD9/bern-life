@@ -1,23 +1,25 @@
 "use client";
 
-// Your office, where you land after onboarding: a warm room seen from above at an angle, with Lumi
+// Your office, where you land after onboarding: a warm room seen from above at an angle, with Bärli
 // by the desk. Clicking the desk or computer sits you down at it; the door takes you outside. Both
 // are also real buttons below the room, so the keyboard and screen readers reach them. The canvas
 // renders only when something changes, and under reduced motion nothing moves at all.
 
 import { OrthographicCamera } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { type BearConfig } from "@/features/avatar/bear-config";
 import { BearFigure } from "@/features/avatar/bear-figure";
 import { motionFor } from "@/features/avatar/bear-motion";
+import { Button } from "@/infrastructure/ui/button";
+import { ContextLossWatch, SceneGuard, useTakeLostFocus } from "@/infrastructure/ui/scene-guard";
 import { type HotspotId, hotspot } from "./hotspot";
 import { Bookshelf, Chair, Desk, Picture, Plant } from "./office-furniture";
 import { CAMERA_POSITION, LOOK_AT, LUMI_SPOT, PLAYER_SPOT, fitZoom } from "./office-layout";
 import { Ball, Column, OfficeQualityProvider, officeQuality } from "./office-parts";
 import { OfficeShell } from "./office-shell";
 
-/** Lumi until the player's own agent is passed in. */
+/** Bärli until the player's own agent is passed in. */
 export const LUMI: BearConfig = {
   kind: "brown-bear",
   fur: "honey",
@@ -31,7 +33,7 @@ type RoomLook = {
   reducedMotion: boolean;
   /** The player's figure, standing on the rug; a plain stand-in when absent. */
   player?: ReactNode;
-  /** The player's agent bear; Lumi's default look when absent. */
+  /** The player's agent bear; Bärli's default look when absent. */
   agent?: BearConfig;
 };
 
@@ -91,6 +93,42 @@ function StandIn() {
   );
 }
 
+function noRoomText(visiting: string | undefined, stopped: boolean): string {
+  const office = visiting === undefined ? "The office" : `${visiting}'s office`;
+  const why = stopped
+    ? "stopped drawing."
+    : "needs 3D graphics, which this browser does not offer.";
+  const below = visiting === undefined ? " The computer and the door below still work." : "";
+  return `${office} ${why}${below}`;
+}
+
+/**
+ * The room's place when it cannot be drawn; in your own office the buttons stay below. A room that
+ * stops drawing takes the focus it held with it, so its note takes that focus instead.
+ */
+export function NoRoom({
+  visiting,
+  onRetry,
+}: {
+  visiting: string | undefined;
+  onRetry: (() => void) | null;
+}) {
+  const note = useRef<HTMLParagraphElement>(null);
+  useTakeLostFocus(note, onRetry !== null);
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-4 text-center">
+      <p ref={note} tabIndex={-1} className="bg-panel rounded-panel shadow-panel max-w-sm p-4">
+        {noRoomText(visiting, onRetry !== null)}
+      </p>
+      {onRetry !== null && (
+        <Button variant="ghost" onClick={onRetry}>
+          Try the room again
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function OfficeRoom({
   lite,
   reducedMotion,
@@ -104,44 +142,57 @@ export function OfficeRoom({
   const point = visiting === undefined ? setPointed : still;
   const quality = officeQuality(lite);
   const motion = motionFor("idle", { reducedMotion, lite });
+  const room = useRef<HTMLDivElement>(null);
 
   return (
     <div className="relative isolate flex size-full flex-col">
-      <div
-        role="img"
-        aria-label={
-          visiting === undefined
-            ? "Your office: a desk with a computer and your agent beside it, a bookshelf, a plant, a window and the door"
-            : `${visiting}'s office, as a visitor sees it: a desk with a computer and their agent beside it, a bookshelf, a plant, a window and the door`
-        }
-        className={`min-h-0 flex-1 ${pointed === null ? "" : "cursor-pointer"}`}
+      <SceneGuard
+        fallback={(retry) => <NoRoom visiting={visiting} onRetry={retry} />}
+        pending={<div className="min-h-0 flex-1" />}
+        focusAfterRetry={room}
       >
-        {/* Shadows and pixel ratio are fixed when the renderer is created, so lite mode remounts it. */}
-        <Canvas
-          key={lite ? "lite" : "full"}
-          frameloop="demand"
-          shadows={quality.shadows}
-          dpr={lite ? 1 : [1, 2]}
-          gl={{ alpha: true }}
+        <div
+          ref={room}
+          tabIndex={-1}
+          role="img"
+          aria-label={
+            visiting === undefined
+              ? "Your office: a desk with a computer and your agent beside it, a bookshelf, a plant, a window and the door"
+              : `${visiting}'s office, as a visitor sees it: a desk with a computer and their agent beside it, a bookshelf, a plant, a window and the door`
+          }
+          className={`min-h-0 flex-1 ${pointed === null ? "" : "cursor-pointer"}`}
         >
-          <FitCamera />
-          <Lights shadows={quality.shadows} />
-          <OfficeQualityProvider value={quality}>
-            <OfficeShell doorGlow={pointed === "door"} door={hotspot("door", onGoOutside, point)} />
-            <Desk glow={pointed === "desk"} handlers={hotspot("desk", onUseDesk, point)} />
-            <Chair />
-            <Bookshelf />
-            <Plant />
-            <Picture />
-            <group position={[PLAYER_SPOT.x, 0, PLAYER_SPOT.z]} rotation-y={0.5}>
-              {player ?? <StandIn />}
+          {/* Shadows and pixel ratio are fixed when the renderer is created, so lite mode remounts it. */}
+          <Canvas
+            key={lite ? "lite" : "full"}
+            frameloop="demand"
+            shadows={quality.shadows}
+            dpr={lite ? 1 : [1, 2]}
+            gl={{ alpha: true }}
+          >
+            <ContextLossWatch />
+            <FitCamera />
+            <Lights shadows={quality.shadows} />
+            <OfficeQualityProvider value={quality}>
+              <OfficeShell
+                doorGlow={pointed === "door"}
+                door={hotspot("door", onGoOutside, point)}
+              />
+              <Desk glow={pointed === "desk"} handlers={hotspot("desk", onUseDesk, point)} />
+              <Chair />
+              <Bookshelf />
+              <Plant />
+              <Picture />
+              <group position={[PLAYER_SPOT.x, 0, PLAYER_SPOT.z]} rotation-y={0.5}>
+                {player ?? <StandIn />}
+              </group>
+            </OfficeQualityProvider>
+            <group position={[LUMI_SPOT.x, 0, LUMI_SPOT.z]} rotation-y={-0.6}>
+              <BearFigure config={agent} lite={lite} motion={motion} />
             </group>
-          </OfficeQualityProvider>
-          <group position={[LUMI_SPOT.x, 0, LUMI_SPOT.z]} rotation-y={-0.6}>
-            <BearFigure config={agent} lite={lite} motion={motion} />
-          </group>
-        </Canvas>
-      </div>
+          </Canvas>
+        </div>
+      </SceneGuard>
       {visiting === undefined && (
         <div className="flex flex-wrap justify-center gap-2 p-4">
           <button
@@ -153,6 +204,7 @@ export function OfficeRoom({
           </button>
           <button
             type="button"
+            data-office-exit
             onClick={onGoOutside}
             className="bg-chip rounded-pill px-5 py-2.5 font-bold"
           >

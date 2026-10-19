@@ -6,7 +6,8 @@ Licensed under the Apache License, Version 2.0 (see LICENSE).
 This product includes code adapted from Apertus Red-Team Graph
 (https://github.com/CPD9/apertus-redteam-graph), Copyright 2026 its authors,
 Apache License 2.0. Where a file is adapted, it says so in its opening comment
-and PROVENANCE.md lists it.
+and PROVENANCE.md lists it. A skill's evidence rows follow the shape of its
+track_1a/src/redteam/agent_facts.py.
 
 Models used at run time (not distributed in this repository):
 - Apertus v1.5 8B and 70B, Swiss AI Initiative (https://huggingface.co/swiss-ai),

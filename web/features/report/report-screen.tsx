@@ -27,8 +27,8 @@ export function ReportScreen({ id, store = browserReports }: ReportScreenProps) 
   if (stored === null) {
     return (
       <p>
-        This report is not in this browser. Reports are kept only in the browser that made them,
-        until shared links arrive.
+        This report is not in this browser: it was removed, or made in another one. Reports are kept
+        only in the browser that made them, until shared links arrive.
       </p>
     );
   }

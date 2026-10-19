@@ -3,7 +3,7 @@
 
 import { type KindId } from "./bear-config";
 import { type BearLook } from "./bear-look";
-import { BODY } from "./bear-shape";
+import { BODY, NECK, NECK_Y } from "./bear-shape";
 import { Ball, Plush, useSegments } from "./plush";
 import { PART } from "./use-bear-motion";
 
@@ -86,6 +86,12 @@ export function BearBody({
         radius={BODY.radius}
         position={[0, BODY.y, 0]}
         scale={[...BODY.scale]}
+      />
+      <Ball
+        colour={look.fur}
+        radius={NECK.radius}
+        position={[0, NECK_Y - 0.02, 0]}
+        scale={[...NECK.scale]}
       />
       <Ball colour={look.belly} radius={0.17} position={[0, 0.27, 0.17]} scale={[1, 0.85, 0.55]} />
       {([-1, 1] as const).map((side, index) => (

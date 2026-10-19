@@ -178,6 +178,7 @@ the code that ran before step 1: `sudo mv /opt/bernlife /opt/bernlife.search`, t
 | Task | Command (on the VM, in `/opt/bernlife/infra/exoscale`) |
 |---|---|
 | Invite someone | `./invite.sh 1` prints a one-time code, valid 7 days |
+| Team and demo accounts | `(umask 077; ./seed.sh > ~/accounts.txt)`: peter, yaseen, nik, admin (an ordinary account) and test01–test10, each with a new random password printed once; existing handles are skipped. Hand the passwords over privately, then `rm ~/accounts.txt` |
 | Deploy a new `main` | back up (step 1 above), copy the files again, then `docker compose up -d --build --wait` |
 | New bundle in `bundle.lock` | steps 1 to 4 and 7 above, with `docker compose up -d --build --wait --force-recreate load serve web` as step 6 |
 | Status and logs | `docker compose ps`, `docker compose logs -f web serve` |
@@ -185,7 +186,13 @@ the code that ran before step 1: `sudo mv /opt/bernlife /opt/bernlife.search`, t
 | Backup now | `sudo ./backup.sh` |
 | Restore a backup | "Back up and restore" below |
 | Watch uptime | From your machine, in a clone with `make fetch` done: `python3 -m infra.check_hosted --url https://<site> --watch`. One line per check every 30 s (time, HTTP status, mode, status, failures in the last hour per role and marker, ms); it exits 1 after 3 failed checks in a row (`--interval`, `--max-failures`). A `degraded` status is shown, not counted |
-| New SSH IP | Exoscale portal → Security Groups → `bernlife-web` → edit the port 22 rule |
+| New SSH IP | Exoscale portal → Security Groups → `bernlife-web` → edit the port 22 rule (one `/32`; never write the IP in git, issues or chat) |
+
+## Changes to access
+
+| Date | Change |
+|---|---|
+| 2026-10-19 | Port 22 moved from the home network to the venue network (#99); the old rule removed. Only 443 public and 22 from that one `/32`; the database stays closed. |
 
 ## Back up and restore
 
@@ -229,6 +236,47 @@ sudo cat "$b/uploads.tar.gz" | docker compose exec -T -u 0 web tar -xzf - -C /da
 docker compose exec -T -u 0 web chown -R node /data/uploads
 sudo cat "$b/caddy-data.tar.gz" | docker compose exec -T caddy tar -xzf - -C /data
 docker compose restart caddy             # serves the restored certificate
+```
+
+### Restore drill (proves a backup restores, without touching the live database)
+
+On the VM in `/opt/bernlife/infra/exoscale`, about a minute. It restores the newest folder's
+`db.sql.gz` into a scratch database next to the live one, compares the row count of every table,
+checks that both archives read, and drops the scratch database.
+
+```bash
+sudo ./backup.sh </dev/null
+b=/var/backups/bernlife/$(sudo ls -t /var/backups/bernlife | grep -E '^bernlife-[0-9TZ]+$' | head -1)
+docker compose exec -T db psql -U bernlife -d postgres -qc 'CREATE DATABASE restore_drill' </dev/null
+sudo gunzip -c "$b/db.sql.gz" \
+  | docker compose exec -T db psql -q -v ON_ERROR_STOP=1 -U bernlife -d restore_drill >/dev/null
+Q="select string_agg(t || '=' || n, ' ' order by t) from (select relname t,
+  (xpath('/row/c/text()', query_to_xml('select count(*) c from public.' || quote_ident(relname),
+  false, true, '')))[1]::text n from pg_class where relkind = 'r'
+  and relnamespace = 'public'::regnamespace) x"
+live=$(docker compose exec -T db psql -U bernlife -d bernlife -Atc "$Q" </dev/null)
+drill=$(docker compose exec -T db psql -U bernlife -d restore_drill -Atc "$Q" </dev/null)
+[ "$live" = "$drill" ] && echo "row counts match" || printf 'MISMATCH\n%s\n%s\n' "$live" "$drill"
+sudo tar -tzf "$b/uploads.tar.gz" >/dev/null && sudo tar -tzf "$b/caddy-data.tar.gz" >/dev/null \
+  && echo "archives read"
+docker compose exec -T db psql -U bernlife -d postgres -qc 'DROP DATABASE restore_drill' </dev/null
+```
+
+`</dev/null` keeps `docker compose` from reading the rest of a pasted script as its input. Rows
+written between the backup and the count (a new account, a message) show as a mismatch: run it
+again, or at a quiet moment.
+
+| Date | Backup | Result |
+|---|---|---|
+| 2026-10-19 | `bernlife-20261019T071437Z` | restored in 7 s; all 28 tables match the live database (8 migrations, 3,351 pages, 3,484 profiles); `uploads.tar.gz` (no uploads yet) and `caddy-data.tar.gz` (1 certificate) read |
+
+### Uptime watch
+
+From a machine that stays on (a laptop only while it is awake): it checks the site every 30
+seconds and exits, with a non-zero status, after 3 failures in a row.
+
+```bash
+python3 -m infra.check_hosted --url https://<site> --watch --interval 30 --max-failures 3
 ```
 
 ### Off-VM copy to Exoscale SOS (not provisioned)

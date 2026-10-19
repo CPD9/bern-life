@@ -1,68 +1,113 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { type SearchResponse } from "@/infrastructure/contract-types.generated";
-import { type Building, groupPlacesByBuilding } from "./buildings";
+import { SceneGuard } from "@/infrastructure/ui/scene-guard";
+import { type Building } from "./buildings";
 import { type CameraCommand } from "./camera-moves";
-import { liteTrees, planCity } from "./city-plan";
+import { BUILDINGS, CITY } from "./city-layout";
 import { useWorldDisplay } from "./display";
-import { AARE_PATH, DISTRICTS, MAP_BOUNDS, type MapPoint, RATHAUSPLATZ, ROADS } from "./geography";
+import { type Door, HOME_DOOR_KEY } from "./doors";
+import { type MapPoint } from "./geography";
 import { lightUp } from "./light";
-import { type CameraHandle, MapCamera } from "./map-camera";
-import { AnchorProjector } from "./markers/anchor-projector";
+import { type CameraHandle } from "./map-camera";
 import { markerAnchors, PlaceMarkers } from "./markers/place-markers";
-import { paletteFor } from "./palette";
+import { NoMapCard } from "./no-map-card";
 import { PlacePanel } from "./place-panel";
-import { PLACES } from "./places";
-import { AGENT_ANCHOR, AgentButton, AgentFigure, type MapAgent } from "./scene/agents";
-import { City } from "./scene/city";
-import { Ground } from "./scene/ground";
-import { Lights } from "./scene/lights";
-import { PlaceBuildings } from "./scene/place-buildings";
+import { agentAnchor, AgentButton, type MapAgent } from "./scene/agents";
+import { MapScene } from "./scene/map-scene";
 import { SearchSummary } from "./search-summary";
 import { useMapKeys } from "./use-map-keys";
+import { useWalk } from "./use-walk";
+import { WalkControls } from "./walk-controls";
+import { feetOn } from "./walk-map";
+import { walkWorld } from "./walk-world";
 import { useWorldSearch, worldSearch } from "./world-search";
 
-const BUILDINGS = groupPlacesByBuilding(PLACES);
-/** The square in front of the city hall stays open for the agent. */
-const CITY = planCity({
-  districts: DISTRICTS,
-  river: AARE_PATH,
-  roads: ROADS,
-  sites: [...BUILDINGS.map((building): [number, number] => [building.x, building.z]), RATHAUSPLATZ],
-  bounds: MAP_BOUNDS,
-  seed: 1291,
-});
-const ANCHORS = [...markerAnchors(BUILDINGS), AGENT_ANCHOR];
+const MARKER_ANCHORS = markerAnchors(BUILDINGS);
+
+export type MapPlayer = {
+  /** Your figure, feet on y = 0 and facing +z, walking or standing still as asked. */
+  readonly figure: (lite: boolean, walking: boolean) => ReactNode;
+  /** Your office plot; before you settle there is none and you arrive at the station. */
+  readonly home: MapPoint | null;
+  /** In your office: coming out puts you at your door. The office covers the map meanwhile, so
+   * the map, or the card standing in for it, is inert and leaves focus alone. */
+  readonly inside: boolean;
+};
 
 export type WorldCanvasProps = {
-  /** The player's first agent, standing in front of the city hall. */
+  /** The player's first agent, walking beside them. */
   agent: MapAgent;
+  player: MapPlayer;
   /** A tap, Enter or Space on the agent. */
   onAgentOpen: () => void;
   onSearchHere?: (building: Building) => void;
   /** Told whether a place's panel is open, so what floats over the map can keep clear of it. */
   onPlacePanel?: (open: boolean) => void;
+  /** Going in through your own office door. */
+  onGoHome?: () => void;
   /** Shown lit at load: the world fixture, passed only when the app runs with DEMO_FIXTURES=1. */
   demoSearch?: SearchResponse | undefined;
+  /** The ways in that need no 3D, offered when the browser cannot draw the map. */
+  onOpenAsk: () => void;
+  onOpenDesk: () => void;
 };
 
-// Transparent so the shell's sky shows through; "demand" renders only when something changes.
-export function WorldCanvas({
-  agent,
-  onAgentOpen,
-  onSearchHere,
-  onPlacePanel,
-  demoSearch,
-}: WorldCanvasProps) {
-  const display = useWorldDisplay();
-  const palette = paletteFor(display.night);
-  const shadows = !display.lite;
-  const cameraRef = useRef<CameraHandle | null>(null);
+// Without WebGL, or when the scene throws or loses its context for good, a card stands where the
+// map was and the rest of the app carries on. Walking lives with the map: the card offers no Walk,
+// no doors and no Go home. The map's region takes focus back after a retry.
+export function WorldCanvas({ onOpenAsk, onOpenDesk, ...map }: WorldCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  return (
+    <SceneGuard
+      focusAfterRetry={containerRef}
+      fallback={(retry) => (
+        <NoMapCard
+          onOpenAsk={onOpenAsk}
+          onOpenDesk={onOpenDesk}
+          onRetry={retry}
+          covered={map.player.inside}
+        />
+      )}
+    >
+      <WorldMap {...map} containerRef={containerRef} />
+    </SceneGuard>
+  );
+}
+
+type WorldMapProps = Omit<WorldCanvasProps, "onOpenAsk" | "onOpenDesk"> & {
+  containerRef: RefObject<HTMLDivElement | null>;
+};
+
+const KEYS = {
+  map: "Arrow keys or W A S D pan, Q and E turn, plus and minus zoom. Tab reaches each place.",
+  walk: "Arrow keys or W A S D walk, Q and E turn, plus and minus zoom; a click on the ground walks there and Escape stops. Tab reaches each place.",
+} as const;
+
+// The map: its canvas (scene/map-scene.tsx), transparent so the shell's sky shows through, and over
+// it the place markers, your agent's label, the walking controls and a place's panel.
+function WorldMap({
+  agent,
+  player,
+  onAgentOpen,
+  onPlacePanel,
+  containerRef,
+  ...props
+}: WorldMapProps) {
+  const display = useWorldDisplay();
+  const cameraRef = useRef<CameraHandle | null>(null);
   const anchorsRef = useRef(new Map<string, HTMLElement>());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [lobby, setLobby] = useState(false);
   const selected = BUILDINGS.find((building) => building.key === selectedKey) ?? null;
   const search = useWorldSearch();
   const response = search.status === "results" ? search.response : null;
@@ -72,12 +117,15 @@ export function WorldCanvas({
   );
   const fixture = response?.versions.snapshot === "fixture";
   const panelOpen = selected !== null;
+  const world = useMemo(() => walkWorld(CITY, BUILDINGS, player.home), [player.home]);
 
   useEffect(() => {
-    if (demoSearch !== undefined) worldSearch.showResults(demoSearch);
-  }, [demoSearch]);
+    if (props.demoSearch !== undefined) worldSearch.showResults(props.demoSearch);
+  }, [props.demoSearch]);
 
   useEffect(() => onPlacePanel?.(panelOpen), [panelOpen, onPlacePanel]);
+  // A map that gives way to its card takes an open panel with it.
+  useEffect(() => () => onPlacePanel?.(false), [onPlacePanel]);
 
   const framePoints = useMemo(
     () =>
@@ -88,64 +136,83 @@ export function WorldCanvas({
           ),
     [lighting],
   );
+  const walk = useWalk({
+    map: world.map,
+    start: world.start,
+    inside: player.inside,
+    doors: world.doors,
+    framePoints,
+  });
+  const { session, stop } = walk;
+  const agentAt = useMemo(
+    () => feetOn(world.map, () => session.current.agent.at),
+    [session, world.map],
+  );
+  const anchors = useMemo(() => [...MARKER_ANCHORS, agentAnchor(agentAt)], [agentAt]);
 
+  // Leaving a place gives focus back to its door while you stand there, else to its marker.
   const closePanel = useCallback(() => {
     setSelectedKey(null);
+    setLobby(false);
     if (selectedKey === null) return;
-    containerRef.current
-      ?.querySelector<HTMLButtonElement>(`[data-building="${CSS.escape(selectedKey)}"]`)
-      ?.focus();
-  }, [selectedKey]);
+    const key = CSS.escape(selectedKey);
+    const container = containerRef.current;
+    const opener =
+      container?.querySelector<HTMLButtonElement>(`[data-door="${key}"]`) ??
+      container?.querySelector<HTMLButtonElement>(`[data-building="${key}"]`);
+    opener?.focus();
+  }, [containerRef, selectedKey]);
+  const onEscape = useCallback(() => {
+    closePanel();
+    stop();
+  }, [closePanel, stop]);
   const runCamera = useCallback((command: CameraCommand) => cameraRef.current?.run(command), []);
   const selectBuilding = useCallback((key: string) => {
     setSelectedKey(key);
+    setLobby(false);
     const building = BUILDINGS.find((candidate) => candidate.key === key);
     if (building !== undefined) cameraRef.current?.focus(building.x, building.z);
   }, []);
-  useMapKeys({ containerRef, onCommand: runCamera, onEscape: closePanel });
+  useMapKeys({ containerRef, onCommand: runCamera, onEscape, walk: walk.keys });
+
+  function enter(door: Door) {
+    if (door.kind === "home") {
+      props.onGoHome?.();
+      return;
+    }
+    // Going in ends a walk that was passing the door.
+    stop();
+    setSelectedKey(door.key);
+    setLobby(true);
+  }
 
   return (
     <div
       ref={containerRef}
       role="region"
+      tabIndex={-1}
       aria-label="Map of Bern"
       aria-describedby="map-keys"
+      // Your office covers the map; nothing under it is reached by Tab or the keys meanwhile.
+      inert={player.inside}
       className="relative isolate size-full"
     >
       <p id="map-keys" className="sr-only">
-        Arrow keys or W A S D pan, Q and E turn, plus and minus zoom. Tab reaches each place.
+        {walk.walking ? KEYS.walk : KEYS.map}
       </p>
-      {/* Shadows and pixel ratio are fixed when the renderer is created, so lite mode remounts it. */}
-      <Canvas
-        key={display.lite ? "lite" : "full"}
-        frameloop="demand"
-        shadows={shadows ? "percentage" : false}
-        dpr={display.lite ? 1 : [1, 2]}
-        gl={{ alpha: true }}
-        camera={{ fov: 35, near: 1, far: 1200 }}
-      >
-        <Lights night={display.night} shadows={shadows} />
-        <Ground palette={palette} shadows={shadows} />
-        <City
-          blocks={CITY.blocks}
-          trees={display.lite ? liteTrees(CITY.trees) : CITY.trees}
-          palette={palette}
-          shadows={shadows}
-        />
-        <PlaceBuildings
-          buildings={BUILDINGS}
-          palette={palette}
-          shadows={shadows}
-          lighting={lighting}
-        />
-        <AgentFigure agent={agent} lite={display.lite} />
-        <AnchorProjector anchors={ANCHORS} elementsRef={anchorsRef} />
-        <MapCamera
-          handleRef={cameraRef}
-          reducedMotion={display.reducedMotion}
-          framePoints={framePoints}
-        />
-      </Canvas>
+      <MapScene
+        display={display}
+        world={world}
+        home={player.home}
+        walk={walk}
+        lighting={lighting}
+        framePoints={framePoints}
+        anchors={anchors}
+        anchorsRef={anchorsRef}
+        cameraRef={cameraRef}
+        person={player.figure}
+        agent={agent.figure}
+      />
       {/* Its own stacking layer, so marker depth order never lifts a marker over the panel. */}
       <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden *:pointer-events-auto">
         <PlaceMarkers
@@ -159,13 +226,31 @@ export function WorldCanvas({
         <AgentButton name={agent.name} onOpen={onAgentOpen} elementsRef={anchorsRef} />
       </div>
       <SearchSummary state={search} lighting={lighting} onClear={worldSearch.clear} />
+      <WalkControls
+        walking={walk.walking}
+        onToggleWalking={walk.toggleWalking}
+        following={walk.following}
+        onToggleFollowing={walk.toggleFollowing}
+        door={walk.door}
+        onEnter={enter}
+        onWalkHome={player.home === null ? undefined : () => walk.goToDoor(HOME_DOOR_KEY)}
+      />
       {selected !== null && (
         <PlacePanel
           building={selected}
           light={lighting?.byBuilding.get(selected.key)}
           fixture={fixture}
+          lobby={lobby}
           onClose={closePanel}
-          onSearchHere={onSearchHere}
+          onSearchHere={props.onSearchHere}
+          onWalkHere={
+            walk.walking
+              ? (building) => {
+                  closePanel();
+                  walk.goToDoor(building.key);
+                }
+              : undefined
+          }
         />
       )}
     </div>

@@ -22,6 +22,7 @@ import { appEvents, emittedToday, offInFixtures } from "@/infrastructure/app-eve
 import { useNow } from "@/infrastructure/bern-time";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useSettings } from "@/infrastructure/use-settings";
+import { useWebgl } from "@/infrastructure/webgl";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
 import { useWorldPhone } from "./world-phone";
 import { unreadRefresh, useUnreadMessages } from "./use-unread-messages";
@@ -73,6 +74,8 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const desktop = useDesktop();
   const now = useNow();
   const health = useHealth();
+  // Without WebGL the map is only a card, so nothing offers to show something there.
+  const mapDrawn = useWebgl() !== false;
   // Read again when the phone or the desk's Messages closes: reading sends no live notice.
   const unreadMessages = useUnreadMessages(
     account.state.status === "signed-in",
@@ -100,6 +103,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     phone.setOpen(false);
     setView("map");
   }
+  const onShowOnMap = mapDrawn ? showOnMap : undefined;
 
   function searchHere(building: Building) {
     navigator.setDraft(searchHereDraft(building));
@@ -121,7 +125,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     agentName,
     health,
     unreadMessages,
-    onShowOnMap: showOnMap,
+    onShowOnMap,
     onOpenApp: phone.openApp,
     connections: connections.wiring,
     messageWith: message.messageWith,
@@ -135,7 +139,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     engineMode: health.status === "ok" ? health.health.mode : null,
     fixtureMode,
     navigator,
-    onShowOnMap: showOnMap,
+    onShowOnMap,
     onOpenAsk: () => phone.openApp("ask"),
     onMakeReport: apps.makeDeskReport,
     onOpenReports: () => setDesktopOpen(true),
@@ -180,6 +184,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           storyDemo={storyDemo}
           settle={{ ...settle, settled: settle.plot !== null }}
           onShowMe={showMe}
+          canShowMe={(target) => mapDrawn || target !== "map"}
           onOpenStoryMenu={() => setStoryMenuOpen(true)}
         />
       }
@@ -190,6 +195,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           person={person}
           bear={bear}
           agentName={agentName}
+          plot={settle.plot}
           lite={settings.lite}
           reducedMotion={reducedMotion}
           onAgentOpen={lumi.open}
@@ -197,11 +203,13 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           onPlacePanel={setPlaceOpen}
           onUseDesk={sitDown}
           onGoOutside={() => setView("map")}
+          onGoHome={() => setView("home")}
+          onOpenAsk={() => phone.openApp("ask")}
         />
       }
       floatie={lumi.floatie}
       // A place's panel fills the bottom of a phone's screen, and a tall one reaches the floatie's
-      // corner on a wide screen; the bear on the map still opens Lumi meanwhile.
+      // corner on a wide screen; the bear on the map still opens Bärli meanwhile.
       floatieHidden={shownView === "map" && placeOpen}
       overlay={
         <WorldOverlay
@@ -232,6 +240,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
                   story: storyController.progress,
                   people: connections.people,
                   onClose: () => setYouOpen(false),
+                  onMoveOffice: settle.open,
                 }
               : null
           }

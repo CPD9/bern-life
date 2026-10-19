@@ -1,9 +1,11 @@
 // A place's panel: the units in the building with their verbatim addresses, and, after a search,
 // the results found there. People from public pages appear only here, as entries with sources:
 // the same result card as Ask, so every claim opens its evidence; fixture results get a plain list.
+// Walked in through the door, the same panel is the place's lobby; you leave it by going outside.
 
 import { useEffect, useRef } from "react";
 import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
+import { CorrectionNote } from "@/infrastructure/ui/claim-evidence";
 import { ResultCard } from "@/infrastructure/ui/result-card";
 import { type Building } from "./buildings";
 import { type BuildingLight, type SearchResult } from "./light";
@@ -18,12 +20,17 @@ function PlaceEntry({ place }: { place: Place }) {
       <p className="text-ink font-extrabold">{place.name}</p>
       <p className="text-muted text-sm">{KIND_LABELS[place.kind]}</p>
       {place.position_method === "address" ? (
-        <p className="text-sm">
-          {place.address}{" "}
-          <a href={place.address_url} target="_blank" rel="noreferrer" className={LINK}>
-            Source page
-          </a>
-        </p>
+        <>
+          <p className="text-sm">
+            {place.address}{" "}
+            <a href={place.address_url} target="_blank" rel="noreferrer" className={LINK}>
+              Source page
+            </a>
+          </p>
+          <div className="text-sm">
+            <CorrectionNote fetchedAt={place.address_fetched_at} quoted="address" />
+          </div>
+        </>
       ) : (
         <p className="text-sm">
           No address of its own on its pages; placed in its district.{" "}
@@ -59,6 +66,12 @@ function FixtureMatch({ result }: { result: SearchResult }) {
   );
 }
 
+function panelHeading(building: Building, lobby: boolean): string {
+  const units = building.places.length > 1 ? `${building.places.length} units here` : null;
+  if (lobby) return units === null ? "Lobby" : `Lobby: ${units}`;
+  return units ?? "Place";
+}
+
 type PanelProps = {
   building: Building;
   light: BuildingLight | undefined;
@@ -66,6 +79,10 @@ type PanelProps = {
   onClose: () => void;
   /** Starts a question about this place in Ask; absent when nothing can take it. */
   onSearchHere: ((building: Building) => void) | undefined;
+  /** Walks you to the place's door; present in walk mode, outside the lobby. */
+  onWalkHere?: ((building: Building) => void) | undefined;
+  /** Opened by walking in through the door. */
+  lobby?: boolean;
   events?: AppEventSink;
 };
 
@@ -75,16 +92,19 @@ export function PlacePanel({
   fixture,
   onClose,
   onSearchHere,
+  onWalkHere,
+  lobby = false,
   events = appEvents,
 }: PanelProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const headingId = `place-${building.key.replace(/[^a-z0-9]+/gi, "-")}`;
 
   useEffect(() => heading.current?.focus(), [building.key]);
-  // Opening a place is how the story's "enter the lobby" step is done.
+  // Going in through the door is how the story's "enter the lobby" step is done; a place opened
+  // from its marker is only looked at.
   useEffect(() => {
-    events.emit("lobby_entered");
-  }, [building.key, events]);
+    if (lobby) events.emit("lobby_entered");
+  }, [building.key, lobby, events]);
 
   return (
     <section
@@ -94,24 +114,37 @@ export function PlacePanel({
     >
       <div className="flex items-start justify-between gap-3">
         <h2 id={headingId} ref={heading} tabIndex={-1} className="text-lg font-extrabold">
-          {building.places.length > 1 ? `${building.places.length} units here` : "Place"}
+          {panelHeading(building, lobby)}
         </h2>
         <button
           type="button"
           onClick={onClose}
           className="rounded-pill bg-chip px-3 py-1 text-sm font-bold"
         >
-          Close
+          {lobby ? "Go outside" : "Close"}
         </button>
       </div>
-      {onSearchHere !== undefined && (
-        <button
-          type="button"
-          onClick={() => onSearchHere(building)}
-          className="bg-primary text-primary-ink rounded-pill self-start px-4 py-1.5 text-sm font-bold"
-        >
-          Search here
-        </button>
+      {(onSearchHere !== undefined || (onWalkHere !== undefined && !lobby)) && (
+        <div className="flex flex-wrap gap-2">
+          {onSearchHere !== undefined && (
+            <button
+              type="button"
+              onClick={() => onSearchHere(building)}
+              className="bg-primary text-primary-ink rounded-pill px-4 py-1.5 text-sm font-bold"
+            >
+              Search here
+            </button>
+          )}
+          {onWalkHere !== undefined && !lobby && (
+            <button
+              type="button"
+              onClick={() => onWalkHere(building)}
+              className="bg-chip rounded-pill px-4 py-1.5 text-sm font-bold"
+            >
+              Walk here
+            </button>
+          )}
+        </div>
       )}
       {light !== undefined && (
         <div className="flex flex-col gap-3">

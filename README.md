@@ -18,7 +18,8 @@ make run      # Postgres, the engine and the web app, replaying the bundle: no G
 
 Open **http://127.0.0.1:3000**. `make stop` stops it again. The search without the world is at
 http://127.0.0.1:3000/navigator, and the office computer without the 3D room at
-http://127.0.0.1:3000/office.
+http://127.0.0.1:3000/office. In a browser without 3D graphics (WebGL), the map and the office
+room give way to a short note, and Ask, the office desk and every app still work.
 
 **A short tour**
 
@@ -40,35 +41,42 @@ http://127.0.0.1:3000/office.
 4. **Join.** Joining is by invite. Make a code with
    `cd web && bun install && DATABASE_URL=postgresql://bernlife:bernlife@127.0.0.1:5433/bernlife bun run invite:create`
    (needs [Bun](https://bun.sh)), then choose **Join Bern Life**.
-5. **Onboarding.** Lumi, your first agent, greets you. Five short steps follow: who you are in
+5. **Onboarding.** Bärli, your first agent, greets you. Five short steps follow: who you are in
    Bern, your look (players are people), what brings you here, who sees what, and your agent:
-   Lumi is a bear you can rename and restyle. A card then offers to choose where your office
+   Bärli is a bear you can rename and restyle. A card then offers to choose where your office
    stands; each plot lists the nearest places with their sourced addresses.
 6. **Your office.** Onboarding ends in your office, the **Home** tab. Sit at the desk to use the
    computer, nine apps: **Navigator** (the same search as Ask, and a project brief), **Agents**
-   (Lumi's skills, and loops: saved searches you run again, whose new and dropped results reach
-   the bell), **Reports** (match reports with their sources), **Messages** (to members who
-   joined), **Library** (what you saved, and your documents with their trace),
-   **Opportunities** (funding calls, services and spaces; an amount or deadline appears only
-   inside the sentence it was read from), **Garage** (the Apertus models and the evaluator's
-   numbers for this snapshot, as the engine serves them), **Sources** (the institutions crawled,
-   and how to add one) and **Settings**. The door leads back to the map; the phone carries Ask,
-   Messages, Agents, Opportunities, Library and Settings.
-7. **Lumi.** Your agent floats beside you as the bear you made, and stands in front of the city
-   hall on the map; either opens its chat. Lumi searches with the engine's own tools and answers
+   (Bärli's skills, each with its evidence, and loops: saved searches you run again, whose new and
+   dropped results reach the bell), **Reports** (match reports with their sources), **Messages** (to
+   members who joined), **Library** (what you saved, and your documents with their trace),
+   **Opportunities** (funding calls, services and spaces; an amount or deadline appears only inside
+   the sentence it was read from), **Garage** (the Apertus models and the evaluator's numbers for
+   this snapshot, as the engine serves them, and the skills with their evidence), **Sources** (the
+   institutions crawled, and how to add one) and **Settings**. The door leads back to the map; the
+   phone carries Ask, Messages, Agents, Opportunities, Library and Settings.
+7. **Bärli.** Your agent floats beside you as the bear you made, and walks beside you on the map;
+   either opens its chat. Bärli searches with the engine's own tools and answers
    with the same source cards as Ask. A person it names must be among those results, a reply it
-   cannot support is replaced by a summary of the cited claims, and with nothing behind it Lumi
-   says it found no verifiable source. An answer lights its places on the map and may open a card
-   in Ask; a match report waits for your click and opens in the desk's Reports window.
+   cannot support is replaced by a summary of the cited claims, and with nothing behind it Bärli
+   says it found no verifiable source. An answer stays in the chat, with buttons to light its places
+   on the map, open its card in Ask or make a match report (it opens in the desk's Reports window);
+   nothing happens until you click.
 8. **The story.** A card offers **Start the story**, quests about moving a business to Bern that
    each walk through one part of the case and complete only when you actually do the step in the
    app, or **Explore freely**. Your badge opens the **You** sheet: profile, goals, skills, people
    and agents, with real content only.
+9. **Walk Bern.** Out of the office you stand at your office door (at the station before you
+   settle), Bärli beside you. Press **Walk** on the map: the arrows or W A S D walk you and the
+   camera follows; a click on the ground or a bridge finds the way round the houses and over the
+   bridges, and a click on a place's building or your office, or **Walk here** on a place, walks
+   you to its door. At a place's door **Enter** opens its lobby; at your own door **Go home**
+   takes you inside. The city's clock runs about 85 times faster than walking pace.
 
 Replay is the default. Questions recorded in the bundle's model cache get Apertus's search terms
 and explanations; any other question still gets plain search over the stored pages, and the app
 says so. A new project brief needs the model: replay has only the briefs recorded in the bundle,
-and the app says so for any other. In replay Lumi searches your message and summarises the cited
+and the app says so for any other. In replay Bärli searches your message and summarises the cited
 claims; its own recorded answers ship with the next bundle. Only `make live-run` (in place of
 `make run`) calls Apertus: it starts only when the model endpoint set in `.env` answers, and the
 model is called only for signed-in members under their limits, at most `LLM_CALL_BUDGET` calls a
@@ -101,7 +109,10 @@ over base questions, proportions have Wilson intervals. Every number in the tabl
 Snapshot `bundle-20261019-3`, 48 gold questions. To reproduce: `make fetch && make eval && python3 infra/readme_numbers.py`. CI fails when this block differs from the evaluator's output.
 <!-- numbers:end -->
 
-How the numbers on each result are computed is in [`docs/metrics.md`](docs/metrics.md).
+How the numbers on each result are computed is in [`docs/metrics.md`](docs/metrics.md). It also
+has exploratory evaluator numbers this table leaves out, with the commands that compute them:
+top-10 overlap across wordings of one need for criterion 2 (built on the case's glucose example),
+exposure by unit size, and the two-person check of criterion 4.
 
 ## How it works
 
@@ -175,6 +186,32 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
 - Source pages remain their publishers' property; results quote only short evidence sentences
   ([`NOTICE`](NOTICE), [`PROVENANCE.md`](PROVENANCE.md)).
 
+### Corrections and removal
+
+Bern Life removes on request; the Swiss Federal Act on Data Protection (nDSG) gives the people
+named the right to ask. Every claim is a sentence quoted from an institution's public page on the
+date shown beside it. Every quote and map address in the app has a **Wrong or outdated?** note
+that links to the app's own [`/corrections`](web/app/corrections/page.tsx) page, which says what
+this section says; the note only explains, and nothing is sent from the app.
+
+- **Wrong or outdated sentence:** the institution corrects its own page, and the change reaches
+  Bern Life with the next snapshot bundle.
+- **Wrong or outdated address:** the map's addresses are not in the bundle but in git, in
+  [`web/features/world/places.json`](web/features/world/places.json) with page, date and sha256
+  per row. One is corrected or removed by a commit to that file, and git history keeps the
+  earlier value.
+- **Removal:** write to [peter.dike@unibe.ch](mailto:peter.dike@unibe.ch) with the page link and
+  the sentence; nothing else about you is needed. The `/corrections` page shows the address as a
+  plain mail link that opens your own mail program; the app sends and keeps nothing. If you do
+  not mind others reading the request, open an issue on this repository instead.
+- **What happens:** the page is left out. Its path goes into `deny_paths` in its source's file in
+  [`sources/`](sources/), and a new bundle is built without it and pinned; the earlier release
+  assets that hold it are withdrawn and the hosted copy is reloaded. Its nightly backups age out
+  after 14 days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)). Git holds no page, so
+  nothing in its history needs rewriting. Sentences someone saved to the Library, and the match
+  reports they made, are copies kept in their browser that do not change: they stay there until
+  that person removes them (each has a **Remove**).
+
 ## Limits and roadmap
 
 - **Recall is below the case's bar** (criterion 1 in the table). A candidate is shown only when a
@@ -187,16 +224,18 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
   with a title the premise check does not know.
 - **UniBE is found least often** of the three sources (criterion 5).
 - Explanations are written in English only, and field completeness still needs its human check.
-- **In the game:** you cannot walk around the office yet, and on a phone-width screen (390 px) the
-  HUD covers the map's search summary. Two optional quests say why one of their steps cannot be
-  done yet: adding a source is a file in `sources/`, not an action in the app, and there is no
-  network of labs and experts. What you save to the Library and your office plot stay on this
+- **In the game:** you walk the drawn map but not yet inside the office, and on a phone-width screen
+  (390 px) the HUD covers the map's search summary. Two optional quests say why one of their steps
+  cannot be done yet: adding a source is a file in `sources/`, not an action in the app, and there
+  is no network of labs and experts. What you save to the Library and your office plot stay on this
   device. A map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the
   repository but not yet drawn in the world.
+- **A single claim cannot be removed on its own.** Removal works per page (`deny_paths`), so
+  asking for one sentence to go takes its whole page out of the next bundle.
 - **Notifications stay in the app** (the bell). Opt-in e-mail or push notifications are not
   decided yet.
 - **The next bundle is not pinned yet.** Replay and every number above come from
-  `bundle-20261019-2`, which holds no recorded answers of Lumi's own.
+  `bundle-20261019-2`, which holds no recorded answers of Bärli's own.
 - Next: matching word forms and claims across languages, the human completeness labels, and a
   calibrated confidence per result.
 

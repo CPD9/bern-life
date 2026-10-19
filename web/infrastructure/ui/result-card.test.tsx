@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { AppEventName } from "@/infrastructure/app-events";
 import { copyOf, passageFixture, resultFixture, viaFixture } from "@/test/fixtures";
+import { CORRECTIONS_PATH } from "./claim-evidence";
 import { ResultCard } from "./result-card";
 
 const firstResult = () => copyOf(resultFixture.results[0]!);
@@ -59,6 +60,49 @@ describe("ResultCard", () => {
     fireEvent.click(claim);
     fireEvent.click(claim);
     expect(heard).toEqual(["evidence_opened"]);
+  });
+});
+
+describe("ResultCard: correcting a sentence", () => {
+  const note = () => screen.getByText("Wrong or outdated?").closest("details")!;
+
+  test("an open claim says, folded away, how its sentence is corrected or removed", () => {
+    render(<ResultCard result={firstResult()} />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Group Leader" })[0]!);
+    expect(note().open).toBe(false);
+    expect(note().textContent).toBe(
+      "Wrong or outdated?This sentence is quoted from the institution's page as it read on 18 Oct 2026. A correction made on that page reaches Bern Life with the next snapshot; to ask for its removal from Bern Life, see Corrections and removal.",
+    );
+    const link = note().querySelector("a")!;
+    expect([link.textContent, link.getAttribute("href")]).toEqual([
+      "Corrections and removal",
+      CORRECTIONS_PATH,
+    ]);
+    // The app's own page, so the link works wherever the app runs.
+    expect(CORRECTIONS_PATH).toBe("/corrections");
+    // It explains and links; it collects nothing and sends nothing.
+    expect(note().querySelector("form, input, textarea, select, button")).toBeNull();
+  });
+
+  test("without a fetch date it says the page is quoted as stored", () => {
+    const result = firstResult();
+    delete result.profile.fields.role[0]!.evidence.fetched_at;
+    render(<ResultCard result={result} />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Group Leader" })[0]!);
+    expect(note().textContent).toContain("from the institution's page as Bern Life stored it.");
+  });
+
+  test("the sentence that ties a result to a project says it too", () => {
+    render(<ResultCard result={teamResult()} />);
+    const through = screen.getByRole("region", { name: "Through the project PlateScan" });
+    const notes = within(through).getAllByText("Wrong or outdated?");
+    expect(notes).toHaveLength(1);
+    // Under the relation sentence itself, before any of the project's claims is opened.
+    const note = notes[0]!.closest("details")!;
+    expect(note.parentElement!.textContent).toContain("“Project team: Lena Beispiel”");
+    expect(note.textContent).toContain(
+      "quoted from the institution's page as it read on 18 Oct 2026. A correction made on that page reaches Bern Life with the next snapshot;",
+    );
   });
 });
 

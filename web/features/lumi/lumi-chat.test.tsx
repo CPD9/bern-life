@@ -33,7 +33,7 @@ describe("LumiChat", () => {
     const opener = openPanel();
     expect(document.querySelector("dialog")!.open).toBe(true);
     expect(screen.getByText("Your agent")).toBeTruthy();
-    expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Bärli"));
     await closePanel();
     expect(screen.getByTestId("state").textContent).toBe("closed");
     expect(document.activeElement).toBe(opener);
@@ -56,7 +56,7 @@ describe("LumiChat", () => {
     expect(conversation().getByText(/I lit up her unit on the map\./)).toBeTruthy();
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(screen.getByText("MOCK")).toBeTruthy();
-    expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Bärli"));
     expect(api.calls.searched).toEqual([]);
   });
 
@@ -90,7 +90,7 @@ describe("LumiChat", () => {
     render(<Harness api={api} />);
     openPanel();
     await say("Who works on glucose sensors at DCB?");
-    expect(screen.getByRole("status").textContent).toBe("Lumi is answering…");
+    expect(screen.getByRole("status").textContent).toBe("Bärli is answering…");
     await act(async () => api.land({ ok: true, value: reply }));
     expect(screen.getByRole("status").textContent).toBe(`${reply.reply} 1 card.`);
     expect(document.querySelectorAll("[aria-live]")).toHaveLength(0);
@@ -122,22 +122,22 @@ describe("LumiChat", () => {
     ]);
   });
 
-  test("a 404 says Lumi is not connected yet, and the plain search answers, labelled", async () => {
+  test("a 404 says Bärli is not connected yet, and the plain search answers, labelled", async () => {
     const api = scripted([failed("not_connected")], [{ ok: true, value: resultFixture }]);
     render(<Harness api={api} />);
     openPanel();
     await say("glucose sensors");
-    expect(screen.getByText("Lumi is not connected yet.")).toBeTruthy();
+    expect(screen.getByText("Bärli is not connected yet.")).toBeTruthy();
     expect(api.calls.searched).toEqual(["glucose sensors"]);
-    const plain = screen.getByRole("region", { name: "Plain search answer, not Lumi's" });
+    const plain = screen.getByRole("region", { name: "Plain search answer, not Bärli's" });
     expect(plain.querySelectorAll("article")).toHaveLength(1);
     expect(screen.getByRole("status").textContent).toBe(
-      "Lumi is not connected yet. Plain search answer: 1 result.",
+      "Bärli is not connected yet. Plain search answer: 1 result.",
     );
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
-  test("when Lumi abstains, its words stay its own and the plain search is labelled", async () => {
+  test("when Bärli abstains, its words stay its own and the plain search is labelled", async () => {
     const abstained: AgentReply = {
       ...reply,
       reply: "I found no verifiable source for that.",
@@ -151,7 +151,7 @@ describe("LumiChat", () => {
     openPanel();
     await say("What has Prof. Lukas Thalmann published?");
     expect(screen.getByText("I found no verifiable source for that.")).toBeTruthy();
-    const plain = screen.getByRole("region", { name: "Plain search answer, not Lumi's" });
+    const plain = screen.getByRole("region", { name: "Plain search answer, not Bärli's" });
     expect(plain.textContent).toContain(
       "No public page we hold supports an answer to this. We would rather say so than guess.",
     );
@@ -178,7 +178,7 @@ describe("LumiChat", () => {
       [{ role: "user", content: "glucose sensors" }],
     ]);
     expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Bärli"));
   });
 
   test("an unreadable reply and a failed search show sentences, never a partial answer", async () => {
@@ -199,11 +199,11 @@ describe("LumiChat", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
 
-  test("a refusal over the limit says to wait, for Lumi and for the plain search", async () => {
+  test("a refusal over the limit says to wait, for Bärli and for the plain search", async () => {
     const api = scripted([failed("rate_limited")], [failed("rate_limited")]);
     render(<Harness api={api} />);
     openPanel();
-    fireEvent.change(screen.getByLabelText("Message Lumi"), { target: { value: "CGM" } });
+    fireEvent.change(screen.getByLabelText("Message Bärli"), { target: { value: "CGM" } });
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Send" }));
     });

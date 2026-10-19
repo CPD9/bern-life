@@ -71,6 +71,8 @@ type WorldSideProps = {
   storyDemo: boolean;
   settle: { readonly settled: boolean; readonly dismissed: boolean; open(): void; dismiss(): void };
   onShowMe: (target: ShowMeTarget) => void;
+  /** Whether "Show me" can take the player there; the map cannot without WebGL. */
+  canShowMe?: (target: ShowMeTarget) => boolean;
   onOpenStoryMenu: () => void;
 };
 
@@ -82,6 +84,7 @@ export function WorldSide({
   storyDemo,
   settle,
   onShowMe,
+  canShowMe,
   onOpenStoryMenu,
 }: WorldSideProps) {
   const [greetingDismissed, setGreetingDismissed] = useState(false);
@@ -104,7 +107,12 @@ export function WorldSide({
       {card === "settle" && <SettlePrompt onChoose={settle.open} onNotNow={settle.dismiss} />}
       {card === "story-start" && <StoryStart controller={story} />}
       {card === "quest" && (
-        <QuestPanel controller={story} onShowMe={onShowMe} onOpenMenu={onOpenStoryMenu} />
+        <QuestPanel
+          controller={story}
+          onShowMe={onShowMe}
+          canShow={canShowMe}
+          onOpenMenu={onOpenStoryMenu}
+        />
       )}
       {storyDemo && <CriteriaChecklist controller={story} />}
     </div>

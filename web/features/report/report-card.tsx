@@ -1,4 +1,5 @@
 import { fragmentUrl } from "@/infrastructure/text-fragment";
+import { CorrectionNote } from "@/infrastructure/ui/claim-evidence";
 import { highlightParts } from "./highlight";
 import type { ReportCard as Card } from "./report-model";
 import { TopicChips } from "./topic-chips";
@@ -69,34 +70,41 @@ export function ReportCard({ card, highlightTerms }: { card: Card; highlightTerm
       <TopicChips covers={card.covers} missing={card.missing} />
 
       {card.proof ? (
-        <figure className="bg-chip flex flex-col gap-1.5 rounded-2xl p-3 text-sm">
-          <blockquote>
-            “
-            {highlightParts(card.proof.span, highlightTerms).map((part, index) =>
-              part.marked ? (
-                <mark key={index} className="bg-mark text-ink rounded font-bold">
-                  {part.text}
-                </mark>
-              ) : (
-                <span key={index}>{part.text}</span>
-              ),
-            )}
-            ”
-          </blockquote>
-          <figcaption className="text-muted">
-            <a
-              href={fragmentUrl(card.proof.pageUrl, card.proof.span)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-ink break-all underline"
-            >
-              {pageLabel(card.proof.pageUrl)}
-            </a>
-            {card.proof.fetchedAt && (
-              <>, fetched {fetchedFormat.format(new Date(card.proof.fetchedAt))}</>
-            )}
-          </figcaption>
-        </figure>
+        <>
+          <figure className="bg-chip flex flex-col gap-1.5 rounded-2xl p-3 text-sm">
+            <blockquote>
+              “
+              {highlightParts(card.proof.span, highlightTerms).map((part, index) =>
+                part.marked ? (
+                  <mark key={index} className="bg-mark text-ink rounded font-bold">
+                    {part.text}
+                  </mark>
+                ) : (
+                  <span key={index}>{part.text}</span>
+                ),
+              )}
+              ”
+            </blockquote>
+            <figcaption className="text-muted">
+              <a
+                href={fragmentUrl(card.proof.pageUrl, card.proof.span)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-ink break-all underline"
+              >
+                {pageLabel(card.proof.pageUrl)}
+              </a>
+              {card.proof.fetchedAt && (
+                <>, fetched {fetchedFormat.format(new Date(card.proof.fetchedAt))}</>
+              )}
+            </figcaption>
+          </figure>
+          {/* Paper cannot open it; the legend says the same in print. A report is a copy kept in
+              this browser, so a corrected page never changes it: the note says so. */}
+          <div className="text-sm print:hidden">
+            <CorrectionNote fetchedAt={card.proof.fetchedAt} quoted="saved" />
+          </div>
+        </>
       ) : (
         <p className="text-muted text-sm">No sentence to quote.</p>
       )}

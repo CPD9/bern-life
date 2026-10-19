@@ -6,6 +6,7 @@ import {
   currentUser,
   deleteAccount,
   saveProfile,
+  seedAccount,
   signIn,
   signOut,
   signUp,
@@ -81,10 +82,35 @@ describe.skipIf(testDb === null)("accounts against a throwaway database", () => 
     expect(row?.hash.startsWith("$argon2id$v=19$m=19456,t=2,p=1$")).toBe(true);
   });
 
-  test("a wrong password is refused and the sixth failure for a handle is rate limited", async () => {
+  test("a seeded account signs in with its printed password, needs no invite, and seeds once", async () => {
+    const seeded = await seedAccount(sql, "test01", "Test 01");
+    if (seeded === "exists") throw new Error("expected a new account");
+    expect(seeded.password).toMatch(/^[A-Za-z0-9_-]{24}$/);
+    const signedInOk = await signIn(
+      sql,
+      { handle: "test01", password: seeded.password },
+      IP,
+      NOW,
+      null,
+    );
+    expect(signedInOk.ok && signedInOk.value.user).toEqual({
+      id: expect.any(String),
+      handle: "test01",
+      displayName: "Test 01",
+    });
+    expect(await seedAccount(sql, "test01", "Someone else")).toBe("exists");
+    expect(
+      (await signIn(sql, { handle: "test01", password: seeded.password }, IP, NOW, null)).ok,
+    ).toBe(true);
+    const [counts] = await sql<{ invites: number; users: number }[]>`
+      select (select count(*)::int from invite) as invites, (select count(*)::int from app_user) as users`;
+    expect(counts).toEqual({ invites: 0, users: 1 });
+  });
+
+  test("a wrong password is refused and the eleventh attempt for a handle is rate limited", async () => {
     await signUp(sql, joining(await invite()), IP, NOW);
     const wrong = { handle: "ada_example", password: "wrong password!" };
-    for (let attempt = 1; attempt <= 5; attempt++) {
+    for (let attempt = 1; attempt <= 10; attempt++) {
       expect(await signIn(sql, wrong, IP, NOW, null)).toEqual({
         ok: false,
         error: "invalid_credentials",
@@ -92,9 +118,9 @@ describe.skipIf(testDb === null)("accounts against a throwaway database", () => 
     }
     const right = { handle: "ada_example", password: PASSWORD };
     expect(await signIn(sql, right, IP, NOW, null)).toEqual({ ok: false, error: "rate_limited" });
-    expect((await signIn(sql, right, IP, minutes(16), null)).ok).toBe(true);
+    expect((await signIn(sql, right, IP, minutes(6), null)).ok).toBe(true);
     const unknown = { handle: "nobody_here", password: PASSWORD };
-    expect(await signIn(sql, unknown, IP, minutes(16), null)).toEqual({
+    expect(await signIn(sql, unknown, IP, minutes(6), null)).toEqual({
       ok: false,
       error: "invalid_credentials",
     });

@@ -27,6 +27,7 @@ CHECKS = [
     ("metrics.schema.json", ["eval/results/*/metrics.json"]),
     ("quest.schema.json", ["contracts/fixtures/story.json"]),
     ("gold.schema.json", ["contracts/fixtures/gold.jsonl", "eval/gold.jsonl", "eval/dev2.jsonl"]),
+    ("consistency.schema.json", ["eval/consistency.jsonl"]),
 ]
 
 

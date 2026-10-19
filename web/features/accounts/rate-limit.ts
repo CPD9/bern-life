@@ -1,9 +1,10 @@
-// Attempt counters in the database, in fixed 15-minute windows, so limits hold across restarts and
-// server processes without another service.
+// Attempt counters in the database, in fixed 5-minute windows, so limits hold across restarts and
+// server processes without another service. A venue Wi-Fi puts everyone behind one address, so the
+// per-address limits are generous; argon2 keeps each password guess slow on its own.
 import type { Db, Sql } from "@/infrastructure/db";
 
-export const WINDOW_MS = 15 * 60 * 1000;
-export const LIMITS = { signInPerHandle: 5, signInPerIp: 20, signUpPerIp: 10 } as const;
+export const WINDOW_MS = 5 * 60 * 1000;
+export const LIMITS = { signInPerHandle: 10, signInPerIp: 200, signUpPerIp: 100 } as const;
 
 function windowOpenedAfter(now: Date): Date {
   return new Date(now.getTime() - WINDOW_MS);

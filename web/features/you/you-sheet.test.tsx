@@ -11,7 +11,7 @@ import { YouSheet } from "./you-sheet";
 import { YouTabs } from "./you-tabs";
 import type { PersonLook, YouProfile } from "./you-summary";
 
-const lumi = { name: "Lumi", bear: defaultBear };
+const lumi = { name: "Bärli", bear: defaultBear };
 const look: PersonLook = {
   body: "slim",
   skin: "tone-6",
@@ -24,6 +24,8 @@ const progress = storyProgress(
   { ...emptyStoryState, choice: "story", done: ["arrive/settle", "arrive/office"] },
   emittedToday,
 );
+
+const moves: (Element | null)[] = [];
 
 function Harness({ profile, person }: { profile: YouProfile; person?: PersonLook | undefined }) {
   const [open, setOpen] = useState(false);
@@ -39,6 +41,7 @@ function Harness({ profile, person }: { profile: YouProfile; person?: PersonLook
           agent={lumi}
           story={progress}
           onClose={() => setOpen(false)}
+          onMoveOffice={() => moves.push(document.activeElement)}
         />
       )}
     </>
@@ -145,13 +148,13 @@ describe("YouSheet", () => {
     ]);
   });
 
-  test("Agents names Lumi, the bear's look and where skills and loops live", () => {
+  test("Agents names Bärli, the bear's look and where skills and loops live", () => {
     openSheet();
     fireEvent.click(tab("Agents"));
-    expect(screen.getByText("Lumi")).toBeTruthy();
+    expect(screen.getByText("Bärli")).toBeTruthy();
     expect(panelText()).toContain("KindBern bear");
     expect(panelText()).toContain("FurHoney");
-    expect(screen.getByText("Lumi's skills and loops live in the Agents app.")).toBeTruthy();
+    expect(screen.getByText("Bärli's skills and loops live in the Agents app.")).toBeTruthy();
     expect(screen.getByText("Your agent, a bear.")).toBeTruthy();
   });
 
@@ -177,6 +180,27 @@ describe("YouSheet", () => {
     });
     expect(document.querySelector("dialog")).toBeNull();
     expect(document.activeElement).toBe(opener);
+  });
+});
+
+describe("Move your office", () => {
+  test("closes the sheet, puts focus back on its opener, then asks for Settle once", async () => {
+    moves.length = 0;
+    const opener = openSheet();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Move your office" }));
+    });
+    expect(document.querySelector("dialog")).toBeNull();
+    expect(moves).toEqual([opener]);
+  });
+
+  test("closing the sheet any other way does not open Settle", async () => {
+    moves.length = 0;
+    openSheet();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    });
+    expect(moves).toEqual([]);
   });
 });
 

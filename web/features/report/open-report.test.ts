@@ -10,7 +10,7 @@ function deps(saved: string | null) {
     opened,
     emitted,
     deps: {
-      store: { save: () => saved, load: () => null, list: () => [] },
+      store: { save: () => saved, load: () => null, list: () => [], remove: () => true },
       events: { emit: (name: AppEventName) => void emitted.push(name) },
       open: (id: string) => void opened.push(id),
     },

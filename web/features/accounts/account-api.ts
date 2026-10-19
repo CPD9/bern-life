@@ -84,9 +84,9 @@ export const FAILURE_TEXT: Record<AccountFailure, string> = {
     "Check the fields: a handle is 3 to 20 lowercase letters, digits or _, and a password has at least 12 characters.",
   invalid_credentials: "That handle and password do not match an account.",
   invite_invalid:
-    "That invite code is not valid, has been used, or has expired. Ask for a new one.",
+    "That invite code is not known on this site or has expired. A code works once, for 7 days, on the site that made it.",
   handle_taken: "That handle is taken. Pick another.",
-  rate_limited: "Too many attempts. Wait 15 minutes, then try again.",
+  rate_limited: "Too many attempts. Wait 5 minutes, then try again.",
   unauthenticated: "You are signed out. Sign in again.",
   network: "The server could not be reached. Try again in a moment.",
 };

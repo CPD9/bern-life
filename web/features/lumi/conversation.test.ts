@@ -24,7 +24,7 @@ function turn(id: number, answered: boolean): Turn {
 }
 
 describe("messagesFor", () => {
-  test("sends what was said, Lumi's replies included, newest last", () => {
+  test("sends what was said, Bärli's replies included, newest last", () => {
     expect(messagesFor([turn(0, true), turn(1, false)], "question 2")).toEqual([
       { role: "user", content: "question 0" },
       { role: "assistant", content: "answer 0" },

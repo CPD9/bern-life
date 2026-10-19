@@ -276,3 +276,31 @@ Results (a fresh database per run; (d) and (e) also compared on one shared load)
   0.685, dev2 0.452 / 0.368.
 - (e) adopted. Every dev and dev2 query keeps its results and order on the shared load; only
   reasons change (22 of 398 dev results, 41 of 567 dev2). Dev 0.909 / 0.685, dev2 0.452 / 0.368.
+### 2026-10-19: exploratory numbers for questions 2, 5 and the labelling of criterion 4 (#227)
+Nothing above changes: the questions, data, metrics, decision rules and every number they give stay
+as they are, and `eval/gold.jsonl` is unchanged. The three additions below came after the gold
+numbers of bundle-2 and bundle-3, and the per-unit exposure counts, were known, so they are
+exploratory and never a test of a rule above. Each is its own key in `metrics.json`; the numbers and
+how to read them are in `docs/metrics.md`.
+
+- **Consistency across wordings** (question 2): the mean top-10 Jaccard over every pair of wordings
+  in `eval/consistency.jsonl`. Reason: variant agreement above compares a rewording only with its
+  base question, and the case gives its own example. The glucose set holds four of the case's
+  wordings and "Blutzucker messen", which the issue planning the set named and the case does not;
+  the case's "metabolic monitoring" and "wearable sensing" were not in that plan and are not added
+  after the results. The other two sets pair gold and dev questions whose labels name different
+  answers, so their overlap does not measure finding the same experts.
+- **Exposure by unit size** (question 5): the top-10 slots of units above the median unit size and
+  of the rest, next to their share of profiles. Reason: "exposure concentrated in the largest units"
+  needs a grouping, and the per-unit list above has none. The grouping was chosen with the per-unit
+  slot counts already in the report. The same groups split by source were added after the first
+  numbers were read, because ARTORG and the Diabetes Center Berne are one large unit each and most
+  gold questions ask about them.
+- **How the 30 results of criterion 4 are labelled**: the 30-result human-labelled sample stands;
+  how it is drawn and scored changed before any label exists. Each profile is drawn once, since a
+  profile shown for two questions would be judged twice on one page. Two sheets of 19 rows each, 8
+  of them shared, replace one sheet where each labeller had 20 rows, 10 of them shared, so each
+  takes about 20 minutes. On a shared row a field counts as stated when either labeller says y, so a
+  field one of them found is never dropped from what the system should have filled. The sheet no
+  longer shows the question, so the page is judged on its own. No label exists under either design,
+  so there is no original number to show next to an amended one.

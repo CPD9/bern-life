@@ -4,17 +4,22 @@ import type { ReactNode } from "react";
 import { defaultBear } from "@/features/avatar/bear-config";
 import type { AgentReply } from "@/features/lumi/agent-reply";
 import type { LumiApi } from "@/features/lumi/lumi-api";
+import { held } from "@/features/lumi/test-harness";
 import { Phone } from "@/features/phone/phone";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { resultFixture } from "@/test/fixtures";
-import { useWorldLumi } from "./world-lumi";
 import { useWorldPhone } from "./world-phone";
+
+// three.js has to finish loading as a module before the canvas library requires it, or Bun can
+// refuse the require part of the time; a test file loads both at once unless told otherwise.
+await import("three");
+const { useWorldLumi } = await import("./world-lumi");
 
 const answer = resultFixture;
 const profileId = answer.results[0]!.profile.id;
 
-function lumiAnswering(actions: AgentReply["actions"]): LumiApi {
-  const reply: AgentReply = {
+function replyWith(actions: AgentReply["actions"]): AgentReply {
+  return {
     reply: "Demo reply.",
     mode: "mock",
     abstained: false,
@@ -22,6 +27,10 @@ function lumiAnswering(actions: AgentReply["actions"]): LumiApi {
     results: [answer],
     mentions: [],
   };
+}
+
+function lumiAnswering(actions: AgentReply["actions"]): LumiApi {
+  const reply = replyWith(actions);
   return {
     ask: async () => ({ ok: true, value: reply }),
     search: async () => ({ ok: false, failure: "network" }),
@@ -35,13 +44,13 @@ afterEach(() => {
 // The floatie that opens the chat, so the chat has something to give focus back to.
 function floatie() {
   const button = document.createElement("button");
-  button.textContent = "Lumi";
+  button.textContent = "Bärli";
   document.body.append(button);
   button.focus();
   return button;
 }
 
-function setUp(api: LumiApi, { reportSaved = true } = {}) {
+function setUp(api: LumiApi, { reportSaved = true, mapDrawn = true } = {}) {
   const shown: SearchResponse[] = [];
   const focusWhen: Record<string, Element | null> = {};
   const navigator = { show: (response: SearchResponse) => void shown.push(response) };
@@ -56,13 +65,13 @@ function setUp(api: LumiApi, { reportSaved = true } = {}) {
   };
   const { result } = renderHook(() =>
     useWorldLumi({
-      agentName: "Lumi",
+      agentName: "Bärli",
       bear: defaultBear,
       lite: true,
       engineMode: "mock",
       fixtureMode: true,
       navigator,
-      onShowOnMap: calls.shownOnMap,
+      onShowOnMap: mapDrawn ? calls.shownOnMap : undefined,
       onOpenAsk: calls.askOpened,
       onMakeReport: calls.reportMade,
       onOpenReports: calls.reportsOpened,
@@ -77,21 +86,33 @@ function setUp(api: LumiApi, { reportSaved = true } = {}) {
 async function ask(refresh: () => void, open: () => void, text: string) {
   act(() => open());
   refresh();
-  fireEvent.change(screen.getByLabelText("Message Lumi"), { target: { value: text } });
+  fireEvent.change(screen.getByLabelText("Message Bärli"), { target: { value: text } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
   });
-  // The chat closes on the next render; what comes after waits for that.
+  // The reply renders; nothing it offers runs until the player clicks it.
   refresh();
   await act(async () => undefined);
 }
 
-test("show on map closes the chat and shows Lumi's answer on the map, once", async () => {
+/** Clicks one of the reply's buttons; the chat then closes and the action follows. */
+async function choose(refresh: () => void, name: string) {
+  expect(document.querySelector("dialog")!.open).toBe(true);
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name }));
+  });
+  refresh();
+  await act(async () => undefined);
+}
+
+test("the answer stays in the chat; Show on the map closes it and shows the answer on the map, once", async () => {
   const opener = floatie();
   const { result, refresh, calls, focusWhen } = setUp(
     lumiAnswering([{ type: "show_on_map", result: 0 }]),
   );
   await ask(refresh, result.current.open, "glucose sensors");
+  expect(calls.shownOnMap.mock.calls).toEqual([]);
+  await choose(refresh, "Show on the map");
   expect(calls.shownOnMap.mock.calls).toEqual([[answer]]);
   expect(document.querySelector("dialog")!.open).toBe(false);
   // The map hides the floatie only once focus is back on it, so the shell can move focus on.
@@ -99,12 +120,53 @@ test("show on map closes the chat and shows Lumi's answer on the map, once", asy
   expect(document.activeElement).toBe(opener);
 });
 
-test("open profile shows Lumi's answer in Ask once the chat has given focus back", async () => {
+test("without a map to draw, Bärli's show on map leaves the chat open", async () => {
+  floatie();
+  const { result, refresh } = setUp(lumiAnswering([{ type: "show_on_map", result: 0 }]), {
+    mapDrawn: false,
+  });
+  await ask(refresh, result.current.open, "glucose sensors");
+  // With a map, its button closes the chat to show the answer there (the test above).
+  expect(document.querySelector("dialog")!.open).toBe(true);
+  expect(screen.getAllByText("Demo reply.").length).toBeGreaterThan(0);
+});
+
+for (const mapDrawn of [true, false]) {
+  test(`an answer that came while the chat was closed offers the map only when it is drawn (${mapDrawn ? "drawn" : "not drawn"})`, async () => {
+    floatie();
+    const api = held();
+    const { result, refresh } = setUp(api, { mapDrawn });
+    act(() => result.current.open());
+    refresh();
+    fireEvent.change(screen.getByLabelText("Message Bärli"), {
+      target: { value: "glucose sensors" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    });
+    await act(async () => {
+      document.querySelector("dialog")!.dispatchEvent(new Event("close"));
+    });
+    refresh();
+    await act(async () =>
+      api.land({ ok: true, value: replyWith([{ type: "show_on_map", result: 0 }]) }),
+    );
+    act(() => result.current.open());
+    refresh();
+    expect(document.querySelector("dialog")!.open).toBe(true);
+    const offered = screen.queryByRole("button", { name: "Show on the map" });
+    expect(offered !== null).toBe(mapDrawn);
+  });
+}
+
+test("Open the card shows Bärli's answer in Ask once the chat has given focus back", async () => {
   const opener = floatie();
   const { result, refresh, shown, calls, focusWhen } = setUp(
     lumiAnswering([{ type: "open_profile", profile_id: profileId }]),
   );
   await ask(refresh, result.current.open, "glucose sensors");
+  expect(shown).toEqual([]);
+  await choose(refresh, "Open the card");
   expect(shown).toEqual([answer]);
   expect(calls.askOpened).toHaveBeenCalledTimes(1);
   expect(document.querySelector("dialog")!.open).toBe(false);
@@ -151,11 +213,11 @@ test("a report the browser cannot keep leaves the chat open, says why and keeps 
   expect(screen.getByRole("button", { name: "Make a match report" })).toBeTruthy();
 });
 
-/** Lumi's floatie, the phone and the chat, wired as the world app wires them. */
+/** Bärli's floatie, the phone and the chat, wired as the world app wires them. */
 function World({ api, shown }: { api: LumiApi; shown: SearchResponse[] }) {
   const phone = useWorldPhone();
   const lumi = useWorldLumi({
-    agentName: "Lumi",
+    agentName: "Bärli",
     bear: defaultBear,
     lite: true,
     engineMode: "mock",
@@ -184,17 +246,21 @@ function World({ api, shown }: { api: LumiApi; shown: SearchResponse[] }) {
   );
 }
 
-test("open profile from the floatie: Ask shows in the phone, and closing it focuses the floatie", async () => {
+test("Open the card from the floatie: Ask shows in the phone, and closing it focuses the floatie", async () => {
   const shown: SearchResponse[] = [];
   render(
     <World api={lumiAnswering([{ type: "open_profile", profile_id: profileId }])} shown={shown} />,
   );
-  const floatie = screen.getByRole("button", { name: "Lumi, your agent" });
+  const floatie = screen.getByRole("button", { name: "Bärli, your agent" });
   act(() => floatie.focus());
   act(() => fireEvent.click(floatie));
-  fireEvent.change(screen.getByLabelText("Message Lumi"), { target: { value: "glucose" } });
+  fireEvent.change(screen.getByLabelText("Message Bärli"), { target: { value: "glucose" } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
+  });
+  expect(shown).toEqual([]);
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Open the card" }));
   });
   const phone = document.querySelector<HTMLDialogElement>('dialog[aria-label="Phone"]')!;
   expect(shown).toEqual([answer]);
