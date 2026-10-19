@@ -42,12 +42,20 @@ export type WorldCanvasProps = {
   /** A tap, Enter or Space on the agent. */
   onAgentOpen: () => void;
   onSearchHere?: (building: Building) => void;
+  /** Told whether a place's panel is open, so what floats over the map can keep clear of it. */
+  onPlacePanel?: (open: boolean) => void;
   /** Shown lit at load: the world fixture, passed only when the app runs with DEMO_FIXTURES=1. */
   demoSearch?: SearchResponse | undefined;
 };
 
 // Transparent so the shell's sky shows through; "demand" renders only when something changes.
-export function WorldCanvas({ agent, onAgentOpen, onSearchHere, demoSearch }: WorldCanvasProps) {
+export function WorldCanvas({
+  agent,
+  onAgentOpen,
+  onSearchHere,
+  onPlacePanel,
+  demoSearch,
+}: WorldCanvasProps) {
   const display = useWorldDisplay();
   const palette = paletteFor(display.night);
   const shadows = !display.lite;
@@ -63,10 +71,13 @@ export function WorldCanvas({ agent, onAgentOpen, onSearchHere, demoSearch }: Wo
     [response],
   );
   const fixture = response?.versions.snapshot === "fixture";
+  const panelOpen = selected !== null;
 
   useEffect(() => {
     if (demoSearch !== undefined) worldSearch.showResults(demoSearch);
   }, [demoSearch]);
+
+  useEffect(() => onPlacePanel?.(panelOpen), [panelOpen, onPlacePanel]);
 
   const framePoints = useMemo(
     () =>

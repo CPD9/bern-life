@@ -1,7 +1,8 @@
 "use client";
 
 // Choose where your office stands. A native modal dialog, so the world behind it is inert and
-// Escape closes it; it opens on mount and gives focus back to whatever opened it. Each plot lists
+// Escape closes it; it opens on mount and gives focus back to whatever opened it, or, when settling
+// took that control away (the card that offered settling), to where the host says. Each plot lists
 // the nearest places with their sourced addresses; there is nothing to pay and nothing to rent.
 // Confirming a plot stores it on this device and reports it once; the same plot again is no news.
 // The stored plot is read as an external store with nothing stored on the server, so the first
@@ -19,10 +20,18 @@ type SettleProps = {
   places: readonly MapPlace[];
   onSettled: (plot: Plot) => void;
   onClose: () => void;
+  /** Where focus goes on close when the control that opened the dialog is gone. */
+  focusFallback?: (() => HTMLElement | null) | undefined;
   store?: SettleStore;
 };
 
-export function Settle({ places, onSettled, onClose, store = browserSettleStore() }: SettleProps) {
+export function Settle({
+  places,
+  onSettled,
+  onClose,
+  focusFallback,
+  store = browserSettleStore(),
+}: SettleProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const titleId = useId();
@@ -41,7 +50,8 @@ export function Settle({ places, onSettled, onClose, store = browserSettleStore(
 
   function handleClose() {
     onClose();
-    opener.current?.focus();
+    const back = opener.current?.isConnected ? opener.current : (focusFallback?.() ?? null);
+    back?.focus();
   }
 
   function settle() {

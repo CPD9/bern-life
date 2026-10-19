@@ -28,6 +28,11 @@ export type NavigatorController = {
   readonly inputMode: InputMode;
   setInputMode(mode: InputMode): void;
   search(request: SearchRequest): void;
+  /**
+   * Shows an answer already in hand (Lumi's), without asking the engine or telling the story. It is
+   * a question's answer, so the question box shows, holding the question it answers.
+   */
+  show(response: SearchResponse): void;
   submitBrief(input: BriefInput): void;
   retry(): void;
 };
@@ -69,6 +74,16 @@ export function useNavigator(
     search: (request) => {
       setDraft(request.query);
       void run({ kind: "search", search: request });
+    },
+    show: (response) => {
+      latest.current += 1;
+      setInputMode("search");
+      setDraft(response.query);
+      setState({
+        status: "done",
+        request: { kind: "search", search: { query: response.query } },
+        response,
+      });
     },
     submitBrief: (brief) => void run({ kind: "brief", brief }),
     retry: () => {

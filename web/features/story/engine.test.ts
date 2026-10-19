@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { type AppEventName, emittedToday } from "@/infrastructure/app-events";
+import { type AppEventName, emittedToday, offInFixtures } from "@/infrastructure/app-events";
 import type { Story } from "@/infrastructure/contract-types.generated";
 import { storyFixture as story } from "@/test/story";
 import {
@@ -62,15 +62,18 @@ describe("optional quests in any order", () => {
   const grow = (state: StoryState, emitted: readonly AppEventName[]) =>
     storyProgress(story, state, emitted).quests.find((q) => q.quest.id === "grow")!;
 
+  // Finding experts stays open, so Grow is merely ready, not current.
+  const messagesOnly: AppEventName[] = ["search_answered", "evidence_opened", "message_sent"];
+
   test("one playable step is enough to open the quest, and that step is offered next", () => {
-    const entry = grow(started, [...emittedToday, "message_sent"]);
+    const entry = grow(started, messagesOnly);
     expect(entry.status).toBe("ready");
     expect(entry.nextStep?.id).toBe("message");
     expect(entry.stepsDone).toBe(0);
   });
 
   test("once its playable steps are done it waits again, counting what was done", () => {
-    const entry = grow(play(["message_sent"]), [...emittedToday, "message_sent"]);
+    const entry = grow(play(["message_sent"]), messagesOnly);
     expect(entry.status).toBe("coming");
     expect(entry.nextStep?.id).toBe("opportunity");
     expect(entry.stepsDone).toBe(1);
@@ -94,26 +97,102 @@ describe("optional quests in any order", () => {
 
 describe("comingReason", () => {
   test("uses the story's own line and falls back to a plain one", () => {
-    const visit = story.quests.find((q) => q.id === "visit")!;
-    expect(comingReason(visit)).toBe(
-      "Opening a place on the map does not report to the story yet.",
+    const extend = story.quests.find((q) => q.id === "extend")!;
+    expect(comingReason(extend)).toBe(
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
     );
-    const withoutReason = { ...visit };
+    const withoutReason = { ...extend };
     delete withoutReason.coming;
     expect(comingReason(withoutReason)).toBe(defaultComingReason);
+  });
+
+  test("a quest whose events are all emitted carries no coming reason", () => {
+    const visit = story.quests.find((q) => q.id === "visit")!;
+    expect(visit.coming).toBeUndefined();
+  });
+
+  test("Arrive carries no coming reason now that settling reports to the story", () => {
+    const arrive = story.quests.find((q) => q.id === "arrive")!;
+    expect(arrive.coming).toBeUndefined();
+  });
+
+  test("Arrive is open in full: once the office is ready, settling is offered next", () => {
+    const arrive = (state: StoryState) =>
+      storyProgress(story, state, emittedToday).quests.find((q) => q.quest.id === "arrive")!;
+    expect(arrive(started).status).toBe("ready");
+    const afterOffice = arrive(play(["office_ready"]));
+    expect([afterOffice.status, afterOffice.nextStep?.id, afterOffice.stepsDone]).toEqual([
+      "ready",
+      "settle",
+      1,
+    ]);
+    expect(arrive(play(["office_ready", "settled"])).status).toBe("done");
   });
 });
 
 describe("storyProgress", () => {
+  test("an open quest with a step nothing emits yet is not finishable; the others are", () => {
+    const finishable = Object.fromEntries(
+      storyProgress(story, started, emittedToday).quests.map((q) => [q.quest.id, q.finishable]),
+    );
+    expect(finishable).toEqual({
+      arrive: true,
+      "find-experts": true,
+      "other-words": true,
+      brief: true,
+      visit: true,
+      honest: true,
+      extend: false,
+      grow: false,
+    });
+    const done = play(["abstained_seen"]);
+    expect(
+      storyProgress(story, done, []).quests.find((q) => q.quest.id === "honest"),
+    ).toMatchObject({ status: "done", finishable: true });
+  });
+
+  test("a quest that cannot be finished gives the story's reason; a finishable one gives none", () => {
+    const reasons = Object.fromEntries(
+      storyProgress(story, started, emittedToday).quests.map((q) => [q.quest.id, q.reasons]),
+    );
+    expect(reasons["find-experts"]).toEqual([]);
+    expect(reasons["extend"]).toEqual([
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+    ]);
+    expect(reasons["grow"]).toEqual([
+      "A network of labs and experts is not built yet, so its step cannot be done.",
+    ]);
+  });
+
+  test("under the demo fixtures saving and the numbers wait with their reason, never offered", () => {
+    const quest = (off: typeof offInFixtures, id: string) =>
+      storyProgress(story, started, emittedToday, off).quests.find((q) => q.quest.id === id)!;
+    expect(quest({}, "grow").nextStep?.id).toBe("opportunity");
+    const grow = quest(offInFixtures, "grow");
+    expect([grow.status, grow.nextStep?.id, grow.finishable]).toEqual(["ready", "message", false]);
+    expect(grow.reasons).toEqual([
+      "Saving is off for the invented demo data.",
+      "A network of labs and experts is not built yet, so its step cannot be done.",
+    ]);
+    const extend = quest(offInFixtures, "extend");
+    expect(extend.status).toBe("coming");
+    expect(extend.reasons).toEqual([
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+      "The Garage shows invented demo numbers here; only the engine's own numbers count.",
+    ]);
+  });
+
   test("quests whose events nothing emits yet are coming next and never current", () => {
+    const withoutNumbers = emittedToday.filter((event) => event !== "numbers_seen");
+    expect(statuses(started, withoutNumbers)["extend"]).toBe("coming");
     expect(statuses(started)).toEqual({
-      arrive: "coming",
+      arrive: "ready",
       "find-experts": "current",
       "other-words": "ready",
       brief: "ready",
       visit: "ready",
       honest: "ready",
-      extend: "coming",
+      extend: "ready",
       grow: "ready",
     });
   });
@@ -148,10 +227,17 @@ describe("storyProgress", () => {
       "abstained_seen",
       "lobby_entered",
       "message_sent",
+      "office_ready",
+      "settled",
+      "opportunity_saved",
+      "library_item_saved",
+      "garage_visited",
+      "numbers_seen",
     ]);
     const progress = storyProgress(story, state, emittedToday);
     expect(progress.current).toBeNull();
     expect(progress.finishedCriteria).toEqual([
+      "stretch",
       "c1-right-people",
       "c2-wording",
       "c3-traceable",

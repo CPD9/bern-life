@@ -1,6 +1,6 @@
 import type { QuestStep } from "./engine";
 
-export type ShowMeTarget = "ask" | "map";
+export type ShowMeTarget = "ask" | "map" | "settle" | "opportunities";
 
 const targets: Partial<Record<QuestStep["done_when"], ShowMeTarget>> = {
   search_answered: "ask",
@@ -9,7 +9,9 @@ const targets: Partial<Record<QuestStep["done_when"], ShowMeTarget>> = {
   brief_answered: "ask",
   report_made: "ask",
   abstained_seen: "ask",
-  settled: "map",
+  settled: "settle",
+  opportunity_saved: "opportunities",
+  library_item_saved: "opportunities",
   lobby_entered: "map",
 };
 

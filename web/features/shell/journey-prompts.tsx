@@ -44,3 +44,34 @@ export function OnboardingPrompt() {
     </section>
   );
 }
+
+export function SettlePrompt({
+  onChoose,
+  onNotNow,
+}: {
+  onChoose: () => void;
+  onNotNow: () => void;
+}) {
+  return (
+    <section aria-label="Choose where to settle" className={cardClass}>
+      <p className="font-bold">Choose where your office stands in Bern.</p>
+      <p className="text-muted text-sm">Each plot lists the places near it, with their sources.</p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onChoose}
+          className="bg-primary text-primary-ink rounded-pill px-4 py-1.5 text-sm font-bold"
+        >
+          Choose a plot
+        </button>
+        <button
+          type="button"
+          onClick={onNotNow}
+          className="rounded-pill px-3 py-1.5 text-sm font-bold"
+        >
+          Not now
+        </button>
+      </div>
+    </section>
+  );
+}
