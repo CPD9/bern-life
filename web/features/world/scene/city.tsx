@@ -1,26 +1,29 @@
 // The city above the ground: generic buildings and trees as instanced meshes (a few hundred boxes
 // cost one draw call each kind), the Old Town's house rows, the landmarks and bridges, and the
-// district names. Landmarks and bridges claim their ground after the generic plan is laid out.
+// district names. What stands where is decided outside (drawn-city.ts), where walking reads it too.
+// In walk mode a click on a building or a bridge walks you to the spot clicked (walk-click.ts).
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { Color, type InstancedMesh, Object3D } from "three";
 import { type Block } from "../city-plan";
 import { useWorldDisplay } from "../display";
+import { type DrawnCity, shownTrees } from "../drawn-city";
 import { type MapPoint } from "../geography";
 import { type WorldPalette } from "../palette";
-import { coveredByAny } from "./footprint";
 import { Landmarks } from "./landmarks";
 import { MapLabels } from "./map-labels";
 import { OldTownHouses } from "./old-town";
-import { CLAIMED, OLD_TOWN_HOUSES } from "./town";
-
-/** Half a generic block's widest side, and a tree crown's radius, kept off claimed ground. */
-const CLAIM_MARGIN = { block: 1.3, tree: 0.7 } as const;
+import { type OnWalkClick, walkClick } from "./walk-click";
 
 const scratch = new Object3D();
 const tint = new Color();
 
-function Blocks({ blocks, palette, shadows }: CityProps & { blocks: readonly Block[] }) {
+function Blocks({
+  blocks,
+  palette,
+  shadows,
+  onWalk,
+}: CityProps & { blocks: readonly Block[]; onWalk: OnWalkClick }) {
   const mesh = useRef<InstancedMesh>(null);
   useLayoutEffect(() => {
     const target = mesh.current;
@@ -41,6 +44,7 @@ function Blocks({ blocks, palette, shadows }: CityProps & { blocks: readonly Blo
       args={[undefined, undefined, blocks.length]}
       castShadow={shadows}
       receiveShadow={shadows}
+      {...walkClick(onWalk)}
     >
       <boxGeometry />
       <meshLambertMaterial />
@@ -83,26 +87,25 @@ function TreeLayer({ trees, palette, shadows }: CityProps & { trees: readonly Ma
 type CityProps = { palette: WorldPalette; shadows: boolean };
 
 export function City({
-  blocks,
+  drawn,
   trees,
   palette,
   shadows,
-}: CityProps & { blocks: readonly Block[]; trees: readonly MapPoint[] }) {
+  onWalk,
+}: CityProps & {
+  drawn: DrawnCity;
+  trees: readonly MapPoint[];
+  /** Walks you to the spot clicked on a building or a bridge, in walk mode. */
+  onWalk: OnWalkClick;
+}) {
   const { lite } = useWorldDisplay();
-  const shownBlocks = useMemo(
-    () => blocks.filter((block) => !coveredByAny(CLAIMED, [block.x, block.z], CLAIM_MARGIN.block)),
-    [blocks],
-  );
-  const shownTrees = useMemo(
-    () => trees.filter((tree) => !coveredByAny(CLAIMED, tree, CLAIM_MARGIN.tree)),
-    [trees],
-  );
+  const standingTrees = useMemo(() => shownTrees(trees, drawn.claimed), [trees, drawn.claimed]);
   return (
     <group>
-      <Blocks blocks={shownBlocks} palette={palette} shadows={shadows} />
-      <TreeLayer trees={shownTrees} palette={palette} shadows={shadows} />
-      <OldTownHouses houses={OLD_TOWN_HOUSES} palette={palette} shadows={shadows} />
-      <Landmarks palette={palette} shadows={shadows} lite={lite} />
+      <Blocks blocks={drawn.blocks} palette={palette} shadows={shadows} onWalk={onWalk} />
+      <TreeLayer trees={standingTrees} palette={palette} shadows={shadows} />
+      <OldTownHouses houses={drawn.houses} palette={palette} shadows={shadows} onWalk={onWalk} />
+      <Landmarks palette={palette} shadows={shadows} lite={lite} onWalk={onWalk} />
       <MapLabels />
     </group>
   );

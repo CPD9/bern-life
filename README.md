@@ -55,8 +55,8 @@ room give way to a short note, and Ask, the office desk and every app still work
    this snapshot, as the engine serves them, and the skills with their evidence), **Sources** (the
    institutions crawled, and how to add one) and **Settings**. The door leads back to the map; the
    phone carries Ask, Messages, Agents, Opportunities, Library and Settings.
-7. **Lumi.** Your agent floats beside you as the bear you made, and stands in front of the city
-   hall on the map; either opens its chat. Lumi searches with the engine's own tools and answers
+7. **Lumi.** Your agent floats beside you as the bear you made, and walks beside you on the map;
+   either opens its chat. Lumi searches with the engine's own tools and answers
    with the same source cards as Ask. A person it names must be among those results, a reply it
    cannot support is replaced by a summary of the cited claims, and with nothing behind it Lumi
    says it found no verifiable source. An answer lights its places on the map and may open a card
@@ -65,6 +65,12 @@ room give way to a short note, and Ask, the office desk and every app still work
    each walk through one part of the case and complete only when you actually do the step in the
    app, or **Explore freely**. Your badge opens the **You** sheet: profile, goals, skills, people
    and agents, with real content only.
+9. **Walk Bern.** Out of the office you stand at your office door (at the station before you
+   settle), Lumi beside you. Press **Walk** on the map: the arrows or W A S D walk you and the
+   camera follows; a click on the ground or a bridge finds the way round the houses and over the
+   bridges, and a click on a place's building or your office, or **Walk here** on a place, walks
+   you to its door. At a place's door **Enter** opens its lobby; at your own door **Go home**
+   takes you inside. The city's clock runs about 85 times faster than walking pace.
 
 Replay is the default. Questions recorded in the bundle's model cache get Apertus's search terms
 and explanations; any other question still gets plain search over the stored pages, and the app
@@ -217,10 +223,10 @@ this section says; the note only explains, and nothing is sent from the app.
   with a title the premise check does not know.
 - **UniBE is found least often** of the three sources (criterion 5).
 - Explanations are written in English only, and field completeness still needs its human check.
-- **In the game:** you cannot walk around the office yet, and on a phone-width screen (390 px) the
-  HUD covers the map's search summary. Two optional quests say why one of their steps cannot be
-  done yet: adding a source is a file in `sources/`, not an action in the app, and there is no
-  network of labs and experts. What you save to the Library and your office plot stay on this
+- **In the game:** you walk the drawn map but not yet inside the office, and on a phone-width screen
+  (390 px) the HUD covers the map's search summary. Two optional quests say why one of their steps
+  cannot be done yet: adding a source is a file in `sources/`, not an action in the app, and there
+  is no network of labs and experts. What you save to the Library and your office plot stay on this
   device. A map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the
   repository but not yet drawn in the world.
 - **A single claim cannot be removed on its own.** Removal works per page (`deny_paths`), so

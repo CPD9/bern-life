@@ -47,7 +47,7 @@ export const offInFixtures: OffEvents = {
  *   features/navigator/navigator-events.ts
  * - evidence_opened: infrastructure/ui/result-card.tsx
  * - report_made: features/report/open-report.ts
- * - lobby_entered: features/world/place-panel.tsx (opening a place on the map)
+ * - lobby_entered: features/world/place-panel.tsx (going in through a place's door on the map)
  * - message_sent: features/messages/use-messages.ts
  * - office_ready: features/shell/use-office-ready.ts (after onboarding: first office render, or
  *   sitting at the desk)

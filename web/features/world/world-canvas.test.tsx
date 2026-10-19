@@ -1,8 +1,10 @@
 import { afterEach, expect, mock, spyOn, test } from "bun:test";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { appEvents } from "@/infrastructure/app-events";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { assumeWebgl } from "@/infrastructure/webgl";
 import { resultFixture } from "@/test/fixtures";
+import type { MapPoint } from "./geography";
 
 // three.js has to finish loading as a module before the canvas library requires it, or Bun can
 // refuse the require part of the time; a test file loads both at once unless told otherwise.
@@ -14,6 +16,8 @@ const NO_MAP =
   "The map needs 3D graphics, which this browser does not offer. Ask, the office desk and every app still work.";
 // A map that threw or lost its context: the browser is not to blame, and trying again may help.
 const STOPPED = "The map stopped drawing. Ask, the office desk and every app still work.";
+/** An office plot; on load you stand at its door. */
+const HOME: MapPoint = [-50, 25];
 
 // Unmounted first, so putting WebGL back re-renders nothing outside act().
 afterEach(() => {
@@ -25,15 +29,20 @@ afterEach(() => {
 type WorldProps = {
   demoSearch?: SearchResponse;
   onPlacePanel?: (open: boolean) => void;
-  covered?: boolean;
+  onGoHome?: () => void;
+  /** Your office plot; none unless given. */
+  home?: MapPoint;
+  /** In your office, which covers the map. */
+  inside?: boolean;
 };
 
 function renderWorld(props: WorldProps = {}) {
   const onOpenAsk = mock(() => undefined);
   const onOpenDesk = mock(() => undefined);
-  const world = (shown: WorldProps) => (
+  const world = ({ home, inside = false, ...shown }: WorldProps) => (
     <WorldCanvas
       agent={{ name: "Lumi", figure: () => null }}
+      player={{ figure: () => null, home: home ?? null, inside }}
       onAgentOpen={() => undefined}
       onOpenAsk={onOpenAsk}
       onOpenDesk={onOpenDesk}
@@ -44,8 +53,10 @@ function renderWorld(props: WorldProps = {}) {
   return { onOpenAsk, onOpenDesk, rerender: (next: WorldProps) => rerender(world(next)) };
 }
 
-test("the host is told when a place's panel opens and closes", () => {
+test("the host is told when a place's panel opens and closes; the story only when you go in", () => {
   const told: boolean[] = [];
+  const heard: string[] = [];
+  const unsubscribe = appEvents.subscribe((name) => void heard.push(name));
   renderWorld({ onPlacePanel: (open) => void told.push(open) });
   expect(told).toEqual([false]);
   const place = document.querySelector<HTMLButtonElement>("[data-building]")!;
@@ -55,6 +66,54 @@ test("the host is told when a place's panel opens and closes", () => {
   act(() => fireEvent.click(screen.getByRole("button", { name: "Close" })));
   expect(document.querySelector("[data-place-panel]")).toBeNull();
   expect(told).toEqual([false, true, false]);
+  expect(heard).toEqual([]);
+  unsubscribe();
+});
+
+test("at your door on load, Go home is offered and takes you in only when pressed", () => {
+  const heard: string[] = [];
+  const unsubscribe = appEvents.subscribe((name) => void heard.push(name));
+  let wentHome = 0;
+  renderWorld({ home: HOME, onGoHome: () => void (wentHome += 1) });
+  expect(wentHome).toBe(0);
+  act(() => fireEvent.click(screen.getByRole("button", { name: "Go home" })));
+  expect(wentHome).toBe(1);
+  expect(heard).toEqual([]);
+  unsubscribe();
+});
+
+test("in your office the map under the room is inert; out of it, it is not", () => {
+  const { rerender } = renderWorld({ home: HOME, inside: true });
+  const map = () => document.querySelector('[aria-label="Map of Bern"]')?.hasAttribute("inert");
+  expect(map()).toBe(true);
+  rerender({ home: HOME, inside: false });
+  expect(map()).toBe(false);
+});
+
+test("Walk switches the keys from the map to you, and a place offers to walk you there", () => {
+  renderWorld();
+  const keys = () => document.getElementById("map-keys")?.textContent ?? "";
+  expect(keys()).toStartWith("Arrow keys or W A S D pan");
+  expect(screen.queryByRole("button", { name: "Go home" })).toBeNull();
+  act(() => fireEvent.click(document.querySelector<HTMLButtonElement>("[data-building]")!));
+  expect(screen.queryByRole("button", { name: "Walk here" })).toBeNull();
+  act(() => fireEvent.click(screen.getByRole("button", { name: "Close" })));
+  act(() => fireEvent.click(screen.getByRole("button", { name: "Walk" })));
+  expect(keys()).toStartWith("Arrow keys or W A S D walk");
+  expect(screen.getByRole("button", { name: "Follow" }).getAttribute("aria-pressed")).toBe("true");
+  act(() => fireEvent.click(document.querySelector<HTMLButtonElement>("[data-building]")!));
+  expect(screen.getByRole("button", { name: "Walk here" })).toBeTruthy();
+});
+
+test("without WebGL, walking goes with the map: no Walk, no door, no Go home at your door", () => {
+  assumeWebgl(false);
+  renderWorld({ home: HOME });
+  expect(screen.getByText(NO_MAP)).toBeTruthy();
+  expect(screen.queryByRole("group", { name: "Walking" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Walk" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Go home" })).toBeNull();
+  expect(document.querySelector("[data-door], [data-walk-toggle]")).toBeNull();
+  expect(document.getElementById("map-keys")).toBeNull();
 });
 
 test("without WebGL a card stands where the map was and opens Ask and the office desk", () => {
@@ -111,7 +170,7 @@ test("a map that stops drawing behind the office leaves focus alone", () => {
   const quiet = spyOn(console, "error").mockImplementation(() => undefined);
   try {
     const broken = { ...resultFixture, results: null } as unknown as SearchResponse;
-    renderWorld({ demoSearch: broken, covered: true });
+    renderWorld({ demoSearch: broken, home: HOME, inside: true });
     expect(screen.getByText(STOPPED)).toBeTruthy();
     expect(document.activeElement).toBe(document.body);
   } finally {
@@ -121,12 +180,12 @@ test("a map that stops drawing behind the office leaves focus alone", () => {
 
 test("while the office covers it, the card and its buttons are out of the tab order", () => {
   assumeWebgl(false);
-  const { rerender } = renderWorld({ covered: true });
+  const { rerender } = renderWorld({ home: HOME, inside: true });
   const card = screen.getByText(NO_MAP).closest("section")!;
   const button = screen.getByRole("button", { name: "Open Ask" });
   expect(button.closest("[inert]")).not.toBeNull();
   expect(card.closest("[inert]")).not.toBeNull();
   // Uncovered, the card's buttons are reachable again.
-  rerender({ covered: false });
+  rerender({ home: HOME, inside: false });
   expect(button.closest("[inert]")).toBeNull();
 });

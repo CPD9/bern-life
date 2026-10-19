@@ -195,6 +195,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           person={person}
           bear={bear}
           agentName={agentName}
+          plot={settle.plot}
           lite={settings.lite}
           reducedMotion={reducedMotion}
           onAgentOpen={lumi.open}
@@ -202,6 +203,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           onPlacePanel={setPlaceOpen}
           onUseDesk={sitDown}
           onGoOutside={() => setView("map")}
+          onGoHome={() => setView("home")}
           onOpenAsk={() => phone.openApp("ask")}
         />
       }

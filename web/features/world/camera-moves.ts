@@ -89,3 +89,22 @@ export function frameBox(points: readonly MapPoint[], margin: number, minSpan: n
   const [minZ, maxZ] = widen(Math.min(...zs), Math.max(...zs));
   return { minX, maxX, minZ, maxZ };
 }
+
+/**
+ * The follow camera while walking: behind and above you at the view's own azimuth, nearer than the
+ * map's closest zoom. The tilt stays inside the map camera's range, so it never dips under the
+ * ground, and even at its nearest it looks down from above the tallest roofs.
+ */
+export const FOLLOW_VIEW = { distance: 30, polar: 0.9, minDistance: 15, maxDistance: 90 } as const;
+
+export function followPosition(
+  [x, y, z]: readonly [number, number, number],
+  azimuth: number,
+): [number, number, number] {
+  const { distance, polar } = FOLLOW_VIEW;
+  return [
+    x + distance * Math.sin(polar) * Math.sin(azimuth),
+    y + distance * Math.cos(polar),
+    z + distance * Math.sin(polar) * Math.cos(azimuth),
+  ];
+}

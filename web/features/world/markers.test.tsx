@@ -7,7 +7,7 @@ import { lightUp } from "./light";
 import { PlaceMarkers } from "./markers/place-markers";
 import { PlacePanel } from "./place-panel";
 import { PLACES, type Place } from "./places";
-import { AGENT_ANCHOR, AgentButton, AgentFigure } from "./scene/agents";
+import { AGENT_KEY, AgentButton, agentAnchor } from "./scene/agents";
 
 const addressed: Place = {
   id: "example-lab",
@@ -100,18 +100,24 @@ describe("PlacePanel", () => {
     expect(notes[0]!.querySelector("a")!.getAttribute("href")).toBe("/corrections");
   });
 
-  test("opening a place tells the story the lobby was entered, once", () => {
+  test("opened from its marker, the story hears nothing; going in at the door tells it once", () => {
     const emit = mock((name: string) => name);
-    render(
+    const events = { emit };
+    const panel = (lobby: boolean) => (
       <PlacePanel
         building={shared}
         light={undefined}
         fixture={false}
+        lobby={lobby}
         onClose={() => undefined}
         onSearchHere={undefined}
-        events={{ emit }}
-      />,
+        events={events}
+      />
     );
+    const { rerender } = render(panel(false));
+    expect(emit.mock.calls).toEqual([]);
+    rerender(panel(true));
+    rerender(panel(true));
     expect(emit.mock.calls).toEqual([["lobby_entered"]]);
   });
 
@@ -159,15 +165,14 @@ describe("PlaceMarkers", () => {
 });
 
 describe("the agent on the map", () => {
-  test("is one bear, the figure passed in, standing in front of the city hall", () => {
-    const bear = <mesh name="the player's bear" />;
-    const figure = mock((lite: boolean) => (lite ? bear : <group />));
-    const drawn = AgentFigure({ agent: { name: "Lumi", figure }, lite: true });
-    expect(figure.mock.calls).toEqual([[true]]);
-    expect(drawn.type).toBe("group");
-    const props = drawn.props as { position: unknown; children: unknown };
-    expect(props.position).toEqual([21.9, 0, -7]);
-    expect(props.children).toBe(bear);
+  test("its label follows the agent: read again on every frame, above its ears", () => {
+    let feet: [number, number, number] = [21.9, 0, -7];
+    const anchor = agentAnchor(() => feet);
+    expect(anchor.key).toBe(AGENT_KEY);
+    expect(anchor.position).toEqual([21.9, 2.9, -7]);
+    feet = [3, 1.5, 12];
+    expect(anchor.position).toEqual([3, 4.4, 12]);
+    expect(anchor.position).toBe(anchor.position);
   });
 
   test("has one button, named for the agent, registered at one anchor", () => {
@@ -176,7 +181,7 @@ describe("the agent on the map", () => {
     expect(
       screen.getAllByRole("button").map((button) => button.getAttribute("aria-label")),
     ).toEqual(["Bärli, your agent"]);
-    expect([...elements.current.keys()]).toEqual([AGENT_ANCHOR.key]);
+    expect([...elements.current.keys()]).toEqual([AGENT_KEY]);
   });
 
   test("a tap opens it once; it is a page button, so Enter and Space reach it too", () => {
@@ -204,6 +209,47 @@ describe("while a search runs", () => {
       />,
     );
     expect(screen.getByRole("button").className).toContain("motion-safe:animate-pulse");
+  });
+});
+
+describe("a place's lobby", () => {
+  test("walked into, the panel is the lobby and you leave it by going outside", () => {
+    const onClose = mock(() => undefined);
+    const emit = mock((name: string) => name);
+    render(
+      <PlacePanel
+        building={shared}
+        light={undefined}
+        fixture={false}
+        lobby
+        onClose={onClose}
+        onSearchHere={undefined}
+        onWalkHere={() => undefined}
+        events={{ emit }}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "Lobby: 2 units here" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Walk here" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Go outside" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(emit.mock.calls).toEqual([["lobby_entered"]]);
+  });
+
+  test("opened from its marker while walking, it offers to walk you to the door", () => {
+    const onWalkHere = mock((building: Building) => building.key);
+    render(
+      <PlacePanel
+        building={shared}
+        light={undefined}
+        fixture={false}
+        onClose={() => undefined}
+        onSearchHere={undefined}
+        onWalkHere={onWalkHere}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "2 units here" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Walk here" }));
+    expect(onWalkHere.mock.calls).toEqual([[shared]]);
   });
 });
 

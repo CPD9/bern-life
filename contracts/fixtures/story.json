@@ -76,13 +76,14 @@
     {
       "id": "visit",
       "title": "Visit an institute",
-      "goal": "Open a place on the map to see its units, each with its source.",
+      "goal": "Walk to a place on the map and go in to see its units, each with its source.",
       "criterion": "c4-structured",
       "optional": true,
       "steps": [
         {
           "id": "lobby",
-          "text": "Open a place on the map.",
+          "text": "Walk to a place's door on the map and go in.",
+          "hint": "Press Walk on the map, or Walk here on a place; at its door, Enter opens the lobby.",
           "done_when": "lobby_entered"
         }
       ]
