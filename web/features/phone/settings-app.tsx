@@ -1,51 +1,14 @@
 "use client";
 
-import { useId } from "react";
-import type { NightMode, Settings } from "@/infrastructure/settings";
+import type { NightMode } from "@/infrastructure/settings";
+import { Toggle } from "@/infrastructure/ui/toggle";
 import { useSettings } from "@/infrastructure/use-settings";
-
-type Choice<T> = { value: T; label: string };
-
-type SettingRowProps<T> = {
-  title: string;
-  description: string;
-  choices: readonly Choice<T>[];
-  value: T;
-  onChange: (value: T) => void;
-};
-
-function SettingRow<T extends string | boolean>({
-  title,
-  description,
-  choices,
-  value,
-  onChange,
-}: SettingRowProps<T>) {
-  const name = useId();
-  return (
-    <fieldset className="border-panel-border flex flex-col gap-2 border-b pb-5">
-      <legend className="pb-1 text-base font-extrabold">{title}</legend>
-      <p className="text-muted text-sm">{description}</p>
-      <div className="bg-chip rounded-pill flex gap-1 p-1">
-        {choices.map((choice) => (
-          <label
-            key={String(choice.value)}
-            className="rounded-pill has-checked:bg-chip-selected has-checked:text-chip-selected-ink has-focus-visible:outline-focus flex-1 cursor-pointer py-1.5 text-center text-sm font-bold has-focus-visible:outline-3"
-          >
-            <input
-              type="radio"
-              name={name}
-              checked={value === choice.value}
-              onChange={() => onChange(choice.value)}
-              className="sr-only"
-            />
-            {choice.label}
-          </label>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
+import { type Choice, ChoiceRow } from "./choice-row";
+import type { PhoneHealth } from "./phone-types";
+import { httpProfileApi, type ProfileApi } from "./profile-api";
+import { AboutDataSources } from "./settings-about";
+import { AccountSettings } from "./settings-account";
+import { SettingsSection } from "./settings-section";
 
 const nightChoices: readonly Choice<NightMode>[] = [
   { value: "off", label: "Off" },
@@ -53,39 +16,71 @@ const nightChoices: readonly Choice<NightMode>[] = [
   { value: "auto", label: "Auto" },
 ];
 
-const switchChoices: readonly Choice<boolean>[] = [
-  { value: false, label: "Off" },
-  { value: true, label: "On" },
-];
+type SettingsAppProps = {
+  /** The account and profile routes; tests pass a fake. */
+  profileApi?: ProfileApi | undefined;
+  /** Snapshot, counts and mode for "About & data sources"; left out, only the intro shows. */
+  health?: PhoneHealth | undefined;
+  signInHref?: string | undefined;
+  /** DEMO_FIXTURES: a "mock" engine is then the fixture, said as MOCK. */
+  fixtureMode?: boolean | undefined;
+};
 
-export function SettingsApp() {
+export function SettingsApp({
+  profileApi = httpProfileApi,
+  health,
+  signInHref = "/account",
+  fixtureMode = false,
+}: SettingsAppProps) {
   const [settings, setSettings] = useSettings();
-  const update = (change: Partial<Settings>) => setSettings({ ...settings, ...change });
 
   return (
-    <div className="flex flex-col gap-5">
-      <SettingRow
-        title="Night mode"
-        description="Darker colours for the evening. Auto follows your device."
-        choices={nightChoices}
-        value={settings.night}
-        onChange={(night) => update({ night })}
-      />
-      <SettingRow
-        title="Lite graphics"
-        description="The map drops shadows and effects, for older laptops and phones."
-        choices={switchChoices}
-        value={settings.lite}
-        onChange={(lite) => update({ lite })}
-      />
-      <SettingRow
-        title="Data saver"
-        description="The map loads smaller models and nothing plays by itself."
-        choices={switchChoices}
-        value={settings.dataSaver}
-        onChange={(dataSaver) => update({ dataSaver })}
-      />
-      <p className="text-muted text-sm">Saved on this device only.</p>
+    <div className="flex flex-col gap-6">
+      <SettingsSection title="Account and privacy">
+        <AccountSettings api={profileApi} signInHref={signInHref} />
+      </SettingsSection>
+      <SettingsSection title="Notifications">
+        <Toggle
+          label="In the app"
+          description="Shown here while you use Bern Life."
+          checked
+          disabled
+          onChange={() => undefined}
+        />
+        <Toggle
+          label="Push"
+          description="Not available yet."
+          checked={false}
+          disabled
+          onChange={() => undefined}
+        />
+        <Toggle
+          label="Email"
+          description="Not available yet."
+          checked={false}
+          disabled
+          onChange={() => undefined}
+        />
+      </SettingsSection>
+      <SettingsSection title="Display">
+        <ChoiceRow
+          title="Night mode"
+          description="Darker colours for the evening. Auto follows your device."
+          choices={nightChoices}
+          value={settings.night}
+          onChange={(night) => setSettings({ ...settings, night })}
+        />
+        <Toggle
+          label="Lite graphics"
+          description="The map drops shadows and effects, for older laptops and phones."
+          checked={settings.lite}
+          onChange={(lite) => setSettings({ ...settings, lite })}
+        />
+        <p className="text-muted text-sm">Saved on this device only.</p>
+      </SettingsSection>
+      <SettingsSection title="About & data sources">
+        <AboutDataSources health={health} fixtureMode={fixtureMode} />
+      </SettingsSection>
     </div>
   );
 }
