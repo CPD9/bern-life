@@ -4,12 +4,12 @@ import io
 import json
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from evaluator.__main__ import main
 from evaluator.score import score_all
-from evaluator.sheet import labeller, stratified
+from evaluator.sheet import labellers, read_sheet, stratified
 from records import gold, profile, response, result
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
@@ -70,12 +70,48 @@ class FixtureRunTest(unittest.TestCase):
         )
         self.assertIn("- criterion_3: **not computed**", report)
 
-    def test_labelling_sheet_is_blind(self) -> None:
+    def test_labelling_sheets_are_blind_and_the_key_stays_apart(self) -> None:
         _, _, out = self.run_main("--pages", str(FIXTURES / "pages.jsonl"))
-        with (out / "labelling_sheet.csv").open(encoding="utf-8") as sheet:
-            header = next(csv.reader(sheet))
-        self.assertEqual(header[:6], ["item", "labeller", "query", "lang", "name", "page"])
-        self.assertFalse({"rank", "score", "reason"} & {column.split()[0] for column in header})
+        folder = out / "labelling"
+        self.assertEqual(
+            sorted(path.name for path in folder.iterdir()),
+            ["key.json", "sheet-nik.csv", "sheet-peter.csv"],
+        )
+        key = json.loads((folder / "key.json").read_text(encoding="utf-8"))
+        predictions = hashlib.sha256((FIXTURES / "predictions.jsonl").read_bytes()).hexdigest()
+        self.assertEqual(key["predictions_sha256"], predictions)
+        for who in ("peter", "nik"):
+            with self.subTest(labeller=who):
+                text = (folder / f"sheet-{who}.csv").read_text(encoding="utf-8")
+                self.assertTrue(text.startswith('"# Bern Life field check for'))
+                rows = list(csv.reader(text.splitlines()))
+                header = next(row for row in rows if row[:1] == ["item"])
+                self.assertEqual(header[:4], ["item", "kind", "name", "source link"])
+                for column in ("query", "rank", "score", "reason", "filled", "profile"):
+                    self.assertNotIn(column, header)
+                    self.assertNotIn(f'"{column}"', text)
+                items = [int(row["item"]) for row in read_sheet(folder / f"sheet-{who}.csv")]
+                mine = [i["item"] for i in key["items"] if who in i["labellers"]]
+                self.assertEqual(items, mine)
+
+    def test_answered_sheets_are_never_overwritten(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        folder = Path(tmp.name)
+        args = ["--gold", str(GOLD), "--predictions", str(FIXTURES / "predictions.jsonl")]
+        args += ["--out", str(folder / "out"), "--labelling-dir", str(folder / "sheets")]
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(main(args), 0)
+        sheet = folder / "sheets" / "sheet-nik.csv"
+        filled = sheet.read_text(encoding="utf-8").replace(",,,,,,,\n", ",y,n,,,,,\n", 1)
+        sheet.write_text(filled, encoding="utf-8")
+        before = {path.name: path.read_bytes() for path in (folder / "sheets").iterdir()}
+        err = io.StringIO()
+        with redirect_stdout(io.StringIO()), redirect_stderr(err):
+            self.assertEqual(main(args), 0)
+        after = {path.name: path.read_bytes() for path in (folder / "sheets").iterdir()}
+        self.assertEqual(before, after)
+        self.assertIn("holds answered sheets, left as they are", err.getvalue())
 
 
 class SheetTest(unittest.TestCase):
@@ -104,9 +140,25 @@ class SheetTest(unittest.TestCase):
         self.assertEqual(
             [r["profile"]["source_id"] for _, r in picks], ["artorg", "dcb", "unibe", "dcb"]
         )
+        both = ("peter", "nik")
         self.assertEqual(
-            [labeller(row) for row in (0, 9, 10, 19, 20, 29)],
-            ["Peter + Nik", "Peter + Nik", "Peter", "Peter", "Nik", "Nik"],
+            [labellers(row) for row in (0, 7, 8, 9, 10, 29)],
+            [both, both, ("peter",), ("nik",), ("peter",), ("nik",)],
+        )
+        per_labeller = [sum(who in labellers(row) for row in range(30)) for who in both]
+        self.assertEqual(per_labeller, [19, 19])
+
+    def test_a_profile_shown_for_two_queries_is_labelled_once(self) -> None:
+        same = profile("person-unibe-0", "person", "P 0", "https://unibe.test/0")
+        other = profile("person-unibe-1", "person", "P 1", "https://unibe.test/1")
+        queries = [gold("q100"), gold("q200")]
+        responses = {
+            "q100": response([result(1, same)]),
+            "q200": response([result(1, same), result(2, other)]),
+        }
+        picks = stratified(score_all(queries, responses, None, None), size=4)
+        self.assertEqual(
+            sorted(r["profile"]["id"] for _, r in picks), ["person-unibe-0", "person-unibe-1"]
         )
 
 

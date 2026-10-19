@@ -94,6 +94,7 @@ def markdown(metrics: Metrics) -> str:
                 for name, v in metrics["variant_agreement"].items()
             ],
         ),
+        *consistency_lines(metrics.get("consistency")),
         "",
         f"Exposure: {metrics['exposure']['slots']} top-10 slots"
         " on queries that should find someone.",
@@ -111,11 +112,13 @@ def markdown(metrics: Metrics) -> str:
                 exposure_rows(metrics["exposure"]["by_unit"]),
             ),
         ]
+    lines += size_lines(metrics.get("exposure_by_size"))
     completeness = metrics["completeness"]
     lines += [
         "",
         f"Field completeness ({completeness['status']}): {completeness['results']} results shown,"
         f" mean share of the 8 required fields filled {number(completeness['mean_share'])}.",
+        *labelled_lines(metrics.get("labelled_completeness")),
         "",
         "Decision rules (eval/PREREGISTRATION.md):",
         *(decision_line(name, rule) for name, rule in metrics["decisions"].items()),
@@ -136,3 +139,112 @@ def untraceable_lines(misses: Sequence[Metrics] | None) -> list[str]:
     return ["", "Untraceable claims:", *shown] + (
         [f"- … and {more} more in metrics.json"] if more > 0 else []
     )
+
+
+def consistency_lines(wording: Metrics | None) -> list[str]:
+    """Criterion 2 on eval/consistency.jsonl; nothing when its predictions were not given."""
+    if wording is None:
+        return []
+    plain = wording["plain_search"]
+    lines = [
+        "",
+        "Consistency across wordings (criterion 2): top-10 profile ids of every wording of one"
+        f" need; mean Jaccard over every pair {number(wording['jaccard_mean'])}.",
+        "",
+        *table(
+            ["Set", "Wordings", "Pairs", "Mean pairwise Jaccard", "Also found by the first"]
+            + ["Both empty"],
+            [
+                [s["id"], len(s["queries"]), s["pairs"], number(s["jaccard_mean"])]
+                + [number(s["found_by_first_mean"]), s["both_empty"]]
+                for s in wording["sets"]
+            ],
+        ),
+        "",
+        *table(
+            ["Wording", "Shown", "Share of its top 10 the first also finds", "Expansion"],
+            [
+                [
+                    q["query"],
+                    q["shown"],
+                    "first" if q["id"].endswith(":1") else number(q["found_by_first"]),
+                    "recorded" if q["expanded"] else "plain search",
+                ]
+                for s in wording["sets"]
+                for q in s["queries"]
+            ],
+        ),
+        "",
+        f"Searched plain, without the model's other wordings: {len(plain)} of"
+        f" {wording['queries']}" + (f" ({'; '.join(plain)})." if plain else "."),
+    ]
+    return lines
+
+
+def size_lines(by_size: Metrics | None) -> list[str]:
+    if by_size is None:
+        return []
+    sources = ", ".join(by_size["sources"])
+    return [
+        "",
+        f"Exposure by unit size: the units of {sources}; large = more profiles than the median"
+        f" unit ({by_size['median_profiles']:g}), small = the rest. Slots outside these units:"
+        f" {by_size['slots_outside']}.",
+        "",
+        *table(
+            ["Group", "Units", "Profiles", "Profile share", "Top-10 slots", "Slot share"]
+            + ["Units never in a top 10"],
+            [
+                [g["name"], g["units"], g["profiles"], number(g["profile_share"]), g["slots"]]
+                + [number(g["slot_share"]), g["units_never_shown"]]
+                for g in by_size["groups"]
+            ],
+        ),
+    ]
+
+
+def kappa_cell(agreement: Metrics) -> str:
+    return NOTHING if agreement["kappa"] is None else f"{agreement['kappa']:.2f}"
+
+
+def labelled_lines(labelled: Metrics | None) -> list[str]:
+    """The human check of criterion 4, once the sheets are back."""
+    if labelled is None:
+        return []
+    pooled, agreement = labelled["completeness"], labelled["agreement"]
+    rows = [
+        [
+            field,
+            f["stated"],
+            f["filled_where_stated"],
+            share_cell(f["completeness"]),
+            f["filled_page_silent"],
+            f["unanswered"],
+        ]
+        for field, f in labelled["fields"].items()
+    ]
+    return [
+        "",
+        f"Labelled completeness: {labelled['labelled']} of {labelled['results']} results"
+        f" labelled; of the fields their pages state, the system filled"
+        f" {pooled['filled_where_stated']}/{pooled['stated']}"
+        f" ({number(pooled['value'])}{interval(pooled['ci'])}, bootstrap over results).",
+        "",
+        *table(
+            ["Field", "Page states", "Filled", "Completeness", "Filled, page silent"]
+            + ["Unanswered"],
+            rows,
+        ),
+        "",
+        f"Agreement on the {agreement['overlap']} overlap results: Cohen's kappa"
+        f" {kappa_cell(agreement['pooled'])} over {agreement['pooled']['pairs']} field judgements"
+        f" (raw agreement {number(agreement['pooled']['agreement'])}).",
+        "",
+        *table(
+            ["Field", "Judged by both", "Raw agreement", "Cohen's kappa"],
+            [
+                [field, a["pairs"], number(a["agreement"]), kappa_cell(a)]
+                for field, a in agreement["fields"].items()
+            ],
+        ),
+    ]
