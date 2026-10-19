@@ -113,3 +113,75 @@ Gold, measured once after the decision:
   changed after the gold run.
 - The base run on this database reproduces the bundle-3 gold row. Against the bundle's frozen
   predictions, it reorders q017's top 10 and changes q020's.
+
+### 2026-10-19: dev2, and the rule for search levers toward criterion 1 (#226), before any dev2 run
+Not a change to the questions, data, metrics or decision rules above; `eval/gold.jsonl` is
+unchanged. Written and committed with `eval/dev2.jsonl`, before any search run on dev2.
+
+Why a second dev set: `eval/dev.jsonl` (27 queries) is saturated. Its recall@10 is 0.86 on the base
+above and 0.91 after the two adopted changes, with UniBE and English at 1.00. A rule like "not
+lower on dev" accepts almost any change and cannot show what lifts gold. Gold stays a test, not a
+tuning set.
+
+The set: `eval/dev2.jsonl`, 38 queries (q930 to q967) in the gold schema, with 33 expected entities
+(26 people, 7 units), each with a profile of the same name in bundle-20261019-3.
+
+| Source | de | en | fr | site | synonym | lay | translation | invented | total |
+|---|---|---|---|---|---|---|---|---|---|
+| UniBE | 3 | 8 | 5 | 3 | 3 | 3 | 5 | 2 | 16 |
+| ARTORG | 2 | 5 | 3 | 2 | 2 | 2 | 2 | 2 | 10 |
+| DCB | 4 | 5 | 1 | 3 | 2 | 3 | 1 | 1 | 10 |
+| off-topic | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 2 | 2 |
+| all | 10 | 19 | 9 | 8 | 7 | 8 | 8 | 7 | 38 |
+
+The 7 invented queries are 5 invented titled names (German, French and English titles) and 2
+off-topic questions.
+
+How it was written:
+- One writer per source (UniBE, ARTORG, DCB) and one for invented queries. Each saw the stored
+  pages of bundle-20261019-3 and the variant definitions, never gold, search results or the miss
+  table below. They wrote 56 candidates.
+- `python -m evaluator.dev2_check` (`eval/src/evaluator/dev2_check.py`) checks each line in code:
+  - the gold schema;
+  - every `proof_span` verbatim in the stored text of its page, after the whitespace
+    normalisation of "Text matching" and nothing else;
+  - no gold proof page (host and path);
+  - no gold expected person or unit by normalised name (case, accents, titles);
+  - no invented name, or its surname, in any stored page or profile name;
+  - no e-mail address or phone number;
+  - no proof page or name already in dev.
+- The checker prints counts and failing line ids, never gold wording. 8 of the 56 candidates
+  failed a gold check (4 on a gold proof page, 7 on a gold name, some on both) and were dropped.
+  Given ids in the gold pattern, none failed another check.
+- From the 48 left, 38 were chosen to match the mix above before any run. One candidate was left
+  out because its proof page matches 19 profiles, any of which would count as a hit.
+- On the final file the checker passes 38 of 38 on every check.
+- Gaps: no German query on an English page (dev has six German translation queries), and one
+  French DCB query.
+
+A stage-level table of gold misses was read to choose which stages to work on. For every expected
+gold entity missing from the top 10, it holds one stage: crawl, extraction, retrieval, the claim
+rule, rank 11 to 20, or the unit cap and abstention. It holds counts per stage, split by source,
+language and variant, and is kept outside the repository. No query-level fix was made from it, and
+no gold wording went into code, terms or dev2.
+
+Rule for each search lever:
+- Measured against the run before it in the same setup: bundle-20261019-3, a fresh database per
+  run, predictions in replay, no model calls.
+- Adopted only if, on dev and dev2 pooled:
+  - recall@10 rises and MRR does not fall;
+  - traceability stays 100% and invented entities stay 0;
+  - invented queries abstained do not drop and false abstentions do not rise.
+- A lever the rule rejects is reverted. Every variant tried is reported, adopted or not.
+- Not levers: the evaluator and its matching rules, `GOLD-NOTES.md`, `eval/gold.jsonl`. RRF k stays
+  60 unless a dated line here changes it before the run that tests it.
+- Dev2 queries have no recorded expansion: in replay the expansion misses and the query runs as a
+  plain search. Levers are compared in that setup, so a lever that works only through expansion
+  cannot show on dev2.
+
+Gold runs once at the end, on the final code, as measurement. The report gives the original
+number (bundle-20261019-3: recall@10 0.38 [0.22, 0.56], MRR 0.46) next to the new one, with
+intervals and every slice, whatever the outcome. The gold run in the entry above measured those
+two changes and is not used to choose levers.
+
+Results: pending.
