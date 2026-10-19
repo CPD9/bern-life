@@ -1,0 +1,293 @@
+{
+  "query": "funding and lab space for a glucose sensor pilot",
+  "mode": "mock",
+  "abstained": false,
+  "abstain_reason": null,
+  "expanded_terms": [],
+  "results": [
+    {
+      "rank": 1,
+      "profile": {
+        "id": "call-example-clinic-seed-grants",
+        "kind": "call",
+        "source_id": "example-clinic",
+        "name": {
+          "value": "Seed Grants for Clinical Sensor Pilots",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://research.example-clinic.test/funding/seed-grants",
+            "page_sha256": "dc20d8a2044b74faf5c5607faf9d1a6e676bb69ab3705d2db550b5c04d4658f9",
+            "span": "Seed Grants for Clinical Sensor Pilots",
+            "start": 0,
+            "fetched_at": "2026-10-18T09:30:00Z"
+          }
+        },
+        "source_url": "https://research.example-clinic.test/funding/seed-grants",
+        "fields": {
+          "role": [],
+          "unit": [],
+          "expertise": [
+            {
+              "value": "wearable sensors",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://research.example-clinic.test/funding/seed-grants",
+                "page_sha256": "dc20d8a2044b74faf5c5607faf9d1a6e676bb69ab3705d2db550b5c04d4658f9",
+                "span": "wearable sensors for diabetes care",
+                "start": 186,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ],
+          "projects": [],
+          "infrastructure": [],
+          "services": [],
+          "funder": [
+            {
+              "value": "Example Clinic Research Fund",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://research.example-clinic.test/funding/seed-grants",
+                "page_sha256": "dc20d8a2044b74faf5c5607faf9d1a6e676bb69ab3705d2db550b5c04d4658f9",
+                "span": "Funded by the Example Clinic Research Fund",
+                "start": 39,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ],
+          "amount": [
+            {
+              "value": "Up to CHF 40,000 per project",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://research.example-clinic.test/funding/seed-grants",
+                "page_sha256": "dc20d8a2044b74faf5c5607faf9d1a6e676bb69ab3705d2db550b5c04d4658f9",
+                "span": "Up to CHF 40,000 per project for twelve months",
+                "start": 83,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ],
+          "deadline": [
+            {
+              "value": "30 November 2026",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://research.example-clinic.test/funding/seed-grants",
+                "page_sha256": "dc20d8a2044b74faf5c5607faf9d1a6e676bb69ab3705d2db550b5c04d4658f9",
+                "span": "Application deadline: 30 November 2026",
+                "start": 222,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ],
+          "eligibility": [
+            {
+              "value": "research groups and young companies working on wearable sensors for diabetes care",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://research.example-clinic.test/funding/seed-grants",
+                "page_sha256": "dc20d8a2044b74faf5c5607faf9d1a6e676bb69ab3705d2db550b5c04d4658f9",
+                "span": "Open to research groups and young companies working on wearable sensors for diabetes care",
+                "start": 131,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ]
+        }
+      },
+      "reason": {
+        "text": "Funds pilots of wearable sensors for diabetes care, open to research groups and young companies.",
+        "cites": [
+          "/fields/expertise/0",
+          "/fields/eligibility/0"
+        ]
+      },
+      "score": {
+        "fused": 0.0328,
+        "lexical_rank": 1,
+        "vector_rank": 1
+      }
+    },
+    {
+      "rank": 2,
+      "profile": {
+        "id": "service-example-clinic-sensor-testing",
+        "kind": "service",
+        "source_id": "example-clinic",
+        "name": {
+          "value": "Sensor Testing Service",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.example-clinic.test/services/sensor-testing",
+            "page_sha256": "0d097f58ace1d79dd5da5b4f635a8caea2067f016f93beb97502f395c4ae1abd",
+            "span": "Sensor Testing Service",
+            "start": 0,
+            "fetched_at": "2026-10-18T09:30:00Z"
+          }
+        },
+        "source_url": "https://www.example-clinic.test/services/sensor-testing",
+        "fields": {
+          "role": [],
+          "unit": [
+            {
+              "value": "Clinical Sensor Unit",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://www.example-clinic.test/services/sensor-testing",
+                "page_sha256": "0d097f58ace1d79dd5da5b4f635a8caea2067f016f93beb97502f395c4ae1abd",
+                "span": "The Clinical Sensor Unit",
+                "start": 23,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ],
+          "expertise": [
+            {
+              "value": "skin-worn glucose sensors",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://www.example-clinic.test/services/sensor-testing",
+                "page_sha256": "0d097f58ace1d79dd5da5b4f635a8caea2067f016f93beb97502f395c4ae1abd",
+                "span": "tests skin-worn glucose sensors",
+                "start": 48,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ],
+          "projects": [],
+          "infrastructure": [],
+          "services": [
+            {
+              "value": "tests skin-worn glucose sensors against reference blood measurements",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.example-clinic.test/services/sensor-testing",
+                "page_sha256": "0d097f58ace1d79dd5da5b4f635a8caea2067f016f93beb97502f395c4ae1abd",
+                "span": "tests skin-worn glucose sensors against reference blood measurements",
+                "start": 48,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ],
+          "eligibility": [
+            {
+              "value": "academic and industry partners",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://www.example-clinic.test/services/sensor-testing",
+                "page_sha256": "0d097f58ace1d79dd5da5b4f635a8caea2067f016f93beb97502f395c4ae1abd",
+                "span": "Available to academic and industry partners on request",
+                "start": 118,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ]
+        }
+      },
+      "reason": {
+        "text": "Tests skin-worn glucose sensors against reference blood measurements for academic and industry partners.",
+        "cites": [
+          "/fields/services/0",
+          "/fields/eligibility/0"
+        ]
+      },
+      "score": {
+        "fused": 0.0315,
+        "lexical_rank": 2,
+        "vector_rank": 3
+      }
+    },
+    {
+      "rank": 3,
+      "profile": {
+        "id": "space-example-clinic-wet-lab-bench",
+        "kind": "space",
+        "source_id": "example-clinic",
+        "name": {
+          "value": "Shared Wet Lab Bench",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.example-clinic.test/spaces/wet-lab-bench",
+            "page_sha256": "d80545b89fe687ff6b9112e1e65078ff086fd311dd59713a81534cffe083d672",
+            "span": "Shared Wet Lab Bench",
+            "start": 0,
+            "fetched_at": "2026-10-18T09:30:00Z"
+          }
+        },
+        "source_url": "https://www.example-clinic.test/spaces/wet-lab-bench",
+        "fields": {
+          "role": [],
+          "unit": [],
+          "expertise": [],
+          "projects": [],
+          "infrastructure": [],
+          "services": [],
+          "location": [
+            {
+              "value": "Example Clinic, Building C, second floor",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://www.example-clinic.test/spaces/wet-lab-bench",
+                "page_sha256": "d80545b89fe687ff6b9112e1e65078ff086fd311dd59713a81534cffe083d672",
+                "span": "Location: Example Clinic, Building C, second floor",
+                "start": 21,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ],
+          "size": [
+            {
+              "value": "2 benches, 24 square metres",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://www.example-clinic.test/spaces/wet-lab-bench",
+                "page_sha256": "d80545b89fe687ff6b9112e1e65078ff086fd311dd59713a81534cffe083d672",
+                "span": "Size: 2 benches, 24 square metres",
+                "start": 73,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ],
+          "eligibility": [
+            {
+              "value": "teams running sensor validation studies",
+              "method": "model",
+              "evidence": {
+                "page_url": "https://www.example-clinic.test/spaces/wet-lab-bench",
+                "page_sha256": "d80545b89fe687ff6b9112e1e65078ff086fd311dd59713a81534cffe083d672",
+                "span": "Booked by the week for teams running sensor validation studies",
+                "start": 108,
+                "fetched_at": "2026-10-18T09:30:00Z"
+              }
+            }
+          ]
+        }
+      },
+      "reason": {
+        "text": "Booked by the week for teams running sensor validation studies.",
+        "cites": [
+          "/fields/eligibility/0"
+        ]
+      },
+      "score": {
+        "fused": 0.0301,
+        "lexical_rank": 4,
+        "vector_rank": 2
+      }
+    }
+  ],
+  "timings_ms": {
+    "expand": 0,
+    "search": 14,
+    "explain": 0
+  },
+  "versions": {
+    "engine": "0.0.0",
+    "snapshot": "fixture",
+    "prompts": "fixture",
+    "models": {
+      "expand": "MOCK-no-model"
+    }
+  }
+}

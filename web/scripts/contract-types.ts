@@ -10,24 +10,30 @@ const generatedPath = path.join(
   "contract-types.generated.ts",
 );
 
-// result.schema.json refers to profile.schema.json; only the profile pass declares the shared
-// definitions (Claim, Evidence) so each type is emitted once.
+// Schemas refer to each other (agent → result → profile), so a pass declares the definitions it
+// refers to only when no other pass does: profile declares Claim and Evidence, numbers declares
+// EvalNumbers. A short bounded array would become a union of one tuple per length, so the agent's
+// lists (at most 4 or 6 items) stay arrays.
 const schemaFiles = [
-  { file: "result.schema.json", declaresShared: false },
-  { file: "profile.schema.json", declaresShared: true },
-  { file: "health.schema.json", declaresShared: false },
-  { file: "quest.schema.json", declaresShared: false },
+  { file: "result.schema.json", declaresShared: false, plainArrays: false },
+  { file: "profile.schema.json", declaresShared: true, plainArrays: false },
+  { file: "health.schema.json", declaresShared: false, plainArrays: false },
+  { file: "quest.schema.json", declaresShared: false, plainArrays: false },
+  { file: "agent.schema.json", declaresShared: false, plainArrays: true },
+  { file: "sources.schema.json", declaresShared: false, plainArrays: false },
+  { file: "numbers.schema.json", declaresShared: true, plainArrays: false },
 ];
 
 async function generateContractTypes(): Promise<string> {
   const parts: string[] = [];
-  for (const { file, declaresShared } of schemaFiles) {
+  for (const { file, declaresShared, plainArrays } of schemaFiles) {
     const schema = JSON.parse(await readFile(path.join(contractsDir, file), "utf8"));
     parts.push(
       await compile(schema, schema.title, {
         cwd: contractsDir,
         bannerComment: "",
         declareExternallyReferenced: declaresShared,
+        ignoreMinAndMaxItems: plainArrays,
         additionalProperties: false,
         style: { printWidth: 100 },
       }),

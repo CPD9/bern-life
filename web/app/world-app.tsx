@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { httpAccountApi } from "@/features/accounts/account-api";
 import { useAccount } from "@/features/accounts/use-account";
+import { shownAgentName } from "@/features/avatar/agent-name";
+import { BearFigure } from "@/features/avatar/bear-figure";
 import { personBadgeColour } from "@/features/avatar/person-config";
 import { useAvatar } from "@/features/avatar/use-avatar";
 import { PersonFigure } from "@/features/avatar/person-figure";
@@ -35,7 +37,6 @@ import { StoryMenu } from "@/features/story/story-menu";
 import { StoryStart } from "@/features/story/story-start";
 import { useStory } from "@/features/story/use-story";
 import type { Building } from "@/features/world/buildings";
-import type { AgentId } from "@/features/world/scene/agents";
 import { WorldCanvas } from "@/features/world/world-canvas";
 import { YouSheet } from "@/features/you/you-sheet";
 import { worldSearch } from "@/features/world/world-search";
@@ -106,11 +107,6 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     worldSearch.showResults(response);
     setPhoneOpen(false);
     setView("map");
-  }
-
-  /** The Navigator opens Ask; the agents still to come open the Agents app, which says what they will do. */
-  function selectAgent(id: AgentId) {
-    openApp(id === "navigator" ? "ask" : "agents");
   }
 
   function searchHere(building: Building) {
@@ -225,7 +221,11 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
         <>
           <WorldCanvas
             demoSearch={demoSearch}
-            onAgentSelect={selectAgent}
+            agent={{
+              name: shownAgentName(agentName),
+              figure: (lite) => <BearFigure config={bear} lite={lite} motion="still" />,
+            }}
+            onAgentOpen={() => openApp("ask")}
             onSearchHere={searchHere}
           />
           {shownView === "home" && (
