@@ -84,6 +84,43 @@ const health = (mode: "live" | "replay" | "mock"): PhoneHealth => ({
 });
 
 describe("Phone", () => {
+  test("grouped apps sit under their heading, above the other apps", () => {
+    const steps: PhoneApp[] = [
+      {
+        id: "case-1",
+        label: "1 People",
+        icon: "1",
+        tile: "#0e7490",
+        content: null,
+        group: "Steps",
+      },
+      {
+        id: "case-2",
+        label: "2 Wording",
+        icon: "2",
+        tile: "#0e7490",
+        content: null,
+        group: "Steps",
+      },
+    ];
+    render(<Harness phoneApps={[{ ...apps[0]!, dock: true }, ...apps.slice(1), ...steps]} />);
+    openPhone();
+    const group = screen.getByRole("region", { name: "Steps" });
+    expect(within(group).getByRole("heading").textContent).toBe("Steps");
+    expect(
+      within(group)
+        .getAllByRole("button")
+        .map((tile) => tile.textContent),
+    ).toEqual(["11 People", "22 Wording"]);
+    const others = screen.getByRole("list", { name: "Apps" });
+    expect(
+      within(others)
+        .getAllByRole("button")
+        .map((tile) => tile.textContent),
+    ).toEqual(["Messages", "Settings"]);
+    expect(group.compareDocumentPosition(others) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   test("opens as a modal dialog with Bern time and the app tiles", () => {
     render(<Harness />);
     openPhone();

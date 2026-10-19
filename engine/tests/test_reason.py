@@ -17,6 +17,15 @@ class ReasonTest(unittest.TestCase):
             },
         )
 
+    def test_claims_sharing_the_word_as_written_come_before_those_sharing_its_form(self):
+        self.assertEqual(
+            reason(asked("glucose sensors"), ADA),
+            {"text": "Expertise: continuous glucose monitoring", "cites": ["/fields/expertise/0"]},
+        )
+        self.assertEqual(
+            reason(asked("sensors"), ADA), {"text": "Unit: Sensor Lab", "cites": ["/fields/unit/0"]}
+        )
+
     def test_a_meaning_only_match_describes_the_profile(self):
         self.assertEqual(
             reason(asked("blood sugar"), ADA),

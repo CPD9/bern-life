@@ -1,0 +1,113 @@
+{
+  "snapshot": "fixture",
+  "people": [
+    {
+      "id": "person-example-ada-muster",
+      "kind": "person",
+      "source_id": "example",
+      "name": {
+        "value": "Ada Muster",
+        "method": "selector",
+        "evidence": {
+          "page_url": "https://www.example-institute.test/team/ada-muster",
+          "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
+          "span": "Dr. Ada Muster",
+          "start": 0,
+          "fetched_at": "2026-10-18T12:00:00Z"
+        }
+      },
+      "source_url": "https://www.example-institute.test/team/ada-muster",
+      "fields": {
+        "role": [
+          {
+            "value": "Group Leader",
+            "method": "selector",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/team/ada-muster",
+              "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
+              "span": "Group Leader, Sensor Lab",
+              "start": 15,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          }
+        ],
+        "unit": [
+          {
+            "value": "Sensor Lab",
+            "method": "selector",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/team/ada-muster",
+              "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
+              "span": "Sensor Lab",
+              "start": 29,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          },
+          {
+            "value": "Example Institute for Engineering",
+            "method": "selector",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/team/ada-muster",
+              "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
+              "span": "Example Institute for Engineering",
+              "start": 40,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          }
+        ],
+        "expertise": [
+          {
+            "value": "continuous glucose monitoring",
+            "method": "model",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/team/ada-muster",
+              "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
+              "span": "continuous glucose monitoring",
+              "start": 84,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          },
+          {
+            "value": "wearable biosensors",
+            "method": "model",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/team/ada-muster",
+              "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
+              "span": "wearable biosensors",
+              "start": 115,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          }
+        ],
+        "projects": [
+          {
+            "value": "GlucoPatch",
+            "method": "model",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/team/ada-muster",
+              "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
+              "span": "GlucoPatch, a skin-worn sensor for people with type 1 diabetes",
+              "start": 179,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          }
+        ],
+        "infrastructure": [
+          {
+            "value": "cleanroom for thin-film sensor fabrication",
+            "method": "model",
+            "evidence": {
+              "page_url": "https://www.example-institute.test/team/ada-muster",
+              "page_sha256": "ae1bbd3174a5e9aa574bcf0527f27df85a86375c31e72b9ca0e3d96f7e5911d4",
+              "span": "cleanroom for thin-film sensor fabrication",
+              "start": 259,
+              "fetched_at": "2026-10-18T12:00:00Z"
+            }
+          }
+        ],
+        "services": []
+      }
+    }
+  ],
+  "total": 1
+}

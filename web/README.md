@@ -62,10 +62,13 @@ not messaged or asked; their handles (`demo-lena`) hold a hyphen, which sign-up 
 
 ## Settings
 
-The phone's Settings app stores night mode and lite graphics in `localStorage` (key
-`bernlife.settings`) and mirrors them on `<html>`, where anything can read them:
-`data-theme="day" | "night"` (absent: follow the device) and `data-graphics="lite"` (absent when
-off). An inline script applies them before the first paint.
+The phone's Settings app stores night mode, lite graphics, the desktop background and the
+screensaver switch in `localStorage` (key `bernlife.settings`). Night mode and lite graphics are
+mirrored on `<html>`, where anything can read them: `data-theme="day" | "night"` (absent: follow
+the device) and `data-graphics="lite"` (absent when off). An inline script applies them before the
+first paint. The office computer reads the other two itself: a drawn scene (Bern, Aare, Night sky
+or Plain) behind its windows, and after 90 seconds without activity a screensaver with that scene
+and the Bern time; lite graphics and reduced motion stop all motion in both.
 
 ## Layout
 

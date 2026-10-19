@@ -1,6 +1,7 @@
-// A place's panel: the units in the building with their verbatim addresses, and, after a search,
-// the results found there. People from public pages appear only here, as entries with sources:
-// the same result card as Ask, so every claim opens its evidence; fixture results get a plain list.
+// A place's panel: two cards. On the right the place: the units in the building with their verbatim
+// addresses and, after a search, the matches found there, on the same result card as Ask, so every
+// claim opens its evidence (fixture results get a plain list). On the left its people
+// (place-people.tsx), listed without a search. On a phone the cards stack, place first.
 // Walked in through the door, the same panel is the place's lobby; you leave it by going outside.
 
 import { useEffect, useRef } from "react";
@@ -10,6 +11,7 @@ import { ResultCard } from "@/infrastructure/ui/result-card";
 import { type Building } from "./buildings";
 import { type BuildingLight, type SearchResult } from "./light";
 import { KIND_LABELS } from "./markers/place-markers";
+import { type LoadPlacePeople, PeopleCard } from "./place-people";
 import { type Place } from "./places";
 
 const LINK = "text-primary font-bold underline underline-offset-2";
@@ -84,6 +86,8 @@ type PanelProps = {
   /** Opened by walking in through the door. */
   lobby?: boolean;
   events?: AppEventSink;
+  /** Reads the people of one place; the engine route by default. */
+  loadPeople?: LoadPlacePeople;
 };
 
 export function PlacePanel({
@@ -95,6 +99,7 @@ export function PlacePanel({
   onWalkHere,
   lobby = false,
   events = appEvents,
+  loadPeople,
 }: PanelProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const headingId = `place-${building.key.replace(/[^a-z0-9]+/gi, "-")}`;
@@ -107,76 +112,81 @@ export function PlacePanel({
   }, [building.key, lobby, events]);
 
   return (
-    <section
+    <div
       data-place-panel
-      aria-labelledby={headingId}
-      className="bg-panel shadow-panel border-panel-border rounded-panel absolute inset-x-3 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-20 flex max-h-[45vh] flex-col gap-4 overflow-y-auto border p-5 sm:inset-x-auto sm:top-24 sm:right-4 sm:bottom-auto sm:max-h-[calc(100vh-12rem)] sm:w-96"
+      className="absolute inset-x-3 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-20 flex max-h-[min(45vh,calc(100dvh-var(--hud-bottom,5.5rem)-7rem))] flex-col gap-3 overflow-y-auto sm:inset-x-auto sm:top-24 sm:right-4 sm:bottom-auto sm:max-h-none sm:flex-row-reverse sm:items-start sm:overflow-visible"
     >
-      <div className="flex items-start justify-between gap-3">
-        <h2 id={headingId} ref={heading} tabIndex={-1} className="text-lg font-extrabold">
-          {panelHeading(building, lobby)}
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-pill bg-chip px-3 py-1 text-sm font-bold"
-        >
-          {lobby ? "Go outside" : "Close"}
-        </button>
-      </div>
-      {(onSearchHere !== undefined || (onWalkHere !== undefined && !lobby)) && (
-        <div className="flex flex-wrap gap-2">
-          {onSearchHere !== undefined && (
-            <button
-              type="button"
-              onClick={() => onSearchHere(building)}
-              className="bg-primary text-primary-ink rounded-pill px-4 py-1.5 text-sm font-bold"
-            >
-              Search here
-            </button>
-          )}
-          {onWalkHere !== undefined && !lobby && (
-            <button
-              type="button"
-              onClick={() => onWalkHere(building)}
-              className="bg-chip rounded-pill px-4 py-1.5 text-sm font-bold"
-            >
-              Walk here
-            </button>
-          )}
+      <section
+        aria-labelledby={headingId}
+        className="bg-panel shadow-panel border-panel-border rounded-panel flex shrink-0 flex-col gap-4 border p-5 sm:max-h-[calc(100vh-12rem)] sm:w-96 sm:overflow-y-auto"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <h2 id={headingId} ref={heading} tabIndex={-1} className="text-lg font-extrabold">
+            {panelHeading(building, lobby)}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-pill bg-chip px-3 py-1 text-sm font-bold"
+          >
+            {lobby ? "Go outside" : "Close"}
+          </button>
         </div>
-      )}
-      {light !== undefined && (
-        <div className="flex flex-col gap-3">
-          <h3 className="font-extrabold">
-            {light.results.length === 1 ? "1 match here" : `${light.results.length} matches here`}
-            {fixture && (
-              <span className="rounded-pill bg-chip ml-2 px-2 py-0.5 align-middle text-xs">
-                FIXTURE
-              </span>
+        {(onSearchHere !== undefined || (onWalkHere !== undefined && !lobby)) && (
+          <div className="flex flex-wrap gap-2">
+            {onSearchHere !== undefined && (
+              <button
+                type="button"
+                onClick={() => onSearchHere(building)}
+                className="bg-primary text-primary-ink rounded-pill px-4 py-1.5 text-sm font-bold"
+              >
+                Search here
+              </button>
             )}
-          </h3>
-          <ul className="flex flex-col gap-4">
-            {light.results.map((result) =>
-              fixture ? (
-                <FixtureMatch key={result.profile.id} result={result} />
-              ) : (
-                <li key={result.profile.id}>
-                  <ResultCard result={result} />
-                </li>
-              ),
+            {onWalkHere !== undefined && !lobby && (
+              <button
+                type="button"
+                onClick={() => onWalkHere(building)}
+                className="bg-chip rounded-pill px-4 py-1.5 text-sm font-bold"
+              >
+                Walk here
+              </button>
             )}
-          </ul>
-        </div>
-      )}
-      <ul className="flex flex-col gap-4">
-        {building.places.map((place) => (
-          <PlaceEntry key={place.id} place={place} />
-        ))}
-      </ul>
-      <p className="text-muted text-xs">
-        Position placed by hand from the address; approximate (street level).
-      </p>
-    </section>
+          </div>
+        )}
+        {light !== undefined && (
+          <div className="flex flex-col gap-3">
+            <h3 className="font-extrabold">
+              {light.results.length === 1 ? "1 match here" : `${light.results.length} matches here`}
+              {fixture && (
+                <span className="rounded-pill bg-chip ml-2 px-2 py-0.5 align-middle text-xs">
+                  FIXTURE
+                </span>
+              )}
+            </h3>
+            <ul className="flex flex-col gap-4">
+              {light.results.map((result) =>
+                fixture ? (
+                  <FixtureMatch key={result.profile.id} result={result} />
+                ) : (
+                  <li key={result.profile.id}>
+                    <ResultCard result={result} />
+                  </li>
+                ),
+              )}
+            </ul>
+          </div>
+        )}
+        <ul className="flex flex-col gap-4">
+          {building.places.map((place) => (
+            <PlaceEntry key={place.id} place={place} />
+          ))}
+        </ul>
+        <p className="text-muted text-xs">
+          Position placed by hand from the address; approximate (street level).
+        </p>
+      </section>
+      <PeopleCard building={building} {...(loadPeople === undefined ? {} : { load: loadPeople })} />
+    </div>
   );
 }

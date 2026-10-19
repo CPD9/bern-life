@@ -1,10 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import agent from "../../contracts/fixtures/agent.json";
 import numbers from "../../contracts/fixtures/numbers.json";
+import placePeople from "../../contracts/fixtures/place-people.json";
 import opportunities from "../../contracts/fixtures/result-opportunities.json";
 import sources from "../../contracts/fixtures/sources.json";
 import { abstainedFixture, briefFixture, healthFixture, resultFixture } from "@/test/fixtures";
-import { parseAgentReply, parseNumbers, parseSearchResponse, parseSourcesList } from "./contract";
+import {
+  parseAgentReply,
+  parseNumbers,
+  parsePlacePeople,
+  parseSearchResponse,
+  parseSourcesList,
+} from "./contract";
 import { createFixtureClient } from "./fixture-client";
 
 function parsed<T>(value: T | null): T {
@@ -25,6 +32,7 @@ const client = createFixtureClient({
   agent: agentFixture,
   sources: sourcesFixture,
   numbers: numbersFixture,
+  placePeople: parsed(parsePlacePeople(placePeople)),
   health: healthFixture,
 });
 

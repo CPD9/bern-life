@@ -1,9 +1,10 @@
 """Why it matches, without a model: the profile's claim values, each cited by its pointer.
 
-The reason lists the claims that share a content word with the query (matching.py). Search shows
-a profile without such a claim only when the query names it; then the reason says who the profile
-is, from its role, unit and first expertise, and still cites every value it shows. The text never
-says more than the cited values.
+The reason lists the claims that share a content word with the query (matching.py): those sharing
+it as written when there are any, else those sharing its word form. Search shows a profile
+without such a claim only when the query names it; then the reason says who the profile is, from
+its role, unit and first expertise, and still cites every value it shows. The text never says
+more than the cited values.
 """
 
 from collections.abc import Mapping, Sequence
@@ -39,7 +40,9 @@ def render(profile: Profile, chosen: list[tuple[str, int]]) -> str:
 def reason(
     question: Asked, profile: Profile, enrichment: Mapping[str, Sequence[str]] | None = None
 ) -> dict[str, object]:
-    matched = matched_claims(question, profile, enrichment)
+    matched = matched_claims(question, profile, enrichment, exact=True) or matched_claims(
+        question, profile, enrichment
+    )
     chosen = (matched or describing_claims(profile))[:MAX_CLAIMS]
     while chosen and len(render(profile, chosen)) > MAX_TEXT:
         chosen = chosen[:-1]
