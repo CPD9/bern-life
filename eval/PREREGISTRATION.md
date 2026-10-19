@@ -216,3 +216,43 @@ rule above: each lever is adopted or rejected on dev and dev2 only. The final go
 the third time gold is scored for this work, and the report says so.
 
 Results: pending.
+
+### 2026-10-19: three fixes to titles and word forms after review, and gold-informed levers (#226), before the runs
+Not a change to the questions, data, metrics or rules above; `eval/gold.jsonl` and
+`eval/dev2.jsonl` are unchanged. Written and committed before the runs it describes. A review of
+the titles and word forms entry probed the stored data outside every eval set and found three
+defects:
+- (c) Full text matched a word's light form as a prefix with the word's own weight, so it also
+  reached unrelated words: "species" became `speci:*` (13 chunks hold the word, 623 the prefix:
+  special, specialist, specific), and "transfer" reached "transformation". Fix: a query word
+  matches only the words `word_form` maps to its own form ("species", "specie"; "Kohlenhydrate",
+  "Kohlenhydraten"), the comparison the claim rule makes. Coverage still counts exact words only.
+- (d) "Pre" and "Pr" opened a name in English Title Case: "Pre Clinical Models of Sepsis"
+  abstained. Fix: "Pr", "Pre" and "Dre" open a name only when written with a period or after a
+  French article or preposition ("la Pre", "du Pr", "chez la Dre").
+- (e) Reasons cite claims that share only a word form, so recorded explanations miss the cache.
+  Fix: a reason cites the claims sharing an exact word with the question, and the claims sharing
+  only a form when there are none. Which results show, and their order, do not change.
+
+Rule, in the setup of the titles and word forms entry (bundle-20261019-3, its one shared load,
+predictions in replay, no model calls):
+- (c) is adopted if, on dev, against word forms in the claim rule only (full text on exact words),
+  recall@10 and MRR are not lower, traceability stays 100%, invented entities stay 0, invented
+  queries abstained are not fewer and false abstentions are not more: the rule (b) passed.
+  Otherwise full text goes back to exact words and the claim rule keeps its word forms.
+- (d) and (e) are adopted if, on dev, every query keeps the same results in the same order; (e)
+  may change only the claims a reason cites.
+- Each row is also run on dev2 and reported. Dev2 does not decide these fixes, which repair (b)
+  rather than add a lever.
+- Gold is not run for these fixes. The gold row "(a) + (b)" above measured the prefix. The final
+  gold run of #226 measures the fixed code, and its report says so.
+
+Gold-informed levers. The dev2 entry says a table of gold misses by stage chose the stages to work
+on, and that gold was scored for raising or removing the unit cap and for keeping profiles through
+a passage before that entry's rule was written. A gold gain from a lever of this round is
+therefore not a held-out measurement. Every gold number from the final run of #226, and any gold
+number of a lever chosen after the miss table, is labelled "gold-informed, not held-out" wherever
+it appears, README included. The unit cap and passage levers are also named as scored on gold
+before their rule.
+
+Results: pending.
