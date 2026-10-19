@@ -3,6 +3,7 @@
 // the same result card as Ask, so every claim opens its evidence; fixture results get a plain list.
 
 import { useEffect, useRef } from "react";
+import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import { ResultCard } from "@/infrastructure/ui/result-card";
 import { type Building } from "./buildings";
 import { type BuildingLight, type SearchResult } from "./light";
@@ -65,19 +66,31 @@ type PanelProps = {
   onClose: () => void;
   /** Starts a question about this place in Ask; absent when nothing can take it. */
   onSearchHere: ((building: Building) => void) | undefined;
+  events?: AppEventSink;
 };
 
-export function PlacePanel({ building, light, fixture, onClose, onSearchHere }: PanelProps) {
+export function PlacePanel({
+  building,
+  light,
+  fixture,
+  onClose,
+  onSearchHere,
+  events = appEvents,
+}: PanelProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const headingId = `place-${building.key.replace(/[^a-z0-9]+/gi, "-")}`;
 
   useEffect(() => heading.current?.focus(), [building.key]);
+  // Opening a place is how the story's "enter the lobby" step is done.
+  useEffect(() => {
+    events.emit("lobby_entered");
+  }, [building.key, events]);
 
   return (
     <section
       data-place-panel
       aria-labelledby={headingId}
-      className="bg-panel shadow-panel border-panel-border rounded-panel absolute inset-x-3 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-20 flex max-h-[45vh] flex-col gap-4 overflow-y-auto border p-5 sm:inset-x-auto sm:top-24 sm:bottom-auto sm:left-4 sm:max-h-[calc(100vh-12rem)] sm:w-96"
+      className="bg-panel shadow-panel border-panel-border rounded-panel absolute inset-x-3 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-20 flex max-h-[45vh] flex-col gap-4 overflow-y-auto border p-5 sm:inset-x-auto sm:top-24 sm:right-4 sm:bottom-auto sm:max-h-[calc(100vh-12rem)] sm:w-96"
     >
       <div className="flex items-start justify-between gap-3">
         <h2 id={headingId} ref={heading} tabIndex={-1} className="text-lg font-extrabold">
