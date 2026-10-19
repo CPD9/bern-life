@@ -18,7 +18,8 @@ make run      # Postgres, the engine and the web app, replaying the bundle: no G
 
 Open **http://127.0.0.1:3000**. `make stop` stops it again. The search without the world is at
 http://127.0.0.1:3000/navigator, and the office computer without the 3D room at
-http://127.0.0.1:3000/office.
+http://127.0.0.1:3000/office. In a browser without 3D graphics (WebGL), the map and the office
+room give way to a short note, and Ask, the office desk and every app still work.
 
 **A short tour**
 
@@ -178,6 +179,32 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
 - Source pages remain their publishers' property; results quote only short evidence sentences
   ([`NOTICE`](NOTICE), [`PROVENANCE.md`](PROVENANCE.md)).
 
+### Corrections and removal
+
+Bern Life removes on request; the Swiss Federal Act on Data Protection (nDSG) gives the people
+named the right to ask. Every claim is a sentence quoted from an institution's public page on the
+date shown beside it. Every quote and map address in the app has a **Wrong or outdated?** note
+that links to the app's own [`/corrections`](web/app/corrections/page.tsx) page, which says what
+this section says; the note only explains, and nothing is sent from the app.
+
+- **Wrong or outdated sentence:** the institution corrects its own page, and the change reaches
+  Bern Life with the next snapshot bundle.
+- **Wrong or outdated address:** the map's addresses are not in the bundle but in git, in
+  [`web/features/world/places.json`](web/features/world/places.json) with page, date and sha256
+  per row. One is corrected or removed by a commit to that file, and git history keeps the
+  earlier value.
+- **Removal:** write to [peter.dike@unibe.ch](mailto:peter.dike@unibe.ch) with the page link and
+  the sentence; nothing else about you is needed. The `/corrections` page shows the address as a
+  plain mail link that opens your own mail program; the app sends and keeps nothing. If you do
+  not mind others reading the request, open an issue on this repository instead.
+- **What happens:** the page is left out. Its path goes into `deny_paths` in its source's file in
+  [`sources/`](sources/), and a new bundle is built without it and pinned; the earlier release
+  assets that hold it are withdrawn and the hosted copy is reloaded. Its nightly backups age out
+  after 14 days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)). Git holds no page, so
+  nothing in its history needs rewriting. Sentences someone saved to the Library, and the match
+  reports they made, are copies kept in their browser that do not change: they stay there until
+  that person removes them (each has a **Remove**).
+
 ## Limits and roadmap
 
 - **Recall is below the case's bar** (criterion 1 in the table). A candidate is shown only when a
@@ -196,6 +223,8 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
   network of labs and experts. What you save to the Library and your office plot stay on this
   device. A map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the
   repository but not yet drawn in the world.
+- **A single claim cannot be removed on its own.** Removal works per page (`deny_paths`), so
+  asking for one sentence to go takes its whole page out of the next bundle.
 - **Notifications stay in the app** (the bell). Opt-in e-mail or push notifications are not
   decided yet.
 - **The next bundle is not pinned yet.** Replay and every number above come from

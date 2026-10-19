@@ -9,6 +9,7 @@ function memoryStorage() {
     storage: {
       getItem: (key: string) => saved.get(key) ?? null,
       setItem: (key: string, value: string) => void saved.set(key, value),
+      removeItem: (key: string) => void saved.delete(key),
       key: (index: number) => [...saved.keys()][index] ?? null,
       get length() {
         return saved.size;
@@ -61,7 +62,22 @@ describe("createReportStore", () => {
     ]);
   });
 
-  test("blocked storage saves nothing and loads nothing", () => {
+  test("removes one report from this browser and leaves the others", () => {
+    const { saved, storage } = memoryStorage();
+    saved.set("bernlife.report.old", JSON.stringify(report));
+    saved.set("bernlife.report.new", JSON.stringify(report));
+    saved.set("bernlife.settings", "{}");
+    const store = createReportStore(
+      () => storage,
+      () => "unused",
+    );
+    expect(store.remove("old")).toBe(true);
+    expect([...saved.keys()]).toEqual(["bernlife.report.new", "bernlife.settings"]);
+    expect(store.load("old")).toBeNull();
+    expect(store.list().map(({ id }) => id)).toEqual(["new"]);
+  });
+
+  test("blocked storage saves, loads and removes nothing", () => {
     const blocked = () => {
       throw new DOMException("denied", "SecurityError");
     };
@@ -69,5 +85,6 @@ describe("createReportStore", () => {
     expect(store.save(report)).toBeNull();
     expect(store.load("r1")).toBeNull();
     expect(store.list()).toEqual([]);
+    expect(store.remove("r1")).toBe(false);
   });
 });
