@@ -23,7 +23,7 @@ import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useSettings } from "@/infrastructure/use-settings";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
 import { useWorldPhone } from "./world-phone";
-import { useUnreadMessages } from "./use-unread-messages";
+import { unreadRefresh, useUnreadMessages } from "./use-unread-messages";
 import { useWorldApps } from "./use-world-apps";
 import { WorldHud, WorldSide } from "./world-hud";
 import { useWorldLumi } from "./world-lumi";
@@ -62,10 +62,10 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const desktop = useDesktop();
   const now = useNow();
   const health = useHealth();
-  // Read again when the phone or the desk closes, since reading a thread sends no live notice.
+  // Read again when the phone or the desk's Messages closes: reading sends no live notice.
   const unreadMessages = useUnreadMessages(
     account.state.status === "signed-in",
-    phone.open || desktopOpen,
+    unreadRefresh(phone.open, desktopOpen, desktop.windows),
   );
   const shownView = view ?? landingView(onboarding.done);
   // Called after useStory, so the story already listens when the office reports it is ready.

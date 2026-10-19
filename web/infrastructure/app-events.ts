@@ -35,7 +35,8 @@ export const appEvents: AppEvents = createAppEvents();
  * - report_made: features/report/open-report.ts
  * - lobby_entered: features/world/place-panel.tsx (opening a place on the map)
  * - message_sent: features/messages/use-messages.ts
- * - office_ready: features/shell/use-office-ready.ts (the office after onboarding, or the desk)
+ * - office_ready: features/shell/use-office-ready.ts (after onboarding: first office render, or
+ *   sitting at the desk)
  * - opportunity_saved, library_item_saved: app/shared-apps.tsx (the Library's save button, through
  *   features/library/library-items.ts savedEventNames)
  * - garage_visited, numbers_seen: app/shared-apps.tsx (features/garage/garage-app.tsx; numbers only

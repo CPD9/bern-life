@@ -12,6 +12,21 @@ const signedOutApi: MessagesApi = {
 };
 const noStream: Connect = () => () => undefined;
 
+type WindowPlace = { readonly appId: string };
+
+/**
+ * The refresh key for the count: it changes when the phone opens or closes, and when the desk's
+ * Messages window opens or closes while the player is seated. Windows outlive leaving the desk,
+ * so an open Messages window counts only while the desk is open.
+ */
+export function unreadRefresh(
+  phoneOpen: boolean,
+  desktopOpen: boolean,
+  windows: readonly WindowPlace[],
+): boolean {
+  return phoneOpen || (desktopOpen && windows.some((place) => place.appId === "messages"));
+}
+
 /**
  * Unread messages for the Phone tab and the desk's Messages; null when signed out. Reading a
  * thread sends no live notice, so the count is read again whenever `refresh` changes, such as
