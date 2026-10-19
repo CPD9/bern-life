@@ -12,8 +12,8 @@ import { blocked, type WalkMap } from "./walk-map";
  * 1.4 m/s one street would take minutes, so the city's time runs about 85 times faster.
  */
 export const WALK_SPEED = 6;
-/** Half the figure's shoulders on the map, narrow enough for the Old Town's lanes. */
-export const WALKER_RADIUS = 0.3;
+/** Narrower than the figure's shoulders, so the Old Town's lanes and the bridges' decks fit. */
+export const WALKER_RADIUS = 0.25;
 /** Radians a second: a full about-turn in a quarter of a second. */
 const TURN_SPEED = 12;
 const ARRIVED = 1e-6;

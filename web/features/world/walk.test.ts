@@ -39,16 +39,16 @@ const still = { direction: [0, 0] as MapPoint, seconds: 0.1, snapTurn: false };
 
 describe("collision", () => {
   test("a house blocks its footprint plus the walker's radius, and nothing beyond", () => {
-    expect(blocked(MAP, [0, 1.69], R)).toBe(false);
-    expect(blocked(MAP, [0, 1.71], R)).toBe(true);
-    expect(blocked(MAP, [2.25, 3], R)).toBe(true);
-    expect(blocked(MAP, [2.35, 3], R)).toBe(false);
+    expect(blocked(MAP, [0, 1.74], R)).toBe(false);
+    expect(blocked(MAP, [0, 1.76], R)).toBe(true);
+    expect(blocked(MAP, [2.2, 3], R)).toBe(true);
+    expect(blocked(MAP, [2.3, 3], R)).toBe(false);
   });
 
   test("the map's edge is a wall", () => {
-    expect(blocked(MAP, [9.65, 0], R)).toBe(false);
-    expect(blocked(MAP, [9.75, 0], R)).toBe(true);
-    expect(blocked(MAP, [0, -9.75], R)).toBe(true);
+    expect(blocked(MAP, [9.7, 0], R)).toBe(false);
+    expect(blocked(MAP, [9.8, 0], R)).toBe(true);
+    expect(blocked(MAP, [0, -9.8], R)).toBe(true);
   });
 
   test("the river blocks off the bridge; on the deck it does not", () => {
@@ -73,29 +73,27 @@ describe("collision", () => {
 
 describe("sliding", () => {
   test("a step into a wall at an angle keeps its sideways part and ends against the wall", () => {
-    expect(slide(MAP, [0, 1.5], [0.5, 1.8], R)).toEqual([0.5, 1.696875]);
+    expect(slide(MAP, [0, 1.5], [0.5, 1.8], R)).toEqual([0.5, 1.74375]);
   });
 
   test("a step straight into a wall ends against it", () => {
-    expect(slide(MAP, [0, 1.5], [0, 1.8], R)).toEqual([0, 1.696875]);
+    expect(slide(MAP, [0, 1.5], [0, 1.8], R)).toEqual([0, 1.74375]);
   });
 
   test("a step that starts against the wall goes nowhere", () => {
-    expect(slide(MAP, [0, 1.699], [0, 1.8], R)).toEqual([0, 1.699]);
+    expect(slide(MAP, [0, 1.749], [0, 1.8], R)).toEqual([0, 1.749]);
   });
 
-  test("a long step stops at the wall instead of passing through it", () => {
-    const [x, z] = move(MAP, [0, 0], [0, 6], R);
-    expect(x).toBe(0);
-    expect(z).toBeCloseTo(1.7, 2);
-    expect(z).toBeLessThan(1.7);
+  test("a long step stops touching the wall instead of passing through it", () => {
+    expect(move(MAP, [0, 0], [0, 6], R)).toEqual([0, 1.75]);
+    expect(blocked(MAP, [0, 1.75], R)).toBe(false);
   });
 
   test("walking diagonally along a facade slides along it", () => {
     const [x, z] = move(MAP, [-1, 1.6], [2, 1], R);
     expect(x).toBeCloseTo(1, 12);
-    expect(z).toBeCloseTo(1.7, 2);
-    expect(z).toBeLessThan(1.7);
+    expect(z).toBeCloseTo(1.75, 2);
+    expect(z).toBeLessThan(1.75);
   });
 });
 
@@ -142,7 +140,7 @@ describe("walking", () => {
   test("a path into a wall stops you at it and is dropped", () => {
     let walker = standing([0, 0], [[0, 3]]);
     for (let frame = 0; frame < 10; frame++) walker = walkTick(MAP, walker, still);
-    expect(walker.at[1]).toBeCloseTo(1.7, 2);
+    expect(walker.at[1]).toBeCloseTo(1.75, 2);
     expect(walker.path).toEqual([]);
   });
 

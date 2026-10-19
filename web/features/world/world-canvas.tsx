@@ -1,29 +1,19 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type SearchResponse } from "@/infrastructure/contract-types.generated";
-import { type Building, groupPlacesByBuilding } from "./buildings";
+import { type Building } from "./buildings";
 import { type CameraCommand } from "./camera-moves";
-import { liteTrees, planCity } from "./city-plan";
+import { BUILDINGS, CITY } from "./city-layout";
 import { useWorldDisplay } from "./display";
 import { type Door, HOME_DOOR_KEY } from "./doors";
-import { AARE_PATH, DISTRICTS, MAP_BOUNDS, type MapPoint, RATHAUSPLATZ, ROADS } from "./geography";
+import { type MapPoint } from "./geography";
 import { lightUp } from "./light";
-import { type CameraHandle, MapCamera } from "./map-camera";
-import { AnchorProjector } from "./markers/anchor-projector";
+import { type CameraHandle } from "./map-camera";
 import { markerAnchors, PlaceMarkers } from "./markers/place-markers";
-import { paletteFor } from "./palette";
 import { PlacePanel } from "./place-panel";
-import { PLACES } from "./places";
 import { agentAnchor, AgentButton, type MapAgent } from "./scene/agents";
-import { City } from "./scene/city";
-import { Ground } from "./scene/ground";
-import { HomeLot } from "./scene/home-lot";
-import { Lights } from "./scene/lights";
-import { PathPreview } from "./scene/path-preview";
-import { PlaceBuildings } from "./scene/place-buildings";
-import { Walkers } from "./scene/walkers";
+import { MapScene } from "./scene/map-scene";
 import { SearchSummary } from "./search-summary";
 import { useMapKeys } from "./use-map-keys";
 import { useWalk } from "./use-walk";
@@ -32,16 +22,6 @@ import { groundHeight } from "./walk-map";
 import { walkWorld } from "./walk-world";
 import { useWorldSearch, worldSearch } from "./world-search";
 
-const BUILDINGS = groupPlacesByBuilding(PLACES);
-/** The square in front of the city hall stays open, as it is in Bern. */
-const CITY = planCity({
-  districts: DISTRICTS,
-  river: AARE_PATH,
-  roads: ROADS,
-  sites: [...BUILDINGS.map((building): [number, number] => [building.x, building.z]), RATHAUSPLATZ],
-  bounds: MAP_BOUNDS,
-  seed: 1291,
-});
 const MARKER_ANCHORS = markerAnchors(BUILDINGS);
 
 export type MapPlayer = {
@@ -73,7 +53,8 @@ const KEYS = {
   walk: "Arrow keys or W A S D walk, Q and E turn, plus and minus zoom; a click on the ground walks there and Escape stops. Tab reaches each place.",
 } as const;
 
-// Transparent so the shell's sky shows through; "demand" renders only when something changes.
+// The map: its canvas (scene/map-scene.tsx), transparent so the shell's sky shows through, and over
+// it the place markers, your agent's label, the walking controls and a place's panel.
 export function WorldCanvas({
   agent,
   player,
@@ -82,8 +63,6 @@ export function WorldCanvas({
   ...props
 }: WorldCanvasProps) {
   const display = useWorldDisplay();
-  const palette = paletteFor(display.night);
-  const shadows = !display.lite;
   const cameraRef = useRef<CameraHandle | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const anchorsRef = useRef(new Map<string, HTMLElement>());
@@ -179,51 +158,19 @@ export function WorldCanvas({
       <p id="map-keys" className="sr-only">
         {walk.walking ? KEYS.walk : KEYS.map}
       </p>
-      {/* Shadows and pixel ratio are fixed when the renderer is created, so lite mode remounts it. */}
-      <Canvas
-        key={display.lite ? "lite" : "full"}
-        frameloop="demand"
-        shadows={shadows ? "percentage" : false}
-        dpr={display.lite ? 1 : [1, 2]}
-        gl={{ alpha: true }}
-        camera={{ fov: 35, near: 1, far: 1200 }}
-      >
-        <Lights night={display.night} shadows={shadows} />
-        <Ground palette={palette} shadows={shadows} onPick={walk.walking ? goTo : undefined} />
-        <City
-          drawn={world.drawn}
-          trees={display.lite ? liteTrees(CITY.trees) : CITY.trees}
-          palette={palette}
-          shadows={shadows}
-        />
-        <PlaceBuildings
-          buildings={BUILDINGS}
-          palette={palette}
-          shadows={shadows}
-          lighting={lighting}
-        />
-        {player.home !== null && <HomeLot home={player.home} palette={palette} shadows={shadows} />}
-        <Walkers
-          map={world.map}
-          sessionRef={session}
-          heldRef={walk.held}
-          wakeRef={walk.wake}
-          doors={world.doors}
-          snapTurn={display.reducedMotion}
-          person={(walking) => player.figure(display.lite, walking)}
-          agent={(walking) => agent.figure(display.lite, walking)}
-          onDoor={walk.setDoor}
-          onPathEnd={walk.clearPreview}
-        />
-        {walk.preview !== null && <PathPreview points={walk.preview} map={world.map} />}
-        <AnchorProjector anchors={anchors} elementsRef={anchorsRef} />
-        <MapCamera
-          handleRef={cameraRef}
-          reducedMotion={display.reducedMotion}
-          framePoints={framePoints}
-          follow={walk.follow}
-        />
-      </Canvas>
+      <MapScene
+        display={display}
+        world={world}
+        home={player.home}
+        walk={walk}
+        lighting={lighting}
+        framePoints={framePoints}
+        anchors={anchors}
+        anchorsRef={anchorsRef}
+        cameraRef={cameraRef}
+        person={player.figure}
+        agent={agent.figure}
+      />
       {/* Its own stacking layer, so marker depth order never lifts a marker over the panel. */}
       <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden *:pointer-events-auto">
         <PlaceMarkers

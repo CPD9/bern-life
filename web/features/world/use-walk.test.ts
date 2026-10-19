@@ -103,5 +103,8 @@ describe("arriving", () => {
     expect(result.current.following).toBe(true);
     rerender({ inside: false, framePoints: [[1, 2]] });
     expect(result.current.following).toBe(false);
+    act(() => result.current.toggleWalking());
+    act(() => result.current.toggleWalking());
+    expect(result.current.following).toBe(true);
   });
 });

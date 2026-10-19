@@ -16,13 +16,16 @@ import { type WalkMap, walkMap } from "./walk-map";
 /** Every place's building is the same box: a small institute is as easy to find as a large one. */
 export const PLACE_BUILDING = { size: 2.6, height: 2.8, plate: 4.6 } as const;
 
-/** Your office: a small house at the back of a square lot, its door toward the default camera. */
-export const HOME = { lot: 3.2, width: 1.6, depth: 1.4, height: 1.5, back: 0.6 } as const;
+/**
+ * Your office: a small house at the back of a square lot, its door toward the default camera, as
+ * tall as a place's building with its roof, so it shows above you standing at its door.
+ */
+export const HOME = { lot: 3.2, width: 1.6, depth: 1.4, height: 2.2, back: 0.6 } as const;
 
 /** Half a generic block's widest side, and a tree crown's radius, kept off claimed ground. */
 const CLAIM_MARGIN = { block: 1.3, tree: 0.7 } as const;
 
-/** The railings stand on the deck's edges, short of the ramps, where you step on and off. */
+/** Railings just outside the deck's edges, short of the ramps, where you step on and off. */
 const RAIL_THICKNESS = 0.1;
 
 export function homeLot([x, z]: MapPoint): Footprint {
@@ -63,7 +66,7 @@ export function shownTrees(
 
 /** Two thin walls along a bridge's sides, so you cross it end to end and never fall off. */
 export function bridgeRails(deck: Footprint): Footprint[] {
-  const offset = deck.depth / 2;
+  const offset = deck.depth / 2 + RAIL_THICKNESS / 2;
   return [-1, 1].map((side) => ({
     x: deck.x + side * offset * Math.sin(deck.angle),
     z: deck.z + side * offset * Math.cos(deck.angle),

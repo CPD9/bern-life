@@ -125,10 +125,13 @@ export function useWalk({ map, start, inside, doors, framePoints }: WalkOptions)
     held,
     wake,
     walking,
+    // Starting to walk always brings the follow camera, whatever an earlier search did to it.
     toggleWalking: () => {
       if (walking) {
         stop();
         held.current.clear();
+      } else {
+        setFollowing(true);
       }
       setWalking(!walking);
     },

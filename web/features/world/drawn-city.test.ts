@@ -1,33 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { groupPlacesByBuilding } from "./buildings";
-import { planCity } from "./city-plan";
+import { BUILDINGS, CITY as PLAN } from "./city-layout";
 import { cityObstacles, cityWalkMap, drawnCity, homeLot, homeOffice } from "./drawn-city";
 import { homeDoor } from "./doors";
-import {
-  AARE_PATH,
-  BRIDGES,
-  DISTRICTS,
-  MAP_BOUNDS,
-  type MapPoint,
-  RATHAUSPLATZ,
-  ROADS,
-} from "./geography";
-import { PLACES } from "./places";
+import { BRIDGES, type MapPoint } from "./geography";
 import { bridgeFootprint } from "./scene/bridge-plan";
 import { covers, overlaps } from "./scene/footprint";
 import { AARE_CURVE, OLD_TOWN_HOUSES } from "./scene/town";
 import { WALKER_RADIUS } from "./walk";
 import { blocked, groundHeight } from "./walk-map";
 
-const BUILDINGS = groupPlacesByBuilding(PLACES);
-const PLAN = planCity({
-  districts: DISTRICTS,
-  river: AARE_PATH,
-  roads: ROADS,
-  sites: [...BUILDINGS.map((b): MapPoint => [b.x, b.z]), RATHAUSPLATZ],
-  bounds: MAP_BOUNDS,
-  seed: 1291,
-});
 /** An Old Town plot, among the house rows north of Kramgasse. */
 const OLD_TOWN_HOME: MapPoint = [12, -4];
 
