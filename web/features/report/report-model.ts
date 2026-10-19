@@ -4,8 +4,9 @@
 import { type ClaimRef, type SearchResult, citedClaims } from "@/infrastructure/claims";
 import type { Profile, SearchResponse } from "@/infrastructure/contract-types.generated";
 import { foldText } from "@/infrastructure/text-match";
+import { noveltyTags, notComputed, percent } from "@/infrastructure/ui/result-metrics";
 
-export const notComputed = "—";
+export { notComputed } from "@/infrastructure/ui/result-metrics";
 
 export type BriefNeed = NonNullable<SearchResponse["brief_terms"]>[number];
 
@@ -57,10 +58,6 @@ function modeLabel(mode: SearchResponse["mode"], fixture: boolean): string {
   }
 }
 
-function percent(value: number | null): string {
-  return value === null ? notComputed : `${Math.round(value * 100)}%`;
-}
-
 function firstValue(profile: Profile, field: "role" | "unit"): string {
   return profile.fields[field][0]?.value ?? notComputed;
 }
@@ -68,14 +65,6 @@ function firstValue(profile: Profile, field: "role" | "unit"): string {
 function joined(profile: Profile, field: "projects" | "infrastructure" | "services"): string {
   const values = profile.fields[field].map((claim) => claim.value);
   return values.length > 0 ? values.join(", ") : notComputed;
-}
-
-function novelty(result: SearchResult): string[] {
-  const metrics = result.metrics;
-  if (!metrics) return [];
-  const tags = [metrics.novelty.new_unit ? "New unit" : "Unit already above"];
-  if (metrics.novelty.adds.length > 0) tags.push(`Adds: ${metrics.novelty.adds.join(", ")}`);
-  return tags;
 }
 
 /** The cited claim whose sentence names a topic or an added wording; else the first one cited. */
@@ -97,7 +86,7 @@ function card(result: SearchResult, terms: readonly string[]): ReportCard {
     name: profile.name.value,
     role: firstValue(profile, "role"),
     unit: firstValue(profile, "unit"),
-    novelty: novelty(result),
+    novelty: noveltyTags(metrics),
     covers: metrics?.covers ?? [],
     missing: metrics?.missing ?? [],
     proof: proof && {
