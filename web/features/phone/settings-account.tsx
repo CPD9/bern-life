@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/infrastructure/ui/button";
 import { type Choice, ChoiceRow } from "./choice-row";
 import type { AccountLoad, ProfileApi, ProfileSave, ProfileVisibility } from "./profile-api";
@@ -14,7 +14,7 @@ const saveText: Record<ProfileSave, string> = {
   saved: "Saved.",
   "signed-out": "You are signed out. Sign in again to change this.",
   "not-connected": "Saving your profile is not connected yet.",
-  failed: "Not saved: the server could not be reached. Try again.",
+  failed: "Not saved. Try again in a moment.",
 };
 
 type AccountSettingsProps = { api: ProfileApi; signInHref: string };
@@ -24,6 +24,7 @@ export function AccountSettings({ api, signInHref }: AccountSettingsProps) {
   const [attempt, setAttempt] = useState(0);
   const [saved, setSaved] = useState<ProfileSave | null>(null);
   const [busy, setBusy] = useState(false);
+  const saving = useRef(false);
 
   useEffect(() => {
     let current = true;
@@ -81,9 +82,13 @@ export function AccountSettings({ api, signInHref }: AccountSettingsProps) {
       avatar: account.profile?.avatar ?? null,
       visibility: next,
     };
+    // One save at a time; a change while one is out is ignored, not queued.
+    if (saving.current) return;
+    saving.current = true;
     setBusy(true);
     setSaved(null);
     const outcome = await api.save(profile);
+    saving.current = false;
     setBusy(false);
     setSaved(outcome);
     if (outcome === "saved") setLoad({ status: "signed-in", account: { ...account, profile } });
@@ -101,7 +106,7 @@ export function AccountSettings({ api, signInHref }: AccountSettingsProps) {
         choices={choices}
         value={visibility}
         onChange={(next) => void change(next)}
-        disabled={busy}
+        busy={busy}
       />
       <p aria-live="polite" className="text-muted min-h-5 text-sm">
         {saved && saveText[saved]}

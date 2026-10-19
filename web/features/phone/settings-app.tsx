@@ -22,12 +22,15 @@ type SettingsAppProps = {
   /** Snapshot, counts and mode for "About & data sources"; left out, only the intro shows. */
   health?: PhoneHealth | undefined;
   signInHref?: string | undefined;
+  /** DEMO_FIXTURES: a "mock" engine is then the fixture, said as MOCK. */
+  fixtureMode?: boolean | undefined;
 };
 
 export function SettingsApp({
   profileApi = httpProfileApi,
   health,
   signInHref = "/account",
+  fixtureMode = false,
 }: SettingsAppProps) {
   const [settings, setSettings] = useSettings();
 
@@ -76,7 +79,7 @@ export function SettingsApp({
         <p className="text-muted text-sm">Saved on this device only.</p>
       </SettingsSection>
       <SettingsSection title="About & data sources">
-        <AboutDataSources health={health} />
+        <AboutDataSources health={health} fixtureMode={fixtureMode} />
       </SettingsSection>
     </div>
   );

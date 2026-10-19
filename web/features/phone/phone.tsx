@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
+import { useEscapeLayer } from "@/infrastructure/ui/escape-layers";
 import { WindowChrome } from "@/infrastructure/ui/window-chrome";
 import { NotificationCentre } from "./notification-centre";
 import { PhoneHome } from "./phone-home";
@@ -25,15 +26,17 @@ type PhoneProps = {
   unreadMessages?: number | undefined;
   /** Turns on the notification centre; its unread ones put a dot on the bell. */
   notifications?: readonly PhoneNotification[] | undefined;
+  /** Called after the notification centre has closed, so the app it opens is what shows. */
   onOpenNotification?: ((notification: PhoneNotification) => void) | undefined;
   onMarkAllRead?: (() => void) | undefined;
+  /** Shown inside the phone's dialog (the top layer), below the status bar: toasts, say. */
+  overlay?: ReactNode;
 };
 
-type FocusAfter = { kind: "tile"; appId: string } | { kind: "heading" } | null;
-
 // A native modal dialog: the page behind it is inert and Escape closes it from the home screen.
-// Inside an app, Back and Escape return to the app before or home, and focus lands on the tile
-// that opened it. Focus goes back to whatever opened the phone (the Phone tab) on close.
+// Inside an app, Back and Escape return to the app before or home. Whenever the app changes,
+// focus moves to the new app's title, or home to the tile of the app just left, so it never
+// falls to <body>. Focus goes back to whatever opened the phone (the Phone tab) on close.
 export function Phone({
   open,
   onClose,
@@ -46,11 +49,12 @@ export function Phone({
   notifications,
   onOpenNotification,
   onMarkAllRead,
+  overlay,
 }: PhoneProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
-  const focusAfter = useRef<FocusAfter>(null);
+  const shownApp = useRef<string | null>(appId);
   const headingId = useId();
   const [centreOpen, setCentreOpen] = useState(false);
   const reducedMotion = useReducedMotion();
@@ -70,41 +74,27 @@ export function Phone({
   }, [open]);
 
   useEffect(() => {
-    const target = focusAfter.current;
-    focusAfter.current = null;
-    if (target === null) return;
-    // Back to home lands on the tile that opened the app; anywhere else, on the app's title.
+    const left = shownApp.current;
+    shownApp.current = appId;
+    const element = dialog.current;
+    if (left === appId || !element?.open) return;
+    if (appId !== null) {
+      heading.current?.focus();
+      return;
+    }
     const tile =
-      target.kind === "tile" && appId === null
-        ? dialog.current?.querySelector<HTMLElement>(
-            `[data-app-tile="${CSS.escape(target.appId)}"]`,
-          )
-        : null;
-    (tile ?? heading.current)?.focus();
+      (left === null
+        ? null
+        : element.querySelector<HTMLElement>(`[data-app-tile="${CSS.escape(left)}"]`)) ??
+      element.querySelector<HTMLElement>("[data-app-tile]");
+    tile?.focus();
   }, [appId]);
 
-  function openApp(id: string) {
-    focusAfter.current = { kind: "heading" };
-    onAppChange(id);
-  }
-
-  function back() {
-    focusAfter.current = appId === null ? null : { kind: "tile", appId };
-    history.back();
-  }
-
-  // Escape inside an app goes back instead of closing the phone. A native listener, so a sheet
-  // inside the phone that handles Escape itself stops it first.
-  useEffect(() => {
-    const element = dialog.current;
-    if (!element || appId === null) return;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
-      event.preventDefault();
-      back();
-    }
-    element.addEventListener("keydown", onKeyDown);
-    return () => element.removeEventListener("keydown", onKeyDown);
+  // Escape inside an app goes back instead of closing the phone, wherever focus is. A sheet
+  // opened on top (the notification centre) is a higher layer and closes first.
+  useEscapeLayer(open && appId !== null, () => {
+    if (centreOpen) setCentreOpen(false);
+    else history.back();
   });
 
   function handleClose() {
@@ -115,6 +105,12 @@ export function Phone({
     opener.current?.focus();
   }
 
+  const openNotification = onOpenNotification
+    ? (notification: PhoneNotification) => {
+        setCentreOpen(false);
+        onOpenNotification(notification);
+      }
+    : undefined;
   const transition = reducedMotion ? "" : "motion-safe:animate-phone-in";
 
   return (
@@ -144,14 +140,14 @@ export function Phone({
                 title={app.label}
                 headingId={headingId}
                 headingRef={heading}
-                onBack={back}
+                onBack={history.back}
               >
                 {app.content}
               </WindowChrome>
             </section>
           ) : (
             <div key="home" className={`flex min-h-0 flex-1 flex-col ${transition}`}>
-              <PhoneHome now={now} apps={apps} onOpen={openApp} />
+              <PhoneHome now={now} apps={apps} onOpen={onAppChange} />
             </div>
           )}
           {centreOpen && notifications && (
@@ -159,9 +155,16 @@ export function Phone({
               notifications={notifications}
               now={now}
               onClose={() => setCentreOpen(false)}
-              onOpen={onOpenNotification}
+              onOpen={openNotification}
               onMarkAllRead={onMarkAllRead}
             />
+          )}
+          {overlay !== undefined && (
+            // Below the status bar, so nothing covers Close or the bell. contain:layout makes this
+            // box the frame for fixed-position children such as toasts.
+            <div className="pointer-events-none absolute inset-0 z-30 [contain:layout]">
+              {overlay}
+            </div>
           )}
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useId, useRef } from "react";
 import { IconButton } from "./button";
+import { useEscapeLayer } from "./escape-layers";
 import { keepTabInside } from "./focus-trap";
 
 type SheetProps = {
@@ -24,23 +25,17 @@ export function Sheet({ title, onClose, children }: SheetProps) {
     return () => before?.focus();
   }, []);
 
-  // A native listener, so Escape here is handled before a dialog the sheet sits in sees it.
+  // Escape closes the sheet as the topmost layer, even with focus on <body>.
+  useEscapeLayer(true, onClose);
+
   useEffect(() => {
     const element = panel.current;
     if (!element) return;
     const container = element;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
-        return;
-      }
-      keepTabInside(event, container);
-    }
+    const onKeyDown = (event: KeyboardEvent) => keepTabInside(event, container);
     container.addEventListener("keydown", onKeyDown);
     return () => container.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col justify-end bg-black/40">
