@@ -1,4 +1,4 @@
-"""Remove e-mail addresses and phone numbers from page text before it is stored.
+"""Remove e-mail addresses and phone numbers from page text and model output before storage.
 
 The project stores no contact details: the source page link is the way to reach a person. The
 replacement is a fixed token, so the text stays deterministic and evidence spans around it still
@@ -8,6 +8,7 @@ shape, so they are left alone.
 """
 
 import re
+from typing import Any
 
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 # A leading + is a strong sign, so that form may follow a letter, use hyphens and have a one- to
@@ -21,3 +22,14 @@ PHONE = re.compile(rf"(?<!\d[ ./-])(?:{PLUS}|{DIAL_00}|{NATIONAL})(?![ ./-]?\d)"
 
 def redact(text: str) -> str:
     return PHONE.sub("[phone]", EMAIL.sub("[email]", text))
+
+
+def redact_strings(value: Any) -> Any:
+    """Every string in a JSON value redacted; keys and other values as they are."""
+    if isinstance(value, str):
+        return redact(value)
+    if isinstance(value, list):
+        return [redact_strings(item) for item in value]
+    if isinstance(value, dict):
+        return {key: redact_strings(item) for key, item in value.items()}
+    return value

@@ -8,11 +8,12 @@ logged. Callers get `ModelUnavailable` with a marker (`timeout`, `http_<status>`
 exception rides along as `__context__`.
 """
 
+import http.client
 import json
 import time
 import urllib.error
 import urllib.request
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from .cache import Message
@@ -56,16 +57,25 @@ class OpenAIChat:
         seed: int | None,
         max_tokens: int,
     ) -> str:
-        request: dict[str, Any] = {
-            "model": model,
-            "messages": list(messages),
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        }
-        if seed is not None:
-            request["seed"] = seed
+        request = _completion(model, messages, temperature, seed, max_tokens)
         reply = self._call("/chat/completions", request, CALL_TIMEOUT)
         return _field(reply, lambda body: body["choices"][0]["message"]["content"] or "")
+
+    def chat_tools(
+        self,
+        model: str,
+        messages: Sequence[Mapping[str, Any]],
+        *,
+        tools: Sequence[Mapping[str, Any]],
+        temperature: float,
+        seed: int | None,
+        max_tokens: int,
+    ) -> dict[str, Any]:
+        """The model's message: its text, if any, and its tool calls with parsed arguments."""
+        request = _completion(model, messages, temperature, seed, max_tokens)
+        request["tools"] = list(tools)
+        reply = self._call("/chat/completions", request, CALL_TIMEOUT)
+        return _field(reply, lambda body: _tool_reply(body["choices"][0]["message"]))
 
     def _call(self, path: str, body: dict[str, Any] | None, timeout: float) -> Any:
         headers = {"Content-Type": "application/json"}
@@ -94,8 +104,47 @@ class OpenAIChat:
             return "timeout"
         except urllib.error.URLError as error:
             return "timeout" if isinstance(error.reason, TimeoutError) else "unreachable"
-        except OSError:
+        except (OSError, http.client.HTTPException):
             return "unreachable"
+
+
+def _completion(
+    model: str,
+    messages: Sequence[Mapping[str, Any]],
+    temperature: float,
+    seed: int | None,
+    max_tokens: int,
+) -> dict[str, Any]:
+    request: dict[str, Any] = {
+        "model": model,
+        "messages": list(messages),
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if seed is not None:
+        request["seed"] = seed
+    return request
+
+
+def _tool_reply(message: Mapping[str, Any]) -> dict[str, Any]:
+    content = message.get("content")
+    if not (content is None or isinstance(content, str)):
+        raise TypeError("content")
+    calls = [_tool_call(call) for call in message.get("tool_calls") or []]
+    return {"content": content, "tool_calls": calls}
+
+
+def _tool_call(call: Mapping[str, Any]) -> dict[str, Any]:
+    """OpenAI sends the arguments as a JSON string; an empty one means none."""
+    function = call["function"]
+    arguments = function.get("arguments") or "{}"
+    if isinstance(arguments, str):
+        arguments = json.loads(arguments)
+    if not (isinstance(call["id"], str) and isinstance(function["name"], str)):
+        raise TypeError("tool call")
+    if not isinstance(arguments, dict):
+        raise TypeError("arguments")
+    return {"id": call["id"], "name": function["name"], "arguments": arguments}
 
 
 def _retryable(marker: str) -> bool:
@@ -105,6 +154,6 @@ def _retryable(marker: str) -> bool:
 def _field(value: Any, read: Callable[[Any], Any]) -> Any:
     try:
         return read(value)
-    except (ValueError, KeyError, IndexError, TypeError):
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError):
         pass
     raise ModelUnavailable("bad_json")

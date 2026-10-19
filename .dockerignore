@@ -1,9 +1,11 @@
-# Allow-list: the image gets the engine, its contracts and the source configs, nothing else.
+# Allow-list: the image gets the engine, its contracts, the source configs and the committed eval
+# results, nothing else.
 # .env, data/, .venv and node_modules never reach the build context, with or without BuildKit.
 *
 !engine/pyproject.toml
 !engine/src
 !contracts
 !sources
+!eval/results
 **/__pycache__
 **/*.egg-info

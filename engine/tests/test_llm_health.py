@@ -5,12 +5,19 @@ import unittest
 import urllib.error
 from contextlib import redirect_stderr, redirect_stdout
 
-from bernlife.health import main
+from bernlife.health import main, service_health
 from bernlife.llm import ROLES
+from contract_schemas import validator
 from fake_llm import FakeTransport, models_body
 
 KEY = "sk-test-never-printed"
 LARGE = "swiss-ai/Apertus-v1.5-70B"
+SERVED = {
+    "mode": "live",
+    "models": {"explain": LARGE},
+    "snapshot": "local-abc",
+    "counts": {"pages": 4, "profiles": 5, "sources": 2},
+}
 
 
 class HealthTest(unittest.TestCase):
@@ -55,6 +62,45 @@ class HealthTest(unittest.TestCase):
         with redirect_stderr(err):
             code = main(["--verbose"], self.env, FakeTransport())
         self.assertEqual((code, err.getvalue()), (2, "usage: python -m bernlife health\n"))
+
+
+class ServiceHealthTest(unittest.TestCase):
+    def test_ok_without_failures_and_with_calls_left(self) -> None:
+        health = service_health(SERVED, 42, {}, {"limit": 50, "used": 49})
+        self.assertEqual(
+            health,
+            SERVED
+            | {
+                "status": "ok",
+                "uptime_s": 42,
+                "failures_last_hour": {},
+                "budget": {"limit": 50, "used": 49},
+            },
+        )
+
+    def test_degraded_while_a_call_failed_in_the_last_hour(self) -> None:
+        replay = SERVED | {"mode": "replay"}
+        failures = {"explain": {"timeout": 2}, "expand": {}}
+        self.assertEqual(
+            service_health(replay, 7, failures, None),
+            replay
+            | {
+                "status": "degraded",
+                "uptime_s": 7,
+                "failures_last_hour": {"explain": {"timeout": 2}},
+            },
+        )
+
+    def test_degraded_when_a_live_engine_used_up_todays_calls(self) -> None:
+        self.assertEqual(
+            service_health(SERVED, 0, {}, {"limit": 50, "used": 50})["status"], "degraded"
+        )
+        self.assertEqual(service_health(SERVED | {"mode": "mock"}, 0, {}, None)["status"], "ok")
+
+    def test_the_added_fields_validate_against_the_contract(self) -> None:
+        health = service_health(SERVED, 3, {"brief": {"budget": 1}}, {"limit": 5, "used": 5})
+        schema = validator("health.schema.json", requires="status")
+        self.assertEqual(list(schema.iter_errors(health)), [])
 
 
 if __name__ == "__main__":
