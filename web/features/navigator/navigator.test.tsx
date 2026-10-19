@@ -237,4 +237,36 @@ describe("Navigator", () => {
     await ask("Prof. Nobody");
     expect(heard).toEqual(["search_answered", "search_answered_other_language", "abstained_seen"]);
   });
+
+  test("show() puts an answer on screen without asking the engine or telling the story", () => {
+    const heard: AppEventName[] = [];
+    const asked: string[] = [];
+    const api: NavigatorApi = {
+      search: async (request) => {
+        asked.push(request.query);
+        return { ok: true, response: resultFixture };
+      },
+      brief: async () => ({ ok: true, response: briefFixture }),
+    };
+    function Shown() {
+      const controller = useNavigator(api, { emit: (name) => void heard.push(name) });
+      return (
+        <>
+          <button type="button" onClick={() => controller.show(resultFixture)}>
+            Show the answer
+          </button>
+          <Navigator controller={controller} fixtureMode={false} />
+        </>
+      );
+    }
+    render(<Shown />);
+    act(() => fireEvent.click(screen.getByRole("button", { name: "Show the answer" })));
+    const name = resultFixture.results[0]!.profile.name.value;
+    expect(screen.getByRole("status").textContent).toBe("1 result");
+    expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+    expect((screen.getByLabelText("Ask in your words") as HTMLInputElement).value).toBe(
+      resultFixture.query,
+    );
+    expect([heard, asked]).toEqual([[], []]);
+  });
 });

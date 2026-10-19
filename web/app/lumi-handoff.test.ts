@@ -1,10 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import type { AgentReply } from "@/features/lumi/agent-reply";
 import type { LumiApi } from "@/features/lumi/lumi-api";
-import type { NavigatorApi } from "@/features/navigator/navigator-api";
-import type { SearchRequest } from "@/infrastructure/engine-types";
-import { copyOf, resultFixture } from "@/test/fixtures";
-import { handOverNavigatorApi, rememberingLumiApi } from "./lumi-handoff";
+import { resultFixture } from "@/test/fixtures";
+import { rememberingLumiApi } from "./lumi-handoff";
 
 const answer = resultFixture;
 const profileId = answer.results[0]!.profile.id;
@@ -44,41 +42,5 @@ describe("rememberingLumiApi", () => {
     next = null;
     await api.ask([{ role: "user", content: "again" }]);
     expect(api.answerListing(profileId)).toBeNull();
-  });
-});
-
-describe("handOverNavigatorApi", () => {
-  function engine() {
-    const asked: SearchRequest[] = [];
-    const api: NavigatorApi = {
-      search: async (request) => {
-        asked.push(request);
-        return { ok: false, failure: { kind: "network" } };
-      },
-      brief: async () => ({ ok: false, failure: { kind: "network" } }),
-    };
-    return { asked, api: handOverNavigatorApi(api) };
-  }
-
-  test("the next search for the handed answer's query gets it, without asking the engine", async () => {
-    const { asked, api } = engine();
-    api.handOver(answer);
-    expect(await api.search({ query: answer.query })).toEqual({ ok: true, response: answer });
-    expect(asked).toEqual([]);
-  });
-
-  test("the handed answer serves once, and never another question", async () => {
-    const { asked, api } = engine();
-    api.handOver(answer);
-    await api.search({ query: answer.query });
-    await api.search({ query: answer.query });
-    api.handOver(copyOf(answer));
-    await api.search({ query: "something else" });
-    await api.search({ query: answer.query });
-    expect(asked.map((request) => request.query)).toEqual([
-      answer.query,
-      "something else",
-      answer.query,
-    ]);
   });
 });

@@ -4,9 +4,7 @@ import type { ReactNode } from "react";
 import { defaultBear } from "@/features/avatar/bear-config";
 import type { AgentReply } from "@/features/lumi/agent-reply";
 import type { LumiApi } from "@/features/lumi/lumi-api";
-import type { NavigatorController } from "@/features/navigator/use-navigator";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
-import type { SearchRequest } from "@/infrastructure/engine-types";
 import { resultFixture } from "@/test/fixtures";
 import { useWorldLumi } from "./world-lumi";
 
@@ -29,11 +27,10 @@ function lumiAnswering(actions: AgentReply["actions"]): LumiApi {
 }
 
 function setUp(api: LumiApi) {
-  const searched: SearchRequest[] = [];
-  const navigator = { search: (request: SearchRequest) => void searched.push(request) };
+  const shown: SearchResponse[] = [];
+  const navigator = { show: (response: SearchResponse) => void shown.push(response) };
   const calls = {
     shownOnMap: mock((response: SearchResponse) => response.query),
-    handedOver: mock((response: SearchResponse) => response.query),
     askOpened: mock(() => undefined),
   };
   const { result } = renderHook(() =>
@@ -43,8 +40,7 @@ function setUp(api: LumiApi) {
       lite: true,
       engineMode: "mock",
       fixtureMode: true,
-      navigator: navigator as unknown as NavigatorController,
-      handOver: calls.handedOver,
+      navigator,
       onShowOnMap: calls.shownOnMap,
       onOpenAsk: calls.askOpened,
       api,
@@ -52,7 +48,7 @@ function setUp(api: LumiApi) {
   );
   const view = render(<>{result.current.chat as ReactNode}</>);
   const refresh = () => view.rerender(<>{result.current.chat as ReactNode}</>);
-  return { result, refresh, searched, calls };
+  return { result, refresh, shown, calls };
 }
 
 async function ask(refresh: () => void, open: () => void, text: string) {
@@ -73,22 +69,21 @@ test("show on map closes the chat and shows Lumi's answer on the map, once", asy
 });
 
 test("open profile shows the answer that lists the profile in Ask, without a second search", async () => {
-  const { result, refresh, searched, calls } = setUp(
+  const { result, refresh, shown, calls } = setUp(
     lumiAnswering([{ type: "open_profile", profile_id: profileId }]),
   );
   await ask(refresh, result.current.open, "glucose sensors");
-  expect(calls.handedOver.mock.calls).toEqual([[answer]]);
-  expect(searched).toEqual([{ query: answer.query }]);
+  expect(shown).toEqual([answer]);
   expect(calls.askOpened).toHaveBeenCalledTimes(1);
   expect(document.querySelector("dialog")!.open).toBe(false);
 });
 
 test("a profile no answer lists leaves the chat open and Ask alone", async () => {
-  const { result, refresh, searched, calls } = setUp(
+  const { result, refresh, shown, calls } = setUp(
     lumiAnswering([{ type: "open_profile", profile_id: "person-demo-nobody" }]),
   );
   await ask(refresh, result.current.open, "glucose sensors");
-  expect(searched).toEqual([]);
+  expect(shown).toEqual([]);
   expect(calls.askOpened).not.toHaveBeenCalled();
   expect(document.querySelector("dialog")!.open).toBe(true);
 });

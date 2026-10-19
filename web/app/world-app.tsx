@@ -46,7 +46,6 @@ import { notifyLoop, useOfficeApps } from "./office-apps";
 import { phoneApps } from "./phone-apps";
 import { usePhoneNotifications } from "./phone-notifications";
 import { useUnreadMessages } from "./use-unread-messages";
-import { handOverNavigatorApi } from "./lumi-handoff";
 import { useWorldLumi } from "./world-lumi";
 import { useWorldSettle } from "./world-settle";
 import { applyWorldAction, searchHereDraft, worldActionFor } from "./world-search-bridge";
@@ -80,8 +79,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const [onboarding] = useOnboarding();
   const [greetingDismissed, setGreetingDismissed] = useState(false);
   const [joinDismissed, setJoinDismissed] = useState(false);
-  const [navigatorApi] = useState(() => handOverNavigatorApi(httpNavigatorApi));
-  const navigator = useNavigator(navigatorApi);
+  const navigator = useNavigator(httpNavigatorApi);
   const desktop = useDesktop();
   const now = useNow();
   const health = useHealth();
@@ -145,7 +143,6 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     engineMode: health.status === "ok" ? health.health.mode : null,
     fixtureMode,
     navigator,
-    handOver: navigatorApi.handOver,
     onShowOnMap: showOnMap,
     onOpenAsk: () => openApp("ask"),
   });

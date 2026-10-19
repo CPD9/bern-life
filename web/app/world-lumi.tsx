@@ -21,10 +21,8 @@ type WorldLumiInput = {
   /** How the engine answers, from health; null while unknown. */
   engineMode: SearchResponse["mode"] | null;
   fixtureMode: boolean;
-  /** The Ask app's Navigator, which shows a profile Lumi opens. */
-  navigator: NavigatorController;
-  /** Gives Lumi's answer to the Navigator so Ask shows it without asking the engine again. */
-  handOver: (response: SearchResponse) => void;
+  /** The Ask app's Navigator, which shows the answer holding a profile Lumi opens. */
+  navigator: Pick<NavigatorController, "show">;
   onShowOnMap: (response: SearchResponse) => void;
   onOpenAsk: () => void;
   api?: LumiApi;
@@ -56,8 +54,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
     const answer = api.answerListing(profileId);
     if (answer === null) return;
     setOpen(false);
-    input.handOver(answer);
-    navigator.search({ query: answer.query });
+    navigator.show(answer);
     input.onOpenAsk();
   }
 
