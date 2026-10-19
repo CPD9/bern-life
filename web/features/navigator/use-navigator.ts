@@ -74,6 +74,7 @@ export function useNavigator(
     },
     show: (response) => {
       latest.current += 1;
+      setInputMode("search");
       setDraft(response.query);
       setState({
         status: "done",

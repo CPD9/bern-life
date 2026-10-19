@@ -260,7 +260,12 @@ describe("Navigator", () => {
       );
     }
     render(<Shown />);
+    // Left on the brief form, the answer still shows under the question it answers.
+    fireEvent.click(screen.getByRole("button", { name: "Project brief" }));
     act(() => fireEvent.click(screen.getByRole("button", { name: "Show the answer" })));
+    expect(screen.getByRole("button", { name: "Question" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
     const name = resultFixture.results[0]!.profile.name.value;
     expect(screen.getByRole("status").textContent).toBe("1 result");
     expect(screen.getAllByText(name).length).toBeGreaterThan(0);
