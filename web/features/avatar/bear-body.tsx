@@ -11,6 +11,7 @@ const ARM_SPREAD = 0.55;
 /** Legs swing from the hip, so a foot lifts forward or back rather than sliding. */
 const HIP_Y = 0.22;
 
+/** Side -1 is the bear's right (it faces +z), index 0 in the pose's [right, left] pairs. */
 type Limb = { side: 1 | -1; index: 0 | 1 };
 
 function Arm({ side, index, colour }: Limb & { colour: string }) {
