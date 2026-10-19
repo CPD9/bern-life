@@ -83,6 +83,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
         open={open}
         onClose={() => setOpen(false)}
         agentName={name}
+        fixtureMode={fixtureMode}
         bear={open && <SmallBear config={bear} />}
         engineMode={input.engineMode}
         api={api}

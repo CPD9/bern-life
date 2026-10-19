@@ -15,10 +15,10 @@ import { httpNavigatorApi } from "@/features/navigator/navigator-api";
 import { useNavigator } from "@/features/navigator/use-navigator";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import { Toasts } from "@/features/notifications/toasts";
-import { notificationStore, useNotifications } from "@/features/notifications/use-notifications";
+import { notificationStore } from "@/features/notifications/use-notifications";
 import { OfficeView } from "@/features/office/office-view";
 import { useOnboarding } from "@/features/onboarding/use-onboarding";
-import { Phone, type PhoneNotification } from "@/features/phone/phone";
+import { Phone } from "@/features/phone/phone";
 import type { HudAccount } from "@/features/shell/account-badge";
 import { firstRunCard, landingView } from "@/features/shell/first-run";
 import { GameShell, type WorldView } from "@/features/shell/game-shell";
@@ -44,6 +44,7 @@ import { useSettings } from "@/infrastructure/use-settings";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
 import { notifyLoop, useOfficeApps } from "./office-apps";
 import { phoneApps } from "./phone-apps";
+import { usePhoneNotifications } from "./phone-notifications";
 import { useUnreadMessages } from "./use-unread-messages";
 import { handOverNavigatorApi } from "./lumi-handoff";
 import { useWorldLumi } from "./world-lumi";
@@ -89,7 +90,6 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     account.state.status === "signed-in",
     phoneOpen || desktopOpen,
   );
-  const notifications = useNotifications(notificationStore());
   const agents = {
     navigatorApi: httpNavigatorApi,
     agentName,
@@ -150,6 +150,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     onOpenAsk: () => openApp("ask"),
   });
   const settle = useWorldSettle(appEvents);
+  const phoneNotices = usePhoneNotifications(setPhoneApp);
 
   const { choice } = storyController.state;
   const card = firstRunCard({
@@ -176,14 +177,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     else openApp(target);
   }
 
-  // Following a notification marks it read and opens the app it belongs to, when there is one.
-  function openNotification(notification: PhoneNotification) {
-    notificationStore().markRead(notification.id);
-    if (notification.kind === "message") setPhoneApp("messages");
-    else if (notification.kind === "loop") setPhoneApp("agents");
-  }
-
-  // The desktop is a modal dialog, so toasts move inside it while it is open, or nobody sees them.
+  // The desk and the phone are modal dialogs, so toasts move inside the open one, or nobody sees them.
   // Moving remounts them: a toast still up when the desk opens or closes leaves the screen (under
   // reduced motion too) but stays unread in the bell. One instance would need the toasts to live
   // above the dialog, which a modal makes inert.
@@ -262,9 +256,8 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
             now={now}
             health={health}
             unreadMessages={unreadMessages ?? undefined}
-            notifications={notifications}
-            onOpenNotification={openNotification}
-            onMarkAllRead={() => notificationStore().markAllRead()}
+            {...phoneNotices}
+            overlay={phoneOpen ? toasts : undefined}
           />
           <DesktopDialog
             open={desktopOpen}
@@ -285,7 +278,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           )}
           {lumi.chat}
           {settle.dialog}
-          {!desktopOpen && toasts}
+          {!desktopOpen && !phoneOpen && toasts}
           <StoryMenu
             controller={storyController}
             open={storyMenuOpen}
