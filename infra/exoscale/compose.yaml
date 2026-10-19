@@ -73,7 +73,12 @@ services:
       timeout: 3s
       # The first run downloads the embedding model before serve answers.
       retries: 300
+    # After a reboot Docker starts db and serve together, without compose's order. serve then
+    # waits up to two minutes for the database (bernlife.database.connect_when_ready) instead of
+    # exiting: a restarted serve is a new network, and web would be left on the old one.
     depends_on:
+      db:
+        condition: service_healthy
       load:
         condition: service_completed_successfully
 

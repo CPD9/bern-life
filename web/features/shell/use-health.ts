@@ -3,22 +3,36 @@
 import { useEffect, useState } from "react";
 import type { Health } from "@/infrastructure/contract-types.generated";
 
-// Asked once after the world is on screen, so the shell never waits for the engine. A failed or
-// missing answer leaves the HUD without counts.
-export function useHealth(): Health | null {
-  const [health, setHealth] = useState<Health | null>(null);
+// Asked once after the world is on screen, so the shell never waits for the engine. "waiting" and
+// "offline" are told apart so the HUD can say the engine is down instead of just showing nothing.
+export type HealthState =
+  | { readonly status: "waiting" }
+  | { readonly status: "ok"; readonly health: Health }
+  | { readonly status: "offline" };
+
+const OFFLINE: HealthState = { status: "offline" };
+
+export async function loadHealth(fetchHealth: () => Promise<Response>): Promise<HealthState> {
+  try {
+    const response = await fetchHealth();
+    if (!response.ok) return OFFLINE;
+    // The route checked this body against contracts/health.schema.json before sending it.
+    return { status: "ok", health: (await response.json()) as Health };
+  } catch {
+    return OFFLINE;
+  }
+}
+
+export function useHealth(): HealthState {
+  const [state, setState] = useState<HealthState>({ status: "waiting" });
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/health")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body: unknown) => {
-        // The route checked this body against contracts/health.schema.json before sending it.
-        if (!cancelled && body !== null) setHealth(body as Health);
-      })
-      .catch(() => undefined);
+    void loadHealth(() => fetch("/api/health")).then((next) => {
+      if (!cancelled) setState(next);
+    });
     return () => {
       cancelled = true;
     };
   }, []);
-  return health;
+  return state;
 }

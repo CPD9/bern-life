@@ -130,9 +130,9 @@ describe("YouSheet", () => {
     openSheet({ ...emptyProfile, goal: "collaborator" });
     fireEvent.click(tab("Goals"));
     expect(panelText()).toContain("Find a collaborator");
-    expect(screen.getByText("1 of 8 required quests done")).toBeTruthy();
+    expect(screen.getByText("0 of 4 required quests done")).toBeTruthy();
     const rows = screen.getAllByRole("listitem").map((item) => item.textContent);
-    expect(rows.slice(0, 2)).toEqual(["Arrive and settleDone", "Find the right peopleNow"]);
+    expect(rows.slice(0, 2)).toEqual(["Find the right peopleNow", "Ask it differentlyOpen"]);
   });
 
   test("Skills lists the player's own expertise when there is some", () => {

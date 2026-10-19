@@ -1,7 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { type AppEventName, emittedToday } from "@/infrastructure/app-events";
+import type { Story } from "@/infrastructure/contract-types.generated";
 import { storyFixture as story } from "@/test/story";
-import { type StoryState, applyEvent, emptyStoryState, storyProgress } from "./engine";
+import {
+  type StoryState,
+  applyEvent,
+  comingReason,
+  defaultComingReason,
+  emptyStoryState,
+  storyProgress,
+} from "./engine";
 
 const started: StoryState = { ...emptyStoryState, choice: "story" };
 
@@ -32,6 +40,68 @@ describe("applyEvent", () => {
   test("an event counts in every quest where it is the next step", () => {
     expect(play(["brief_answered", "report_made"]).done).toEqual(["brief/upload", "brief/report"]);
   });
+
+  test("an optional quest's steps complete in any order, each once", () => {
+    const state = play(["message_sent", "opportunity_saved", "message_sent", "garage_visited"]);
+    expect(state.done).toEqual(["grow/message", "grow/opportunity", "grow/garage"]);
+    expect(play(["office_ready"]).done).toEqual(["arrive/office"]);
+  });
+
+  test("a required quest still waits for its earlier steps", () => {
+    const [first, ...rest] = story.quests;
+    const required: Story = {
+      ...story,
+      quests: [{ ...first, optional: false }, ...rest.map((q) => ({ ...q, optional: false }))],
+    };
+    expect(applyEvent(required, started, "office_ready")).toBe(started);
+    expect(applyEvent(required, started, "garage_visited")).toBe(started);
+  });
+});
+
+describe("optional quests in any order", () => {
+  const grow = (state: StoryState, emitted: readonly AppEventName[]) =>
+    storyProgress(story, state, emitted).quests.find((q) => q.quest.id === "grow")!;
+
+  test("one playable step is enough to open the quest, and that step is offered next", () => {
+    const entry = grow(started, [...emittedToday, "message_sent"]);
+    expect(entry.status).toBe("ready");
+    expect(entry.nextStep?.id).toBe("message");
+    expect(entry.stepsDone).toBe(0);
+  });
+
+  test("once its playable steps are done it waits again, counting what was done", () => {
+    const entry = grow(play(["message_sent"]), [...emittedToday, "message_sent"]);
+    expect(entry.status).toBe("coming");
+    expect(entry.nextStep?.id).toBe("opportunity");
+    expect(entry.stepsDone).toBe(1);
+  });
+
+  test("an open optional quest is current only when no required quest is open", () => {
+    const everyEvent = story.quests.flatMap((q) => q.steps.map((step) => step.done_when));
+    const progress = storyProgress(story, started, everyEvent);
+    expect(progress.current?.quest.id).toBe("find-experts");
+    const requiredDone = play([
+      "search_answered",
+      "evidence_opened",
+      "search_answered_other_language",
+      "brief_answered",
+      "report_made",
+      "abstained_seen",
+    ]);
+    expect(storyProgress(story, requiredDone, everyEvent).current?.quest.id).toBe("arrive");
+  });
+});
+
+describe("comingReason", () => {
+  test("uses the story's own line and falls back to a plain one", () => {
+    const visit = story.quests.find((q) => q.id === "visit")!;
+    expect(comingReason(visit)).toBe(
+      "Opening a place on the map does not report to the story yet.",
+    );
+    const withoutReason = { ...visit };
+    delete withoutReason.coming;
+    expect(comingReason(withoutReason)).toBe(defaultComingReason);
+  });
 });
 
 describe("storyProgress", () => {
@@ -41,7 +111,7 @@ describe("storyProgress", () => {
       "find-experts": "current",
       "other-words": "ready",
       brief: "ready",
-      visit: "coming",
+      visit: "ready",
       honest: "ready",
       extend: "coming",
       grow: "coming",
@@ -76,6 +146,7 @@ describe("storyProgress", () => {
       "brief_answered",
       "report_made",
       "abstained_seen",
+      "lobby_entered",
     ]);
     const progress = storyProgress(story, state, emittedToday);
     expect(progress.current).toBeNull();
@@ -83,6 +154,7 @@ describe("storyProgress", () => {
       "c1-right-people",
       "c2-wording",
       "c3-traceable",
+      "c4-structured",
       "ethics-abstain",
     ]);
   });

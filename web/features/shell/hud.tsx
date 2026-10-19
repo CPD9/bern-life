@@ -1,17 +1,18 @@
-import type { Health } from "@/infrastructure/contract-types.generated";
 import { formatBernShortDate, formatBernTime } from "@/infrastructure/bern-time";
 import { AccountBadge, type HudAccount } from "./account-badge";
 import { hudCounts } from "./hud-items";
+import type { HealthState } from "./use-health";
 
 type HudProps = {
   now: Date | null;
-  health: Health | null;
+  health: HealthState;
   goal: string;
   account: HudAccount;
 };
 
 export function Hud({ now, health, goal, account }: HudProps) {
-  const counts = hudCounts(health);
+  const counts = hudCounts(health.status === "ok" ? health.health : null);
+  const mode = health.status === "ok" ? health.health.mode : null;
   return (
     <div className="rounded-pill bg-panel shadow-panel border-panel-border flex min-h-12 max-w-[calc(100vw-2rem)] flex-wrap items-center justify-center gap-x-4 gap-y-1 border px-5 py-2 text-sm">
       <h1 className="sr-only text-base font-extrabold tracking-tight sm:not-sr-only">Bern Life</h1>
@@ -31,14 +32,24 @@ export function Hud({ now, health, goal, account }: HudProps) {
           <span className="text-muted">{counts.join(" · ")}</span>
         </>
       )}
-      {health?.mode === "mock" && (
+      {mode === "live" && (
+        <span className="bg-chip text-primary rounded-pill px-2 py-0.5 text-xs font-bold">
+          Live
+        </span>
+      )}
+      {mode === "mock" && (
         <span className="bg-warn-bg text-warn-ink rounded-pill px-2 py-0.5 text-xs font-bold tracking-widest">
           MOCK
         </span>
       )}
-      {health?.mode === "replay" && (
+      {mode === "replay" && (
         <span className="bg-chip text-muted rounded-pill px-2 py-0.5 text-xs font-bold">
           Replay
+        </span>
+      )}
+      {health.status === "offline" && (
+        <span className="bg-warn-bg text-warn-ink rounded-pill px-2 py-0.5 text-xs font-bold">
+          Engine offline
         </span>
       )}
       <AccountBadge account={account} />
