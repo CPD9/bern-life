@@ -209,7 +209,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
       }
       floatie={lumi.floatie}
       // A place's panel fills the bottom of a phone's screen, and a tall one reaches the floatie's
-      // corner on a wide screen; the bear on the map still opens Bärli meanwhile.
+      // corner on a wide screen; the bear on the map still opens Bärnli meanwhile.
       floatieHidden={shownView === "map" && placeOpen}
       overlay={
         <WorldOverlay

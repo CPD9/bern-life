@@ -12,7 +12,7 @@ function Shell(props: { floatieHidden?: boolean; view?: WorldView; watchHud?: Wa
       hud={<p>Goal Explore</p>}
       side={<p>Tap a place.</p>}
       canvas={<button type="button">A place</button>}
-      floatie={<button type="button">Bärli, your agent</button>}
+      floatie={<button type="button">Bärnli, your agent</button>}
       {...props}
       overlay={null}
     />
@@ -26,19 +26,19 @@ function shell(props: { floatieHidden?: boolean } = {}) {
 describe("GameShell", () => {
   test("the floatie shows beside the world", () => {
     shell();
-    expect(screen.getByRole("button", { name: "Bärli, your agent" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Bärnli, your agent" })).toBeTruthy();
   });
 
   test("while hidden, the floatie is out of sight and out of the tab order", () => {
     shell({ floatieHidden: true });
-    expect(screen.queryByRole("button", { name: "Bärli, your agent" })).toBeNull();
-    const floatie = screen.getByText("Bärli, your agent");
+    expect(screen.queryByRole("button", { name: "Bärnli, your agent" })).toBeNull();
+    const floatie = screen.getByText("Bärnli, your agent");
     expect(floatie.parentElement?.hidden).toBe(true);
   });
 
   test("a floatie hidden while it holds focus hands focus to the tab of the view on screen", () => {
     const view = render(<Shell view="home" />);
-    screen.getByRole("button", { name: "Bärli, your agent" }).focus();
+    screen.getByRole("button", { name: "Bärnli, your agent" }).focus();
     view.rerender(<Shell view="map" floatieHidden />);
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Map" }));
     expect(document.activeElement?.getAttribute("aria-current")).toBe("true");

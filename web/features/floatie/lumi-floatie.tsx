@@ -1,7 +1,7 @@
 "use client";
 
-// Bärli floating beside the player once they are in Bern: the floatie with the agent's name under
-// it, and a tap, Enter or Space opens Bärli. In onboarding the same floatie moves its greeting on
+// Bärnli floating beside the player once they are in Bern: the floatie with the agent's name under
+// it, and a tap, Enter or Space opens Bärnli. In onboarding the same floatie moves its greeting on
 // instead, so opening is this component's one job and app/ decides what it opens.
 
 import { type ReactNode } from "react";
@@ -9,12 +9,12 @@ import { Floatie } from "./floatie";
 import { type FloatieState } from "./floatie-motion";
 
 type LumiFloatieProps = {
-  /** The agent's name, which a player may change from Bärli. */
+  /** The agent's name, which a player may change from Bärnli. */
   name: string;
   /** The agent's bear, as for `Floatie`. */
   figure: (reducedMotion: boolean) => ReactNode;
   onOpen: () => void;
-  /** "listening" while Bärli is open or working, so it reads as attending. */
+  /** "listening" while Bärnli is open or working, so it reads as attending. */
   state?: FloatieState;
   lite?: boolean;
 };

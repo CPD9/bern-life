@@ -1,6 +1,6 @@
 "use client";
 
-// One conversation with Bärli. No action in a reply runs by itself: with the panel open each one is
+// One conversation with Bärnli. No action in a reply runs by itself: with the panel open each one is
 // a button under the reply, so the answer stays on screen; a reply that lands while the panel is
 // closed keeps its actions on its turn until the player runs them. An action runs only from its
 // click, never from rendering, so a re-render cannot repeat it. One message is in flight.

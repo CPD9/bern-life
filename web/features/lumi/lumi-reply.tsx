@@ -1,6 +1,6 @@
 "use client";
 
-// One reply from Bärli: its words, with every name it mentions linked to that person's card below.
+// One reply from Bärnli: its words, with every name it mentions linked to that person's card below.
 // Following a mention moves focus to the card, so it works the same by keyboard and by pointer.
 import { Fragment, useId } from "react";
 import type { SearchResult } from "@/infrastructure/claims";

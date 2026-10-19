@@ -39,7 +39,7 @@ function setup(
   const notices: AgentNotice[] = [];
   const tried: Skill[] = [];
   const props = {
-    agent: { name: "Bärli" },
+    agent: { name: "Bärnli" },
     search,
     onTrySkill: (skill: Skill) => void tried.push(skill),
     notify: (notice: AgentNotice) => void notices.push(notice),
@@ -99,7 +99,7 @@ describe("AgentsApp skills", () => {
   test("lists the five real skills, Checks the premise second, and Try hands the skill over", async () => {
     const { tried, api } = await withNumbers(ENGINE);
     expect(api.calls()).toBe(1);
-    expect(screen.getByRole("heading", { name: "Bärli’s skills" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Bärnli’s skills" })).toBeTruthy();
     const names = screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent);
     expect(names).toEqual([
       "Search people and units",

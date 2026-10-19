@@ -23,7 +23,7 @@ export type LumiState =
     }
   | { readonly status: "failed"; readonly failure: LumiFailure };
 
-/** The plain search, asked only when Bärli could not answer. */
+/** The plain search, asked only when Bärnli could not answer. */
 export type SearchState =
   | { readonly status: "waiting" }
   | { readonly status: "done"; readonly response: SearchResponse }

@@ -11,7 +11,7 @@ import { YouSheet } from "./you-sheet";
 import { YouTabs } from "./you-tabs";
 import type { PersonLook, YouProfile } from "./you-summary";
 
-const lumi = { name: "Bärli", bear: defaultBear };
+const lumi = { name: "Bärnli", bear: defaultBear };
 const look: PersonLook = {
   body: "slim",
   skin: "tone-6",
@@ -148,13 +148,13 @@ describe("YouSheet", () => {
     ]);
   });
 
-  test("Agents names Bärli, the bear's look and where skills and loops live", () => {
+  test("Agents names Bärnli, the bear's look and where skills and loops live", () => {
     openSheet();
     fireEvent.click(tab("Agents"));
-    expect(screen.getByText("Bärli")).toBeTruthy();
+    expect(screen.getByText("Bärnli")).toBeTruthy();
     expect(panelText()).toContain("KindBern bear");
     expect(panelText()).toContain("FurHoney");
-    expect(screen.getByText("Bärli's skills and loops live in the Agents app.")).toBeTruthy();
+    expect(screen.getByText("Bärnli's skills and loops live in the Agents app.")).toBeTruthy();
     expect(screen.getByText("Your agent, a bear.")).toBeTruthy();
   });
 
