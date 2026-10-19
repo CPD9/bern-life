@@ -237,6 +237,47 @@ sudo cat "$b/caddy-data.tar.gz" | docker compose exec -T caddy tar -xzf - -C /da
 docker compose restart caddy             # serves the restored certificate
 ```
 
+### Restore drill (proves a backup restores, without touching the live database)
+
+On the VM in `/opt/bernlife/infra/exoscale`, about a minute. It restores the newest folder's
+`db.sql.gz` into a scratch database next to the live one, compares the row count of every table,
+checks that both archives read, and drops the scratch database.
+
+```bash
+sudo ./backup.sh </dev/null
+b=/var/backups/bernlife/$(sudo ls -t /var/backups/bernlife | grep -E '^bernlife-[0-9TZ]+$' | head -1)
+docker compose exec -T db psql -U bernlife -d postgres -qc 'CREATE DATABASE restore_drill' </dev/null
+sudo gunzip -c "$b/db.sql.gz" \
+  | docker compose exec -T db psql -q -v ON_ERROR_STOP=1 -U bernlife -d restore_drill >/dev/null
+Q="select string_agg(t || '=' || n, ' ' order by t) from (select relname t,
+  (xpath('/row/c/text()', query_to_xml('select count(*) c from public.' || quote_ident(relname),
+  false, true, '')))[1]::text n from pg_class where relkind = 'r'
+  and relnamespace = 'public'::regnamespace) x"
+live=$(docker compose exec -T db psql -U bernlife -d bernlife -Atc "$Q" </dev/null)
+drill=$(docker compose exec -T db psql -U bernlife -d restore_drill -Atc "$Q" </dev/null)
+[ "$live" = "$drill" ] && echo "row counts match" || printf 'MISMATCH\n%s\n%s\n' "$live" "$drill"
+sudo tar -tzf "$b/uploads.tar.gz" >/dev/null && sudo tar -tzf "$b/caddy-data.tar.gz" >/dev/null \
+  && echo "archives read"
+docker compose exec -T db psql -U bernlife -d postgres -qc 'DROP DATABASE restore_drill' </dev/null
+```
+
+`</dev/null` keeps `docker compose` from reading the rest of a pasted script as its input. Rows
+written between the backup and the count (a new account, a message) show as a mismatch: run it
+again, or at a quiet moment.
+
+| Date | Backup | Result |
+|---|---|---|
+| 2026-10-19 | `bernlife-20261019T071437Z` | restored in 7 s; all 28 tables match the live database (8 migrations, 3,351 pages, 3,484 profiles); `uploads.tar.gz` (no uploads yet) and `caddy-data.tar.gz` (1 certificate) read |
+
+### Uptime watch
+
+From a machine that stays on (a laptop only while it is awake): it checks the site every 30
+seconds and exits, with a non-zero status, after 3 failures in a row.
+
+```bash
+python3 -m infra.check_hosted --url https://<site> --watch --interval 30 --max-failures 3
+```
+
 ### Off-VM copy to Exoscale SOS (not provisioned)
 
 Today nothing leaves the VM, so losing the VM loses its backups. This is the copy Peter would set
