@@ -21,12 +21,12 @@ Each lane runs the dev server on its own port (`CONTRIBUTING.md`). The server bi
 
 Read only in `infrastructure/env.ts`.
 
-| Variable        | Meaning                                                                                                                                                              |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ENGINE_URL`    | Engine base URL, e.g. `http://127.0.0.1:8100`. Required unless `DEMO_FIXTURES=1`.                                                                                    |
-| `DEMO_FIXTURES` | `1` renders the invented fixtures from `contracts/fixtures/` instead of calling the engine.                                                                          |
-| `DATABASE_URL`  | Postgres for accounts and messages. Needed only by `/api/auth/*`; tests run against it only when it names a throwaway database (`bernlife_l1`..`l3`, `bernlife_ci`). |
-| `APP_ORIGIN`    | The app's own origin for the CSRF origin check, default `http://127.0.0.1:3000`.                                                                                     |
+| Variable        | Meaning                                                                                                                                                                                                                                                               |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ENGINE_URL`    | Engine base URL, e.g. `http://127.0.0.1:8100`. Required unless `DEMO_FIXTURES=1`.                                                                                                                                                                                     |
+| `DEMO_FIXTURES` | `1` renders the invented fixtures from `contracts/fixtures/` instead of calling the engine.                                                                                                                                                                           |
+| `DATABASE_URL`  | Postgres for accounts, messages, connections and notifications; without it nobody can sign in, and under `DEMO_FIXTURES` Connections lists the DEMO members alone. Tests run against it only when it names a throwaway database (`bernlife_l1`..`l3`, `bernlife_ci`). |
+| `APP_ORIGIN`    | The app's own origin for the CSRF origin check, default `http://127.0.0.1:3000`.                                                                                                                                                                                      |
 
 Accounts are invite-only: `bun run invite:create --count 3` prints codes once and stores only their hashes.
 
@@ -48,6 +48,18 @@ In fixture mode a question that shares a word with the fixture query or its expa
 ("glucose", "CGM") returns `result.json`; any other question returns the abstained fixture; every
 brief returns `result-brief.json`.
 
+## Connections and notifications
+
+Members find each other in Connections. The directory (`GET /api/people`) lists members whose
+profile visibility lets you see them, never you; a visit (`GET /api/people/<handle>/office`) follows
+the owner's visit visibility and is read-only. `POST /api/connections` asks a member by handle with
+a note of up to 280 characters; `POST /api/connections/<id>` accepts, declines or withdraws. A
+message or a request leaves an in-app notification (`GET /api/notifications`,
+`POST /api/notifications/read`, `PUT /api/notifications/preferences`) that holds a kind and an id,
+never text; nothing is sent outside the app. Every change checks the origin, the session and a
+per-member limit. Under `DEMO_FIXTURES` three invented members, labelled DEMO, can be visited but
+not messaged or asked; their handles (`demo-lena`) hold a hyphen, which sign-up refuses.
+
 ## Settings
 
 The phone's Settings app stores night mode and lite graphics in `localStorage` (key
@@ -65,6 +77,8 @@ off). An inline script applies them before the first paint.
 - `features/desktop/` the office computer; `app/office-apps.tsx` mounts its apps.
 - `features/navigator/` Ask: question and project brief, result cards with evidence, aspect matrix.
 - `features/lumi/` the chat with Lumi, your agent; `features/floatie/` Lumi floating beside you.
+- `features/connections/` members, requests and office visits; `features/notifications/` the bell,
+  toasts and the server's notifications.
 - `features/opportunities/`, `features/library/`, `features/garage/`, `features/sources/` the apps
   of the same names. `features/settle/` choosing where your office stands.
 - `features/world/` the 3D scene that fills the frame (lane 2b).

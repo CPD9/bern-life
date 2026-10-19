@@ -128,7 +128,6 @@
       "goal": "Save opportunities, keep results, message members and meet the models behind the Navigator, in any order.",
       "criterion": "stretch",
       "optional": true,
-      "coming": "A network of labs and experts is not built yet, so its step cannot be done.",
       "steps": [
         {
           "id": "opportunity",
@@ -137,7 +136,8 @@
         },
         {
           "id": "connection",
-          "text": "Add a lab or an expert to your network.",
+          "text": "Connect with another member: accept their request, or have yours accepted.",
+          "hint": "Open Connections on your phone or at your desk.",
           "done_when": "connection_saved"
         },
         {

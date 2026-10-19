@@ -6,7 +6,7 @@ import { defaultBear } from "@/features/avatar/bear-config";
 import { emptyProfile } from "@/features/onboarding/profile";
 import { emptyStoryState, storyProgress } from "@/features/story/engine";
 import { storyFixture } from "@/test/story";
-import { AgentsPanel } from "./you-panels";
+import { AgentsPanel, PeoplePanel } from "./you-panels";
 import { YouSheet } from "./you-sheet";
 import { YouTabs } from "./you-tabs";
 import type { PersonLook, YouProfile } from "./you-summary";
@@ -122,7 +122,7 @@ describe("YouSheet", () => {
     fireEvent.click(tab("Skills"));
     expect(panelText()).toContain("No expertise yet. It comes from the expertise step");
     fireEvent.click(tab("People"));
-    expect(panelText()).toContain("No connections yet.");
+    expect(panelText()).toContain("Sign in to connect with members.");
     expect(screen.queryAllByRole("img")).toEqual([]);
   });
 
@@ -177,5 +177,26 @@ describe("YouSheet", () => {
     });
     expect(document.querySelector("dialog")).toBeNull();
     expect(document.activeElement).toBe(opener);
+  });
+});
+
+describe("PeoplePanel", () => {
+  test("lists accepted connections by name and handle, or says there are none yet", () => {
+    const { rerender } = render(
+      <PeoplePanel
+        people={[
+          { handle: "bea", displayName: "Bea Example" },
+          { handle: "cem", displayName: "Cem Example" },
+        ]}
+      />,
+    );
+    const list = screen.getByRole("list", { name: "Your connections" });
+    expect([...list.querySelectorAll("li")].map((li) => li.textContent)).toEqual([
+      "Bea Example @bea",
+      "Cem Example @cem",
+    ]);
+    rerender(<PeoplePanel people={[]} />);
+    expect(screen.queryByRole("list", { name: "Your connections" })).toBeNull();
+    expect(screen.getByText(/^No connections yet\./)).toBeTruthy();
   });
 });
