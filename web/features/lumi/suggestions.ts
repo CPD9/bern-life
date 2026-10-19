@@ -11,7 +11,8 @@ export const suggestions: readonly Suggestion[] = [
     text: "Muster Medtech AG (an invented company) is building a night-time alarm for people with type 1 diabetes who live alone. We need partners in Bern for continuous glucose sensing, for detecting sleep and movement at night, and for testing such a device with older patients.",
   },
   {
-    label: "Is anyone in Bern building a night-time low blood sugar alarm?",
+    label:
+      "Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?",
     text: "Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?",
   },
 ];
