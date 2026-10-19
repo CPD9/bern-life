@@ -49,6 +49,7 @@ export function Navigator({ controller, fixtureMode, onShowOnMap, onMakeReport }
       )}
       <ResultsView
         state={controller.state}
+        fixtureMode={fixtureMode}
         onRetry={controller.retry}
         onShowOnMap={onShowOnMap}
         onMakeReport={onMakeReport}

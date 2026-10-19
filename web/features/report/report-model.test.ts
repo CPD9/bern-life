@@ -36,6 +36,12 @@ describe("buildReport", () => {
     });
   });
 
+  test("an engine answer without a model is labelled Plain search, never MOCK", () => {
+    expect(buildReport(resultFixture, madeAt, false)!.modeLabels).toEqual(["Plain search"]);
+    const replayed = { ...copyOf(resultFixture), mode: "replay" as const };
+    expect(buildReport(replayed, madeAt, false)!.modeLabels).toEqual(["Replay"]);
+  });
+
   test("chips are exactly the metrics' covers and missing", () => {
     const response = copyOf(resultFixture);
     response.results[0]!.metrics!.covers = ["glucose sensors"];

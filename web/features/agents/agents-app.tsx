@@ -1,62 +1,71 @@
-import { ComingNext } from "@/infrastructure/ui/coming-next";
+"use client";
 
-export type SkillId = "search" | "brief" | "report";
+import { useId } from "react";
+import { LoopCard } from "./loop-card";
+import { LoopForm } from "./loop-form";
+import { type LoopStore, browserLoops } from "./loop-store";
+import type { AgentNotice } from "./loops";
+import { SkillList } from "./skill-list";
+import type { Skill } from "./skills";
+import { type LoopSearch, useLoops } from "./use-loops";
 
-type Skill = { readonly id: SkillId; readonly title: string; readonly text: string };
+export type AgentsAppProps = {
+  agent: { name: string };
+  search: LoopSearch;
+  onTrySkill: (skill: Skill) => void;
+  notify: (notice: AgentNotice) => void;
+  /** The snapshot the engine serves now, from health; null while unknown. */
+  snapshot: string | null;
+  store?: LoopStore;
+};
 
-// Each skill is a tool that exists today; "Try" opens it rather than describing it.
-export const lumiSkills: readonly Skill[] = [
-  {
-    id: "search",
-    title: "Search Bern experts",
-    text: "Ask in your words, in German, English or French. Every result carries the sentence on a public page that proves it.",
-  },
-  {
-    id: "brief",
-    title: "Read a project brief",
-    text: "Bring a PDF or paste the text. Lumi lists the needs she read, each with the sentence it came from, and shows which needs the experts cover.",
-  },
-  {
-    id: "report",
-    title: "Make a match report",
-    text: "Keep an answer as a report with every claim and its source, ready to save as a PDF.",
-  },
-];
-
-export const loopsText =
-  "Loops: saved searches that run again when a new snapshot of the public pages arrives. New results come to you as notifications, each with its source.";
-
-export function AgentsApp({ onTry }: { onTry: (skill: SkillId) => void }) {
+/** The Agents app: an agent's skills and the loops the player keeps. The host injects search,
+ *  notifications and where "Try" goes, so this runs in a desktop window or a page alike. Loops run
+ *  only when the player asks; nothing here polls or runs in the background. */
+export function AgentsApp({
+  agent,
+  search,
+  onTrySkill,
+  notify,
+  snapshot,
+  store = browserLoops(),
+}: AgentsAppProps) {
+  const controller = useLoops(store, search, notify);
+  const id = useId();
   return (
-    <div className="flex flex-col gap-5">
-      <section aria-labelledby="lumi-title" className="flex flex-col gap-1">
-        <h3 id="lumi-title" className="text-xl font-extrabold">
-          Lumi
+    <div className="flex flex-col gap-8">
+      <section aria-labelledby={`${id}-skills`} className="flex flex-col gap-3">
+        <h3 id={`${id}-skills`} className="text-lg font-extrabold">
+          {agent.name}&rsquo;s skills
         </h3>
-        <p className="text-muted">
-          Your guide in Bern. She works only with these tools, and what she shows you comes with its
-          source.
-        </p>
+        <SkillList onTry={onTrySkill} />
       </section>
-      <ul className="flex flex-col gap-3">
-        {lumiSkills.map((skill) => (
-          <li key={skill.id} className="bg-chip flex items-start gap-3 rounded-2xl p-4">
-            <div className="flex flex-1 flex-col gap-1">
-              <h4 className="font-extrabold">{skill.title}</h4>
-              <p className="text-sm">{skill.text}</p>
-            </div>
-            <button
-              type="button"
-              aria-label={`Try: ${skill.title}`}
-              onClick={() => onTry(skill.id)}
-              className="bg-primary text-primary-ink rounded-pill shrink-0 px-4 py-1.5 font-bold"
-            >
-              Try
-            </button>
-          </li>
-        ))}
-      </ul>
-      <ComingNext text={loopsText} />
+      <section aria-labelledby={`${id}-loops`} className="flex flex-col gap-3">
+        <h3 id={`${id}-loops`} className="text-lg font-extrabold">
+          Loops
+        </h3>
+        <p className="text-muted text-sm">
+          A loop is a search {agent.name} keeps for you. Run it again when a new snapshot arrives;
+          new and dropped results are listed here and sent to your notifications.
+        </p>
+        <LoopForm onSave={controller.save} />
+        {controller.loops.length === 0 ? (
+          <p className="text-muted">No loops yet.</p>
+        ) : (
+          <ul aria-label="Saved loops" className="flex flex-col gap-3">
+            {controller.loops.map((loop) => (
+              <LoopCard
+                key={loop.id}
+                loop={loop}
+                status={controller.status[loop.id]}
+                snapshot={snapshot}
+                onRun={() => void controller.run(loop.id)}
+                onRemove={() => controller.remove(loop.id)}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

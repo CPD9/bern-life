@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { httpAccountApi } from "@/features/accounts/account-api";
 import { useAccount } from "@/features/accounts/use-account";
-import { type BearConfig, furOptions } from "@/features/avatar/bear-config";
+import { personBadgeColour } from "@/features/avatar/person-config";
 import { useAvatar } from "@/features/avatar/use-avatar";
+import { PersonFigure } from "@/features/avatar/person-figure";
+import { useAgentName, usePerson } from "@/features/avatar/use-person";
 import { DesktopDialog } from "@/features/desktop/desktop";
 import { useDesktop } from "@/features/desktop/use-desktop";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
@@ -32,18 +34,12 @@ import { useStory } from "@/features/story/use-story";
 import { WorldCanvas } from "@/features/world/world-canvas";
 import { emittedToday } from "@/infrastructure/app-events";
 import { useNow } from "@/infrastructure/bern-time";
+import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
+import { useSettings } from "@/infrastructure/use-settings";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
 import { AppIcon } from "@/infrastructure/ui/app-icons";
 import { ComingNext } from "@/infrastructure/ui/coming-next";
-import { useOfficeApps } from "./office-apps";
-
-// The badge reads the colour from the stored bear on each render, so there is no second copy.
-function furColourOf(bear: BearConfig): string {
-  const shades = furOptions(bear.kind);
-  const shade = shades.find((candidate) => candidate.id === bear.fur) ?? shades[0];
-  if (!shade) throw new Error(`bear kind ${bear.kind} has no fur shades`);
-  return shade.colour;
-}
+import { notifyLoop, useOfficeApps } from "./office-apps";
 
 // Composes the features. One Navigator controller lives here, above the phone, so a search
 // survives closing the phone and the agent can drive the same instance.
@@ -65,15 +61,27 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const [storyMenuOpen, setStoryMenuOpen] = useState(false);
   const storyController = useStory({ story, demo: storyDemo, emitted: emittedToday });
   const account = useAccount(httpAccountApi);
-  const [avatar] = useAvatar();
+  const [person] = usePerson();
+  const [bear] = useAvatar();
+  const [agentName] = useAgentName();
+  const [settings] = useSettings();
+  const reducedMotion = useReducedMotion();
   const [onboarding] = useOnboarding();
   const [greetingDismissed, setGreetingDismissed] = useState(false);
   const [joinDismissed, setJoinDismissed] = useState(false);
   const navigator = useNavigator(httpNavigatorApi);
   const desktop = useDesktop();
-  const officeApps = useOfficeApps({ navigator, desktop, fixtureMode });
   const now = useNow();
   const health = useHealth();
+  const officeApps = useOfficeApps({
+    navigator,
+    navigatorApi: httpNavigatorApi,
+    desktop,
+    fixtureMode,
+    agentName,
+    snapshot: health?.snapshot ?? null,
+    notify: notifyLoop,
+  });
 
   const apps: PhoneApp[] = [
     {
@@ -128,10 +136,10 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     greetingDismissed,
     joinDismissed,
   });
-  const furColour = furColourOf(avatar);
+  const badgeColour = personBadgeColour(person);
   const hudAccount: HudAccount =
     account.state.status === "signed-in"
-      ? { status: "signed-in", handle: account.state.user.handle, colour: furColour }
+      ? { status: "signed-in", handle: account.state.user.handle, colour: badgeColour }
       : { status: account.state.status };
   const current = storyController.progress.current;
   const goal = choice !== "story" ? "Explore" : current ? current.quest.title : "Open quests done";
@@ -173,7 +181,14 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
         <>
           <WorldCanvas demoSearch={demoSearch} />
           {shownView === "home" && (
-            <OfficeView onUseDesk={() => setDesktopOpen(true)} onGoOutside={() => setView("map")} />
+            <OfficeView
+              lite={settings.lite}
+              reducedMotion={reducedMotion}
+              player={<PersonFigure config={person} shadows={!settings.lite} />}
+              agent={bear}
+              onUseDesk={() => setDesktopOpen(true)}
+              onGoOutside={() => setView("map")}
+            />
           )}
         </>
       }

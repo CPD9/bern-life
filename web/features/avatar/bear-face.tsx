@@ -1,5 +1,5 @@
 // The face on the front of the head: eyes in the chosen style, a small smile and soft blush. Head
-// coordinates, centred on the head.
+// coordinates, centred on the head. The bear faces +z, so its right eye sits at -x.
 
 import { type FaceId } from "./bear-config";
 import { DARK_EYES } from "./bear-look";
@@ -42,6 +42,7 @@ function Eye({ side, style, colour }: EyeProps) {
   );
 }
 
+/** Eye styles as [right, left], from the bear's point of view. */
 const EYES: Readonly<Record<FaceId, readonly [EyeStyle, EyeStyle]>> = {
   happy: ["closed-happy", "closed-happy"],
   bright: ["open", "open"],
@@ -52,11 +53,11 @@ const EYES: Readonly<Record<FaceId, readonly [EyeStyle, EyeStyle]>> = {
 type FaceProps = { face: FaceId; eyes: string; mouth: string };
 
 export function BearFace({ face, eyes, mouth }: FaceProps) {
-  const [left, right] = EYES[face];
+  const [right, left] = EYES[face];
   return (
     <group>
-      <Eye side={-1} style={left} colour={eyes} />
-      <Eye side={1} style={right} colour={eyes} />
+      <Eye side={-1} style={right} colour={eyes} />
+      <Eye side={1} style={left} colour={eyes} />
       {[-1, 1].map((side) => (
         <Ball
           key={side}

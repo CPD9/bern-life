@@ -39,14 +39,35 @@ async function ask(query: string) {
   });
 }
 
+async function submitBrief(text: string) {
+  fireEvent.click(screen.getByRole("button", { name: "Project brief" }));
+  fireEvent.change(screen.getByLabelText("Or paste the text"), { target: { value: text } });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Find experts" }));
+  });
+}
+
 describe("Navigator", () => {
-  test("a mock answer shows the MOCK banner and the expanded terms as search terms", async () => {
-    render(<Harness api={answering(resultFixture)} />);
+  test("a mock answer in fixture mode shows the MOCK banner and the expanded terms", async () => {
+    render(<Harness api={answering(resultFixture)} fixtureMode />);
     await ask("glucose sensors");
     expect(screen.getByRole("status").textContent).toBe("1 result");
     expect(screen.getByText("MOCK")).toBeTruthy();
+    expect(screen.queryByText(/plain search over the stored pages/)).toBeNull();
     expect(screen.getByText(/They are not facts about anyone/)).toBeTruthy();
     expect(screen.getByText("CGM")).toBeTruthy();
+  });
+
+  test("a mock answer from the engine says plain search, with no MOCK banner", async () => {
+    render(<Harness api={answering(resultFixture)} />);
+    await ask("glucose sensors");
+    expect(screen.queryByText("MOCK")).toBeNull();
+    expect(screen.queryByText(/canned test data/)).toBeNull();
+    expect(
+      screen.getByText(
+        "No recorded model answer for this question: plain search over the stored pages",
+      ),
+    ).toBeTruthy();
   });
 
   test("a replay answer shows the Replay chip and no MOCK banner", async () => {
@@ -113,13 +134,7 @@ describe("Navigator", () => {
 
   test("a brief shows each need with its sentence and the aspect matrix", async () => {
     render(<Harness api={answering(briefFixture)} />);
-    fireEvent.click(screen.getByRole("button", { name: "Project brief" }));
-    fireEvent.change(screen.getByLabelText("Or paste the text"), {
-      target: { value: "We are developing a wearable glucose sensor." },
-    });
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Find experts" }));
-    });
+    await submitBrief("We are developing a wearable glucose sensor.");
     expect(
       screen.getByText(
         "From your brief: “We are developing a wearable glucose sensor for people with diabetes.”",
@@ -127,6 +142,21 @@ describe("Navigator", () => {
     ).toBeTruthy();
     const cells = Array.from(document.querySelectorAll("tbody td"), (td) => td.textContent);
     expect(cells).toEqual(["Covered", "Not covered", "Not covered", "Partly"]);
+  });
+
+  test("a brief the replay could not read says it needs the model, not that no page supports it", async () => {
+    const unread: SearchResponse = {
+      ...copyOf(abstainedFixture),
+      query: "",
+      mode: "mock",
+      brief_terms: [],
+    };
+    render(<Harness api={answering(unread)} />);
+    await submitBrief("We are developing a wearable glucose sensor.");
+    expect(screen.getByRole("status").textContent).toBe(
+      "Reading a new brief needs the model; this replay has the recorded briefs only.",
+    );
+    expect(screen.queryByText(/plain search over the stored pages/)).toBeNull();
   });
 
   test("the FIXTURE label shows only in fixture mode", () => {
