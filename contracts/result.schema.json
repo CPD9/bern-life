@@ -110,7 +110,7 @@
             "$ref": "profile.schema.json"
           },
           "reason": {
-            "description": "Why it matches, written only from the cited claims. `cites` are JSON pointers into `profile`, e.g. /fields/expertise/0.",
+            "description": "Why it matches, written only from the cited claims. `cites` are JSON pointers into the result: /name or /fields/expertise/0 for a claim of the profile's own, /via/related_claims/0 for a claim of the project the result is shown through.",
             "type": "object",
             "required": [
               "text",
@@ -128,7 +128,7 @@
                 "minItems": 1,
                 "items": {
                   "type": "string",
-                  "pattern": "^/(name|fields/[a-z]+/[0-9]+)$"
+                  "pattern": "^/(name|fields/[a-z]+/[0-9]+|via/related_claims/[0-9]+)$"
                 }
               }
             }
@@ -246,7 +246,7 @@
             }
           },
           "via": {
-            "description": "When the result's own claims do not match the question but a related project or unit does: the relation (its verbatim span on its page) and the related profile's matching claims, inline, so both sentences are shown and checked.",
+            "description": "When the result's own claims do not match the question but a related project or unit does: the relation (its verbatim span on its page) and the related profile's matching claims, inline, so both sentences are shown and checked. The result's reason is the relation sentence written from them, citing these claims.",
             "type": "object",
             "additionalProperties": false,
             "required": [

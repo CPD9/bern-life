@@ -148,8 +148,9 @@ reorders a few results below rank 10.
    when it works on or leads a project (relation `works_on` or `leads`) that has a matching
    claim. The result then carries `via`: the relation with its verbatim span and page, and the
    project's matching claims inline with their evidence. So the card shows both sentences
-   ("Project team: …" and the project's topic), and both can be checked. Its `reason` stays the
-   plain one from its own claims, and it is not sent to the explainer. Unit membership
+   ("Project team: …" and the project's topic), and both can be checked. Its `reason` is the
+   relation sentence written by code, "Works on <project>: <the project's matching claims>",
+   citing those claims as `/via/related_claims/<n>`; it is not sent to the explainer. Unit membership
    (`member_of`) does not count: on the dev set it added nothing, and a broad unit would vouch
    for everyone in it.
    **On their own page (`passage`):** a candidate with neither is still shown when its own page,

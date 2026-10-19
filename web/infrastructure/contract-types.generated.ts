@@ -33,7 +33,7 @@ export interface SearchResponse {
     rank: number;
     profile: Profile;
     /**
-     * Why it matches, written only from the cited claims. `cites` are JSON pointers into `profile`, e.g. /fields/expertise/0.
+     * Why it matches, written only from the cited claims. `cites` are JSON pointers into the result: /name or /fields/expertise/0 for a claim of the profile's own, /via/related_claims/0 for a claim of the project the result is shown through.
      */
     reason: {
       text: string;
@@ -66,7 +66,7 @@ export interface SearchResponse {
       };
     };
     /**
-     * When the result's own claims do not match the question but a related project or unit does: the relation (its verbatim span on its page) and the related profile's matching claims, inline, so both sentences are shown and checked.
+     * When the result's own claims do not match the question but a related project or unit does: the relation (its verbatim span on its page) and the related profile's matching claims, inline, so both sentences are shown and checked. The result's reason is the relation sentence written from them, citing these claims.
      */
     via?: {
       kind: "leads" | "works_on" | "member_of";

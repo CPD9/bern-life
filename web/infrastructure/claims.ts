@@ -50,16 +50,29 @@ export function claimAt(profile: Profile, pointer: string): Claim | null {
   return profile.fields[field]?.[Number(index)] ?? null;
 }
 
+const viaPointer = /^\/via\/related_claims\/(\d+)$/;
+
+/** A cited claim: the profile's own, or one of the project the result is shown through. */
+function citedClaim(result: SearchResult, pointer: string): Claim | null {
+  const related = viaPointer.exec(pointer);
+  if (related) return result.via?.related_claims[Number(related[1])] ?? null;
+  return claimAt(result.profile, pointer);
+}
+
 export function citedClaims(result: SearchResult): ClaimRef[] {
   return result.reason.cites.flatMap((pointer) => {
-    const claim = claimAt(result.profile, pointer);
+    const claim = citedClaim(result, pointer);
     return claim ? [{ pointer, claim }] : [];
   });
 }
 
-/** A reason that cites only the name says nothing about the question, so the card leaves it out. */
-export function citesOnlyName(result: SearchResult): boolean {
-  return result.reason.cites.every((pointer) => pointer === "/name");
+/**
+ * A reason that cites no claim of the profile's own: only its name, which says nothing about the
+ * question, or only the claims of the project it is shown through, which the card shows under
+ * "Through". Either way the card leaves it out when a relation or a passage explains the result.
+ */
+export function citesNoOwnClaim(result: SearchResult): boolean {
+  return result.reason.cites.every((pointer) => pointer === "/name" || viaPointer.test(pointer));
 }
 
 const relatedKinds = ["person", "unit", "project", "infrastructure"] as const;
