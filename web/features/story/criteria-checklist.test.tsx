@@ -30,8 +30,11 @@ describe("criterionRows", () => {
       ["c3-traceable", false, null],
       ["c4-structured", false, null],
       ["c5-sources", false, noQuestYet],
-      // The garage's measured numbers count toward Add a new source, so it is playable.
-      ["c6-extend", false, null],
+      [
+        "c6-extend",
+        false,
+        "The measured numbers are not connected to the game yet; adding a source is a reviewed change: one file in sources/.",
+      ],
       ["ethics-abstain", true, null],
     ]);
   });

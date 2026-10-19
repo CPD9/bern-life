@@ -39,8 +39,9 @@ export const appEvents: AppEvents = createAppEvents();
  *   sitting at the desk)
  * - opportunity_saved, library_item_saved: app/shared-apps.tsx (the Library's save button, through
  *   features/library/library-items.ts savedEventNames)
- * - garage_visited, numbers_seen: app/shared-apps.tsx (features/garage/garage-app.tsx; numbers only
- *   when the engine measured them, never a fixture)
+ * - garage_visited: app/shared-apps.tsx (features/garage/garage-app.tsx, opening the garage)
+ * The garage also emits numbers_seen for numbers the engine measured, but nothing serves
+ * /api/numbers until Run A's PR-A1, so it is listed here only once that is on main.
  * - settled: app/world-settle.tsx (features/settle/settle.tsx, choosing a plot)
  */
 export const emittedToday: readonly AppEventName[] = [
@@ -56,6 +57,5 @@ export const emittedToday: readonly AppEventName[] = [
   "opportunity_saved",
   "library_item_saved",
   "garage_visited",
-  "numbers_seen",
   "settled",
 ];

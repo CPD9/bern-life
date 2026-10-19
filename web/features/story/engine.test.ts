@@ -99,7 +99,7 @@ describe("comingReason", () => {
   test("uses the story's own line and falls back to a plain one", () => {
     const extend = story.quests.find((q) => q.id === "extend")!;
     expect(comingReason(extend)).toBe(
-      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+      "The measured numbers are not connected to the game yet; adding a source is a reviewed change: one file in sources/.",
     );
     const withoutReason = { ...extend };
     delete withoutReason.coming;
@@ -132,8 +132,6 @@ describe("comingReason", () => {
 
 describe("storyProgress", () => {
   test("quests whose events nothing emits yet are coming next and never current", () => {
-    const withoutNumbers = emittedToday.filter((event) => event !== "numbers_seen");
-    expect(statuses(started, withoutNumbers)["extend"]).toBe("coming");
     expect(statuses(started)).toEqual({
       arrive: "ready",
       "find-experts": "current",
@@ -141,7 +139,7 @@ describe("storyProgress", () => {
       brief: "ready",
       visit: "ready",
       honest: "ready",
-      extend: "ready",
+      extend: "coming",
       grow: "ready",
     });
   });

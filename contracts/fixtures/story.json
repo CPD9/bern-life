@@ -107,7 +107,7 @@
       "goal": "Add an institution's website with one configuration file.",
       "criterion": "c6-extend",
       "optional": true,
-      "coming": "Adding a source does not report to the story yet; a new site is one file in sources/.",
+      "coming": "The measured numbers are not connected to the game yet; adding a source is a reviewed change: one file in sources/.",
       "steps": [
         {
           "id": "source",
@@ -127,7 +127,7 @@
       "goal": "Find opportunities, connections and partners for your business in Bern, in any order.",
       "criterion": "stretch",
       "optional": true,
-      "coming": "Adding a lab or an expert to your network does not report to the story yet.",
+      "coming": "Adding a lab or an expert to a network is not in the game.",
       "steps": [
         {
           "id": "opportunity",
@@ -141,7 +141,7 @@
         },
         {
           "id": "library",
-          "text": "Keep a source or a document in your office library.",
+          "text": "Save a person or an opportunity to your office library.",
           "done_when": "library_item_saved"
         },
         {
