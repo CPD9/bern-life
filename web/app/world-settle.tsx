@@ -18,10 +18,12 @@ export type WorldSettle = {
 };
 
 // Settling after onboarding: the card and the quest's "Show me" open the dialog; choosing a plot
-// stores it on this device and reports `settled` to the story.
+// stores it on this device and reports `settled` to the story. Settling removes the card that
+// opened the dialog, so on close focus goes to `focusFallback` when that card is gone.
 export function useWorldSettle(
   events: AppEventSink,
   store: () => SettleStore = browserSettleStore,
+  focusFallback?: () => HTMLElement | null,
 ): WorldSettle {
   const plot = useSyncExternalStore(
     (listener) => store().subscribe(listener),
@@ -42,6 +44,7 @@ export function useWorldSettle(
         store={store()}
         onSettled={() => events.emit("settled")}
         onClose={() => setOpen(false)}
+        focusFallback={focusFallback}
       />
     ),
   };

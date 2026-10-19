@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type Ref, useState } from "react";
 import type { AccountState } from "@/features/accounts/use-account";
 import { type PersonConfig, personBadgeColour } from "@/features/avatar/person-config";
 import { NotificationBell } from "@/features/notifications/notification-bell";
@@ -16,6 +16,7 @@ import { QuestPanel } from "@/features/story/quest-panel";
 import type { ShowMeTarget } from "@/features/story/show-me";
 import { StoryStart } from "@/features/story/story-start";
 import type { StoryController } from "@/features/story/use-story";
+import { focusableIn } from "@/infrastructure/ui/focus-trap";
 
 // The HUD across the top and the cards at the side of the world, composed from the shell and the
 // story. Which card shows follows the first-run order in features/shell/first-run.ts.
@@ -49,7 +50,20 @@ export function WorldHud({ now, health, account, person, story, onOpenYou }: Wor
   );
 }
 
+/**
+ * Where focus goes when the side card that held it is gone, as settling removes the settle card:
+ * the first control of the card now beside the world, or, with none, the tab of the view on screen.
+ */
+export function focusBeside(side: HTMLElement | null): HTMLElement | null {
+  const card = side === null ? undefined : focusableIn(side)[0];
+  return (
+    card ?? document.querySelector<HTMLElement>('nav[aria-label="Main"] [aria-current="true"]')
+  );
+}
+
 type WorldSideProps = {
+  /** The cards' column, for `focusBeside`. */
+  ref?: Ref<HTMLDivElement>;
   account: AccountState["status"];
   onboarded: boolean;
   story: StoryController;
@@ -61,6 +75,7 @@ type WorldSideProps = {
 };
 
 export function WorldSide({
+  ref,
   account,
   onboarded,
   story,
@@ -82,7 +97,7 @@ export function WorldSide({
     settleDismissed: settle.dismissed,
   });
   return (
-    <>
+    <div ref={ref} className="flex flex-col items-start gap-3">
       {card === "greeting" && <GuideGreeting onDismiss={() => setGreetingDismissed(true)} />}
       {card === "join" && <JoinPrompt onNotNow={() => setJoinDismissed(true)} />}
       {card === "onboarding" && <OnboardingPrompt />}
@@ -92,6 +107,6 @@ export function WorldSide({
         <QuestPanel controller={story} onShowMe={onShowMe} onOpenMenu={onOpenStoryMenu} />
       )}
       {storyDemo && <CriteriaChecklist controller={story} />}
-    </>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { httpAccountApi } from "@/features/accounts/account-api";
 import { useAccount } from "@/features/accounts/use-account";
 import { useAvatar } from "@/features/avatar/use-avatar";
@@ -9,6 +9,7 @@ import { useDesktop } from "@/features/desktop/use-desktop";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
 import { useNavigator } from "@/features/navigator/use-navigator";
 import { useOnboarding } from "@/features/onboarding/use-onboarding";
+import { browserSettleStore } from "@/features/settle/settle-store";
 import { landingView } from "@/features/shell/first-run";
 import { GameShell, type WorldView } from "@/features/shell/game-shell";
 import { useHealth } from "@/features/shell/use-health";
@@ -25,7 +26,7 @@ import type { SearchResponse, Story } from "@/infrastructure/contract-types.gene
 import { useWorldPhone } from "./world-phone";
 import { unreadRefresh, useUnreadMessages } from "./use-unread-messages";
 import { useWorldApps } from "./use-world-apps";
-import { WorldHud, WorldSide } from "./world-hud";
+import { WorldHud, WorldSide, focusBeside } from "./world-hud";
 import { useWorldLumi } from "./world-lumi";
 import { WorldOverlay } from "./world-overlay";
 import { WorldScene } from "./world-scene";
@@ -107,7 +108,8 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     onShowOnMap: showOnMap,
     onOpenAsk: () => phone.openApp("ask"),
   });
-  const settle = useWorldSettle(appEvents);
+  const side = useRef<HTMLDivElement>(null);
+  const settle = useWorldSettle(appEvents, browserSettleStore, () => focusBeside(side.current));
 
   function showMe(target: ShowMeTarget) {
     if (target === "map") setView("map");
@@ -138,6 +140,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
       }
       side={
         <WorldSide
+          ref={side}
           account={account.state.status}
           onboarded={onboarding.done}
           story={storyController}

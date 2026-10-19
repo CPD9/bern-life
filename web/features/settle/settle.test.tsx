@@ -124,4 +124,30 @@ describe("Settle", () => {
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  test("when the control that opened it is gone, Close focuses the fallback", () => {
+    function Host({ withOpener }: { withOpener: boolean }) {
+      return (
+        <>
+          {withOpener && <button type="button">Choose a plot</button>}
+          <button type="button">Next card</button>
+        </>
+      );
+    }
+    const { rerender } = render(<Host withOpener />);
+    screen.getByRole("button", { name: "Choose a plot" }).focus();
+    const fallback = () => screen.getByRole("button", { name: "Next card" });
+    render(
+      <Settle
+        places={PLACES}
+        onSettled={() => undefined}
+        onClose={() => undefined}
+        focusFallback={fallback}
+        store={memoryStore()}
+      />,
+    );
+    rerender(<Host withOpener={false} />);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(document.activeElement).toBe(fallback());
+  });
 });
