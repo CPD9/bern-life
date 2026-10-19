@@ -16,13 +16,14 @@ from agent_fakes import (
     user,
 )
 from bernlife.agent import answer
-from bernlife.agent_follow_up import is_topical, search_query
+from bernlife.agent_follow_up import is_follow_up, search_query
 from bernlife.agent_views import NO_SOURCE_REPLY
 from bernlife.cache import cache_roots
 from bernlife.config import Endpoint
 from bernlife.llm import ROLES, MockLLM, Router
 from bernlife.llm_gate import request_mode, request_scope
 from bernlife.llm_http import OpenAIChat
+from bernlife.search import NO_MODEL
 from fake_llm import FakeTransport, chat_body
 
 KEERA = "I will show the experts working on glucose sensors on the map."
@@ -42,9 +43,17 @@ class FollowUpTest(AgentCase):
     def test_a_follow_up_with_nothing_to_search_searches_the_earlier_question(self):
         follow_ups = (
             "Show them on the map",
-            "Zeig sie auf der Karte",
-            "Montre-les sur la carte, s'il vous plaît",
+            "Can you put them on the map?",
             "Where are they?",
+            "Zeig sie auf der Karte",
+            "Zeig sie mir auf der Karte an",
+            "Kannst du sie auf der Karte zeigen?",
+            "Wo befinden sie sich?",
+            "Montre-les sur la carte, s'il vous plaît",
+            "Montre-les sur la carte, s'il te plaît",
+            "Peux-tu les montrer sur la carte ?",
+            "Pouvez-vous les afficher sur la carte ?",
+            "Où se trouvent-ils ?",
         )
         for text in follow_ups:
             for llm in (MockLLM(), ScriptedChat(says(KEERA))):
@@ -57,7 +66,7 @@ class FollowUpTest(AgentCase):
                     )
                     self.assertEqual(tools.asked, [("search", (QUESTION, None))])
 
-    def test_the_most_recent_question_with_a_topic_is_the_one_searched(self):
+    def test_the_latest_message_that_is_no_follow_up_is_searched(self):
         cases = (
             (after_glucose("Bitte nochmal auf der Karte"), QUESTION),
             (
@@ -66,6 +75,10 @@ class FollowUpTest(AgentCase):
             ),
             (after_glucose("And insulin pumps?"), "And insulin pumps?"),
             (after_glucose("Who works on CT?"), "Who works on CT?"),
+            (after_glucose("Who works on maps?"), "Who works on maps?"),
+            (after_glucose("Wer forscht zu Karten?"), "Wer forscht zu Karten?"),
+            (after_glucose("Qui travaille sur les cartes ?"), "Qui travaille sur les cartes ?"),
+            (after_glucose("Who works on maps?", "Show them on the map"), "Who works on maps?"),
             (
                 [
                     *user("Hi"),
@@ -80,30 +93,31 @@ class FollowUpTest(AgentCase):
             with self.subTest(last=messages[-1]["content"]):
                 self.assertEqual(search_query(messages), query)
 
-    def test_topical_words(self):
+    def test_a_follow_up_holds_only_words_of_showing_and_pointing_back(self):
         texts = (
             "Où sont-ils ?",
             "And on the map?",
             "Tell me more",
             "Wo liegen sie?",
+            "Mark them on the plan",
             "DCB?",
             "3D printing",
+            "Who are they?",
         )
-        self.assertEqual(
-            [is_topical(text) for text in texts], [False, False, False, False, True, True]
-        )
+        self.assertEqual([is_follow_up(text) for text in texts], [True] * 5 + [False] * 3)
 
 
 class ModeTools(FakeTools):
-    """Searches that answer in the mode of the request they ran in, as search.py does when the
-    model's expansion was used."""
+    """Searches that answer in the mode search.py's model_use gives: the request's when the
+    model's expansion was used, else "mock"."""
 
-    def __init__(self, backend: str) -> None:
+    def __init__(self, backend: str, expanded: bool) -> None:
         super().__init__({QUESTION: GLUCOSE})
-        self.backend = backend
+        self.backend, self.expanded = backend, expanded
 
     def search(self, query: str, kinds: Sequence[str] | None = None) -> dict[str, Any]:
-        return super().search(query, kinds) | {"mode": request_mode(self.backend)}
+        mode = request_mode(self.backend) if self.expanded else NO_MODEL
+        return super().search(query, kinds) | {"mode": mode}
 
 
 class FallbackModeTest(unittest.TestCase):
@@ -112,28 +126,34 @@ class FallbackModeTest(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         self.roots = cache_roots(Path(tmp.name))
 
-    def modes(self, llm: Any) -> tuple[str, str]:
-        reply = answer(user(QUESTION), ModeTools(llm.backend), llm)
-        self.assertEqual(reply["reply"], GLUCOSE_SUMMARY)
-        return reply["mode"], reply["results"][0]["mode"]
+    def mode(self, llm: Any, expanded: bool = True) -> str:
+        reply = answer(user(QUESTION), ModeTools(llm.backend, expanded), llm)
+        self.assertEqual((reply["reply"], reply["versions"]["prompts"]), (GLUCOSE_SUMMARY, "none"))
+        self.assertEqual(reply["mode"], reply["results"][-1]["mode"])
+        return reply["mode"]
 
     def test_a_fallback_answers_in_the_mode_its_search_ran_in(self):
         models = dict.fromkeys(ROLES, MODEL)
         transport = FakeTransport(chat_body(KEERA))
         client = OpenAIChat(Endpoint("https://gateway.example/v1", "key", MODEL), transport)
         router = Router(client, models, self.roots, serving=True, budget=5)
-        modes = [self.modes(MockLLM()), self.modes(Router(None, models, self.roots))]
+        modes = [self.mode(MockLLM()), self.mode(Router(None, models, self.roots))]
         for live in (True, False):
             with request_scope(live=live):
-                modes.append(self.modes(router))
-        self.assertEqual(
-            modes, [("mock", "mock"), ("replay", "replay"), ("live", "live"), ("replay", "replay")]
-        )
+                modes.append(self.mode(router))
+        self.assertEqual(modes, ["mock", "replay", "live", "replay"])
         self.assertEqual(len(transport.requests), 1)
 
-    def test_only_the_mock_engine_answers_mock(self):
-        reply = answer(user(QUESTION), FakeTools({QUESTION: GLUCOSE}), ScriptedChat(says(KEERA)))
-        self.assertEqual((reply["mode"], reply["results"][0]["mode"]), ("replay", "mock"))
+    def test_a_fallback_search_that_used_no_model_answers_mock(self):
+        models = dict.fromkeys(ROLES, MODEL)
+        transport = FakeTransport(chat_body(KEERA))
+        client = OpenAIChat(Endpoint("https://gateway.example/v1", "key", MODEL), transport)
+        router = Router(client, models, self.roots, serving=True, budget=5)
+        modes = [self.mode(ScriptedChat(says(KEERA)), expanded=False)]
+        for live in (True, False):
+            with request_scope(live=live):
+                modes.append(self.mode(router, expanded=False))
+        self.assertEqual(modes, ["mock", "mock", "mock"])
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 An endpoint that passes OpenAI `tools` on may return native tool calls, and those are taken first.
 One that does not (the Keera gateway answers in plain text) still carries the JSON step protocol of
 agent_prompt.py, read here with the llm_json helpers: {"tool": ...} is one call and {"answer": ...}
-ends the turn. Text that holds no step is no answer, and the turn falls back to a plain search.
+ends the turn. Text that holds no step is no answer, and the reply is a summary (agent.py).
 
 A JSON step goes back to the model as the object it was read as, and the tool's output as the next
 user message, {"result": ...}: without native tools there is no tool role to carry it. Earlier

@@ -11,11 +11,12 @@ a summary of the results' cited claims, so a premise in the question ("Prof. X, 
 not come back as a fact. A reply with no result behind it is NO_SOURCE_REPLY, whatever the model
 wrote: there is nothing it could have been written from.
 
-With no model (mock, a replay miss, a refused budget, a failure marker), with a reply that holds no
-step, or when the model ran no search, the turn is deterministic: the user's last message is
-searched, or for a follow-up with nothing to search the earlier question (agent_follow_up.py), and
-the summary is the reply. Its mode is the mode that search ran in, replay or live; only the mock
-engine answers "mock". Actions point only at returned results (agent_actions.py).
+When the model ran no search (no model, a replay miss, a refused budget, a failure marker, text
+that holds no step), the turn is deterministic: the user's last message is searched, or for a
+follow-up the earlier question (agent_follow_up.py), and the summary is the reply. Its mode is the
+mode that search answered in, so "mock" unless the model's expansion was used. When the model
+searched and then failed or wrote no answer, the reply summarises its own searches, and no plain
+search runs. Actions point only at returned results (agent_actions.py).
 """
 
 import unicodedata
@@ -146,7 +147,7 @@ def answer(
     mentioned = [profile_id for profile_id, _ in mentions]
     return {
         "reply": reply,
-        "mode": NO_MODEL if llm.backend == "mock" else request_mode(llm.backend),
+        "mode": _mode(llm, turn.responses, model_searched),
         "abstained": not found,
         "actions": actions(turn.responses, turn.made_by, mentioned, proposed),
         "results": turn.responses,
@@ -159,6 +160,14 @@ def answer(
             "models": {"agent": llm.models()["agent"]} if model_searched else {},
         },
     }
+
+
+def _mode(llm: ToolChat, responses: Sequence[Mapping[str, Any]], model_searched: bool) -> str:
+    """The request's mode when the model drove the searches; else the plain search's own, which
+    says "mock" when it used no model text."""
+    if model_searched:
+        return request_mode(llm.backend)
+    return responses[-1]["mode"] if responses else NO_MODEL
 
 
 def _may_ask(llm: ToolChat) -> bool:

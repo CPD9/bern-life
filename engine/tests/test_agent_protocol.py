@@ -87,7 +87,7 @@ class JsonStepTest(AgentCase):
                     {k: reply[k] for k in ("reply", "mode", "tool_calls", "versions")},
                     {
                         "reply": GLUCOSE_SUMMARY,
-                        "mode": "replay",
+                        "mode": "mock",
                         "tool_calls": [{"tool": "search", "query": QUESTION}],
                         "versions": versions("none", {}),
                     },
@@ -134,6 +134,7 @@ class JsonStepTest(AgentCase):
     def test_the_answer_keeps_only_actions_on_the_turns_results(self):
         research = response("glucose research", shown(CLEO, "/fields/expertise/0"))
         proposed = [
+            {"type": "show_on_map", "result": 1},
             {"type": "show_on_map", "result": 0},
             {"type": "show_on_map", "result": True},
             {"type": "show_on_map", "result": 7},
@@ -143,21 +144,22 @@ class JsonStepTest(AgentCase):
             {"type": "send_email", "to": "someone"},
             "map",
         ]
-        llm = ScriptedChat(
-            step("search", query="glucose sensors"),
-            step("search", query="glucose research"),
-            answers(ADA_SAYS, proposed),
+        both = f"{ADA_SAYS} Cleo Beispiel studies glucose metabolism in mice."
+        expected = (
+            (ADA_SAYS, [{"type": "open_profile", "profile_id": ADA["id"]}]),
+            (both, [{"type": "open_profile", "profile_id": CLEO["id"]}]),
         )
-        tools = FakeTools({"glucose sensors": GLUCOSE, "glucose research": research})
-        reply = self.check(answer(user(QUESTION), tools, llm))
-        self.assertEqual(
-            reply["actions"],
-            [
-                {"type": "show_on_map", "result": 0},
-                {"type": "open_profile", "profile_id": ADA["id"]},
-                {"type": "open_profile", "profile_id": CLEO["id"]},
-            ],
-        )
+        for text, cards in expected:
+            with self.subTest(text=text):
+                llm = ScriptedChat(
+                    step("search", query="glucose sensors"),
+                    step("search", query="glucose research"),
+                    answers(text, proposed),
+                )
+                tools = FakeTools({"glucose sensors": GLUCOSE, "glucose research": research})
+                reply = self.check(answer(user(QUESTION), tools, llm))
+                self.assertEqual(reply["reply"], text)
+                self.assertEqual(reply["actions"], [{"type": "show_on_map", "result": 0}, *cards])
         llm = ScriptedChat(
             step("search", query="glucose sensors"),
             answers("Ada Muster and Hugo Brandtner work on glucose sensors.", proposed[3:4]),

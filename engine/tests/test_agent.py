@@ -170,7 +170,7 @@ class AgentTest(AgentCase):
             tools,
             ScriptedChat(answers("Yes, he leads it.")),
         )
-        self.assertEqual((reply["reply"], reply["mode"]), (NO_SOURCE_REPLY, "replay"))
+        self.assertEqual((reply["reply"], reply["mode"]), (NO_SOURCE_REPLY, "mock"))
         self.assertEqual(
             tools.asked, [("search", ("Does Prof. Hugo Brandtner work at the Demo Centre?", None))]
         )
@@ -273,22 +273,21 @@ class AgentTest(AgentCase):
             {"role": "assistant", "content": "Hello."},
             *user(f"  {QUESTION}\n"),
         ]
-        for llm, mode in (
-            (MockLLM(), "mock"),
-            (ScriptedChat(ModelUnavailable("timeout")), "replay"),
-            (ScriptedChat(CacheMiss("agent call not in cache")), "replay"),
+        for case, llm in enumerate(
             (
+                MockLLM(),
+                ScriptedChat(ModelUnavailable("timeout")),
+                ScriptedChat(CacheMiss("agent call not in cache")),
                 ScriptedChat(answers("Ada Muster."), model=f"{MODEL}-thinking", backend="live"),
-                "live",
-            ),
+            )
         ):
-            with self.subTest(llm=type(llm).__name__, mode=mode):
+            with self.subTest(case=case):
                 reply = self.check(answer(messages, tools, llm))
                 self.assertEqual(
                     reply,
                     {
                         "reply": GLUCOSE_SUMMARY,
-                        "mode": mode,
+                        "mode": "mock",
                         "abstained": False,
                         "actions": [{"type": "show_on_map", "result": 0}],
                         "results": [GLUCOSE],
@@ -327,14 +326,14 @@ class AgentReplayTest(unittest.TestCase):
         self.assertEqual(len(transport.requests), 2)
         self.assertEqual(transport.bodies[0]["tools"], list(TOOLS))
         other = answer(user("Who builds insulin pumps?"), tools, Router(None, models, self.roots))
-        self.assertEqual((other["reply"], other["mode"]), (NO_SOURCE_REPLY, "replay"))
+        self.assertEqual((other["reply"], other["mode"]), (NO_SOURCE_REPLY, "mock"))
 
     def test_a_bundle_without_the_agent_role_falls_back(self):
         recorded = {role: MODEL for role in ROLES if role != "agent"}
         reply = answer(
             user(QUESTION), FakeTools({QUESTION: GLUCOSE}), Router(None, recorded, self.roots)
         )
-        self.assertEqual((reply["reply"], reply["mode"]), (GLUCOSE_SUMMARY, "replay"))
+        self.assertEqual((reply["reply"], reply["mode"]), (GLUCOSE_SUMMARY, "mock"))
 
     def test_a_live_engine_reports_replay_when_no_call_went_live(self):
         transport = FakeTransport(

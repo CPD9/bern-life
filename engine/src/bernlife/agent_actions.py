@@ -3,8 +3,10 @@
 By default the map shows the last results that found anything, a brief's results offer a match
 report, and a reply naming exactly one person opens that profile. The model may ask for actions in
 its JSON answer: one is kept only if it is among those the turn's results offer, compared as JSON
-so that 1.0 or true is no result number, and is written as the contract spells it. A map the model
-asks for replaces the default one, since the app shows one set of results at a time.
+so that 1.0 or true is no result number, and is written as the contract spells it. The app runs
+the actions in order and shows one set of results and one card at a time, so the last map the
+model asks for replaces the default one, and a card it asks for is kept only when the reply names
+no single person: otherwise it could open over the card of the one the reply is about.
 """
 
 import json
@@ -23,15 +25,14 @@ def actions(
     proposed: Sequence[object] = (),
 ) -> list[Action]:
     found = [i for i, response in enumerate(responses) if response["results"]]
-    asked = {_key(action) for action in proposed}
-    chosen = [action for action in offered(responses, made_by) if _key(action) in asked]
-    planned = [action for action in chosen if action["type"] == "show_on_map"] or [
-        {"type": "show_on_map", "result": i} for i in found[-1:]
-    ]
+    chosen = _chosen(proposed, offered(responses, made_by))
+    maps = [action for action in chosen if action["type"] == "show_on_map"]
+    planned = maps[-1:] or [{"type": "show_on_map", "result": i} for i in found[-1:]]
     planned += [{"type": "start_match_report", "result": i} for i in found if made_by[i] == "brief"]
     if len(mentioned) == 1:
         planned.append({"type": "open_profile", "profile_id": mentioned[0]})
-    planned += [action for action in chosen if action not in planned]
+    else:
+        planned += [action for action in chosen if action["type"] == "open_profile"]
     return planned[:MAX_ACTIONS]
 
 
@@ -45,6 +46,12 @@ def offered(responses: Sequence[Mapping[str, Any]], made_by: Sequence[str]) -> l
         *({"type": "start_match_report", "result": i} for i in found if made_by[i] == "brief"),
         *({"type": "open_profile", "profile_id": profile_id} for profile_id in ids),
     ]
+
+
+def _chosen(proposed: Sequence[object], offers: Sequence[Action]) -> list[Action]:
+    """The offered actions the model asked for, each once, in the order it asked."""
+    by_key = {_key(action): action for action in offers}
+    return [by_key[key] for key in dict.fromkeys(map(_key, proposed)) if key in by_key]
 
 
 def _key(action: object) -> str:
