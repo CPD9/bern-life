@@ -17,4 +17,22 @@ describe("parseSearchRequest", () => {
     expect(parseSearchRequest({ query: "CGM", lang: "it" })).toBeNull();
     expect(parseSearchRequest(null)).toBeNull();
   });
+
+  test("passes the kinds to search through", () => {
+    expect(
+      parseSearchRequest({ query: "seed grant", kinds: ["call", "service", "space"] }),
+    ).toEqual({ query: "seed grant", kinds: ["call", "service", "space"] });
+    expect(parseSearchRequest({ query: "CGM", lang: "en", kinds: ["person"] })).toEqual({
+      query: "CGM",
+      lang: "en",
+      kinds: ["person"],
+    });
+  });
+
+  test("rejects empty kinds, an unknown kind and kinds that are not a list", () => {
+    expect(parseSearchRequest({ query: "CGM", kinds: [] })).toBeNull();
+    expect(parseSearchRequest({ query: "CGM", kinds: ["call", "listing"] })).toBeNull();
+    expect(parseSearchRequest({ query: "CGM", kinds: "call" })).toBeNull();
+    expect(parseSearchRequest({ query: "CGM", kinds: null })).toBeNull();
+  });
 });

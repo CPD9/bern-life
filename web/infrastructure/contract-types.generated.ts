@@ -164,6 +164,26 @@ export interface Health {
     profiles?: number;
     sources?: number;
   };
+  /**
+   * degraded when a model call failed in the last hour, or when the mode is live and today's call budget is used up.
+   */
+  status?: "ok" | "degraded";
+  uptime_s?: number;
+  /**
+   * Failed model calls in the last hour, counted per role and failure marker. Markers only, never error text.
+   */
+  failures_last_hour?: {
+    [k: string]: {
+      [k: string]: number;
+    };
+  };
+  /**
+   * Live model calls allowed and used today (UTC day). Absent when the mode is not live.
+   */
+  budget?: {
+    limit: number;
+    used: number;
+  };
 }
 
 /**
@@ -331,4 +351,130 @@ export interface Story {
       ];
     }[]
   ];
+}
+
+/**
+ * POST /api/agent. The Navigator agent answers only from its tool results: every person it names appears in `mentions`, and every mention is a profile in one of `results`. Actions are things the app does on screen; the agent never contacts anyone.
+ */
+export interface AgentReply {
+  reply: string;
+  mode: "live" | "replay" | "mock";
+  abstained?: boolean;
+  /**
+   * @maxItems 6
+   */
+  actions: (
+    | {
+        type: "show_on_map";
+        result: number;
+      }
+    | {
+        type: "open_profile";
+        profile_id: string;
+      }
+    | {
+        type: "start_match_report";
+        result: number;
+      }
+  )[];
+  /**
+   * @maxItems 4
+   */
+  results: SearchResponse[];
+  mentions: {
+    profile_id: string;
+    name: string;
+  }[];
+  tool_calls?: {
+    tool: "search" | "brief" | "profile";
+    query?: string;
+  }[];
+  versions: {
+    engine: string;
+    snapshot: string;
+    prompts: string;
+    models?: {
+      [k: string]: string;
+    };
+  };
+}
+
+/**
+ * GET /api/sources. Every institution configured under sources/, with what the loaded snapshot holds from it. Counts are read from the stored pages and profiles, never estimated.
+ */
+export interface SourcesList {
+  snapshot: string;
+  sources: {
+    id: string;
+    name: string;
+    hosts: string[];
+    /**
+     * The profile kinds the snapshot holds for this source.
+     */
+    kinds: ("person" | "unit" | "project" | "infrastructure" | "call" | "service" | "space")[];
+    pages: number;
+    profiles: number;
+    /**
+     * When the most recently fetched page of this source was fetched; null only when it has no pages.
+     */
+    newest_fetched_at: string | null;
+  }[];
+}
+
+export type Share = number;
+
+/**
+ * GET /api/numbers. The measured numbers for the loaded snapshot: its evaluation as committed in eval/results/<snapshot>/metrics.json, and the model calls recorded in its cache pack.
+ */
+export interface Numbers {
+  snapshot: string;
+  /**
+   * When the engine answered.
+   */
+  generated_at: string;
+  /**
+   * The evaluation of this snapshot; null when none is committed.
+   */
+  eval: EvalNumbers | null;
+  /**
+   * One entry per role and model, computed from the cache pack entries (role, model, latency_ms); a role with no entries is not listed. The pack holds no failure records, so ok equals calls; failures show only in the health response's failures_last_hour.
+   */
+  models: {
+    role: string;
+    model: string;
+    calls: number;
+    ok: number;
+    median_ms: number;
+    p95_ms: number;
+  }[];
+}
+/**
+ * The evaluator's measurements on the gold set (eval/gold.jsonl): invented_abstained counts the questions about invented entities the search abstained on, false_abstention the answerable questions it abstained on, traceable the shown claims whose span is in their stored page's text.
+ */
+export interface EvalNumbers {
+  queries: number;
+  /**
+   * The share with its confidence interval.
+   */
+  recall_at_10: {
+    value: Share;
+    low: Share;
+    high: Share;
+  };
+  mrr: Share;
+  invented_abstained: Tally;
+  false_abstention: Tally;
+  traceable: Tally;
+  /**
+   * Profiles shown, directly or through a related profile, that the snapshot does not hold.
+   */
+  invented_entities: number;
+  slices: {
+    name: string;
+    recall_at_10: Share;
+  }[];
+}
+export interface Tally {
+  n: number;
+  of: number;
 }

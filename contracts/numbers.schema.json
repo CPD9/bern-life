@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "numbers.schema.json",
+  "title": "Numbers",
+  "description": "GET /api/numbers. The measured numbers for the loaded snapshot: its evaluation as committed in eval/results/<snapshot>/metrics.json, and the model calls recorded in its cache pack.",
+  "type": "object",
+  "required": [
+    "snapshot",
+    "generated_at",
+    "eval",
+    "models"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "snapshot": {
+      "type": "string"
+    },
+    "generated_at": {
+      "description": "When the engine answered.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "eval": {
+      "description": "The evaluation of this snapshot; null when none is committed.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/eval"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "models": {
+      "description": "One entry per role and model, computed from the cache pack entries (role, model, latency_ms); a role with no entries is not listed. The pack holds no failure records, so ok equals calls; failures show only in the health response's failures_last_hour.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "role",
+          "model",
+          "calls",
+          "ok",
+          "median_ms",
+          "p95_ms"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "calls": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "ok": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "median_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "p95_ms": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "eval": {
+      "title": "EvalNumbers",
+      "description": "The evaluator's measurements on the gold set (eval/gold.jsonl): invented_abstained counts the questions about invented entities the search abstained on, false_abstention the answerable questions it abstained on, traceable the shown claims whose span is in their stored page's text.",
+      "type": "object",
+      "required": [
+        "queries",
+        "recall_at_10",
+        "mrr",
+        "invented_abstained",
+        "false_abstention",
+        "traceable",
+        "invented_entities",
+        "slices"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "queries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "recall_at_10": {
+          "description": "The share with its confidence interval.",
+          "type": "object",
+          "required": [
+            "value",
+            "low",
+            "high"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "$ref": "#/$defs/share"
+            },
+            "low": {
+              "$ref": "#/$defs/share"
+            },
+            "high": {
+              "$ref": "#/$defs/share"
+            }
+          }
+        },
+        "mrr": {
+          "$ref": "#/$defs/share"
+        },
+        "invented_abstained": {
+          "$ref": "#/$defs/tally"
+        },
+        "false_abstention": {
+          "$ref": "#/$defs/tally"
+        },
+        "traceable": {
+          "$ref": "#/$defs/tally"
+        },
+        "invented_entities": {
+          "description": "Profiles shown, directly or through a related profile, that the snapshot does not hold.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "slices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "recall_at_10"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "recall_at_10": {
+                "$ref": "#/$defs/share"
+              }
+            }
+          }
+        }
+      }
+    },
+    "share": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "tally": {
+      "type": "object",
+      "required": [
+        "n",
+        "of"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "n": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "of": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

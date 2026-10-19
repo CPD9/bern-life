@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "metrics.schema.json",
+  "title": "EvalMetrics",
+  "description": "eval/results/<snapshot>/metrics.json, written by the evaluator and committed. GET /api/numbers returns its eval for the loaded snapshot.",
+  "type": "object",
+  "required": [
+    "snapshot",
+    "generated_at",
+    "eval"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "snapshot": {
+      "type": "string"
+    },
+    "generated_at": {
+      "description": "When the evaluator wrote this file.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "eval": {
+      "$ref": "numbers.schema.json#/$defs/eval"
+    }
+  }
+}
