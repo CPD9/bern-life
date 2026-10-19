@@ -32,6 +32,8 @@ type WorldSceneProps = {
   onUseDesk: () => void;
   onGoOutside: () => void;
   onGoHome: () => void;
+  /** Offered on the map's card when the browser cannot draw it. */
+  onOpenAsk: () => void;
 };
 
 /** Which way you last went through your office door, until focus has followed you through it. */
@@ -39,13 +41,15 @@ type Passage = "in" | "out";
 
 /**
  * Where focus lands on the other side of the door: going in, the office's way back out; coming
- * out, "Go home" at the door you stand at, else the Walk button.
+ * out, "Go home" at the door you stand at, else the Walk button, else the card that stands where
+ * the map would be when it cannot be drawn.
  */
 function landing(passage: Passage): HTMLElement | null {
   if (passage === "in") return document.querySelector<HTMLElement>("[data-office-exit]");
   return (
     document.querySelector<HTMLElement>(`[data-door="${HOME_DOOR_KEY}"]`) ??
-    document.querySelector<HTMLElement>("[data-walk-toggle]")
+    document.querySelector<HTMLElement>("[data-walk-toggle]") ??
+    document.querySelector<HTMLElement>("[data-no-map]")
   );
 }
 
@@ -105,6 +109,8 @@ export function WorldScene({
         onSearchHere={props.onSearchHere}
         onPlacePanel={props.onPlacePanel}
         onGoHome={goHome}
+        onOpenAsk={props.onOpenAsk}
+        onOpenDesk={props.onUseDesk}
       />
       {view === "home" && (
         <OfficeView

@@ -1,5 +1,6 @@
 // One line over the map that says what the light means: a search is running, or how many results
 // are lit at how many places, how many have no place on the map, and a way back to the quiet city.
+// On a phone it sits under the HUD's measured bottom, which the shell writes as `--hud-bottom`.
 
 import { type Lighting } from "./light";
 import { type WorldSearchState } from "./world-search";
@@ -36,7 +37,7 @@ export function SearchSummary({
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none absolute inset-x-0 top-24 z-20 sm:top-20 flex justify-center px-4"
+      className="pointer-events-none absolute inset-x-0 top-[calc(var(--hud-bottom,5.5rem)+0.5rem)] z-20 sm:top-20 flex justify-center px-4"
     >
       {text !== null && (
         <p className="rounded-pill bg-panel shadow-panel pointer-events-auto flex items-center gap-3 py-1.5 pr-1.5 pl-4 text-sm font-bold">

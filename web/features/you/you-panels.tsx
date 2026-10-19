@@ -39,9 +39,11 @@ function Empty({ children }: { children: string }) {
 export function ProfilePanel({
   profile,
   person,
+  onMoveOffice,
 }: {
   profile: YouProfile;
   person: PersonLook | undefined;
+  onMoveOffice: () => void;
 }) {
   return (
     <>
@@ -52,6 +54,14 @@ export function ProfilePanel({
       ) : (
         <Empty>No look chosen yet. It comes from the look step when you join.</Empty>
       )}
+      <Heading>Your office</Heading>
+      <button
+        type="button"
+        onClick={onMoveOffice}
+        className="bg-chip rounded-pill self-start px-4 py-1.5 text-sm font-bold"
+      >
+        Move your office
+      </button>
       <p className="text-muted text-sm">
         Everything here stays in this browser until you save it to an account.
       </p>

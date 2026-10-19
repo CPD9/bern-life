@@ -1,6 +1,11 @@
-import { describe, expect, test } from "bun:test";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { OfficeRoom } from "./office-room";
+import { afterEach, describe, expect, mock, test } from "bun:test";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { assumeWebgl } from "@/infrastructure/webgl";
+
+// three.js has to finish loading as a module before the canvas library requires it, or Bun can
+// refuse the require part of the time; a test file loads both at once unless told otherwise.
+await import("three");
+const { NoRoom, OfficeRoom } = await import("./office-room");
 
 function renderRoom() {
   const calls: string[] = [];
@@ -40,5 +45,42 @@ describe("OfficeRoom", () => {
       screen.getByRole("img", { name: /^Lena Beispiel's office, as a visitor sees it: a desk/ }),
     ).toBeTruthy();
     expect(screen.queryByRole("img", { name: /^Your office/ })).toBeNull();
+  });
+
+  describe("without WebGL", () => {
+    // Unmounted first, so putting WebGL back re-renders nothing outside act().
+    afterEach(() => {
+      cleanup();
+      assumeWebgl(true);
+    });
+
+    test("a visited office says so, with no promise of buttons it does not have", () => {
+      assumeWebgl(false);
+      render(<OfficeRoom lite reducedMotion visiting="Lena Beispiel" />);
+      expect(
+        screen.getByText(
+          "Lena Beispiel's office needs 3D graphics, which this browser does not offer.",
+        ),
+      ).toBeTruthy();
+      expect(screen.queryAllByRole("button")).toEqual([]);
+    });
+  });
+
+  describe("a room that stopped drawing", () => {
+    test("says so without blaming the browser, offers to try again and takes lost focus", () => {
+      const onRetry = mock(() => undefined);
+      render(<NoRoom visiting={undefined} onRetry={onRetry} />);
+      const note = screen.getByText(
+        "The office stopped drawing. The computer and the door below still work.",
+      );
+      expect(document.activeElement).toBe(note);
+      fireEvent.click(screen.getByRole("button", { name: "Try the room again" }));
+      expect(onRetry).toHaveBeenCalledTimes(1);
+    });
+
+    test("a visited office says whose it is", () => {
+      render(<NoRoom visiting="Lena Beispiel" onRetry={() => undefined} />);
+      expect(screen.getByText("Lena Beispiel's office stopped drawing.")).toBeTruthy();
+    });
   });
 });

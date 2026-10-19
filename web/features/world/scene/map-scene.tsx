@@ -5,6 +5,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import { type ReactNode, type RefObject } from "react";
+import { ContextLossWatch } from "@/infrastructure/ui/scene-guard";
 import { CITY, BUILDINGS } from "../city-layout";
 import { liteTrees } from "../city-plan";
 import { type WorldDisplay } from "../display";
@@ -54,6 +55,8 @@ export function MapScene({ display, world, home, walk, ...props }: MapSceneProps
       gl={{ alpha: true }}
       camera={{ fov: 35, near: 1, far: 1200 }}
     >
+      {/* A context lost for good gives the map up for its card (world-canvas.tsx). */}
+      <ContextLossWatch />
       <Lights night={display.night} shadows={shadows} />
       <Ground palette={palette} shadows={shadows} onWalk={toSpot} />
       <City

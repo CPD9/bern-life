@@ -1,7 +1,16 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { type SearchResponse } from "@/infrastructure/contract-types.generated";
+import { SceneGuard } from "@/infrastructure/ui/scene-guard";
 import { type Building } from "./buildings";
 import { type CameraCommand } from "./camera-moves";
 import { BUILDINGS, CITY } from "./city-layout";
@@ -11,6 +20,7 @@ import { type MapPoint } from "./geography";
 import { lightUp } from "./light";
 import { type CameraHandle } from "./map-camera";
 import { markerAnchors, PlaceMarkers } from "./markers/place-markers";
+import { NoMapCard } from "./no-map-card";
 import { PlacePanel } from "./place-panel";
 import { agentAnchor, AgentButton, type MapAgent } from "./scene/agents";
 import { MapScene } from "./scene/map-scene";
@@ -29,7 +39,8 @@ export type MapPlayer = {
   readonly figure: (lite: boolean, walking: boolean) => ReactNode;
   /** Your office plot; before you settle there is none and you arrive at the station. */
   readonly home: MapPoint | null;
-  /** In your office: coming out puts you at your door. */
+  /** In your office: coming out puts you at your door. The office covers the map meanwhile, so
+   * the map, or the card standing in for it, is inert and leaves focus alone. */
   readonly inside: boolean;
 };
 
@@ -46,6 +57,35 @@ export type WorldCanvasProps = {
   onGoHome?: () => void;
   /** Shown lit at load: the world fixture, passed only when the app runs with DEMO_FIXTURES=1. */
   demoSearch?: SearchResponse | undefined;
+  /** The ways in that need no 3D, offered when the browser cannot draw the map. */
+  onOpenAsk: () => void;
+  onOpenDesk: () => void;
+};
+
+// Without WebGL, or when the scene throws or loses its context for good, a card stands where the
+// map was and the rest of the app carries on. Walking lives with the map: the card offers no Walk,
+// no doors and no Go home. The map's region takes focus back after a retry.
+export function WorldCanvas({ onOpenAsk, onOpenDesk, ...map }: WorldCanvasProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  return (
+    <SceneGuard
+      focusAfterRetry={containerRef}
+      fallback={(retry) => (
+        <NoMapCard
+          onOpenAsk={onOpenAsk}
+          onOpenDesk={onOpenDesk}
+          onRetry={retry}
+          covered={map.player.inside}
+        />
+      )}
+    >
+      <WorldMap {...map} containerRef={containerRef} />
+    </SceneGuard>
+  );
+}
+
+type WorldMapProps = Omit<WorldCanvasProps, "onOpenAsk" | "onOpenDesk"> & {
+  containerRef: RefObject<HTMLDivElement | null>;
 };
 
 const KEYS = {
@@ -55,16 +95,16 @@ const KEYS = {
 
 // The map: its canvas (scene/map-scene.tsx), transparent so the shell's sky shows through, and over
 // it the place markers, your agent's label, the walking controls and a place's panel.
-export function WorldCanvas({
+function WorldMap({
   agent,
   player,
   onAgentOpen,
   onPlacePanel,
+  containerRef,
   ...props
-}: WorldCanvasProps) {
+}: WorldMapProps) {
   const display = useWorldDisplay();
   const cameraRef = useRef<CameraHandle | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const anchorsRef = useRef(new Map<string, HTMLElement>());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [lobby, setLobby] = useState(false);
@@ -84,6 +124,8 @@ export function WorldCanvas({
   }, [props.demoSearch]);
 
   useEffect(() => onPlacePanel?.(panelOpen), [panelOpen, onPlacePanel]);
+  // A map that gives way to its card takes an open panel with it.
+  useEffect(() => () => onPlacePanel?.(false), [onPlacePanel]);
 
   const framePoints = useMemo(
     () =>
@@ -119,7 +161,7 @@ export function WorldCanvas({
       container?.querySelector<HTMLButtonElement>(`[data-door="${key}"]`) ??
       container?.querySelector<HTMLButtonElement>(`[data-building="${key}"]`);
     opener?.focus();
-  }, [selectedKey]);
+  }, [containerRef, selectedKey]);
   const onEscape = useCallback(() => {
     closePanel();
     stop();
@@ -148,6 +190,7 @@ export function WorldCanvas({
     <div
       ref={containerRef}
       role="region"
+      tabIndex={-1}
       aria-label="Map of Bern"
       aria-describedby="map-keys"
       // Your office covers the map; nothing under it is reached by Tab or the keys meanwhile.

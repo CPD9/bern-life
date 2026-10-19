@@ -9,15 +9,18 @@ import type { StoryController } from "./use-story";
 type QuestPanelProps = {
   controller: StoryController;
   onShowMe: (target: ShowMeTarget) => void;
+  /** Whether the host can take the player to a target now; a step it cannot keeps only its hint. */
+  canShow?: ((target: ShowMeTarget) => boolean) | undefined;
   onOpenMenu: () => void;
 };
 
-export function QuestPanel({ controller, onShowMe, onOpenMenu }: QuestPanelProps) {
+export function QuestPanel({ controller, onShowMe, canShow, onOpenMenu }: QuestPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [hintFor, setHintFor] = useState<string | null>(null);
   const current = controller.progress.current;
   const step = current?.nextStep ?? null;
-  const target = step ? showMeTarget(step) : null;
+  const shown = step ? showMeTarget(step) : null;
+  const target = shown !== null && (canShow?.(shown) ?? true) ? shown : null;
 
   if (collapsed) {
     return (

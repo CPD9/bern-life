@@ -5,6 +5,7 @@
 
 import { useEffect, useRef } from "react";
 import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
+import { CorrectionNote } from "@/infrastructure/ui/claim-evidence";
 import { ResultCard } from "@/infrastructure/ui/result-card";
 import { type Building } from "./buildings";
 import { type BuildingLight, type SearchResult } from "./light";
@@ -19,12 +20,17 @@ function PlaceEntry({ place }: { place: Place }) {
       <p className="text-ink font-extrabold">{place.name}</p>
       <p className="text-muted text-sm">{KIND_LABELS[place.kind]}</p>
       {place.position_method === "address" ? (
-        <p className="text-sm">
-          {place.address}{" "}
-          <a href={place.address_url} target="_blank" rel="noreferrer" className={LINK}>
-            Source page
-          </a>
-        </p>
+        <>
+          <p className="text-sm">
+            {place.address}{" "}
+            <a href={place.address_url} target="_blank" rel="noreferrer" className={LINK}>
+              Source page
+            </a>
+          </p>
+          <div className="text-sm">
+            <CorrectionNote fetchedAt={place.address_fetched_at} quoted="address" />
+          </div>
+        </>
       ) : (
         <p className="text-sm">
           No address of its own on its pages; placed in its district.{" "}

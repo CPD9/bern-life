@@ -78,6 +78,28 @@ describe("PlacePanel", () => {
     ).toBeTruthy();
   });
 
+  test("a quoted address says, folded away, that it is corrected in the repository", () => {
+    render(
+      <PlacePanel
+        building={shared}
+        light={undefined}
+        fixture={false}
+        onClose={() => undefined}
+        onSearchHere={undefined}
+      />,
+    );
+    // Only the unit with an address of its own quotes one.
+    const notes = screen
+      .getAllByText("Wrong or outdated?")
+      .map((summary) => summary.closest("details")!);
+    expect(notes).toHaveLength(1);
+    expect(notes[0]!.open).toBe(false);
+    expect(notes[0]!.textContent).toContain(
+      "This address is quoted from the institution's page as it read on 18 Oct 2026. Addresses are kept in Bern Life's repository",
+    );
+    expect(notes[0]!.querySelector("a")!.getAttribute("href")).toBe("/corrections");
+  });
+
   test("opened from its marker, the story hears nothing; going in at the door tells it once", () => {
     const emit = mock((name: string) => name);
     const events = { emit };
@@ -277,9 +299,12 @@ describe("after a search", () => {
         "Fixture source, not a real page: https://www.artorg.unibe.ch/fixture/beat-beispiel",
       ),
     ).toBeTruthy();
+    // The links are the units' addresses and their notes; no fixture source is one.
     expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
       "Source page",
+      "Corrections and removal",
       "Source page",
+      "Corrections and removal",
     ]);
   });
 

@@ -17,7 +17,8 @@ type WorldAppsInput = {
   agentName: string;
   health: HealthState;
   unreadMessages: number | null;
-  onShowOnMap: (response: SearchResponse) => void;
+  /** Shows an answer on the map; absent when the map cannot be drawn. */
+  onShowOnMap: ((response: SearchResponse) => void) | undefined;
   onOpenApp: (appId: string) => void;
   connections: ConnectionsWiring;
   messageWith: StartWith | undefined;

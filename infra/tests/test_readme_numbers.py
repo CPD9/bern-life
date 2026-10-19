@@ -7,7 +7,17 @@ import unittest
 from pathlib import Path
 
 from infra import readme_numbers
-from infra.readme_numbers import END, START, main, percent, percent_interval, render
+from infra.readme_numbers import (
+    DOC_END,
+    DOC_START,
+    END,
+    START,
+    main,
+    percent,
+    percent_interval,
+    render,
+    render_exposure,
+)
 
 SNAPSHOT = "bundle-20990101-1"
 # Invented sha256 values of the bundle's scored files, as its manifest lists them.
@@ -28,6 +38,18 @@ def recall_only(value):
 
 def exposure_row(name, slots, slot_share, profile_share):
     return {"name": name, "slots": slots, "slot_share": slot_share, "profile_share": profile_share}
+
+
+def size_group(name, units, profiles, profile_share, slots, slot_share, never):
+    return {
+        "name": name,
+        "units": units,
+        "profiles": profiles,
+        "profile_share": profile_share,
+        "slots": slots,
+        "slot_share": slot_share,
+        "units_never_shown": never,
+    }
 
 
 # Invented numbers: one claim untraceable, a variant with nothing to measure, a source the README
@@ -70,6 +92,26 @@ def invented_metrics(predictions: Path) -> dict:
                 exposure_row("dcb", 6, 0.2, 0.05),
                 exposure_row("fundinghost", 0, 0.0, 0.05),
             ],
+        },
+        "exposure_by_size": {
+            "sources": ["unibe", "artorg", "dcb"],
+            "median_profiles": 12.5,
+            "groups": [
+                size_group("small", 3, 20, 0.2, 6, 0.2, 1),
+                size_group("large", 3, 1080, 0.8, 24, 0.8, 0),
+            ],
+            "by_source": [
+                {
+                    "source": "unibe",
+                    "groups": [
+                        size_group("small", 3, 20, 0.0208, 6, 0.4, 1),
+                        size_group("large", 1, 940, 0.9792, 9, 0.6, 0),
+                    ],
+                },
+                {"source": "artorg", "groups": [size_group("large", 1, 100, 1.0, 9, 1.0, 0)]},
+                {"source": "dcb", "groups": [size_group("large", 1, 40, 1.0, 6, 1.0, 0)]},
+            ],
+            "slots_outside": 0,
         },
         "completeness": {
             "filled": {
@@ -115,22 +157,50 @@ EXPECTED = """
 Snapshot `bundle-20990101-1`, 12 gold questions. To reproduce: `make fetch && make eval && python3 infra/readme_numbers.py`. CI fails when this block differs from the evaluator's output.
 """  # noqa: E501
 
+EXPECTED_EXPOSURE = """
+<!-- Written by infra/readme_numbers.py from eval/out/metrics.json: change the script, not this block. -->
+
+| Group | Units | Profiles | Profile share | Top-10 slots | Slot share | Units never in a top 10 |
+|---|---|---|---|---|---|---|
+| small (≤ 12.5 profiles) | 3 | 20 | 0.20 | 6 | 0.20 | 1 |
+| large (> 12.5 profiles) | 3 | 1,080 | 0.80 | 24 | 0.80 | 0 |
+
+| Source | Group | Units | Profiles | Profile share | Top-10 slots | Slot share | Units never in a top 10 |
+|---|---|---|---|---|---|---|---|
+| UniBE | small | 3 | 20 | 0.02 | 6 | 0.40 | 1 |
+| UniBE | large | 1 | 940 | 0.98 | 9 | 0.60 | 0 |
+| ARTORG | large | 1 | 100 | 1.00 | 9 | 1.00 | 0 |
+| DCB | large | 1 | 40 | 1.00 | 6 | 1.00 | 0 |
+
+Snapshot `bundle-20990101-1`: median unit 12.5 profiles; top-10 slots outside these units 0. To reproduce: `make fetch && make eval && python3 infra/readme_numbers.py`. CI fails when this block differs from the evaluator's output.
+"""  # noqa: E501
+
 HEAD = "# Invented project\n\n## Against the case\n\nText kept as it is.\n\n"
 TAIL = "\n\n## Limits\n\nAlso kept.\n"
+DOC_HEAD = "# Invented metrics\n\nKept.\n\n"
+DOC_TAIL = "\n\nAlso kept.\n"
 
 
 class Workspace:
     """A bundle folder with its manifest, a lock file, metrics and a README, all invented."""
 
-    def __init__(self, root: Path, pinned: str = SNAPSHOT, block: str = "\nold numbers\n"):
+    def __init__(
+        self,
+        root: Path,
+        pinned: str = SNAPSHOT,
+        block: str = "\nold numbers\n",
+        doc_block: str = "\nold table\n",
+    ):
         bundle = root / "bundle"
         bundle.mkdir()
         self.manifest = bundle / "manifest.json"
         self.write_manifest(HASHES)
         self.metrics, self.lock, self.readme = root / "metrics.json", root / "lock", root / "README"
+        self.doc = root / "metrics.md"
         self.write_metrics(invented_metrics(bundle / "predictions.jsonl"))
         self.lock.write_text(json.dumps({"version": pinned}), encoding="utf-8")
         self.readme.write_text(HEAD + START + block + END + TAIL, encoding="utf-8")
+        self.doc.write_text(DOC_HEAD + DOC_START + doc_block + DOC_END + DOC_TAIL, encoding="utf-8")
 
     def write_manifest(self, hashes: dict) -> None:
         files = {f"{name}.jsonl": {"sha256": sha} for name, sha in hashes.items()}
@@ -146,6 +216,7 @@ class Workspace:
     def run(self, *flags: str) -> tuple[int, str, str]:
         out, err = io.StringIO(), io.StringIO()
         paths = ["--metrics", self.metrics, "--readme", self.readme, "--lock", self.lock]
+        paths += ["--doc", self.doc]
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             code = main([*flags, *map(str, paths)])
         return code, out.getvalue(), err.getvalue()
@@ -153,12 +224,22 @@ class Workspace:
     def text(self) -> str:
         return self.readme.read_text(encoding="utf-8")
 
+    def doc_text(self) -> str:
+        return self.doc.read_text(encoding="utf-8")
+
 
 class RenderTest(unittest.TestCase):
     def test_every_number_comes_from_the_metrics(self):
         with tempfile.TemporaryDirectory() as tmp:
             metrics = invented_metrics(Path(tmp) / "predictions.jsonl")
         self.assertEqual(render(metrics, SNAPSHOT), EXPECTED)
+
+    def test_the_exposure_tables_come_from_the_metrics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            metrics = invented_metrics(Path(tmp) / "predictions.jsonl")
+        self.assertEqual(render_exposure(metrics, SNAPSHOT), EXPECTED_EXPOSURE)
+        metrics["exposure_by_size"] = None
+        self.assertIn("not computed", render_exposure(metrics, SNAPSHOT))
 
     def test_a_single_untraceable_claim_never_shows_as_100_percent(self):
         self.assertEqual(percent(4818, 4819), "99.9%")
@@ -196,16 +277,40 @@ class MainTest(unittest.TestCase):
             space = Workspace(Path(tmp))
             code, out, _ = space.run()
             self.assertEqual(code, 0)
-            self.assertEqual(out, "README numbers written from bundle-20990101-1\n")
+            self.assertEqual(
+                out,
+                "README numbers written from bundle-20990101-1\n"
+                "docs/metrics.md numbers written from bundle-20990101-1\n",
+            )
             self.assertEqual(space.text(), HEAD + START + EXPECTED + END + TAIL)
+            self.assertEqual(
+                space.doc_text(), DOC_HEAD + DOC_START + EXPECTED_EXPOSURE + DOC_END + DOC_TAIL
+            )
 
     def test_check_passes_when_the_readme_matches(self):
         with tempfile.TemporaryDirectory() as tmp:
-            space = Workspace(Path(tmp), block=EXPECTED)
+            space = Workspace(Path(tmp), block=EXPECTED, doc_block=EXPECTED_EXPOSURE)
             code, out, _ = space.run("--check")
             self.assertEqual(code, 0)
-            self.assertEqual(out, "README numbers match the evaluator on bundle-20990101-1\n")
+            self.assertEqual(
+                out,
+                "README numbers match the evaluator on bundle-20990101-1\n"
+                "docs/metrics.md numbers match the evaluator on bundle-20990101-1\n",
+            )
             self.assertEqual(space.text(), HEAD + START + EXPECTED + END + TAIL)
+
+    def test_check_fails_when_only_the_exposure_table_differs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            space = Workspace(Path(tmp), block=EXPECTED)
+            code, out, err = space.run("--check")
+            self.assertEqual(code, 1)
+            self.assertIn("--- metrics.md (exposure block)", out.splitlines())
+            self.assertIn("-old table", out.splitlines())
+            self.assertIn("docs/metrics.md numbers differ", err)
+            self.assertNotIn("README numbers differ", err)
+            self.assertEqual(
+                space.doc_text(), DOC_HEAD + DOC_START + "\nold table\n" + DOC_END + DOC_TAIL
+            )
 
     def test_check_fails_with_a_diff_and_writes_nothing(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -293,7 +398,16 @@ class MainTest(unittest.TestCase):
             space.readme.write_text(HEAD + START + END + START + END + TAIL, encoding="utf-8")
             code, _, err = space.run("--check")
             self.assertEqual(code, 2)
-            self.assertIn("needs exactly one", err)
+            self.assertIn("README needs exactly one", err)
+
+    def test_refuses_a_metrics_doc_without_its_block(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            space = Workspace(Path(tmp))
+            space.doc.write_text(DOC_HEAD + DOC_TAIL, encoding="utf-8")
+            code, _, err = space.run()
+            self.assertEqual(code, 2)
+            self.assertIn("docs/metrics.md needs exactly one", err)
+            self.assertEqual(space.text(), HEAD + START + "\nold numbers\n" + END + TAIL)
 
 
 if __name__ == "__main__":

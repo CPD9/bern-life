@@ -55,4 +55,8 @@ pinned in `bundle.lock` carries them so that the replay demo (`make run`), the h
 grants no licence to reuse them. A page is removed on request by publishing a new bundle without
 it, pinning that bundle, withdrawing the earlier release assets that hold it and reloading the
 hosted copy from the new bundle; the hosted copy's nightly database backups age out after 14 days.
-Git holds no copy of any page, so nothing in its history needs rewriting.
+Git holds no copy of any page, so nothing in its history needs rewriting. A single claim cannot
+be removed on its own: removing it leaves out its page (its path goes into `deny_paths` in
+`sources/`). Map addresses are in git (`places.json`), so one is corrected or removed by a commit
+and git history keeps the earlier value. How to ask is in the README
+([Corrections and removal](README.md#corrections-and-removal)).

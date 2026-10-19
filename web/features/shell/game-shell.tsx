@@ -3,6 +3,7 @@
 import { type ReactNode, useLayoutEffect, useRef } from "react";
 import { TabBar, type TabBadges } from "./tab-bar";
 import type { ShellTab } from "./tabs";
+import { type WatchHud, watchHud as watchHudSize } from "./watch-hud";
 
 export type WorldView = Exclude<ShellTab, "phone">;
 
@@ -24,10 +25,12 @@ type GameShellProps = {
    */
   floatieHidden?: boolean;
   overlay: ReactNode;
+  watchHud?: WatchHud;
 };
 
 // The world fills the whole screen; HUD and tab bar float above it. Their wrappers ignore the
-// pointer so drags on the empty sky beside a panel still reach the canvas.
+// pointer so drags on the empty sky beside a panel still reach the canvas. On a phone the map's
+// search summary and the side cards stack under the HUD's measured bottom, `--hud-bottom`.
 export function GameShell({
   view,
   phoneOpen,
@@ -39,7 +42,10 @@ export function GameShell({
   floatie,
   floatieHidden = false,
   overlay,
+  watchHud = watchHudSize,
 }: GameShellProps) {
+  const root = useRef<HTMLDivElement>(null);
+  const hudSlot = useRef<HTMLDivElement>(null);
   const floatieSlot = useRef<HTMLDivElement>(null);
   const tabBar = useRef<HTMLDivElement>(null);
 
@@ -51,8 +57,18 @@ export function GameShell({
     tabBar.current?.querySelector<HTMLElement>('[aria-current="true"]')?.focus();
   }, [floatieHidden]);
 
+  // Written straight to the style, so a resize does not re-render the world.
+  useLayoutEffect(() => {
+    const hudElement = hudSlot.current;
+    if (hudElement === null) return;
+    return watchHud(hudElement, (bottom) =>
+      root.current?.style.setProperty("--hud-bottom", `${bottom}px`),
+    );
+  }, [watchHud]);
+
   return (
     <div
+      ref={root}
       data-view={view}
       className="from-sky-top to-sky-bottom fixed inset-0 overflow-hidden bg-linear-to-b"
     >
@@ -60,9 +76,11 @@ export function GameShell({
         {canvas}
       </main>
       <header className="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-4 pt-[max(1rem,env(safe-area-inset-top))]">
-        <div className="pointer-events-auto">{hud}</div>
+        <div ref={hudSlot} className="pointer-events-auto">
+          {hud}
+        </div>
       </header>
-      <div className="pointer-events-none absolute top-[calc(env(safe-area-inset-top)+10.5rem)] left-4 sm:top-[calc(env(safe-area-inset-top)+5.5rem)] flex flex-col items-start gap-3">
+      <div className="pointer-events-none absolute top-[calc(var(--hud-bottom,5.5rem)+5rem)] left-4 sm:top-[calc(env(safe-area-inset-top)+5.5rem)] flex flex-col items-start gap-3">
         <div className="pointer-events-auto flex flex-col items-start gap-3">{side}</div>
       </div>
       {floatie && (
