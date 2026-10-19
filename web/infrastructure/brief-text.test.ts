@@ -148,9 +148,10 @@ describe("a real PDF through readPdf", () => {
   test("a 21-page PDF is counted and refused without reading its text", async () => {
     const pages = Array.from({ length: 21 }, (_, i) => [`Page ${i + 1}`]);
     expect(await readPdf(pdfWithPages(pages), 20)).toEqual({ pages: 21, text: null });
-    expect(await readBriefText(formWith({ file: pdfFile(pdfWithPages(pages)) }), readPdf)).toEqual(
-      { ok: false, reason: "too_many_pages" },
-    );
+    expect(await readBriefText(formWith({ file: pdfFile(pdfWithPages(pages)) }), readPdf)).toEqual({
+      ok: false,
+      reason: "too_many_pages",
+    });
   });
 
   test("the reader takes over the bytes it is given, which is why the upload is copied first", async () => {
