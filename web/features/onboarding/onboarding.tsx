@@ -1,7 +1,8 @@
 "use client";
 
 // The first-run frame: a dash per step for progress, Back, Skip and one green Continue. The Look
-// and agent steps are slots because their editors are another feature; app/ passes them in.
+// and agent steps are slots because their editors are another feature, and so is the greeting
+// above the first step; app/ passes them in.
 
 import { type ReactNode, useEffect, useRef } from "react";
 import { ChoiceCards } from "./choice-cards";
@@ -21,6 +22,7 @@ type OnboardingProps = {
   dispatch: (action: OnboardingAction) => void;
   lookStep: ReactNode;
   agentStep: ReactNode;
+  greeting: ReactNode;
   onDone: () => void;
 };
 
@@ -41,7 +43,14 @@ function ProgressDashes({ step }: { step: number }) {
   );
 }
 
-export function Onboarding({ state, dispatch, lookStep, agentStep, onDone }: OnboardingProps) {
+export function Onboarding({
+  state,
+  dispatch,
+  lookStep,
+  agentStep,
+  greeting,
+  onDone,
+}: OnboardingProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const step = stepAt(state);
   const answer = (change: Partial<Profile>) => dispatch({ type: "answer", change });
@@ -100,6 +109,7 @@ export function Onboarding({ state, dispatch, lookStep, agentStep, onDone }: Onb
             Skip
           </button>
         </header>
+        {state.step === 0 && greeting}
         <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-extrabold tracking-tight">
           {stepTitles[step]}
         </h1>

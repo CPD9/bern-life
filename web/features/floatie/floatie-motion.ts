@@ -1,0 +1,75 @@
+// How Lumi floats, as plain numbers for a moment in time, so the motion can be checked exactly
+// without three.js. Idle, it bobs slowly and glows like a breathing ember. Listening, it leans
+// towards you, glows brighter and sends out a soft ripple. The bear Lumi wears breathes and blinks
+// by itself. Under reduced motion Lumi holds a fixed pose, but listening still looks different.
+
+export type FloatieState = "idle" | "listening";
+
+export type FloatiePose = {
+  /** Height above the resting point, in metres. */
+  readonly lift: number;
+  /** Tilt towards the viewer, in radians. */
+  readonly lean: number;
+  /** Brightness of Lumi's light, 1 at rest. */
+  readonly glow: number;
+  /** Size of the halo around Lumi, 1 at rest. */
+  readonly halo: number;
+  /** The listening ring: its size and how visible it is (0 hides it). */
+  readonly ripple: { readonly scale: number; readonly opacity: number };
+};
+
+const TAU = Math.PI * 2;
+const BOB_SECONDS = 2.4;
+export const RIPPLE_SECONDS = 1.2;
+
+const NO_RIPPLE = { scale: 1, opacity: 0 };
+const LISTENING_LEAN = 0.18;
+const LISTENING_GLOW = 1.6;
+const LISTENING_HALO = 1.25;
+
+export const RESTING: Readonly<Record<FloatieState, FloatiePose>> = {
+  idle: { lift: 0, lean: 0, glow: 1, halo: 1, ripple: NO_RIPPLE },
+  listening: {
+    lift: 0.02,
+    lean: LISTENING_LEAN,
+    glow: LISTENING_GLOW,
+    halo: LISTENING_HALO,
+    ripple: { scale: 1.5, opacity: 0.3 },
+  },
+};
+
+export function idlePose(seconds: number): FloatiePose {
+  const bob = Math.sin((seconds / BOB_SECONDS) * TAU);
+  return {
+    lift: 0.04 * bob,
+    lean: 0,
+    glow: 1 + 0.1 * bob,
+    halo: 1 + 0.05 * bob,
+    ripple: NO_RIPPLE,
+  };
+}
+
+export function listeningPose(seconds: number): FloatiePose {
+  const ripple = (seconds % RIPPLE_SECONDS) / RIPPLE_SECONDS;
+  return {
+    lift: 0.02 + 0.02 * Math.sin((seconds / 1.6) * TAU),
+    lean: LISTENING_LEAN,
+    glow: LISTENING_GLOW,
+    halo: LISTENING_HALO,
+    ripple: { scale: 1 + ripple, opacity: 0.5 * (1 - ripple) },
+  };
+}
+
+export function poseAt(state: FloatieState, seconds: number, reducedMotion: boolean): FloatiePose {
+  if (reducedMotion) return RESTING[state];
+  return state === "listening" ? listeningPose(seconds) : idlePose(seconds);
+}
+
+/** Lumi listens when told to, or while the player points at it or has it focused. */
+export function shownState(
+  wanted: FloatieState,
+  pointedAt: boolean,
+  focused: boolean,
+): FloatieState {
+  return wanted === "listening" || pointedAt || focused ? "listening" : "idle";
+}
