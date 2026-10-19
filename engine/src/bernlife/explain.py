@@ -3,11 +3,13 @@
 The model sees the question, the result's name and those claims (value and verbatim span),
 numbered, as data, and answers with the numbers it used; code maps them back to the JSON
 pointers (asked for pointers, models copied whole claim lines). Code keeps its text only if
-every number it cites was offered, the text is short, it does not say the claims fail to answer,
-and every capitalised word inside a sentence comes from the result's name or the cited claims. A
-name the model brings from memory fails that check, and so does a place or topic it copies from
-the question: the question is not evidence about the result. Anything else keeps the plain
-reason. English only: German capitalises every noun, which this check cannot tell from a name.
+every number it cites was offered, the text is short, it contains none of a few fixed phrases
+saying the claims do not answer ("does not mention", "doesn't contain", "no information"), and
+every capitalised word inside a sentence occurs in the result's name or the cited claims. Only
+those capitalised words are checked: a name or place from the model's memory, or one copied from
+the question, fails, while lowercase words and a sentence's first word are not compared with
+anything. Anything else keeps the plain reason. English only: German capitalises every noun,
+which this check cannot tell from a name.
 """
 
 import re
@@ -28,12 +30,10 @@ MAX_TEXT = 400
 MAX_TOKENS = 300
 WORD = re.compile(r"[^\W\d_][\w'’-]*")
 SENTENCE_END = re.compile(r"[.!?:;]\s*$")
-# Whole phrases: single words like "no" or "not" also occur in real explanations.
-NON_ANSWERS = (
-    "do not contain",
-    "does not contain",
-    "do not mention",
-    "does not mention",
+# Whole phrases: single words like "no" or "not" also occur in real explanations. fold() turns
+# "don't" into "don t", so each negation is listed in both spellings.
+NEGATIONS = ("do not", "does not", "don t", "doesn t")
+NON_ANSWERS = tuple(f"{neg} {verb}" for neg in NEGATIONS for verb in ("contain", "mention")) + (
     "no information",
 )
 PROMPT = """\

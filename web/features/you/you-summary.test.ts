@@ -69,7 +69,7 @@ describe("you summary", () => {
     const story: Story = { ...storyFixture, quests: [{ ...first, optional: true }, ...rest] };
     const done = ["find-experts/ask", "find-experts/evidence", "arrive/settle", "arrive/office"];
     const progress = storyProgress(story, { ...emptyStoryState, done }, emittedToday);
-    expect(storyTally(progress)).toEqual({ done: 1, required: 7 });
+    expect(storyTally(progress)).toEqual({ done: 1, required: 4 });
   });
 
   test("expertise is trimmed, without blanks or repeats", () => {

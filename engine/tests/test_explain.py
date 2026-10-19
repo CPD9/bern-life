@@ -30,6 +30,10 @@ class CheckTest(unittest.TestCase):
                 reply("The claims do not contain anything about glucose sensors."),
                 reply("Ada Muster's page does not mention sensors."),
                 reply("There is no information on sensors in the claims."),
+                reply("The claims don't mention glucose sensors."),
+                reply("The claims don’t contain anything on sensors."),
+                reply("Ada Muster's page doesn't contain sensors."),
+                reply("Her unit doesn’t mention sensors."),
             ],
             "names": [reply("Works with Dr. Hugo Brandtner on glucose monitoring.")],
         }
@@ -46,6 +50,8 @@ class CheckTest(unittest.TestCase):
 
     def test_a_negative_word_alone_is_not_a_non_answer(self):
         text = "Ada Muster works on continuous glucose monitoring, not on insulin pumps."
+        self.assertEqual(check(reply(text), ADA, OFFERED), "kept")
+        text = "Ada Muster doesn't stop at sensors: she works on continuous glucose monitoring."
         self.assertEqual(check(reply(text), ADA, OFFERED), "kept")
 
     def test_capitals_that_start_a_sentence_or_come_from_the_allowed_text_pass(self):

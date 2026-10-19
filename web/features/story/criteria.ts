@@ -1,4 +1,4 @@
-import type { Criterion } from "./engine";
+import { type Criterion, type StoryProgress, comingReason } from "./engine";
 
 /** The case's success criteria (docs/case.md), short enough for a tag on the quest card. */
 export const criterionTags: Record<Criterion, string> = {
@@ -22,3 +22,27 @@ export const checklistCriteria: { criterion: Criterion; label: string }[] = [
   { criterion: "c6-extend", label: "Easy to extend" },
   { criterion: "ethics-abstain", label: "Says when no page supports it" },
 ];
+
+export const noQuestYet = "No quest shows this yet.";
+
+export type CriterionRow = {
+  readonly criterion: Criterion;
+  readonly label: string;
+  readonly met: boolean;
+  /** Why an unmet criterion cannot be shown in the game yet; null when a quest can show it. */
+  readonly note: string | null;
+};
+
+// A criterion is met only by a finished quest. An unmet one says why it waits: the reason of its
+// quest that is coming next, or that no quest covers it, so the checklist never implies more.
+export function criterionRows(progress: StoryProgress): CriterionRow[] {
+  const finished = new Set(progress.finishedCriteria);
+  return checklistCriteria.map(({ criterion, label }) => {
+    const quests = progress.quests.filter((entry) => entry.quest.criterion === criterion);
+    const met = finished.has(criterion);
+    const playable = quests.some((entry) => entry.status !== "coming");
+    const coming = quests.find((entry) => entry.status === "coming");
+    const note = met || playable ? null : coming ? comingReason(coming.quest) : noQuestYet;
+    return { criterion, label, met, note };
+  });
+}
