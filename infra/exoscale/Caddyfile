@@ -5,11 +5,20 @@
 
 {$SITE_HOST} {
 	encode zstd gzip
+	# The same policy as web/next.config.ts. Deferred, so each value replaces the web app's own
+	# copy instead of adding a second header.
 	header {
+		defer
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		X-Frame-Options DENY
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Opener-Policy same-origin
 		-Server
 	}
+	# trusted_proxies stays unset: Caddy then replaces any X-Forwarded-For a client sends with the
+	# address it sees, which is why the web app may trust that header (TRUST_PROXY=1).
 	reverse_proxy web:3000
 }

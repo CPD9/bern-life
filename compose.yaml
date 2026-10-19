@@ -37,8 +37,9 @@ services:
         condition: service_healthy
 
   # make run: migrate, load the bundle, serve it, and the production web app on 127.0.0.1:3000.
+  # make live-run starts the same stack with serve-live and web-live in place of serve and web.
   migrate:
-    profiles: [run]
+    profiles: [run, live]
     build:
       context: .
       dockerfile: db/Dockerfile
@@ -50,7 +51,7 @@ services:
   # Replay only: every model answer comes from the bundle's recorded calls, so no GPU and no key.
   # The bundle is mounted read-only; the embedding model is fetched once into a volume.
   load:
-    profiles: [run]
+    profiles: [run, live]
     build: *engine-build
     image: bernlife-engine
     command: [load]
@@ -67,7 +68,7 @@ services:
 
   # serve binds 127.0.0.1 and takes searches from loopback only, so the web app joins this
   # container's network, and the web port is published here.
-  serve:
+  serve: &serve
     profiles: [run]
     build: *engine-build
     image: bernlife-engine
@@ -90,7 +91,7 @@ services:
       load:
         condition: service_completed_successfully
 
-  web:
+  web: &web
     profiles: [run]
     build:
       context: .
@@ -113,6 +114,42 @@ services:
       serve:
         condition: service_healthy
 
+  # make live-run: serve may call the model, for the requests the web app marks live (signed-in
+  # users under their limits) and within LLM_CALL_BUDGET. Its mode comes from BERNLIFE_LIVE_BACKEND,
+  # which only the Makefile sets; the endpoints and keys pass through by name from the shell that
+  # sourced the env file. A vLLM tunnel on the host's loopback is out of reach from a container,
+  # so this takes remote endpoints only.
+  serve-live:
+    <<: *serve
+    profiles: [live]
+    environment:
+      <<: *database
+      ENGINE_PORT: "8100"
+      BERNLIFE_BACKEND: ${BERNLIFE_LIVE_BACKEND:-replay}
+      LLM_BASE_URL:
+      LLM_MODEL:
+      LLM_API_KEY:
+      EXPAND_LLM_BASE_URL:
+      EXPAND_LLM_MODEL:
+      EXPAND_LLM_API_KEY:
+      LLM_MAX_CONCURRENCY:
+      LLM_CALL_BUDGET:
+    volumes:
+      - ${BERNLIFE_BUNDLE_DIR:-./data/bundle}:/app/data/bundle:ro
+      - models:/app/data/models
+      # The engine's data folder, which the image gives to its user (a new volume at a path the
+      # image lacks belongs to root). Live calls land in llm_cache/ inside it.
+      - llm_cache:/app/data
+
+  web-live:
+    <<: *web
+    profiles: [live]
+    network_mode: service:serve-live
+    depends_on:
+      serve-live:
+        condition: service_healthy
+
 volumes:
   pgdata:
   models:
+  llm_cache:
