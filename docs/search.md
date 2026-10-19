@@ -110,12 +110,15 @@ reorders a few results below rank 10.
   relation span inside it is found by plain string matching.
 - Vectors are stored under the sha256 of the text they were made from (`passage: ` + text), so a
   re-extraction can never reuse a stale vector. `tsv` uses the `simple` configuration: no
-  stemming, no language guess.
+  stemming, no language guess. Word forms are handled at query time (Ranking, rule 1).
 
 ## Ranking (one SQL statement plus pure code)
 1. **Full text:** each query word weighs its BM25 inverse document frequency, so common words in
    any language count little without a stopword list. A chunk scores the weighted `ts_rank` of
-   the words it contains.
+   the words it contains. A query word of letters only also matches as a prefix of its light
+   word form (`word_forms.py`) when that form has five letters or more: "Kohlenhydrate" becomes
+   `kohlenhydrat:*` and finds "Kohlenhydraten", "sensor" finds "sensors". Coverage still counts
+   only the exact words, as when the abstention thresholds were set.
 2. **Vectors:** HNSW cosine over the same chunks (`hnsw.iterative_scan = strict_order`,
    `ef_search = 100`). Source filters sit inside both scans. Without a filter Postgres walks the
    HNSW index; with a selective filter it may choose an exact filtered scan, which is cheaper at
@@ -128,8 +131,11 @@ reorders a few results below rank 10.
 5. **Can it say why?** A candidate is shown only if at least one cited claim besides its name
    shares a content word with the query, or the query names it (its whole name, or a titled name
    such as "Prof. Muster" that is part of a person's name). Words are folded for case and accents,
-   need three letters, and a short de/en/fr list of function and generic search words ("and",
-   "der", "qui", "research", "forscht") never counts. The same test picks the claims the reason
+   need three letters and are compared by their light word form: an inflection ending (-e, -en,
+   -er, -es, -em, -ern, -s, and a plural -s with the ending under it) comes off while four letters
+   stay, so "Kohlenhydrate" matches "Kohlenhydraten" and "psychotropes" matches "psychotroper".
+   A short de/en/fr list of function and generic search words ("and", "der", "qui", "research",
+   "forscht") never counts, in any of their forms. The same test picks the claims the reason
    cites, so every shown result's reason cites a claim that matches. This rule exists because E2's
    final run added 1,241 people who are a bare name from a news or partner page. A passage they
    appear in credits them, and without the rule they would fill the top ten with nothing to show.
@@ -156,8 +162,9 @@ reorders a few results below rank 10.
 - **Weak support:** no candidate reaches coverage 0.332 (the share of the query's word weight
   one chunk matches; a word absent from the corpus keeps its full weight) **or** cosine
   similarity 0.824.
-- **Premise check:** a person named after a title (`Prof.`, `Dr.`, `PD`, `Frau`, `Mme` …) must
-  be among the candidates' person names. A premise is a hypothesis to check, not a fact.
+- **Premise check:** a person named after a title (`Prof.`, `Dr.`, `PD`, `Frau`, `Mme`, and
+  since 2026-10-19 `Pr`, `Pre`, `Dre`, `professeure`, `docteure`, `Prof.in`, `Dr.in`, `Dr.med.`
+  …) must be among the candidates' person names. `PR` in capitals is not a title. A premise is a hypothesis to check, not a fact.
 - **Nothing can say why:** no candidate passes rule 5 above. The first two checks look at every
   candidate, as they did when the thresholds were set; this one comes after them.
 
@@ -257,19 +264,21 @@ Latency per query over the 48 gold queries (Apple M-series CPU, local Postgres):
 p95 177 ms, max 219 ms with rule 5, which reads every candidate's profile (p50 69 ms before).
 
 ## Limits
-- No stemming: "sensor" does not match "sensors" in full text; the vectors cover some of it.
+- Word forms are inflections only: "Genetik" does not match "genetics", and "Schätzung" does not
+  match "schätzt". A full-text prefix reaches only words that start with the form: "sensor"
+  finds "sensors", not "biosensors".
 - Cross-language recall stays low (gold de 0.18, fr 0.12 with reasons through a project).
 - Known misses on dev: a German question below both thresholds on its plain signals abstains
   although expansion finds the answer (q918); a person credited through a project ranks 11
-  (q919); a project whose claims share no word with the question cannot vouch, and a word form
-  ("Kohlenhydrate" vs "Kohlenhydraten") does not match (q920).
+  (q919, rank 6 since word forms); a project whose claims share no word with the question
+  cannot vouch: the project behind q920 says "Kohlenhydraten" only in its name, which rule 5
+  never reads.
 - The evaluator's traceability check reads profile claims, not `via`; the `via` spans are checked
   here instead (563 of 563).
 - An invented name without a title, or an invented project, is caught only by weak support.
 - Passages credit profiles only through spans that lie fully inside them, and since rule 5 a
   credited profile still needs a matching claim of its own to be shown.
-- Rule 5 matches whole words: "sensors" does not match "biosensors", "psychotropes" does not
-  match "psychotroper".
+- Rule 5 matches whole word forms: "sensors" does not match "biosensors".
 - The API contract has no unit filter, so only `sources` filters. `lang` is accepted and unused.
 - 10 expertise values have no enrichment terms (no valid term in the reply).
 - Query vectors are computed where the search runs; another CPU can move the last digits.
