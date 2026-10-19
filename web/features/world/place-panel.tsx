@@ -94,10 +94,11 @@ export function PlacePanel({
   const headingId = `place-${building.key.replace(/[^a-z0-9]+/gi, "-")}`;
 
   useEffect(() => heading.current?.focus(), [building.key]);
-  // Opening a place is how the story's "enter the lobby" step is done.
+  // Going in through the door is how the story's "enter the lobby" step is done; a place opened
+  // from its marker is only looked at.
   useEffect(() => {
-    events.emit("lobby_entered");
-  }, [building.key, events]);
+    if (lobby) events.emit("lobby_entered");
+  }, [building.key, lobby, events]);
 
   return (
     <section

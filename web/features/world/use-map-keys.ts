@@ -16,6 +16,8 @@ type MapKeys = {
 };
 
 function focusIsOnMap(container: HTMLElement | null): boolean {
+  // In your office the map lies inert under the room: its keys neither pan it nor walk you.
+  if (container !== null && container.closest("[inert]") !== null) return false;
   const active = document.activeElement;
   if (active === null || active === document.body) return true;
   return container?.contains(active) === true && active.closest("[data-place-panel]") === null;

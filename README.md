@@ -192,10 +192,10 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
   with a title the premise check does not know.
 - **UniBE is found least often** of the three sources (criterion 5).
 - Explanations are written in English only, and field completeness still needs its human check.
-- **In the game:** you walk the drawn map but not yet inside the office, and on a phone-width
-  screen (390 px) the HUD covers the map's search summary. Two optional quests say why one of their steps cannot be
-  done yet: adding a source is a file in `sources/`, not an action in the app, and there is no
-  network of labs and experts. What you save to the Library and your office plot stay on this
+- **In the game:** you walk the drawn map but not yet inside the office, and on a phone-width screen
+  (390 px) the HUD covers the map's search summary. Two optional quests say why one of their steps
+  cannot be done yet: adding a source is a file in `sources/`, not an action in the app, and there
+  is no network of labs and experts. What you save to the Library and your office plot stay on this
   device. A map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the
   repository but not yet drawn in the world.
 - **Notifications stay in the app** (the bell). Opt-in e-mail or push notifications are not

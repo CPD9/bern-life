@@ -20,14 +20,16 @@ function MapKeys({
   onEscape = () => undefined,
   walk,
   onCommand,
+  inert = false,
 }: {
   onEscape?: () => void;
   walk: HeldKeys | null;
   onCommand: (c: CameraCommand) => void;
+  inert?: boolean;
 }) {
   const container = useRef<HTMLDivElement>(null);
   useMapKeys({ containerRef: container, onCommand, onEscape, walk });
-  return <div ref={container} />;
+  return <div ref={container} inert={inert} />;
 }
 
 describe("the keys in walk mode", () => {
@@ -69,6 +71,17 @@ describe("the mode switch", () => {
     expect([...held]).toEqual(["ArrowLeft"]);
     act(() => void fireEvent.keyDown(window, { key: "q" }));
     expect(commands).toEqual([{ kind: "rotate", steps: -1 }]);
+  });
+
+  test("with the map inert under your office, the keys neither pan it nor walk you", () => {
+    const { commands, held, walk } = recorder();
+    const { rerender } = render(
+      <MapKeys walk={walk} onCommand={(command) => void commands.push(command)} inert />,
+    );
+    act(() => void fireEvent.keyDown(window, { key: "w" }));
+    rerender(<MapKeys walk={null} onCommand={(command) => void commands.push(command)} inert />);
+    act(() => void fireEvent.keyDown(window, { key: "w" }));
+    expect([commands, [...held]]).toEqual([[], []]);
   });
 
   test("leaving the window lets go of every key, so nobody walks on alone", () => {

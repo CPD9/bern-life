@@ -138,6 +138,8 @@ export function WorldCanvas({
       props.onGoHome?.();
       return;
     }
+    // Going in ends a walk that was passing the door.
+    stop();
     setSelectedKey(door.key);
     setLobby(true);
   }
@@ -153,6 +155,8 @@ export function WorldCanvas({
       role="region"
       aria-label="Map of Bern"
       aria-describedby="map-keys"
+      // Your office covers the map; nothing under it is reached by Tab or the keys meanwhile.
+      inert={player.inside}
       className="relative isolate size-full"
     >
       <p id="map-keys" className="sr-only">

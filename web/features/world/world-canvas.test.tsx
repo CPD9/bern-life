@@ -7,8 +7,10 @@ import { appEvents } from "@/infrastructure/app-events";
 await import("three");
 const { WorldCanvas } = await import("./world-canvas");
 
-test("the host is told when a place's panel opens and closes", () => {
+test("the host is told when a place's panel opens and closes; the story only when you go in", () => {
   const told: boolean[] = [];
+  const heard: string[] = [];
+  const unsubscribe = appEvents.subscribe((name) => void heard.push(name));
   render(
     <WorldCanvas
       agent={{ name: "Lumi", figure: () => null }}
@@ -25,6 +27,8 @@ test("the host is told when a place's panel opens and closes", () => {
   act(() => fireEvent.click(screen.getByRole("button", { name: "Close" })));
   expect(document.querySelector("[data-place-panel]")).toBeNull();
   expect(told).toEqual([false, true, false]);
+  expect(heard).toEqual([]);
+  unsubscribe();
 });
 
 test("at your door on load, Go home is offered and takes you in only when pressed", () => {
@@ -44,6 +48,21 @@ test("at your door on load, Go home is offered and takes you in only when presse
   expect(wentHome).toBe(1);
   expect(heard).toEqual([]);
   unsubscribe();
+});
+
+test("in your office the map under the room is inert; out of it, it is not", () => {
+  const canvas = (inside: boolean) => (
+    <WorldCanvas
+      agent={{ name: "Lumi", figure: () => null }}
+      player={{ figure: () => null, home: [-50, 25], inside }}
+      onAgentOpen={() => undefined}
+    />
+  );
+  const { rerender } = render(canvas(true));
+  const map = () => document.querySelector('[aria-label="Map of Bern"]')?.hasAttribute("inert");
+  expect(map()).toBe(true);
+  rerender(canvas(false));
+  expect(map()).toBe(false);
 });
 
 test("Walk switches the keys from the map to you, and a place offers to walk you there", () => {

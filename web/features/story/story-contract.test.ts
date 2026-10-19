@@ -49,7 +49,7 @@ test("each step says what completes it, keyed by the event", () => {
     search_answered_other_language: "Ask again in German or French and get a result.",
     brief_answered: "Upload or paste your brief and get matches back.",
     report_made: "Make a match report: every match keeps its sentence and source link.",
-    lobby_entered: "Open a place on the map.",
+    lobby_entered: "Walk to a place's door on the map and go in.",
     abstained_seen: "Ask about a professor who does not exist.",
     source_added: "Add an institution's website as a new source.",
     numbers_seen:
