@@ -92,16 +92,10 @@ describe("phone apps", () => {
     return { result, opened };
   }
 
-  test("every app is real: the desk's apps, then the case's seven steps", () => {
+  test("every app is real: Ask, the case's seven steps, then the desk's apps", () => {
     const { apps } = setUp().result.current;
     expect(apps.map((app) => app.label)).toEqual([
       "Ask",
-      "Messages",
-      "Agents",
-      "Opportunities",
-      "Library",
-      "Sources",
-      "Settings",
       "1 People",
       "2 Wording",
       "3 Proof",
@@ -109,6 +103,12 @@ describe("phone apps", () => {
       "5 Sources",
       "6 Add a site",
       "7 Honest no",
+      "Messages",
+      "Agents",
+      "Opportunities",
+      "Library",
+      "Sources",
+      "Settings",
     ]);
     const byId = Object.fromEntries(apps.map((app) => [app.id, typeOf(app.content)]));
     expect(byId["messages"]).toBe(StandaloneMessagesPage);
@@ -211,12 +211,9 @@ describe("phone apps", () => {
         onMessageStarted: started,
       }),
     );
-    expect(result.current.map((app) => app.id).slice(0, 3)).toEqual([
-      "ask",
-      "messages",
-      "connections",
-    ]);
-    const messages = result.current[1]!.content as ReactElement<{
+    const ids = result.current.map((app) => app.id);
+    expect(ids.indexOf("connections")).toBe(ids.indexOf("messages") + 1);
+    const messages = result.current[ids.indexOf("messages")]!.content as ReactElement<{
       startWith: unknown;
       onStarted: unknown;
     }>;

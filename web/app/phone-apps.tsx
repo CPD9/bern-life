@@ -100,6 +100,23 @@ export function phoneApps({
         />
       ),
     },
+    ...caseSteps.map((step, index) => ({
+      id: caseStepAppId(step),
+      label: step.label,
+      icon: <span className="text-2xl font-extrabold">{step.number}</span>,
+      tile: "#0e7490",
+      folder: caseFolder,
+      ...(index === 0 ? { folderHint: caseFolderHint } : {}),
+      content: (
+        <CaseStepApp
+          step={step}
+          fixtureMode={fixtureMode}
+          onAsk={askFromStep}
+          onOpenApp={onOpenApp}
+          {...(agents.numbersApi ? { api: agents.numbersApi } : {})}
+        />
+      ),
+    })),
     {
       id: "messages",
       label: "Messages",
@@ -161,22 +178,5 @@ export function phoneApps({
       dock: true,
       content: <SettingsApp health={health} />,
     },
-    ...caseSteps.map((step, index) => ({
-      id: caseStepAppId(step),
-      label: step.label,
-      icon: <span className="text-2xl font-extrabold">{step.number}</span>,
-      tile: "#0e7490",
-      folder: caseFolder,
-      ...(index === 0 ? { folderHint: caseFolderHint } : {}),
-      content: (
-        <CaseStepApp
-          step={step}
-          fixtureMode={fixtureMode}
-          onAsk={askFromStep}
-          onOpenApp={onOpenApp}
-          {...(agents.numbersApi ? { api: agents.numbersApi } : {})}
-        />
-      ),
-    })),
   ];
 }
