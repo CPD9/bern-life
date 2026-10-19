@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, type ReactNode, useId, useState } from "react";
+import { type FormEvent, type ReactNode, useId, useRef, useState } from "react";
 import type { AppEventSink } from "@/infrastructure/app-events";
 import type { SearchResult } from "@/infrastructure/claims";
 import { ModeNotice } from "./mode-notice";
@@ -34,7 +34,14 @@ export function OpportunitiesApp({
   const controller = useOpportunities(api);
   const [query, setQuery] = useState("");
   const id = useId();
+  const statusRef = useRef<HTMLParagraphElement>(null);
   const { state } = controller;
+
+  function retry() {
+    // The button goes away while the search runs, so focus waits on the status line.
+    statusRef.current?.focus();
+    controller.retry();
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -90,13 +97,13 @@ export function OpportunitiesApp({
         </ul>
       </div>
       {fixtureMode && <p className="text-muted text-xs font-bold tracking-wide">FIXTURE data</p>}
-      <p role="status" aria-live="polite" className="font-bold">
+      <p ref={statusRef} role="status" tabIndex={-1} className="font-bold">
         {statusLine(state, results.length)}
       </p>
       {state.status === "failed" && retryable(state.failure) && (
         <button
           type="button"
-          onClick={controller.retry}
+          onClick={retry}
           className="bg-chip-selected text-chip-selected-ink rounded-pill self-start px-5 py-2 font-bold"
         >
           Try again

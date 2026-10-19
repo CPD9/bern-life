@@ -1,5 +1,6 @@
 // Invented library items and an in-memory Storage for the tests.
 import type { LibraryEntry, LibraryItem } from "./library-items";
+import { type LibraryStore, createLibraryStore } from "./library-store";
 
 export function memoryStorage(initial: Record<string, string> = {}) {
   const values = new Map(Object.entries(initial));
@@ -26,4 +27,10 @@ export function savedItem(
   savedAt = "2026-10-19T02:00:00.000Z",
 ): LibraryItem {
   return { ...demoEntry(ref, kind), saved_at: savedAt };
+}
+
+/** A store on its own in-memory storage, which every read and write reaches. */
+export function memoryStore(): LibraryStore {
+  const storage = memoryStorage();
+  return createLibraryStore(() => storage);
 }

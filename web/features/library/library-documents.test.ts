@@ -29,6 +29,20 @@ describe("httpLibraryDocuments", () => {
     expect(await answer(new Response("oops", { status: 500 }))).toEqual({ status: "failed" });
   });
 
+  test("asks for the list as JSON, and an unreachable server is a failure", async () => {
+    const sent: [string, RequestInit][] = [];
+    const api = httpLibraryDocuments(async (url, init) => {
+      sent.push([url, init]);
+      return Response.json({ documents: [] });
+    });
+    expect(await api.list()).toEqual({ status: "ok", documents: [] });
+    expect(sent).toEqual([["/api/documents", { headers: { accept: "application/json" } }]]);
+    const offline = httpLibraryDocuments(async () => {
+      throw new TypeError("offline");
+    });
+    expect(await offline.list()).toEqual({ status: "failed" });
+  });
+
   test("a document that does not parse is left out", () => {
     expect(
       parseDocuments({ documents: [{ ...good, size: -1 }, { ...good, visibility: "all" }, 3] }),

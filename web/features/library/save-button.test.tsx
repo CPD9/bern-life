@@ -1,16 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { LibraryItem } from "./library-items";
-import { createLibraryStore } from "./library-store";
 import { SaveButton } from "./save-button";
-import { demoEntry, memoryStorage, savedItem } from "./testing";
+import { demoEntry, memoryStore, savedItem } from "./testing";
 
 const entry = demoEntry("demo-ada", "opportunity");
 const at = new Date("2026-10-19T02:30:00.000Z");
 
 describe("SaveButton", () => {
   test("saves once, calls onSaved once with the stamped item, then says Saved", () => {
-    const store = createLibraryStore(() => memoryStorage());
+    const store = memoryStore();
     const heard: LibraryItem[] = [];
     render(
       <SaveButton
@@ -33,7 +32,7 @@ describe("SaveButton", () => {
   });
 
   test("something already in the library shows Saved and does not save again", () => {
-    const store = createLibraryStore(() => memoryStorage());
+    const store = memoryStore();
     store.save(savedItem("demo-ada", "opportunity"));
     const heard: LibraryItem[] = [];
     render(<SaveButton entry={entry} store={store} onSaved={(item) => heard.push(item)} />);

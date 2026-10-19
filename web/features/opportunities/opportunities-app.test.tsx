@@ -104,5 +104,21 @@ describe("OpportunitiesApp", () => {
       { query: "seed funding", kinds: ["call", "service", "space"] },
       { query: "seed funding", kinds: ["call", "service", "space"] },
     ]);
+    expect(document.activeElement).toBe(screen.getByRole("status"));
+  });
+
+  test("a newer search wins over an older answer that arrives late", async () => {
+    const pending: ((outcome: OpportunitiesOutcome) => void)[] = [];
+    const api: OpportunitiesApi = {
+      search: () => new Promise((resolve) => pending.push(resolve)),
+    };
+    render(<OpportunitiesApp fixtureMode={false} api={api} />);
+    await ask("glucose sensors");
+    await ask("seed funding");
+    await act(async () => pending[1]?.({ ok: true, response: mixedResponse() }));
+    await act(async () => pending[0]?.({ ok: true, response: resultFixture }));
+    expect(pending.length).toBe(2);
+    expect(screen.getByRole("status").textContent).toBe("1 opportunity");
+    expect(screen.getByText("Demo Seed Grant")).toBeTruthy();
   });
 });
