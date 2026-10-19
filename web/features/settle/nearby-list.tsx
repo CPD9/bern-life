@@ -2,6 +2,7 @@
 // to that page and the day it was fetched, so every fact here is one click from its source.
 
 import { useId } from "react";
+import { CorrectionNote } from "@/infrastructure/ui/claim-evidence";
 import { distanceLabel, fetchedOn, type NearbyPlace } from "./nearby";
 
 const LINK = "text-primary font-bold underline underline-offset-2";
@@ -53,6 +54,7 @@ export function NearbyList({
                 </>
               )}
             </p>
+            <CorrectionNote fetchedAt={place.address.fetchedAt} quoted="address" />
           </li>
         ))}
       </ol>

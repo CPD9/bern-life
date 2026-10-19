@@ -12,7 +12,7 @@ import type { InputMode, NavigatorController } from "./use-navigator";
 type NavigatorProps = {
   controller: NavigatorController;
   fixtureMode: boolean;
-  onShowOnMap?: (response: SearchResponse) => void;
+  onShowOnMap?: ((response: SearchResponse) => void) | undefined;
   /** Saves the answer as a match report; false when the browser blocks storage. */
   onMakeReport?: (response: SearchResponse) => boolean;
   /** A control under each result card, such as the Library's save button. */

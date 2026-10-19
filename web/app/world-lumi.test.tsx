@@ -4,17 +4,22 @@ import type { ReactNode } from "react";
 import { defaultBear } from "@/features/avatar/bear-config";
 import type { AgentReply } from "@/features/lumi/agent-reply";
 import type { LumiApi } from "@/features/lumi/lumi-api";
+import { held } from "@/features/lumi/test-harness";
 import { Phone } from "@/features/phone/phone";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { resultFixture } from "@/test/fixtures";
-import { useWorldLumi } from "./world-lumi";
 import { useWorldPhone } from "./world-phone";
+
+// three.js has to finish loading as a module before the canvas library requires it, or Bun can
+// refuse the require part of the time; a test file loads both at once unless told otherwise.
+await import("three");
+const { useWorldLumi } = await import("./world-lumi");
 
 const answer = resultFixture;
 const profileId = answer.results[0]!.profile.id;
 
-function lumiAnswering(actions: AgentReply["actions"]): LumiApi {
-  const reply: AgentReply = {
+function replyWith(actions: AgentReply["actions"]): AgentReply {
+  return {
     reply: "Demo reply.",
     mode: "mock",
     abstained: false,
@@ -22,6 +27,10 @@ function lumiAnswering(actions: AgentReply["actions"]): LumiApi {
     results: [answer],
     mentions: [],
   };
+}
+
+function lumiAnswering(actions: AgentReply["actions"]): LumiApi {
+  const reply = replyWith(actions);
   return {
     ask: async () => ({ ok: true, value: reply }),
     search: async () => ({ ok: false, failure: "network" }),
@@ -41,7 +50,7 @@ function floatie() {
   return button;
 }
 
-function setUp(api: LumiApi, { reportSaved = true } = {}) {
+function setUp(api: LumiApi, { reportSaved = true, mapDrawn = true } = {}) {
   const shown: SearchResponse[] = [];
   const focusWhen: Record<string, Element | null> = {};
   const navigator = { show: (response: SearchResponse) => void shown.push(response) };
@@ -62,7 +71,7 @@ function setUp(api: LumiApi, { reportSaved = true } = {}) {
       engineMode: "mock",
       fixtureMode: true,
       navigator,
-      onShowOnMap: calls.shownOnMap,
+      onShowOnMap: mapDrawn ? calls.shownOnMap : undefined,
       onOpenAsk: calls.askOpened,
       onMakeReport: calls.reportMade,
       onOpenReports: calls.reportsOpened,
@@ -98,6 +107,45 @@ test("show on map closes the chat and shows Lumi's answer on the map, once", asy
   expect(focusWhen["map"]).toBe(opener);
   expect(document.activeElement).toBe(opener);
 });
+
+test("without a map to draw, Lumi's show on map leaves the chat open", async () => {
+  floatie();
+  const { result, refresh } = setUp(lumiAnswering([{ type: "show_on_map", result: 0 }]), {
+    mapDrawn: false,
+  });
+  await ask(refresh, result.current.open, "glucose sensors");
+  // With a map, the chat closes to show the answer there (the test above).
+  expect(document.querySelector("dialog")!.open).toBe(true);
+  expect(screen.getAllByText("Demo reply.").length).toBeGreaterThan(0);
+});
+
+for (const mapDrawn of [true, false]) {
+  test(`an answer that came while the chat was closed offers the map only when it is drawn (${mapDrawn ? "drawn" : "not drawn"})`, async () => {
+    floatie();
+    const api = held();
+    const { result, refresh } = setUp(api, { mapDrawn });
+    act(() => result.current.open());
+    refresh();
+    fireEvent.change(screen.getByLabelText("Message Lumi"), {
+      target: { value: "glucose sensors" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    });
+    await act(async () => {
+      document.querySelector("dialog")!.dispatchEvent(new Event("close"));
+    });
+    refresh();
+    await act(async () =>
+      api.land({ ok: true, value: replyWith([{ type: "show_on_map", result: 0 }]) }),
+    );
+    act(() => result.current.open());
+    refresh();
+    expect(document.querySelector("dialog")!.open).toBe(true);
+    const offered = screen.queryByRole("button", { name: "Show on the map" });
+    expect(offered !== null).toBe(mapDrawn);
+  });
+}
 
 test("open profile shows Lumi's answer in Ask once the chat has given focus back", async () => {
   const opener = floatie();

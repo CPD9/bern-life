@@ -1,5 +1,6 @@
-import { describe, expect, mock, test } from "bun:test";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, mock, test } from "bun:test";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { assumeWebgl } from "@/infrastructure/webgl";
 
 // three.js has to finish loading as a module before the canvas library requires it, or Bun can
 // refuse the require part of the time; a test file loads both at once unless told otherwise.
@@ -30,5 +31,23 @@ describe("LumiFloatie", () => {
     const pill = screen.getByText("Bärli");
     expect(pill.getAttribute("aria-hidden")).toBe("true");
     expect(pill.className).toContain("pointer-events-none");
+  });
+
+  describe("without WebGL", () => {
+    // Unmounted first, so putting WebGL back re-renders nothing outside act().
+    afterEach(() => {
+      cleanup();
+      assumeWebgl(true);
+    });
+
+    test("the button stays and still opens Lumi, with the initial where the bear would be", () => {
+      assumeWebgl(false);
+      const onOpen = mock(() => undefined);
+      const floatie = show("Bärli", onOpen);
+      expect(floatie.querySelector("canvas")).toBeNull();
+      expect(floatie.textContent).toBe("B");
+      fireEvent.click(floatie);
+      expect(onOpen).toHaveBeenCalledTimes(1);
+    });
   });
 });

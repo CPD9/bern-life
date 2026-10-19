@@ -1,8 +1,9 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type SearchResponse } from "@/infrastructure/contract-types.generated";
+import { ContextLossWatch, SceneGuard } from "@/infrastructure/ui/scene-guard";
 import { type Building, groupPlacesByBuilding } from "./buildings";
 import { type CameraCommand } from "./camera-moves";
 import { liteTrees, planCity } from "./city-plan";
@@ -12,6 +13,7 @@ import { lightUp } from "./light";
 import { type CameraHandle, MapCamera } from "./map-camera";
 import { AnchorProjector } from "./markers/anchor-projector";
 import { markerAnchors, PlaceMarkers } from "./markers/place-markers";
+import { NoMapCard } from "./no-map-card";
 import { paletteFor } from "./palette";
 import { PlacePanel } from "./place-panel";
 import { PLACES } from "./places";
@@ -46,21 +48,51 @@ export type WorldCanvasProps = {
   onPlacePanel?: (open: boolean) => void;
   /** Shown lit at load: the world fixture, passed only when the app runs with DEMO_FIXTURES=1. */
   demoSearch?: SearchResponse | undefined;
+  /** The ways in that need no 3D, offered when the browser cannot draw the map. */
+  onOpenAsk: () => void;
+  onOpenDesk: () => void;
+  /** True while the office covers the map, so the map's card leaves focus alone. */
+  covered?: boolean;
+};
+
+// Without WebGL, or when the scene throws or loses its context for good, a card stands where the
+// map was and the rest of the app carries on. The map's region takes focus back after a retry.
+export function WorldCanvas({ onOpenAsk, onOpenDesk, covered, ...map }: WorldCanvasProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  return (
+    <SceneGuard
+      focusAfterRetry={containerRef}
+      fallback={(retry) => (
+        <NoMapCard
+          onOpenAsk={onOpenAsk}
+          onOpenDesk={onOpenDesk}
+          onRetry={retry}
+          covered={covered === true}
+        />
+      )}
+    >
+      <WorldMap {...map} containerRef={containerRef} />
+    </SceneGuard>
+  );
+}
+
+type WorldMapProps = Omit<WorldCanvasProps, "onOpenAsk" | "onOpenDesk" | "covered"> & {
+  containerRef: RefObject<HTMLDivElement | null>;
 };
 
 // Transparent so the shell's sky shows through; "demand" renders only when something changes.
-export function WorldCanvas({
+function WorldMap({
   agent,
   onAgentOpen,
   onSearchHere,
   onPlacePanel,
   demoSearch,
-}: WorldCanvasProps) {
+  containerRef,
+}: WorldMapProps) {
   const display = useWorldDisplay();
   const palette = paletteFor(display.night);
   const shadows = !display.lite;
   const cameraRef = useRef<CameraHandle | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const anchorsRef = useRef(new Map<string, HTMLElement>());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selected = BUILDINGS.find((building) => building.key === selectedKey) ?? null;
@@ -78,6 +110,8 @@ export function WorldCanvas({
   }, [demoSearch]);
 
   useEffect(() => onPlacePanel?.(panelOpen), [panelOpen, onPlacePanel]);
+  // A map that gives way to its card takes an open panel with it.
+  useEffect(() => () => onPlacePanel?.(false), [onPlacePanel]);
 
   const framePoints = useMemo(
     () =>
@@ -95,7 +129,7 @@ export function WorldCanvas({
     containerRef.current
       ?.querySelector<HTMLButtonElement>(`[data-building="${CSS.escape(selectedKey)}"]`)
       ?.focus();
-  }, [selectedKey]);
+  }, [containerRef, selectedKey]);
   const runCamera = useCallback((command: CameraCommand) => cameraRef.current?.run(command), []);
   const selectBuilding = useCallback((key: string) => {
     setSelectedKey(key);
@@ -108,6 +142,7 @@ export function WorldCanvas({
     <div
       ref={containerRef}
       role="region"
+      tabIndex={-1}
       aria-label="Map of Bern"
       aria-describedby="map-keys"
       className="relative isolate size-full"
@@ -124,6 +159,7 @@ export function WorldCanvas({
         gl={{ alpha: true }}
         camera={{ fov: 35, near: 1, far: 1200 }}
       >
+        <ContextLossWatch />
         <Lights night={display.night} shadows={shadows} />
         <Ground palette={palette} shadows={shadows} />
         <City

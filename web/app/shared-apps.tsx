@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { SkillList } from "@/features/agents/skill-list";
 import { GarageApp } from "@/features/garage/garage-app";
 import { LibraryApp } from "@/features/library/library-app";
 import {
@@ -13,6 +14,7 @@ import { SaveButton } from "@/features/library/save-button";
 import { OpportunitiesApp } from "@/features/opportunities/opportunities-app";
 import type { AppEventSink } from "@/infrastructure/app-events";
 import type { SearchResult } from "@/infrastructure/claims";
+import type { NumbersApi } from "@/infrastructure/numbers-api";
 
 // Apps the phone and the desk share, and the story events their callbacks stand for. The features
 // only report what happened (a save, a visit); the app turns that into the story's events.
@@ -56,13 +58,16 @@ export function libraryApp(library?: LibraryStore): ReactNode {
   return library ? <LibraryApp store={library} /> : <LibraryApp />;
 }
 
-/** The garage reports a visit once it opens, and numbers only when the engine measured them. */
-export function garageApp(fixtureMode: boolean, events: AppEventSink): ReactNode {
+/** The garage reports a visit once it opens, and numbers only when the engine measured them. Its
+ *  Skills section is the Agents app's list without "Try", from the numbers the garage loaded. */
+export function garageApp(fixtureMode: boolean, events: AppEventSink, api?: NumbersApi): ReactNode {
   return (
     <GarageApp
       fixtureMode={fixtureMode}
       onVisited={() => events.emit("garage_visited")}
       onNumbersSeen={() => events.emit("numbers_seen")}
+      renderSkills={(numbers) => <SkillList numbers={numbers} fixtureMode={fixtureMode} />}
+      {...(api ? { api } : {})}
     />
   );
 }

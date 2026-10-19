@@ -1,5 +1,5 @@
-import { formatInterval, formatMeasure, formatTally } from "./format";
-import type { EvalNumbers } from "./numbers";
+import { formatInterval, formatMeasure, formatTally } from "@/infrastructure/number-format";
+import type { EvalNumbers } from "@/infrastructure/numbers";
 
 type Stat = { readonly label: string; readonly value: string; readonly meaning: string };
 

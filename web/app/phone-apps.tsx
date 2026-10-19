@@ -20,7 +20,8 @@ type PhoneAppsInput = AgentsInput & {
   /** The same controller as the desk's Navigator, so a search survives closing the phone. */
   navigator: NavigatorController;
   fixtureMode: boolean;
-  onShowOnMap: (response: SearchResponse) => void;
+  /** Shows an answer on the map; absent when the map cannot be drawn. */
+  onShowOnMap?: ((response: SearchResponse) => void) | undefined;
   /** Opens another app inside the phone, as "Try" on a skill does. */
   onOpenApp: (appId: string) => void;
   /** A badge on Messages; none when signed out or unknown. */
@@ -53,7 +54,8 @@ export function phoneApps({
   ...agents
 }: PhoneAppsInput): PhoneApp[] {
   const save = { fixtureMode, events, library };
-  // Opportunities has its own app; every other skill starts from Ask, where a report is made too.
+  // Opportunities has its own app; every other skill starts from Ask, where a report is made too,
+  // and all but the brief in search mode.
   function trySkill(skill: Skill) {
     if (skill.id === "opportunities") {
       onOpenApp("opportunities");
@@ -103,7 +105,7 @@ export function phoneApps({
       label: "Agents",
       icon: <AppIcon app="agents" />,
       tile: "#6d4bd8",
-      content: agentsApp(agents, trySkill),
+      content: agentsApp(agents, fixtureMode, trySkill),
     },
     {
       id: "opportunities",

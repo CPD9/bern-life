@@ -25,3 +25,8 @@ Object.assign(globalThis, runtimePrimitives);
 
 const { cleanup } = await import("@testing-library/react");
 afterEach(cleanup);
+
+// happy-dom offers no WebGL, so every 3D scene would show its fallback; tests of a scene's
+// fallback say so themselves (`assumeWebgl(false)`) and put it back afterwards.
+const { assumeWebgl } = await import("@/infrastructure/webgl");
+assumeWebgl(true);

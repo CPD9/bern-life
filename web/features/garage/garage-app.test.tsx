@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { parseNumbers } from "@/infrastructure/numbers";
+import type { NumbersOutcome } from "@/infrastructure/numbers-api";
+import { numbersBody, queuedApi } from "@/test/numbers";
 import { GarageApp } from "./garage-app";
-import { parseNumbers } from "./numbers";
-import type { NumbersOutcome } from "./numbers-api";
-import { numbersBody, queuedApi } from "./testing";
 
 function measured(body: unknown = numbersBody()): NumbersOutcome {
   const numbers = parseNumbers(body);

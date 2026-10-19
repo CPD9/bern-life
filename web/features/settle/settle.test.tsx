@@ -77,6 +77,24 @@ describe("Settle", () => {
     expect(screen.getByText(/Distances are approximate/)).toBeTruthy();
   });
 
+  test("each quoted address says, folded away, how it is corrected or removed", () => {
+    open();
+    fireEvent.click(screen.getByRole("radio", { name: "Länggasse" }));
+    const notes = within(screen.getByRole("list"))
+      .getAllByText("Wrong or outdated?")
+      .map((summary) => summary.closest("details")!);
+    expect(notes).toHaveLength(2);
+    expect(notes.every((note) => !note.open)).toBe(true);
+    expect(notes[1]!.textContent).toContain(
+      "This address is quoted from the institution's page as it read on 19 Oct 2026.",
+    );
+    // Addresses live in the repository, not the snapshot, so no new snapshot changes them.
+    expect(notes[1]!.textContent).toContain(
+      "Addresses are kept in Bern Life's repository and corrected there by a change to places.json, not by the next snapshot; to ask for a correction or its removal, see Corrections and removal.",
+    );
+    expect(notes[1]!.querySelector("a")!.getAttribute("href")).toBe("/corrections");
+  });
+
   test("settling reports the plot once, stores it and says where the office is", () => {
     const { onSettled, store } = open();
     fireEvent.click(screen.getByRole("radio", { name: "Länggasse" }));
