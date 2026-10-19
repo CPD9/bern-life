@@ -1,72 +1,65 @@
-// The three agents stand in the square in front of the city hall as a hint of what is coming.
-// They are the only characters in the world: people found on public pages are never shown as
-// figures, only as entries with their sources in a place's panel.
+// Lumi, the player's first agent, stands in the square in front of the city hall wearing the bear
+// the player made for it. It is the only figure in the world: people found on public pages are
+// never shown as figures, only as entries with their sources in a place's panel. The bear is
+// another feature, so app/ passes it in.
 
+import { type ReactNode } from "react";
 import { RATHAUSPLATZ } from "../geography";
 import { type Anchor, type AnchorElements, registerAnchor } from "../markers/anchors";
 
-export type AgentId = "navigator" | "scout" | "matchmaker";
-
-const AGENTS: readonly { id: AgentId; name: string; colour: string; offset: number }[] = [
-  { id: "navigator", name: "Navigator", colour: "#2fb36b", offset: -1.6 },
-  { id: "scout", name: "Scout", colour: "#f2a93b", offset: 0 },
-  { id: "matchmaker", name: "Matchmaker", colour: "#8f7ae6", offset: 1.6 },
-];
-
-const AGENTS_KEY = "agents";
-
-export const AGENTS_ANCHOR: Anchor = {
-  key: AGENTS_KEY,
-  position: [RATHAUSPLATZ[0], 2.4, RATHAUSPLATZ[1]],
+export type MapAgent = {
+  /** The agent's name, Lumi until the player chooses another. */
+  readonly name: string;
+  /**
+   * The agent's bear, feet on y = 0, facing +z and about 1.4 tall, drawn with lite graphics when
+   * asked. It should stand still: the map renders only on demand, so a figure that keeps moving
+   * would redraw the whole city every frame, and standing still is what reduced motion asks for.
+   */
+  readonly figure: (lite: boolean) => ReactNode;
 };
 
-export function AgentFigures({ shadows }: { shadows: boolean }) {
+/** Large enough to pick out at the default zoom, where one unit is about 20 m. */
+const FIGURE_SCALE = 1.6;
+/** Turned a little towards the default camera. */
+const FIGURE_TURN = 0.5;
+
+const AGENT_KEY = "agent";
+
+export const AGENT_ANCHOR: Anchor = {
+  key: AGENT_KEY,
+  position: [RATHAUSPLATZ[0], 2.9, RATHAUSPLATZ[1]],
+};
+
+export function AgentFigure({ agent, lite }: { agent: MapAgent; lite: boolean }) {
   const [x, z] = RATHAUSPLATZ;
-  return AGENTS.map((agent) => (
-    <group key={agent.id} position={[x + agent.offset, 0, z]}>
-      <mesh position-y={0.45} castShadow={shadows}>
-        <capsuleGeometry args={[0.28, 0.5, 4, 10]} />
-        <meshLambertMaterial color={agent.colour} />
-      </mesh>
-      <mesh position-y={1.12} castShadow={shadows}>
-        <sphereGeometry args={[0.24, 12, 10]} />
-        <meshLambertMaterial color="#f6e7d8" />
-      </mesh>
+  return (
+    <group position={[x, 0, z]} rotation-y={FIGURE_TURN} scale={FIGURE_SCALE}>
+      {agent.figure(lite)}
     </group>
-  ));
+  );
 }
 
-/** One row of buttons for the three figures, so their labels never overlap at any zoom. */
-export function AgentButtons({
-  onSelect,
+/** The agent's name above its figure, as a page button so a tap, Enter or Space opens it. */
+export function AgentButton({
+  name,
+  onOpen,
   elementsRef,
 }: {
-  onSelect: ((id: AgentId) => void) | undefined;
+  name: string;
+  onOpen: () => void;
   elementsRef: AnchorElements;
 }) {
   return (
-    <div
-      ref={registerAnchor(elementsRef, AGENTS_KEY)}
-      className="invisible absolute top-0 left-0 flex gap-1"
+    <button
+      ref={registerAnchor(elementsRef, AGENT_KEY)}
+      type="button"
+      aria-label={`${name}, your agent`}
+      title={`${name}, your agent`}
+      onClick={onOpen}
+      className="rounded-pill bg-panel text-ink shadow-panel invisible absolute top-0 left-0 flex items-center gap-1.5 px-2.5 py-1 text-xs font-extrabold whitespace-nowrap"
     >
-      {AGENTS.map((agent) => (
-        <button
-          key={agent.id}
-          type="button"
-          data-agent={agent.id}
-          aria-label={onSelect ? agent.name : `${agent.name}, coming soon`}
-          title={onSelect ? agent.name : `${agent.name} · coming soon`}
-          onClick={() => onSelect?.(agent.id)}
-          className="rounded-pill bg-panel text-ink shadow-panel flex items-center gap-1.5 px-2 py-0.5 text-xs font-extrabold whitespace-nowrap"
-        >
-          <span
-            aria-hidden="true"
-            className="size-2 rounded-full"
-            style={{ background: agent.colour }}
-          />
-          {agent.name}
-        </button>
-      ))}
-    </div>
+      <span aria-hidden="true" className="size-2 rounded-full bg-[#e0a526]" />
+      {name}
+    </button>
   );
 }

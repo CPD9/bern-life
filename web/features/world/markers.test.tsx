@@ -1,13 +1,13 @@
 import { describe, expect, mock, test } from "bun:test";
 import { createRef } from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { type Building, groupPlacesByBuilding } from "./buildings";
 import { worldDemoSearch } from "./demo-search";
 import { lightUp } from "./light";
 import { PlaceMarkers } from "./markers/place-markers";
 import { PlacePanel } from "./place-panel";
 import { PLACES, type Place } from "./places";
-import { AgentButtons } from "./scene/agents";
+import { AGENT_ANCHOR, AgentButton, AgentFigure } from "./scene/agents";
 
 const addressed: Place = {
   id: "example-lab",
@@ -136,19 +136,36 @@ describe("PlaceMarkers", () => {
   });
 });
 
-describe("AgentButtons", () => {
-  test("without a handler each agent says it is coming soon", () => {
-    render(<AgentButtons onSelect={undefined} elementsRef={anchors()} />);
-    expect(
-      screen.getAllByRole("button").map((button) => button.getAttribute("aria-label")),
-    ).toEqual(["Navigator, coming soon", "Scout, coming soon", "Matchmaker, coming soon"]);
+describe("the agent on the map", () => {
+  test("is one bear, the figure passed in, standing in front of the city hall", () => {
+    const bear = <mesh name="the player's bear" />;
+    const figure = mock((lite: boolean) => (lite ? bear : <group />));
+    const drawn = AgentFigure({ agent: { name: "Lumi", figure }, lite: true });
+    expect(figure.mock.calls).toEqual([[true]]);
+    expect(drawn.type).toBe("group");
+    const props = drawn.props as { position: unknown; children: unknown };
+    expect(props.position).toEqual([21.9, 0, -7]);
+    expect(props.children).toBe(bear);
   });
 
-  test("with a handler a click passes the agent's stable id", () => {
-    const onSelect = mock((id: string) => id);
-    render(<AgentButtons onSelect={onSelect} elementsRef={anchors()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Navigator" }));
-    expect(onSelect).toHaveBeenCalledWith("navigator");
+  test("has one button, named for the agent, registered at one anchor", () => {
+    const elements = anchors();
+    render(<AgentButton name="Bärli" onOpen={() => undefined} elementsRef={elements} />);
+    expect(
+      screen.getAllByRole("button").map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["Bärli, your agent"]);
+    expect([...elements.current.keys()]).toEqual([AGENT_ANCHOR.key]);
+  });
+
+  test("a tap opens it once; it is a page button, so Enter and Space reach it too", () => {
+    const onOpen = mock(() => undefined);
+    render(<AgentButton name="Lumi" onOpen={onOpen} elementsRef={anchors()} />);
+    const button = screen.getByRole("button", { name: "Lumi, your agent" });
+    act(() => button.focus());
+    expect(document.activeElement).toBe(button);
+    expect([button.tagName, button.getAttribute("type")]).toEqual(["BUTTON", "button"]);
+    fireEvent.click(button);
+    expect(onOpen).toHaveBeenCalledTimes(1);
   });
 });
 
