@@ -63,8 +63,12 @@ describe("SaveButton", () => {
       act(() => fireEvent.click(button));
       act(() => fireEvent.click(button));
     }
-    expect(heard.map((item) => item.ref)).toEqual(["demo-ada", "demo-bea"]);
-    expect(store.get().map((item) => item.ref)).toEqual(["demo-ada", "demo-bea"]);
+    const stamped = [entry, other].map((saved) => ({
+      ...saved,
+      saved_at: "2026-10-19T02:30:00.000Z",
+    }));
+    expect(heard).toEqual(stamped);
+    expect(store.get()).toEqual(stamped);
   });
 
   test("something already in the library shows Saved and does not save again", () => {
