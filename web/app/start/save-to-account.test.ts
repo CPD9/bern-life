@@ -6,7 +6,10 @@ import { defaultPerson } from "@/features/avatar/person-config";
 import { type AccountAvatar, saveToAccount } from "./save-to-account";
 
 const profile = { role: "company", goal: "collaborator", visibility: "private" } as const;
-const avatar: AccountAvatar = { person: defaultPerson, agent: { name: "Lumi", bear: defaultBear } };
+const avatar: AccountAvatar = {
+  person: defaultPerson,
+  agent: { name: "Bärli", bear: defaultBear },
+};
 
 async function sentBody(look: AccountAvatar): Promise<unknown> {
   let body: unknown;
@@ -51,7 +54,7 @@ describe("saveToAccount", () => {
               accent: "green",
             },
             agent: {
-              name: "Lumi",
+              name: "Bärli",
               bear: {
                 kind: "brown-bear",
                 fur: "honey",
