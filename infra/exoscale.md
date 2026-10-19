@@ -17,6 +17,14 @@ Apertus on your own GPUs, or the whole app with no network at all: [`sovereign.m
 | Bundle | `/opt/bernlife/data/bundle`, the version in `bundle.lock`, copied by scp (the VM holds no GitHub token) |
 | Backups | `/var/backups/bernlife`, one folder per night at 02:15 UTC (database, uploads, Caddy's certificate), 14 days kept, root only; no copy off the VM yet |
 
+Caddy sends the security headers of `web/next.config.ts` (Content-Security-Policy, X-Frame-Options,
+Permissions-Policy, Cross-Origin-Opener-Policy, X-Content-Type-Options, Referrer-Policy) plus HSTS.
+Its Content-Security-Policy is a default only, so an uploaded PDF keeps its own `sandbox` policy.
+With `trusted_proxies` unset, Caddy replaces any `X-Forwarded-For` a client sends with the address
+it sees. That is why `compose.yaml` sets `TRUST_PROXY=1` for the web app, which then counts sign-in
+and engine limits per real address. Anywhere without such a proxy, leave it unset: the header would
+be the client's own word, so every request counts as one address instead.
+
 ## Cost (CHF per month, Peter's credits)
 
 | Item | About |

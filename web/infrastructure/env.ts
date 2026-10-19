@@ -23,10 +23,11 @@ export class InvalidEnvError extends Error {
   }
 }
 
-function parseDemoFixtures(value: string | undefined): boolean {
+function parseFlag(source: EnvSource, variable: string): boolean {
+  const value = source[variable];
   if (value === undefined || value === "" || value === "0") return false;
   if (value === "1") return true;
-  throw new InvalidEnvError("DEMO_FIXTURES");
+  throw new InvalidEnvError(variable);
 }
 
 function parseEngineUrl(value: string | undefined): URL | null {
@@ -41,7 +42,7 @@ function parseEngineUrl(value: string | undefined): URL | null {
 
 export function parseEnv(source: EnvSource): Env {
   const engineUrl = parseEngineUrl(source.ENGINE_URL);
-  if (parseDemoFixtures(source.DEMO_FIXTURES)) return { demoFixtures: true, engineUrl };
+  if (parseFlag(source, "DEMO_FIXTURES")) return { demoFixtures: true, engineUrl };
   if (engineUrl === null) throw new MissingEnvError("ENGINE_URL");
   return { demoFixtures: false, engineUrl };
 }
@@ -92,6 +93,19 @@ let cachedAccounts: AccountsEnv | undefined;
 export function accountsEnv(): AccountsEnv {
   cachedAccounts ??= parseAccountsEnv(process.env);
   return cachedAccounts;
+}
+
+// X-Forwarded-For names the client only when a proxy we run wrote it (Caddy in infra/exoscale
+// replaces whatever the client sent); anywhere else the header is the client's own word.
+export function parseTrustProxy(source: EnvSource): boolean {
+  return parseFlag(source, "TRUST_PROXY");
+}
+
+let cachedTrustProxy: boolean | undefined;
+
+export function trustProxy(): boolean {
+  cachedTrustProxy ??= parseTrustProxy(process.env);
+  return cachedTrustProxy;
 }
 
 // Uploaded documents live in the data directory the engine also uses; a relative value and the

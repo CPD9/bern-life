@@ -115,8 +115,10 @@ describe("accounts settings", () => {
     ).toThrow(new InvalidEnvError("APP_ORIGIN"));
   });
 
-  test("the client address is the first forwarded hop", () => {
-    expect(clientIp(post({ "x-forwarded-for": "198.51.100.7, 10.0.0.1" }))).toBe("198.51.100.7");
-    expect(clientIp(post({}))).toBe("unknown");
+  test("the client address is the first forwarded hop, and only behind a trusted proxy", () => {
+    const forwarded = post({ "x-forwarded-for": "198.51.100.7, 10.0.0.1" });
+    expect(clientIp(forwarded, true)).toBe("198.51.100.7");
+    expect(clientIp(post({}), true)).toBe("unknown");
+    expect(clientIp(forwarded, false)).toBe("unknown");
   });
 });

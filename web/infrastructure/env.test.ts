@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { InvalidEnvError, MissingEnvError, parseDataDir, parseEnv } from "./env";
+import { InvalidEnvError, MissingEnvError, parseDataDir, parseEnv, parseTrustProxy } from "./env";
 
 describe("parseEnv", () => {
   test("fixtures mode needs no engine URL", () => {
@@ -42,5 +42,17 @@ describe("parseDataDir", () => {
     expect(parseDataDir({ BERNLIFE_DATA_DIR: "" }, "/repo/web")).toBe("/repo/data");
     expect(parseDataDir({ BERNLIFE_DATA_DIR: "../shared" }, "/repo/web")).toBe("/repo/shared");
     expect(parseDataDir({ BERNLIFE_DATA_DIR: "/srv/bernlife" }, "/repo/web")).toBe("/srv/bernlife");
+  });
+});
+
+describe("parseTrustProxy", () => {
+  test("trusts forwarded addresses only when set to 1", () => {
+    expect(parseTrustProxy({ TRUST_PROXY: "1" })).toBe(true);
+    expect(parseTrustProxy({})).toBe(false);
+    expect(parseTrustProxy({ TRUST_PROXY: "" })).toBe(false);
+    expect(parseTrustProxy({ TRUST_PROXY: "0" })).toBe(false);
+    expect(() => parseTrustProxy({ TRUST_PROXY: "yes" })).toThrow(
+      new InvalidEnvError("TRUST_PROXY"),
+    );
   });
 });

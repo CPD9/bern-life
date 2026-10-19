@@ -2,6 +2,7 @@
 // SHA-256, so reading the session table cannot sign anyone in. State-changing routes accept a
 // request only when its Origin is the app's own; with SameSite=Lax that refuses cross-site posts.
 import { createHash, randomBytes } from "node:crypto";
+import { trustProxy } from "./env";
 
 export const SESSION_COOKIE = "bl_session";
 export const SESSION_DAYS = 14;
@@ -44,6 +45,10 @@ export function fromOwnOrigin(request: Request, appOrigin: string): boolean {
   return request.headers.get("origin") === appOrigin;
 }
 
-export function clientIp(request: Request): string {
+/** The address limits are counted against. Next fills X-Forwarded-For with the peer only when the
+ *  header is missing, so without a proxy that overwrites it (TRUST_PROXY=1) a forged value and a
+ *  real one look the same, and every request counts as the one address "unknown". */
+export function clientIp(request: Request, behindProxy: boolean = trustProxy()): string {
+  if (!behindProxy) return "unknown";
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 }
