@@ -62,3 +62,17 @@ invented person answered with results; exposure concentrated in the largest unit
 
 ## Amendments
 None yet.
+
+### 2026-10-19: titles in the premise check and German and French word forms (#226), decided on dev
+Not a change to the questions, data, metrics or rules above; `eval/gold.jsonl` is unchanged. The
+rule was written and committed before any code or run: each change is measured on
+`eval/dev.jsonl` against a base run in the same setup (bundle-20261019-3, a fresh database per
+run, predictions in replay, no model calls) and adopted only if, on dev, recall@10 and MRR are
+not lower, traceability stays 100%, invented entities stay 0, invented queries abstained are not
+fewer and false abstentions are not more. The changes are decided in order: (a) French and German
+titles in the premise check, against the base; (b) German and French word forms in the lexical
+match and the claim rule, against the code the decision on (a) leaves. A change the rule rejects
+is reverted. Every variant tried on dev is reported. Gold is run once, after the decision, as
+measurement, and reported whatever the outcome; nothing changes after it.
+
+Results: pending.
