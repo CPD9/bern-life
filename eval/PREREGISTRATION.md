@@ -75,4 +75,41 @@ match and the claim rule, against the code the decision on (a) leaves. A change 
 is reverted. Every variant tried on dev is reported. Gold is run once, after the decision, as
 measurement, and reported whatever the outcome; nothing changes after it.
 
-Results: pending.
+Setup: bundle-20261019-3, predictions in replay, no model calls. The rule above says a fresh
+database per run. Instead, every run below shares one fresh load, so a reload cannot reorder
+results between runs; a base run on a second fresh load gave the same dev metrics. Expansion
+came from the cache for every query (dev 27/27, gold 49/49).
+Explanations the cache does not hold show the plain reason, which no metric reads: dev 2 of 94
+before and 23 of 97 after, gold 17 of 158 before and 40 of 161 after.
+
+| Set | Run | recall@10 | MRR | traceable | invented | invented abstained | false abstentions | en / de / fr recall@10 |
+|---|---|---|---|---|---|---|---|---|
+| dev | base | 0.86 [0.73, 1.00] | 0.66 [0.49, 0.83] | 2848/2848 | 0 | 5/5 | 1/22 | 1.00 / 0.71 / 0.83 |
+| dev | (a) titles | 0.86 [0.73, 1.00] | 0.66 [0.49, 0.83] | 2848/2848 | 0 | 5/5 | 1/22 | 1.00 / 0.71 / 0.83 |
+| dev | (a), word forms in the claim rule only | 0.86 [0.73, 1.00] | 0.66 [0.49, 0.83] | 2872/2872 | 0 | 5/5 | 1/22 | 1.00 / 0.71 / 0.83 |
+| dev | (a) + (b), claim rule and full text | 0.91 [0.77, 1.00] | 0.66 [0.50, 0.83] | 2971/2971 | 0 | 5/5 | 1/22 | 1.00 / 0.71 / 1.00 |
+| gold | base | 0.38 [0.22, 0.56] | 0.46 [0.28, 0.63] | 4666/4666 | 0 | 8/10 | 0/38 | 0.55 / 0.18 / 0.12 |
+| gold | (a) + (b) | 0.40 [0.23, 0.57] | 0.44 [0.26, 0.59] | 4533/4533 | 0 | 9/10 | 0/38 | 0.56 / 0.20 / 0.12 |
+
+Decision on dev:
+- **(a) adopted.** The dev predictions are the same byte for byte; the dev premises use only
+  `Prof.` and `Dr.`.
+- **(b) adopted.** recall@10 0.864 → 0.909 and MRR 0.655 → 0.661, and nothing else moves.
+  - q919 is found (rank 6, through its project), and q921, q922 and q923 rise.
+  - q901 (rank 1 → 2), q910 (3 → 5) and q924 (2 → 3) fall, so English MRR goes 0.93 → 0.87
+    while German goes 0.48 → 0.50 and French 0.46 → 0.53.
+  - The abstention signals (`calibrate`) are the same to three decimals.
+- **Variants tried on dev.** A first word form (also -n and -x, two passes) and the final one,
+  each in the claim rule alone, changed no dev metric. Before any dev run with full text, the
+  database unit test showed the first form cut "glucose" to "gluco", a prefix that reaches
+  "GlucoPatch". The endings were narrowed then.
+
+Gold, measured once after the decision:
+- recall@10 0.384 → 0.397 and MRR 0.458 → 0.436. Both changes are inside the intervals.
+- q003b (0 → 0.25) and q003c (0.5 → 0.75) gain.
+- q003 (first hit rank 1 → 2), q005 (1 → 2) and q027 (3 → 4) lose rank.
+- q017 ("la Dre Céline Morand-Hächler", invented) now abstains through (a).
+- The gold MRR loss is what the dev rule could not see. It is reported here, and nothing was
+  changed after the gold run.
+- The base run on this database reproduces the bundle-3 gold row. Against the bundle's frozen
+  predictions, it reorders q017's top 10 and changes q020's.

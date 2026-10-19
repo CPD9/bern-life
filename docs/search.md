@@ -245,6 +245,22 @@ Tried on dev and not adopted: abstaining only when both the plain and the expand
 below the thresholds. It answered q918 (rank 5), but the two off-topic questions stopped
 abstaining (3/5 instead of 5/5), so the rule reading the plain signals stays.
 
+## Word forms and French and German titles (dev decision of 2026-10-19)
+Decided on `eval/dev.jsonl` under a rule committed before the runs (`eval/PREREGISTRATION.md`,
+amendment of 2026-10-19), bundle `bundle-20261019-3`, replay, thresholds unchanged.
+
+| Set | Row | recall@10 | MRR | false abstentions | invented abstained | en / de / fr recall |
+|---|---|---|---|---|---|---|
+| dev | base | 0.86 [0.73, 1.00] | 0.66 | 1/22 | 5/5 | 1.00 / 0.71 / 0.83 |
+| dev | + titles + word forms | 0.91 [0.77, 1.00] | 0.66 | 1/22 | 5/5 | 1.00 / 0.71 / 1.00 |
+| gold | base | 0.38 [0.22, 0.56] | 0.46 | 0/38 | 8/10 | 0.55 / 0.18 / 0.12 |
+| gold | + titles + word forms | 0.40 [0.23, 0.57] | 0.44 | 0/38 | 9/10 | 0.56 / 0.20 / 0.12 |
+
+Traceability stayed 100% with 0 invented entities. Titles changed no dev byte. On gold they make
+the French premise "la Dre …" abstain. Word forms raise dev MRR from 0.655 to 0.661. On gold, MRR
+falls from 0.458 to 0.436, inside the interval: three English questions find their first answer
+one rank lower.
+
 ## Baseline (no model help), bundle `local-8f34ab8c1fba`
 `make eval` on the gold predictions, before and after rule 5:
 
@@ -267,9 +283,9 @@ p95 177 ms, max 219 ms with rule 5, which reads every candidate's profile (p50 6
 - Word forms are inflections only: "Genetik" does not match "genetics", and "Schätzung" does not
   match "schätzt". A full-text prefix reaches only words that start with the form: "sensor"
   finds "sensors", not "biosensors".
-- Cross-language recall stays low (gold de 0.18, fr 0.12 with reasons through a project).
+- Cross-language recall stays low (gold de 0.20, fr 0.12 with word forms).
 - Known misses on dev: a German question below both thresholds on its plain signals abstains
-  although expansion finds the answer (q918); a person credited through a project ranks 11
+  although expansion finds the answer (q918); a person credited through a project ranked 11
   (q919, rank 6 since word forms); a project whose claims share no word with the question
   cannot vouch: the project behind q920 says "Kohlenhydraten" only in its name, which rule 5
   never reads.
