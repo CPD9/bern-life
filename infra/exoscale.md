@@ -185,7 +185,13 @@ the code that ran before step 1: `sudo mv /opt/bernlife /opt/bernlife.search`, t
 | Backup now | `sudo ./backup.sh` |
 | Restore a backup | "Back up and restore" below |
 | Watch uptime | From your machine, in a clone with `make fetch` done: `python3 -m infra.check_hosted --url https://<site> --watch`. One line per check every 30 s (time, HTTP status, mode, status, failures in the last hour per role and marker, ms); it exits 1 after 3 failed checks in a row (`--interval`, `--max-failures`). A `degraded` status is shown, not counted |
-| New SSH IP | Exoscale portal → Security Groups → `bernlife-web` → edit the port 22 rule |
+| New SSH IP | Exoscale portal → Security Groups → `bernlife-web` → edit the port 22 rule (one `/32`; never write the IP in git, issues or chat) |
+
+## Changes to access
+
+| Date | Change |
+|---|---|
+| 2026-10-19 | Port 22 moved from the home network to the venue network (#99); the old rule removed. Only 443 public and 22 from that one `/32`; the database stays closed. |
 
 ## Back up and restore
 
