@@ -1,9 +1,8 @@
 // The flat layers: ground, district plates, roads, the Aare's banks and its water. Each layer is
 // one merged geometry, so the whole floor of the city costs six draw calls. In walk mode a click on
-// the ground (not a drag) says where to walk; only then is the ground hit-tested at all.
+// the ground (not a drag) says where to walk (walk-click.ts); only then is it hit-tested at all.
 
 import { useEffect, useMemo } from "react";
-import { type ThreeEvent } from "@react-three/fiber";
 import { BufferAttribute, BufferGeometry, DoubleSide, Shape, ShapeGeometry } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import {
@@ -20,6 +19,7 @@ import { useWorldDisplay } from "../display";
 import { type WorldPalette } from "../palette";
 import { ribbon, smoothPath } from "../ribbon";
 import { AARE_CURVE, AARE_SAMPLES } from "./town";
+import { type OnWalkClick, walkClick } from "./walk-click";
 
 // Layers sit a few millimetres apart so they never flicker against each other.
 const PLATE_Y = 0.02;
@@ -62,24 +62,14 @@ const DISTRICT_PLATES = merged(
 );
 const ROAD_LAYER = merged(ROADS.map((road) => ribbonGeometry(road, ROAD_WIDTH, ROAD_Y)));
 
-/** Pixels the pointer may travel between press and release of a click; more is a drag. */
-export const CLICK_SLOP = 6;
-
-/** The ground point of a click, or null for a drag. */
-export function pickedPoint(
-  event: Pick<ThreeEvent<MouseEvent>, "delta" | "point">,
-): MapPoint | null {
-  return event.delta > CLICK_SLOP ? null : [event.point.x, event.point.z];
-}
-
 type GroundProps = {
   palette: WorldPalette;
   shadows: boolean;
-  /** Where a click on the ground lands, in walk mode. */
-  onPick?: ((point: MapPoint) => void) | undefined;
+  /** Walks you to where a click on the ground lands, in walk mode. */
+  onWalk: OnWalkClick;
 };
 
-export function Ground({ palette, shadows, onPick }: GroundProps) {
+export function Ground({ palette, shadows, onWalk }: GroundProps) {
   const { lite } = useWorldDisplay();
   const width = MAP_BOUNDS.maxX - MAP_BOUNDS.minX;
   const depth = MAP_BOUNDS.maxZ - MAP_BOUNDS.minZ;
@@ -98,12 +88,7 @@ export function Ground({ palette, shadows, onPick }: GroundProps) {
         rotation-x={-Math.PI / 2}
         position={[MAP_BOUNDS.minX + width / 2, 0, MAP_BOUNDS.minZ + depth / 2]}
         receiveShadow={shadows}
-        {...(onPick !== undefined && {
-          onClick: (event: ThreeEvent<MouseEvent>) => {
-            const point = pickedPoint(event);
-            if (point !== null) onPick(point);
-          },
-        })}
+        {...walkClick(onWalk)}
       >
         <planeGeometry args={[width, depth]} />
         <meshLambertMaterial color={palette.ground} />

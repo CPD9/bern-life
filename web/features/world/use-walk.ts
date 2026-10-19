@@ -32,6 +32,8 @@ export type Walk = {
   preview: readonly MapPoint[] | null;
   clearPreview: () => void;
   goTo: (point: MapPoint) => void;
+  /** Walks you to a door by its key: a building's, or "home" for your office. */
+  goToDoor: (key: string) => void;
   stop: () => void;
 };
 
@@ -127,6 +129,14 @@ export function useWalk({ map, start, inside, doors, framePoints }: WalkOptions)
     [map],
   );
 
+  const goToDoor = useCallback(
+    (key: string) => {
+      const door = doors.find((candidate) => candidate.key === key);
+      if (door !== undefined) goTo(door.at);
+    },
+    [doors, goTo],
+  );
+
   const clearPreview = useCallback(() => setPreview(null), []);
 
   return {
@@ -153,6 +163,7 @@ export function useWalk({ map, start, inside, doors, framePoints }: WalkOptions)
     preview,
     clearPreview,
     goTo,
+    goToDoor,
     stop,
   };
 }

@@ -66,6 +66,14 @@ describe("click-to-walk", () => {
     expect(result.current.session.current.walker.path).toEqual(preview.slice(1));
   });
 
+  test("a building's door is walked to by its key; an unknown key walks nowhere", () => {
+    const { result } = walkFrom([0, 0]);
+    act(() => result.current.goToDoor("nowhere"));
+    expect(result.current.preview).toBeNull();
+    act(() => result.current.goToDoor(HOME.key));
+    expect(result.current.preview?.at(-1)).toEqual(HOME.at);
+  });
+
   test("Escape's stop, and leaving walk mode, drop the path and its preview", () => {
     const { result } = walkFrom([0, 0]);
     act(() => result.current.toggleWalking());

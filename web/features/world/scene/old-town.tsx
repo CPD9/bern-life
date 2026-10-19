@@ -6,6 +6,7 @@ import { Color, type InstancedMesh, Object3D } from "three";
 import { type WorldPalette } from "../palette";
 import { gableRoofGeometry } from "./meshes";
 import { type House } from "./old-town-plan";
+import { type OnWalkClick, walkClick } from "./walk-click";
 
 const ROOF_HEIGHT = 0.55;
 const EAVES = 0.12;
@@ -17,10 +18,12 @@ export function OldTownHouses({
   houses,
   palette,
   shadows,
+  onWalk,
 }: {
   houses: readonly House[];
   palette: WorldPalette;
   shadows: boolean;
+  onWalk: OnWalkClick;
 }) {
   const walls = useRef<InstancedMesh>(null);
   const roofs = useRef<InstancedMesh>(null);
@@ -56,6 +59,7 @@ export function OldTownHouses({
         args={[undefined, undefined, houses.length]}
         castShadow={shadows}
         receiveShadow={shadows}
+        {...walkClick(onWalk)}
       >
         <boxGeometry />
         <meshLambertMaterial />
@@ -65,6 +69,7 @@ export function OldTownHouses({
         args={[roofGeometry, undefined, houses.length]}
         castShadow={shadows}
         receiveShadow={shadows}
+        {...walkClick(onWalk)}
       >
         <meshLambertMaterial flatShading />
       </instancedMesh>

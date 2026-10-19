@@ -10,6 +10,7 @@ import { BRIDGE_WIDTH, type Bridge, planBridges } from "./bridge-plan";
 import { type Footprint } from "./footprint";
 import { type Landmark, LANDMARK_BUILDINGS } from "./landmark-plan";
 import { type Coloured, mergeColoured, partGeometry } from "./meshes";
+import { type OnWalkClick, walkClick } from "./walk-click";
 
 const PIER_FOOTING = { width: 0.9, height: 0.35, overhang: 0.4 } as const;
 
@@ -49,10 +50,13 @@ export function Landmarks({
   palette,
   shadows,
   lite,
+  onWalk,
 }: {
   palette: WorldPalette;
   shadows: boolean;
   lite: boolean;
+  /** One mesh: a click on a landmark or on a bridge's deck walks you to the spot clicked. */
+  onWalk: OnWalkClick;
 }) {
   const geometry: BufferGeometry = useMemo(() => {
     const segments = lite ? 8 : 16;
@@ -65,7 +69,7 @@ export function Landmarks({
   useEffect(() => () => geometry.dispose(), [geometry]);
 
   return (
-    <mesh geometry={geometry} castShadow={shadows} receiveShadow={shadows}>
+    <mesh geometry={geometry} castShadow={shadows} receiveShadow={shadows} {...walkClick(onWalk)}>
       <meshLambertMaterial vertexColors />
     </mesh>
   );

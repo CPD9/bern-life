@@ -8,6 +8,7 @@ import { type ReactNode, type RefObject } from "react";
 import { CITY, BUILDINGS } from "../city-layout";
 import { liteTrees } from "../city-plan";
 import { type WorldDisplay } from "../display";
+import { HOME_DOOR_KEY } from "../doors";
 import { type MapPoint } from "../geography";
 import { type Lighting } from "../light";
 import { type CameraHandle, MapCamera } from "../map-camera";
@@ -41,6 +42,9 @@ type MapSceneProps = {
 export function MapScene({ display, world, home, walk, ...props }: MapSceneProps) {
   const palette = paletteFor(display.night);
   const shadows = !display.lite;
+  // In walk mode a click says where to walk: to a building's door, or to the spot clicked.
+  const toSpot = walk.walking ? walk.goTo : undefined;
+  const toDoor = walk.walking ? walk.goToDoor : undefined;
   return (
     <Canvas
       key={display.lite ? "lite" : "full"}
@@ -51,20 +55,29 @@ export function MapScene({ display, world, home, walk, ...props }: MapSceneProps
       camera={{ fov: 35, near: 1, far: 1200 }}
     >
       <Lights night={display.night} shadows={shadows} />
-      <Ground palette={palette} shadows={shadows} onPick={walk.walking ? walk.goTo : undefined} />
+      <Ground palette={palette} shadows={shadows} onWalk={toSpot} />
       <City
         drawn={world.drawn}
         trees={display.lite ? liteTrees(CITY.trees) : CITY.trees}
         palette={palette}
         shadows={shadows}
+        onWalk={toSpot}
       />
       <PlaceBuildings
         buildings={BUILDINGS}
         palette={palette}
         shadows={shadows}
         lighting={props.lighting}
+        onWalkToDoor={toDoor}
       />
-      {home !== null && <HomeLot home={home} palette={palette} shadows={shadows} />}
+      {home !== null && (
+        <HomeLot
+          home={home}
+          palette={palette}
+          shadows={shadows}
+          onWalkToDoor={toDoor === undefined ? undefined : () => toDoor(HOME_DOOR_KEY)}
+        />
+      )}
       <Walkers
         map={world.map}
         sessionRef={walk.session}

@@ -1,6 +1,7 @@
 // The city above the ground: generic buildings and trees as instanced meshes (a few hundred boxes
 // cost one draw call each kind), the Old Town's house rows, the landmarks and bridges, and the
 // district names. What stands where is decided outside (drawn-city.ts), where walking reads it too.
+// In walk mode a click on a building or a bridge walks you to the spot clicked (walk-click.ts).
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { Color, type InstancedMesh, Object3D } from "three";
@@ -12,11 +13,17 @@ import { type WorldPalette } from "../palette";
 import { Landmarks } from "./landmarks";
 import { MapLabels } from "./map-labels";
 import { OldTownHouses } from "./old-town";
+import { type OnWalkClick, walkClick } from "./walk-click";
 
 const scratch = new Object3D();
 const tint = new Color();
 
-function Blocks({ blocks, palette, shadows }: CityProps & { blocks: readonly Block[] }) {
+function Blocks({
+  blocks,
+  palette,
+  shadows,
+  onWalk,
+}: CityProps & { blocks: readonly Block[]; onWalk: OnWalkClick }) {
   const mesh = useRef<InstancedMesh>(null);
   useLayoutEffect(() => {
     const target = mesh.current;
@@ -37,6 +44,7 @@ function Blocks({ blocks, palette, shadows }: CityProps & { blocks: readonly Blo
       args={[undefined, undefined, blocks.length]}
       castShadow={shadows}
       receiveShadow={shadows}
+      {...walkClick(onWalk)}
     >
       <boxGeometry />
       <meshLambertMaterial />
@@ -83,15 +91,21 @@ export function City({
   trees,
   palette,
   shadows,
-}: CityProps & { drawn: DrawnCity; trees: readonly MapPoint[] }) {
+  onWalk,
+}: CityProps & {
+  drawn: DrawnCity;
+  trees: readonly MapPoint[];
+  /** Walks you to the spot clicked on a building or a bridge, in walk mode. */
+  onWalk: OnWalkClick;
+}) {
   const { lite } = useWorldDisplay();
   const standingTrees = useMemo(() => shownTrees(trees, drawn.claimed), [trees, drawn.claimed]);
   return (
     <group>
-      <Blocks blocks={drawn.blocks} palette={palette} shadows={shadows} />
+      <Blocks blocks={drawn.blocks} palette={palette} shadows={shadows} onWalk={onWalk} />
       <TreeLayer trees={standingTrees} palette={palette} shadows={shadows} />
-      <OldTownHouses houses={drawn.houses} palette={palette} shadows={shadows} />
-      <Landmarks palette={palette} shadows={shadows} lite={lite} />
+      <OldTownHouses houses={drawn.houses} palette={palette} shadows={shadows} onWalk={onWalk} />
+      <Landmarks palette={palette} shadows={shadows} lite={lite} onWalk={onWalk} />
       <MapLabels />
     </group>
   );

@@ -66,9 +66,10 @@ http://127.0.0.1:3000/office.
    and agents, with real content only.
 9. **Walk Bern.** Out of the office you stand at your office door (at the station before you
    settle), Lumi beside you. Press **Walk** on the map: the arrows or W A S D walk you and the
-   camera follows; a click on the ground, or **Walk here** on a place, finds the way round the
-   houses and over the bridges. At a place's door **Enter** opens its lobby; at your own door
-   **Go home** takes you inside. The city's clock runs about 85 times faster than walking pace.
+   camera follows; a click on the ground or a bridge finds the way round the houses and over the
+   bridges, and a click on a place's building or your office, or **Walk here** on a place, walks
+   you to its door. At a place's door **Enter** opens its lobby; at your own door **Go home**
+   takes you inside. The city's clock runs about 85 times faster than walking pace.
 
 Replay is the default. Questions recorded in the bundle's model cache get Apertus's search terms
 and explanations; any other question still gets plain search over the stored pages, and the app

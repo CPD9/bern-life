@@ -101,7 +101,7 @@ export function WorldCanvas({
     doors: world.doors,
     framePoints,
   });
-  const { session, stop, goTo } = walk;
+  const { session, stop } = walk;
   const agentAt = useMemo(
     () => feetOn(world.map, () => session.current.agent.at),
     [session, world.map],
@@ -142,11 +142,6 @@ export function WorldCanvas({
     stop();
     setSelectedKey(door.key);
     setLobby(true);
-  }
-
-  function walkToDoor(key: string) {
-    const door = world.doors.find((candidate) => candidate.key === key);
-    if (door !== undefined) goTo(door.at);
   }
 
   return (
@@ -195,7 +190,7 @@ export function WorldCanvas({
         onToggleFollowing={walk.toggleFollowing}
         door={walk.door}
         onEnter={enter}
-        onWalkHome={player.home === null ? undefined : () => walkToDoor(HOME_DOOR_KEY)}
+        onWalkHome={player.home === null ? undefined : () => walk.goToDoor(HOME_DOOR_KEY)}
       />
       {selected !== null && (
         <PlacePanel
@@ -209,7 +204,7 @@ export function WorldCanvas({
             walk.walking
               ? (building) => {
                   closePanel();
-                  walkToDoor(building.key);
+                  walk.goToDoor(building.key);
                 }
               : undefined
           }
