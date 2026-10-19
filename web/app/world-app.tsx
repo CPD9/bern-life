@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { httpAccountApi } from "@/features/accounts/account-api";
 import { useAccount } from "@/features/accounts/use-account";
 import { personBadgeColour } from "@/features/avatar/person-config";
@@ -27,16 +27,20 @@ import type { ShowMeTarget } from "@/features/story/show-me";
 import { StoryMenu } from "@/features/story/story-menu";
 import { StoryStart } from "@/features/story/story-start";
 import { useStory } from "@/features/story/use-story";
+import type { Building } from "@/features/world/buildings";
+import type { AgentId } from "@/features/world/scene/agents";
 import { WorldCanvas } from "@/features/world/world-canvas";
+import { worldSearch } from "@/features/world/world-search";
 import { emittedToday } from "@/infrastructure/app-events";
 import { useNow } from "@/infrastructure/bern-time";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
+import { applyWorldAction, searchHereDraft, worldActionFor } from "./world-search-bridge";
 
 // Composes the features. One Navigator controller lives here, above the phone, so a search
 // survives closing the phone and the agent can drive the same instance.
 type WorldAppProps = {
   fixtureMode: boolean;
-  /** Under DEMO_FIXTURES the map starts lit with the world fixture; W4 replaces this with live search. */
+  /** Under DEMO_FIXTURES the map starts lit with the world fixture until the first question. */
   demoSearch: SearchResponse | undefined;
   story: Story;
   /** `?story=demo`: the jury's run, started straight away with the criteria checklist. */
@@ -58,6 +62,32 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const now = useNow();
   const health = useHealth();
 
+  useEffect(
+    () => applyWorldAction(worldActionFor(navigator.state), worldSearch),
+    [navigator.state],
+  );
+
+  function openApp(appId: string) {
+    setPhoneApp(appId);
+    setPhoneOpen(true);
+  }
+
+  function showOnMap(response: SearchResponse) {
+    worldSearch.showResults(response);
+    setPhoneOpen(false);
+    setView("map");
+  }
+
+  /** The Navigator opens Ask; the agents still to come open the Agents app, which says what they will do. */
+  function selectAgent(id: AgentId) {
+    openApp(id === "navigator" ? "ask" : "agents");
+  }
+
+  function searchHere(building: Building) {
+    navigator.setDraft(searchHereDraft(building));
+    openApp("ask");
+  }
+
   const apps: PhoneApp[] = [
     {
       id: "ask",
@@ -68,6 +98,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
         <Navigator
           controller={navigator}
           fixtureMode={fixtureMode}
+          onShowOnMap={showOnMap}
           onMakeReport={(response) => openReport(response, fixtureMode)}
         />
       ),
@@ -124,8 +155,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
       setView("map");
       return;
     }
-    setPhoneApp("ask");
-    setPhoneOpen(true);
+    openApp("ask");
   }
 
   return (
@@ -150,7 +180,13 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           {storyDemo && <CriteriaChecklist controller={storyController} />}
         </>
       }
-      canvas={<WorldCanvas demoSearch={demoSearch} />}
+      canvas={
+        <WorldCanvas
+          demoSearch={demoSearch}
+          onAgentSelect={selectAgent}
+          onSearchHere={searchHere}
+        />
+      }
       overlay={
         <>
           <Phone
