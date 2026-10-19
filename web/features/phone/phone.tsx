@@ -3,7 +3,7 @@
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useEscapeLayer } from "@/infrastructure/ui/escape-layers";
-import { WindowChrome } from "@/infrastructure/ui/window-chrome";
+import { WindowChrome, belowWindowHeader } from "@/infrastructure/ui/window-chrome";
 import { NotificationCentre } from "./notification-centre";
 import { PhoneHome } from "./phone-home";
 import { PhoneStatusBar } from "./phone-status-bar";
@@ -29,7 +29,10 @@ type PhoneProps = {
   /** Called after the notification centre has closed, so the app it opens is what shows. */
   onOpenNotification?: ((notification: PhoneNotification) => void) | undefined;
   onMarkAllRead?: (() => void) | undefined;
-  /** Shown inside the phone's dialog (the top layer), below the status bar: toasts, say. */
+  /**
+   * Shown inside the phone's dialog (the top layer): toasts, say. It starts below the status bar,
+   * and in an app below the app's header too, so it never covers Close, the bell, Back or the title.
+   */
   overlay?: ReactNode;
 };
 
@@ -160,9 +163,14 @@ export function Phone({
             />
           )}
           {overlay !== undefined && (
-            // Below the status bar, so nothing covers Close or the bell. contain:layout makes this
-            // box the frame for fixed-position children such as toasts.
-            <div className="pointer-events-none absolute inset-0 z-30 [contain:layout]">
+            // Below the status bar (this box's parent starts there) and, in an app, below its
+            // header. contain:layout makes it the frame for fixed-position children (toasts).
+            <div
+              data-phone-overlay
+              className={`pointer-events-none absolute inset-x-0 bottom-0 z-30 [contain:layout] ${
+                app ? belowWindowHeader : "top-0"
+              }`}
+            >
               {overlay}
             </div>
           )}

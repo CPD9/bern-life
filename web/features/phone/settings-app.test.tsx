@@ -134,7 +134,8 @@ describe("Settings", () => {
     await act(async () => fireEvent.click(within(group).getByLabelText("Members")));
     expect(group.getAttribute("aria-busy")).toBe("true");
     expect(group.hasAttribute("disabled")).toBe(false);
-    await act(async () => fireEvent.click(within(group).getByLabelText("Only me")));
+    // "Only me" is still the checked (stored) choice, so only Members fires a second change.
+    await act(async () => fireEvent.click(within(group).getByLabelText("Members")));
     await act(async () => finish(new Response(null, { status: 204 })));
     const puts = sent.filter((request) => request.method === "PUT");
     expect(puts).toHaveLength(1);

@@ -94,6 +94,29 @@ describe("Sheet", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Last inside" }));
   });
 
+  test("Escape in a sheet inside a window that also listens closes only the sheet", async () => {
+    let windowEscapes = 0;
+    function WindowWithSheet() {
+      return (
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- a stand-in desktop window
+        <div
+          onKeyDown={(event) => {
+            if (event.key === "Escape") windowEscapes++;
+          }}
+        >
+          <SheetHarness />
+        </div>
+      );
+    }
+    render(<WindowWithSheet />);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Open sheet" })));
+    const inside = screen.getByRole("button", { name: "Last inside" });
+    inside.focus();
+    await act(async () => fireEvent.keyDown(inside, { key: "Escape" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(windowEscapes).toBe(0);
+  });
+
   test("Escape with focus on <body> closes it", async () => {
     render(<SheetHarness />);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Open sheet" })));

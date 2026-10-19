@@ -1,6 +1,9 @@
 import type { ReactNode, Ref } from "react";
 import { IconButton } from "./button";
 
+/** The header is exactly h-14; a layer that must not cover it starts here. */
+export const belowWindowHeader = "top-14";
+
 type WindowChromeProps = {
   title: string;
   headingId: string;
@@ -32,7 +35,7 @@ export function WindowChrome({
 }: WindowChromeProps) {
   return (
     <>
-      <header className="border-panel-border flex items-center gap-1 border-b px-2 py-2">
+      <header className="border-panel-border flex h-14 shrink-0 items-center gap-1 border-b px-2">
         {onBack && <IconButton label={backLabel} icon="‹" onClick={onBack} className="text-2xl" />}
         <h2
           ref={headingRef}
