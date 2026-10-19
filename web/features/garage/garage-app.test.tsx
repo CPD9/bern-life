@@ -104,8 +104,8 @@ describe("GarageApp numbers", () => {
 
   test("fixture mode labels the numbers as invented and never calls them measured", async () => {
     await mount([measured()], true);
-    expect(screen.getByText("FIXTURE").parentElement?.textContent).toBe(
-      "FIXTURE Invented numbers for the demo, not from the evaluator or the engine.",
+    expect(screen.getByText("Sample data.").parentElement?.textContent).toBe(
+      "Sample data. Invented numbers for the demo, not from the evaluator or the search service.",
     );
     expect(screen.getByText("48 queries, made up for the demo.")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/measured/i);

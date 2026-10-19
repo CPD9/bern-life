@@ -57,7 +57,7 @@ describe("ReportsApp", () => {
     const reports = within(screen.getByRole("navigation", { name: "Your reports" }));
     const items = reports.getAllByRole("listitem").map((item) => item.textContent);
     expect(items).toEqual([
-      `${resultFixture.query}Sun 18 Oct 23:30FIXTURE`,
+      `${resultFixture.query}Sun 18 Oct 23:30Sample data`,
       "KunstherzSun 18 Oct 21:05",
     ]);
     expect(screen.getByText("Ada Muster")).toBeTruthy();

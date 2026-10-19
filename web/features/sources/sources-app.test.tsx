@@ -76,8 +76,8 @@ describe("SourcesApp list", () => {
 
   test("fixture mode labels the list as invented", async () => {
     await mount([listed()], true);
-    expect(screen.getByText("FIXTURE").parentElement?.textContent).toBe(
-      "FIXTURE Invented sources and counts for the demo.",
+    expect(screen.getByText("Sample data.").parentElement?.textContent).toBe(
+      "Sample data. Invented sources and counts for the demo.",
     );
   });
 });

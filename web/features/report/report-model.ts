@@ -1,6 +1,7 @@
 // Turns a search or brief response into the match report, following docs/match-report-design.md
 // and docs/metrics.md. Pure: the report is built from the response already on screen, never from
 // a new model call. Metrics describe a result and are never used to reorder it.
+import { answerSourceFor } from "@/infrastructure/answer-source";
 import { type ClaimRef, type SearchResult, citedClaims } from "@/infrastructure/claims";
 import type { Profile, SearchResponse } from "@/infrastructure/contract-types.generated";
 import { foldText } from "@/infrastructure/text-match";
@@ -45,18 +46,6 @@ export type MatchReport = {
   readonly snapshot: string;
   readonly madeAt: string;
 };
-
-/** "mock" from the engine is real pages searched without a model; only fixtures are MOCK. */
-function modeLabel(mode: SearchResponse["mode"], fixture: boolean): string {
-  switch (mode) {
-    case "live":
-      return "Live";
-    case "replay":
-      return "Replay";
-    case "mock":
-      return fixture ? "MOCK" : "Plain search";
-  }
-}
 
 function firstValue(profile: Profile, field: "role" | "unit"): string {
   return profile.fields[field][0]?.value ?? notComputed;
@@ -137,7 +126,7 @@ export function buildReport(
     addedWordings: response.expanded_terms,
     highlightTerms,
     cards: response.results.map((result) => card(result, highlightTerms)),
-    modeLabels: [modeLabel(response.mode, fixture), ...(fixture ? ["FIXTURE"] : [])],
+    modeLabels: [answerSourceFor(response.mode, fixture).label],
     snapshot: response.versions.snapshot,
     madeAt,
   };

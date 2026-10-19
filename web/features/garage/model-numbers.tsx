@@ -4,7 +4,7 @@ import type { ModelNumbers } from "@/infrastructure/numbers";
 // One card per role rather than a table, so the six columns still read at phone width.
 export function ModelNumbersView({ models }: { models: readonly ModelNumbers[] }) {
   if (models.length === 0) {
-    return <p>No model calls are recorded on this snapshot.</p>;
+    return <p>Apertus was not called on this snapshot, so there are no numbers to show.</p>;
   }
   return (
     <ul aria-label="Models by role" className="flex flex-col gap-3">

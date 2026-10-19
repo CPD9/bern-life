@@ -5,7 +5,8 @@ import { abstainMessage } from "./messages";
 
 const noSource =
   "No public page we hold supports an answer to this. We would rather say so than guess.";
-const needsModel = "Reading a new brief needs the model; this replay has the recorded briefs only.";
+const needsModel =
+  "Reading a new brief needs Apertus connected live; only briefs recorded earlier can be read here.";
 
 function briefAnswer(mode: SearchResponse["mode"]): SearchResponse {
   return { ...copyOf(abstainedFixture), query: "", mode, brief_terms: [] };

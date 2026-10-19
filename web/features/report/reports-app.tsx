@@ -101,7 +101,7 @@ export function ReportsApp({
                       </span>
                       {stored.fixture && (
                         <span className="bg-chip text-muted rounded-pill px-2 text-xs font-bold">
-                          FIXTURE
+                          Sample data
                         </span>
                       )}
                     </button>

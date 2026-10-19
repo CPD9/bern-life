@@ -157,26 +157,22 @@ describe("Settings", () => {
     );
     const terms = Array.from(document.querySelectorAll("dt, dd")).map((node) => node.textContent);
     expect(terms).toEqual(["Snapshot", "2026-10-18", "Pages", "1,234", "Sources", "3"]);
-    expect(
-      screen.getByText(
-        "Live: a model widens your question and explains results from the claims they cite.",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("How an answer is made")).toBeTruthy();
+    expect(screen.getByText("Right now: Live.").parentElement?.textContent).toBe(
+      "Right now: Live. Apertus added search terms and explanations just now. Apertus, the model behind Bern Life, is connected. It widened your question with related search terms and wrote each explanation from the claims that result cites. Every fact shown is a quoted span on a stored public page, with a link to the page it came from.",
+    );
   });
 
-  test("a real engine without a model is plain search; only the fixture is MOCK", async () => {
+  test("a real engine without a model is your words only; only the fixture is sample data", async () => {
     const { api } = fakeServer({ status: 401 });
-    const plain =
-      "Plain search: no model is connected, so the stored pages are searched as they are.";
-    const fixture = "MOCK: fixture data. No model answered, and results are canned test data.";
     const { rerender } = await act(async () =>
       render(<SettingsApp profileApi={api} health={engine("mock", "2026-10-18")} />),
     );
-    expect(screen.getByText(plain)).toBeTruthy();
-    expect(screen.queryByText(fixture)).toBeNull();
+    expect(screen.getByText("Right now: Your words only.")).toBeTruthy();
+    expect(screen.queryByText("Right now: Sample data.")).toBeNull();
     rerender(<SettingsApp profileApi={api} health={engine("mock", "fixture")} />);
-    expect(screen.getByText(fixture)).toBeTruthy();
+    expect(screen.getByText("Right now: Sample data.")).toBeTruthy();
     rerender(<SettingsApp profileApi={api} health={engine("mock", "2026-10-18")} fixtureMode />);
-    expect(screen.getByText(fixture)).toBeTruthy();
+    expect(screen.getByText("Right now: Sample data.")).toBeTruthy();
   });
 });

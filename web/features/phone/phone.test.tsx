@@ -95,17 +95,17 @@ describe("Phone", () => {
     ).toHaveLength(3);
   });
 
-  test("the engine chip says what health says, and nothing while unknown", () => {
+  test("the status chip says what health says in plain words, and nothing while unknown", () => {
     const { rerender } = render(<Harness health={health("live")} />);
     openPhone();
-    const chip = () => document.querySelector("[aria-live]")!.textContent;
+    const chip = () => document.querySelector("[aria-live] button")?.textContent ?? "";
     expect(chip()).toBe("Live");
     rerender(<Harness health={health("replay")} />);
-    expect(chip()).toBe("Replay");
+    expect(chip()).toBe("Recorded");
     rerender(<Harness health={health("mock")} />);
-    expect(chip()).toBe("MOCK");
+    expect(chip()).toBe("Your words only");
     rerender(<Harness health={{ status: "offline" }} />);
-    expect(chip()).toBe("Engine offline");
+    expect(chip()).toBe("Offline");
     rerender(<Harness health={{ status: "waiting" }} />);
     expect(chip()).toBe("");
     rerender(<Harness />);
