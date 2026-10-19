@@ -1,5 +1,5 @@
-// The office computer's apps, in dock order. Every app has a sentence saying what it does, shown
-// as its "coming next" sheet until the app is wired, so an unready app is never a blank window.
+// The office computer's apps, in dock order. An app is either real or gone: only the apps the host
+// gives content appear in the dock, so a package adds its app by passing its content, one line.
 import type { ReactNode } from "react";
 import type { AppIconName } from "@/infrastructure/ui/app-icons";
 
@@ -29,30 +29,29 @@ export const desktopAppLooks: Record<DesktopAppId, AppLook> = {
   settings: { label: "Settings", icon: "settings", tile: "#475569" },
 };
 
-export const desktopComingNext: Record<DesktopAppId, string> = {
-  navigator:
-    "Ask in your words or bring a project brief, and get Bern experts with the sentence that proves each match.",
-  agents: "Lumi and the agents, with the tools they use for you.",
-  reports: "Your match reports, kept with their sources.",
-  messages: "Write to people who joined Bern Life and to your lab.",
-  library:
-    "Keep profiles, projects, pages and your own documents here, each with its trace: where it came from and when.",
-  opportunities:
-    "Funding calls, services and spaces in Bern, each with the page it comes from. Save the ones that fit your business.",
-  garage:
-    "Meet the Apertus models behind the Navigator, with the numbers we measured, not the ones we hoped for.",
-  settings: "Night mode, lite graphics and data saver.",
-};
-
 export type DesktopApp = {
   readonly id: DesktopAppId;
   readonly label: string;
   readonly icon: AppIconName;
   readonly tile: string;
-  /** null: the app is not wired yet and shows its coming-next sheet. */
-  readonly content: ReactNode | null;
+  readonly content: ReactNode;
+  /** A count shown on the dock button, such as unread messages; absent when there is none. */
+  readonly badge?: number;
 };
 
-export function desktopApps(contents: Partial<Record<DesktopAppId, ReactNode>>): DesktopApp[] {
-  return desktopAppIds.map((id) => ({ id, ...desktopAppLooks[id], content: contents[id] ?? null }));
+type DesktopContents = Partial<Record<DesktopAppId, ReactNode>>;
+type DesktopBadges = Partial<Record<DesktopAppId, number | null>>;
+
+/** The wired apps in dock order; an app with no content is left out, never shown empty. */
+export function desktopApps(contents: DesktopContents, badges: DesktopBadges = {}): DesktopApp[] {
+  return desktopAppIds.flatMap((id) => {
+    const content = contents[id];
+    if (content === undefined || content === null) return [];
+    const badge = badges[id];
+    return [{ id, ...desktopAppLooks[id], content, ...(badge ? { badge } : {}) }];
+  });
+}
+
+export function hasDesktopApp(apps: readonly DesktopApp[], id: string): boolean {
+  return apps.some((app) => app.id === id);
 }

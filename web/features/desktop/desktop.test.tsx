@@ -1,10 +1,19 @@
 import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { desktopApps, desktopComingNext } from "./desktop-apps";
-import { DesktopSurface } from "./desktop";
+import { desktopApps } from "./desktop-apps";
+import { DesktopDialog, DesktopSurface } from "./desktop";
 import { useDesktop } from "./use-desktop";
 
-const apps = desktopApps({ navigator: <p>Navigator content</p>, reports: <p>Reports content</p> });
+const apps = desktopApps(
+  {
+    navigator: <p>Navigator content</p>,
+    agents: <p>Agents content</p>,
+    reports: <p>Reports content</p>,
+    messages: <p>Messages content</p>,
+    settings: <p>Settings content</p>,
+  },
+  { messages: 2 },
+);
 
 function Harness({ onLeave = () => undefined }: { onLeave?: () => void }) {
   const controller = useDesktop();
@@ -33,10 +42,17 @@ describe("DesktopSurface", () => {
     expect(dockButton("Navigator").textContent).toContain(", open");
   });
 
-  test("an app that is not wired shows its coming-next sheet", () => {
+  test("only wired apps are in the dock, and Messages carries its unread count", () => {
     render(<Harness />);
-    fireEvent.click(dockButton("Garage"));
-    expect(windowOf("Garage").textContent).toContain(desktopComingNext.garage);
+    const dock = screen.getByRole("toolbar", { name: "Apps" });
+    expect([...dock.querySelectorAll("button")].map((button) => button.textContent)).toEqual([
+      "Navigator",
+      "Agents",
+      "Reports",
+      "2Messages, 2 unread",
+      "Settings",
+    ]);
+    expect(screen.queryByRole("button", { name: /^Garage/ })).toBeNull();
   });
 
   test("Escape closes the front window and returns focus to its dock button", () => {
@@ -102,5 +118,25 @@ describe("DesktopSurface", () => {
     expect(document.activeElement).toBe(dockButton("Navigator"));
     expect(dockButton("Navigator").tabIndex).toBe(0);
     expect(dockButton("Agents").tabIndex).toBe(-1);
+  });
+
+  test("the dialog shows its overlay inside it while open, so toasts are not left in the inert world", () => {
+    function Dialog({ open }: { open: boolean }) {
+      const controller = useDesktop();
+      return (
+        <DesktopDialog
+          open={open}
+          onClose={() => undefined}
+          apps={apps}
+          controller={controller}
+          now={null}
+          overlay={<p>A toast</p>}
+        />
+      );
+    }
+    const { rerender } = render(<Dialog open={false} />);
+    expect(screen.queryByText("A toast")).toBeNull();
+    rerender(<Dialog open />);
+    expect(screen.getByText("A toast").closest("dialog")).toBe(document.querySelector("dialog"));
   });
 });
