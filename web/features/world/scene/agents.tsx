@@ -21,13 +21,20 @@ export const AGENT_KEY = "agent";
 /** Above the bear's ears at the map's figure scale. */
 const LABEL_HEIGHT = 2.9;
 
-/** The agent's label follows the agent: `where` gives its feet each frame. */
+/**
+ * The agent's label follows the agent: `where` gives its feet each frame, and the label's point is
+ * one array filled again each time, not a new one per frame.
+ */
 export function agentAnchor(where: () => readonly [x: number, y: number, z: number]): Anchor {
+  const label: [number, number, number] = [0, 0, 0];
   return {
     key: AGENT_KEY,
     get position(): readonly [number, number, number] {
-      const [x, y, z] = where();
-      return [x, y + LABEL_HEIGHT, z];
+      const feet = where();
+      label[0] = feet[0];
+      label[1] = feet[1] + LABEL_HEIGHT;
+      label[2] = feet[2];
+      return label;
     },
   };
 }

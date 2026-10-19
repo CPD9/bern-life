@@ -150,6 +150,7 @@ describe("the agent on the map", () => {
     expect(anchor.position).toEqual([21.9, 2.9, -7]);
     feet = [3, 1.5, 12];
     expect(anchor.position).toEqual([3, 4.4, 12]);
+    expect(anchor.position).toBe(anchor.position);
   });
 
   test("has one button, named for the agent, registered at one anchor", () => {

@@ -18,7 +18,7 @@ import { SearchSummary } from "./search-summary";
 import { useMapKeys } from "./use-map-keys";
 import { useWalk } from "./use-walk";
 import { WalkControls } from "./walk-controls";
-import { groundHeight } from "./walk-map";
+import { feetOn } from "./walk-map";
 import { walkWorld } from "./walk-world";
 import { useWorldSearch, worldSearch } from "./world-search";
 
@@ -102,10 +102,10 @@ export function WorldCanvas({
     framePoints,
   });
   const { session, stop, goTo } = walk;
-  const agentAt = useCallback((): readonly [number, number, number] => {
-    const at = session.current.agent.at;
-    return [at[0], groundHeight(world.map, at), at[1]];
-  }, [session, world.map]);
+  const agentAt = useMemo(
+    () => feetOn(world.map, () => session.current.agent.at),
+    [session, world.map],
+  );
   const anchors = useMemo(() => [...MARKER_ANCHORS, agentAnchor(agentAt)], [agentAt]);
 
   // Leaving a place gives focus back to its door while you stand there, else to its marker.

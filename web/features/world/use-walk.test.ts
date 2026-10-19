@@ -38,6 +38,7 @@ describe("the mode switch", () => {
     act(() => result.current.toggleWalking());
     expect(result.current.keys).not.toBeNull();
     expect(result.current.follow?.()).toEqual([-5, 0, 0]);
+    expect(result.current.follow?.()).toBe(result.current.follow?.());
     act(() => result.current.toggleFollowing());
     expect(result.current.follow).toBeNull();
     expect(result.current.keys).not.toBeNull();

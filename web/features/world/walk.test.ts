@@ -141,6 +141,11 @@ describe("walking", () => {
     expect(seen).toEqual([2, 1, 1, 0, 0, 0, 0, 0, 0, 0]);
   });
 
+  test("on the way to a point the path is kept as it is, not copied every frame", () => {
+    const path: MapPoint[] = [[5, 0]];
+    expect(walkTick(MAP, standing([-5, 0], path), still).path).toBe(path);
+  });
+
   test("a path into a wall stops you at it and is dropped", () => {
     let walker = standing([0, 0], [[0, 3]]);
     for (let frame = 0; frame < 10; frame++) walker = walkTick(MAP, walker, still);

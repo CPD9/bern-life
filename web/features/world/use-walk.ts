@@ -47,7 +47,9 @@ type WalkOptions = {
 };
 
 export function useWalk({ map, start, inside, doors, framePoints }: WalkOptions): Walk {
-  const session = useRef<WalkSession>(arrive(map, start));
+  // Worked out once: an argument to useRef would be built again on every render and thrown away.
+  const [arrival] = useState(() => arrive(map, start));
+  const session = useRef<WalkSession>(arrival);
   const held = useRef(new Set<string>());
   const wake = useRef<() => void>(() => undefined);
   // Built on the first click-to-walk, and again only for a new map.
@@ -82,16 +84,18 @@ export function useWalk({ map, start, inside, doors, framePoints }: WalkOptions)
     [],
   );
 
-  const follow = useMemo<FollowTarget | null>(
-    () =>
-      walking && following
-        ? () => {
-            const at = session.current.walker.at;
-            return [at[0], groundHeight(map, at), at[1]];
-          }
-        : null,
-    [walking, following, map],
-  );
+  // Asked every frame while you walk, so it fills one array instead of making a new one.
+  const follow = useMemo<FollowTarget | null>(() => {
+    if (!walking || !following) return null;
+    const feet: [number, number, number] = [0, 0, 0];
+    return () => {
+      const at = session.current.walker.at;
+      feet[0] = at[0];
+      feet[1] = groundHeight(map, at);
+      feet[2] = at[1];
+      return feet;
+    };
+  }, [walking, following, map]);
 
   const stop = useCallback(() => {
     session.current = withPath(session.current, []);

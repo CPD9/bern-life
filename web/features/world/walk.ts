@@ -103,7 +103,8 @@ export function walkTick(map: WalkMap, walker: Walker, input: WalkInput): Walker
     const at = move(map, walker.at, [kx * reach, kz * reach], WALKER_RADIUS);
     return { at, heading: turned(walker, input.direction, input), path: [] };
   }
-  const [next, ...rest] = walker.path;
+  // Read in place: the walked point is dropped only on arriving there, not copied every frame.
+  const next = walker.path[0];
   if (next === undefined) return walker;
   const delta: MapPoint = [next[0] - walker.at[0], next[1] - walker.at[1]];
   const before = Math.hypot(...delta);
@@ -116,6 +117,6 @@ export function walkTick(map: WalkMap, walker: Walker, input: WalkInput): Walker
   return {
     at,
     heading: turned(walker, delta, input),
-    path: arrived ? rest : stuck ? [] : walker.path,
+    path: arrived ? walker.path.slice(1) : stuck ? [] : walker.path,
   };
 }

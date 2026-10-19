@@ -158,3 +158,21 @@ export function groundHeight(map: WalkMap, [x, z]: MapPoint): number {
   const { height, endHeight, ramp } = map.deck;
   return endHeight + (height - endHeight) * Math.min(1, Math.max(0, fromEnd / ramp));
 }
+
+/**
+ * Where a walker's feet are, on the ground or a bridge's deck, read from `where` when asked. It is
+ * asked every frame, so it fills one array again instead of making a new one each time.
+ */
+export function feetOn(
+  map: WalkMap,
+  where: () => MapPoint,
+): () => readonly [x: number, y: number, z: number] {
+  const feet: [number, number, number] = [0, 0, 0];
+  return () => {
+    const at = where();
+    feet[0] = at[0];
+    feet[1] = groundHeight(map, at);
+    feet[2] = at[1];
+    return feet;
+  };
+}
