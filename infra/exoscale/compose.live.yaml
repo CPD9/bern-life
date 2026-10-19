@@ -1,0 +1,26 @@
+# Live mode on the VM (infra/exoscale.md "Live mode"), on top of compose.yaml:
+#   docker compose -f compose.yaml -f compose.live.yaml up -d --wait
+# The engine may call the model only for requests the web app marks live (signed-in members under
+# their limits), and at most LLM_CALL_BUDGET calls per UTC day; everyone else is answered from the
+# recordings, as in replay. Endpoints and keys come from .env by name and never enter git. Live
+# calls are kept in the llm_cache volume with what members typed, so it never goes into a bundle.
+# Back to replay: docker compose up -d --wait (without this file).
+services:
+  serve:
+    environment:
+      BERNLIFE_BACKEND: live
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      EXPAND_LLM_BASE_URL: ${EXPAND_LLM_BASE_URL:?set EXPAND_LLM_BASE_URL in .env for live mode}
+      EXPAND_LLM_MODEL: ${EXPAND_LLM_MODEL:?set EXPAND_LLM_MODEL in .env for live mode}
+      EXPAND_LLM_API_KEY: ${EXPAND_LLM_API_KEY:?set EXPAND_LLM_API_KEY in .env for live mode}
+      LLM_MAX_CONCURRENCY: ${LLM_MAX_CONCURRENCY:-}
+      LLM_CALL_BUDGET: ${LLM_CALL_BUDGET:?set LLM_CALL_BUDGET in .env for live mode}
+    volumes:
+      # The engine's data folder, which the image gives to its user; the bundle and models stay
+      # mounted inside it as in replay.
+      - llm_cache:/app/data
+
+volumes:
+  llm_cache:
