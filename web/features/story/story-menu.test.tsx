@@ -75,10 +75,10 @@ describe("StoryMenu", () => {
       "Add an institution's website with one configuration file.",
       "Adding a source does not report to the story yet; a new site is one file in sources/.",
     ]);
-    expect(lines("Grow in Bern").slice(0, 3)).toEqual([
+    expect(row("Grow in Bern").querySelectorAll("p")).toHaveLength(1);
+    expect(lines("Grow in Bern").slice(0, 2)).toEqual([
       "Open · optional",
       "Save opportunities, keep results, message members and meet the models behind the Navigator, in any order.",
-      "A network of labs and experts is not built yet, so its step cannot be done.",
     ]);
   });
 
@@ -88,11 +88,10 @@ describe("StoryMenu", () => {
     const row = (title: string) => screen.getByRole("heading", { name: title }).closest("li")!;
     const lines = (title: string) =>
       Array.from(row(title).querySelectorAll("p, span")).map((element) => element.textContent);
-    expect(lines("Grow in Bern").slice(0, 4)).toEqual([
+    expect(lines("Grow in Bern").slice(0, 3)).toEqual([
       "Open · optional",
       "Save opportunities, keep results, message members and meet the models behind the Navigator, in any order.",
       "Saving is off for the invented demo data.",
-      "A network of labs and experts is not built yet, so its step cannot be done.",
     ]);
     expect(lines("Add a new source").slice(0, 4)).toEqual([
       "Coming next · optional",

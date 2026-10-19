@@ -32,4 +32,13 @@ describe("OfficeRoom", () => {
     renderRoom();
     expect(screen.getByRole("img", { name: /^Your office: a desk with a computer/ })).toBeTruthy();
   });
+
+  test("a visited office is read-only: named for its owner, with no way to use it", () => {
+    render(<OfficeRoom lite reducedMotion visiting="Lena Beispiel" />);
+    expect(screen.queryAllByRole("button")).toEqual([]);
+    expect(
+      screen.getByRole("img", { name: /^Lena Beispiel's office, as a visitor sees it: a desk/ }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("img", { name: /^Your office/ })).toBeNull();
+  });
 });

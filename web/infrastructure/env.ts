@@ -95,6 +95,15 @@ export function accountsEnv(): AccountsEnv {
   return cachedAccounts;
 }
 
+/** Whether DATABASE_URL is set at all; a value that is set but invalid still fails where used. */
+export function parseHasDatabase(source: EnvSource): boolean {
+  return source.DATABASE_URL !== undefined && source.DATABASE_URL !== "";
+}
+
+export function hasDatabase(): boolean {
+  return parseHasDatabase(process.env);
+}
+
 // X-Forwarded-For names the client only when a proxy we run wrote it (Caddy in infra/exoscale
 // replaces whatever the client sent); anywhere else the header is the client's own word.
 export function parseTrustProxy(source: EnvSource): boolean {

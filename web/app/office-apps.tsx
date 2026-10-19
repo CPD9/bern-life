@@ -6,6 +6,7 @@ import type { AgentNotice } from "@/features/agents/loops";
 import type { Skill } from "@/features/agents/skills";
 import { type DesktopApp, desktopApps } from "@/features/desktop/desktop-apps";
 import type { DesktopController } from "@/features/desktop/use-desktop";
+import type { StartWith } from "@/features/messages/messages-app";
 import { StandaloneMessagesPage } from "@/features/messages/standalone-messages-page";
 import { notificationStore } from "@/features/notifications/use-notifications";
 import { Navigator } from "@/features/navigator/navigator";
@@ -65,6 +66,11 @@ type OfficeAppsInput = AgentsInput & {
   /** Where saves and garage visits report to the story. */
   events?: AppEventSink;
   library?: LibraryStore;
+  /** The Connections app, composed for the desk; left out, it is not on the dock. */
+  connections?: ReactNode;
+  /** A thread to open in Messages, as "Message" on a member asks, and when it was opened. */
+  messageWith?: StartWith | undefined;
+  onMessageStarted?: () => void;
 };
 
 export type OfficeApps = {
@@ -83,6 +89,9 @@ export function useOfficeApps({
   health,
   events = appEvents,
   library,
+  connections,
+  messageWith,
+  onMessageStarted,
   ...agents
 }: OfficeAppsInput): OfficeApps {
   const save = { fixtureMode, events, library };
@@ -128,7 +137,8 @@ export function useOfficeApps({
           onAsk={() => openNavigator("search")}
         />
       ),
-      messages: <StandaloneMessagesPage />,
+      messages: <StandaloneMessagesPage startWith={messageWith} onStarted={onMessageStarted} />,
+      connections,
       library: libraryApp(library),
       opportunities: opportunitiesApp(save),
       garage: garageApp(fixtureMode, events),

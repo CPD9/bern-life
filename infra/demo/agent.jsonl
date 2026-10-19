@@ -1,0 +1,3 @@
+{"id": "agent-en", "lang": "en", "turns": ["Who works on glucose sensors at DCB?", "Show them on the map", "What does Prof. Lina Beispiel publish on insulin pumps?"]}
+{"id": "agent-de", "lang": "de", "turns": ["Wer arbeitet am DCB an Glukosesensoren?", "Zeig sie auf der Karte", "Was publiziert Prof. Lina Beispiel über Insulinpumpen?"]}
+{"id": "agent-fr", "lang": "fr", "turns": ["Qui travaille sur les capteurs de glucose au DCB ?", "Montre-les sur la carte", "Que publie la Prof. Lina Beispiel sur les pompes à insuline ?"]}

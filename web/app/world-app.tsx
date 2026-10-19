@@ -8,6 +8,7 @@ import { useAgentName, usePerson } from "@/features/avatar/use-person";
 import { useDesktop } from "@/features/desktop/use-desktop";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
 import { useNavigator } from "@/features/navigator/use-navigator";
+import { useInboxSync } from "@/features/notifications/use-notifications";
 import { useOnboarding } from "@/features/onboarding/use-onboarding";
 import { landingView } from "@/features/shell/first-run";
 import { GameShell, type WorldView } from "@/features/shell/game-shell";
@@ -28,6 +29,8 @@ import { showMeRoute } from "./show-me-route";
 import { useWorldApps } from "./use-world-apps";
 import { WorldHud, WorldSide, focusBeside } from "./world-hud";
 import { useWorldLumi } from "./world-lumi";
+import { visitedOffice } from "./visited-office";
+import { useMessageWith, useWorldConnections } from "./world-connections";
 import { WorldOverlay } from "./world-overlay";
 import { WorldScene } from "./world-scene";
 import { useWorldSettle } from "./world-settle";
@@ -52,6 +55,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const [youOpen, setYouOpen] = useState(false);
   const [storyMenuOpen, setStoryMenuOpen] = useState(false);
   const [placeOpen, setPlaceOpen] = useState(false);
+  const message = useMessageWith();
   const storyController = useStory({
     story,
     demo: storyDemo,
@@ -74,6 +78,14 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     account.state.status === "signed-in",
     unreadRefresh(phone.open, desktopOpen, desktop.windows),
   );
+  const signedIn = account.state.status === "signed-in";
+  // Messages and connection requests reach the bell from the server; a new message moves the
+  // unread count, which reads the server's notifications again.
+  useInboxSync(signedIn, unreadMessages);
+  const connections = useWorldConnections({
+    signedIn,
+    renderRoom: visitedOffice(settings.lite, reducedMotion),
+  });
   const shownView = view ?? landingView(onboarding.done);
   // Called after useStory, so the story already listens when the office reports it is ready.
   const sitAtDesk = useOfficeReady(shownView === "home", onboarding.done);
@@ -94,6 +106,14 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     phone.openApp("ask");
   }
 
+  function messageFrom(place: "phone" | "desk") {
+    return (handle: string) => {
+      message.ask(handle);
+      if (place === "phone") phone.openApp("messages");
+      else desktop.open("messages");
+    };
+  }
+
   const apps = useWorldApps({
     navigator,
     desktop,
@@ -103,6 +123,10 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     unreadMessages,
     onShowOnMap: showOnMap,
     onOpenApp: phone.openApp,
+    connections: connections.wiring,
+    messageWith: message.messageWith,
+    onMessageStarted: message.started,
+    onMessageFrom: messageFrom,
   });
   const lumi = useWorldLumi({
     agentName,
@@ -208,6 +232,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
                   person,
                   agent: { name: agentName, bear },
                   story: storyController.progress,
+                  people: connections.people,
                   onClose: () => setYouOpen(false),
                 }
               : null
