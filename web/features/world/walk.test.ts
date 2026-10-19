@@ -58,10 +58,14 @@ describe("collision", () => {
     expect(blocked(MAP, [0.8, -5], R)).toBe(true);
   });
 
-  test("the bridge's railings keep you on the deck, except at the ramps", () => {
+  test("the bridge's railings keep you on the deck, ramps included; you step on at its ends", () => {
     expect(blocked(MAP, [0.5, -5], R)).toBe(true);
     expect(blocked(MAP, [-0.5, -3], R)).toBe(true);
-    expect(blocked(MAP, [0.5, -2.5], R)).toBe(false);
+    expect(blocked(MAP, [0.5, -2.5], R)).toBe(true);
+    expect(blocked(MAP, [-0.5, -7.5], R)).toBe(true);
+    expect(blocked(MAP, [0, -2.5], R)).toBe(false);
+    expect(blocked(MAP, [0, -1.5], R)).toBe(false);
+    expect(blocked(MAP, [0.5, -1.5], R)).toBe(false);
   });
 
   test("the deck is level in the middle and ramps down to its ends", () => {

@@ -64,6 +64,17 @@ describe("click-to-walk", () => {
     ]);
   });
 
+  test("a step between two open cells that cuts a corner is searched round", () => {
+    // A post on the line between the centres of two open cells, as where a railing ends.
+    const posted = ([x, z]: MapPoint) => !(x > 1.4 && x < 1.6 && z > 0.9 && z < 1.1);
+    const planner: Planner = { grid: buildGrid(posted, SQUARE, 1), free: posted };
+    expect([...planner.grid.open].every((open) => open === 1)).toBe(true);
+    expect(findPath(planner, [1.5, 0.5], [1.5, 2.5])).toEqual([
+      [2.5, 1.5],
+      [1.5, 2.5],
+    ]);
+  });
+
   test("pulling straight keeps only the corners", () => {
     const stairs: MapPoint[] = [
       [0.5, 0.5],

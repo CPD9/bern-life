@@ -1,7 +1,8 @@
 // Click-to-walk: A* over the walk grid from the walker to the reachable cell nearest the click,
 // then the path pulled straight wherever the walker fits all along the line, so you walk lines, not
 // stairs. A cell is open when its centre is free, so a straight line is checked against the walls
-// themselves, not only against the cells it crosses: a line may not cut a turned wall's corner.
+// themselves, not only against the cells it crosses: a line may not cut a turned wall's corner,
+// and a step between two open cells that does (where a bridge's railing ends) is searched round.
 
 import { type MapPoint } from "./geography";
 import { WALKER_RADIUS } from "./walk";
@@ -30,6 +31,8 @@ const GRID_CELL = 0.5;
 const GRID_PAD = 0.05;
 /** Points checked along a straight line, per cell of its length. */
 const LINE_SAMPLES = 10;
+/** Times a route is searched again round steps that cut a corner, before it is walked as it is. */
+const DETOURS = 8;
 
 export function walkPlanner(map: WalkMap): Planner {
   return {
@@ -84,10 +87,17 @@ function estimate(grid: WalkGrid, from: number, to: number): number {
   return Math.max(dx, dz) + (Math.SQRT2 - 1) * Math.min(dx, dz);
 }
 
-function search(grid: WalkGrid, start: number, goal: number): number[] {
-  const travelled = new Float64Array(grid.open.length).fill(Number.POSITIVE_INFINITY);
-  const ranked = new Float64Array(grid.open.length);
-  const cameFrom = new Int32Array(grid.open.length).fill(-1);
+/** The cells from `start` to `goal`, never taking a step in `cut`; null when none is left. */
+function search(
+  grid: WalkGrid,
+  start: number,
+  goal: number,
+  cut: ReadonlySet<number>,
+): number[] | null {
+  const size = grid.open.length;
+  const travelled = new Float64Array(size).fill(Number.POSITIVE_INFINITY);
+  const ranked = new Float64Array(size);
+  const cameFrom = new Int32Array(size).fill(-1);
   const queue = heap(ranked);
   travelled[start] = 0;
   ranked[start] = estimate(grid, start, goal);
@@ -97,13 +107,14 @@ function search(grid: WalkGrid, start: number, goal: number): number[] {
     if (index === goal) break;
     const here = travelled[index] ?? 0;
     eachNeighbour(grid, index, (next, length) => {
-      if (here + length >= (travelled[next] ?? 0)) return;
+      if (here + length >= (travelled[next] ?? 0) || cut.has(index * size + next)) return;
       travelled[next] = here + length;
       ranked[next] = here + length + estimate(grid, next, goal);
       cameFrom[next] = index;
       queue.push(next);
     });
   }
+  if (goal !== start && cameFrom[goal] === -1) return null;
   const cells = [goal];
   for (let at = goal; at !== start;) {
     at = cameFrom[at] ?? start;
@@ -143,6 +154,39 @@ export function pullStraight(planner: Planner, points: readonly MapPoint[]): Map
 }
 
 /**
+ * Steps between neighbouring open cells that the walker does not fit along: the line between
+ * their centres cuts a wall's corner, as where a bridge's railing ends. Both ways round.
+ */
+function cutSteps(planner: Planner, cells: readonly number[]): number[] {
+  const { grid } = planner;
+  const size = grid.open.length;
+  const cut: number[] = [];
+  for (let step = 1; step < cells.length; step++) {
+    const a = cells[step - 1] ?? 0;
+    const b = cells[step] ?? 0;
+    if (!seesThrough(planner, centreOf(grid, a), centreOf(grid, b))) {
+      cut.push(a * size + b, b * size + a);
+    }
+  }
+  return cut;
+}
+
+/** The cells to walk through, searched again round any step that cuts a corner. */
+function route(planner: Planner, start: number, goal: number): number[] {
+  const cut = new Set<number>();
+  let cells = search(planner.grid, start, goal, cut) ?? [start, goal];
+  for (let detour = 0; detour < DETOURS; detour++) {
+    const steps = cutSteps(planner, cells);
+    if (steps.length === 0) break;
+    for (const step of steps) cut.add(step);
+    const around = search(planner.grid, start, goal, cut);
+    if (around === null) break;
+    cells = around;
+  }
+  return cells;
+}
+
+/**
  * The points to walk through from `from` toward `to`, not counting where the walker stands: the
  * clicked spot itself when it can be reached, else the reachable spot nearest it. Null when the
  * walker stands nowhere on the grid's open cells.
@@ -153,7 +197,8 @@ export function findPath(planner: Planner, from: MapPoint, to: MapPoint): MapPoi
   if (start === -1) return null;
   const goal = nearestCell(grid, to, grid.region[start] ?? null);
   if (goal === -1) return null;
-  const end = cellAt(grid, to) === goal && planner.free(to) ? to : centreOf(grid, goal);
-  const route = [from, ...search(grid, start, goal).map((cell) => centreOf(grid, cell)), end];
-  return pullStraight(planner, route).slice(1);
+  const last = centreOf(grid, goal);
+  const end = cellAt(grid, to) === goal && seesThrough(planner, last, to) ? to : last;
+  const cells = route(planner, start, goal).map((cell) => centreOf(grid, cell));
+  return pullStraight(planner, [from, ...cells, end]).slice(1);
 }

@@ -25,7 +25,7 @@ export const HOME = { lot: 3.2, width: 1.6, depth: 1.4, height: 2.2, back: 0.6 }
 /** Half a generic block's widest side, and a tree crown's radius, kept off claimed ground. */
 const CLAIM_MARGIN = { block: 1.3, tree: 0.7 } as const;
 
-/** Railings just outside the deck's edges, short of the ramps, where you step on and off. */
+/** Railings just outside the deck's edges, ramps included; you step on and off at its ends. */
 const RAIL_THICKNESS = 0.1;
 
 export function homeLot([x, z]: MapPoint): Footprint {
@@ -64,13 +64,16 @@ export function shownTrees(
   return trees.filter((tree) => !coveredByAny(claimed, tree, CLAIM_MARGIN.tree));
 }
 
-/** Two thin walls along a bridge's sides, so you cross it end to end and never fall off. */
+/**
+ * Two thin walls along a bridge's whole length, its ends open, so you cross it end to end and
+ * never step off a ramp's side.
+ */
 export function bridgeRails(deck: Footprint): Footprint[] {
   const offset = deck.depth / 2 + RAIL_THICKNESS / 2;
   return [-1, 1].map((side) => ({
     x: deck.x + side * offset * Math.sin(deck.angle),
     z: deck.z + side * offset * Math.cos(deck.angle),
-    width: deck.width - 2 * RAMP,
+    width: deck.width,
     depth: RAIL_THICKNESS,
     angle: deck.angle,
   }));

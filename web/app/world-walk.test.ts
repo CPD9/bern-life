@@ -3,9 +3,9 @@ import { PLOTS } from "@/features/settle/plots";
 import { BUILDINGS, CITY } from "@/features/world/city-layout";
 import { doorNear, HOME_DOOR_KEY } from "@/features/world/doors";
 import { BRIDGES, type MapPoint } from "@/features/world/geography";
-import { bridgeFootprint } from "@/features/world/scene/bridge-plan";
+import { bridgeFootprint, DECK_HEIGHT } from "@/features/world/scene/bridge-plan";
 import { WALKER_RADIUS } from "@/features/world/walk";
-import { blocked, type WalkMap } from "@/features/world/walk-map";
+import { blocked, groundHeight, type WalkMap } from "@/features/world/walk-map";
 import { findPath, type Planner, walkPlanner } from "@/features/world/walk-path";
 import { advance, arrive, withPath } from "@/features/world/walk-session";
 import { walkWorld } from "@/features/world/walk-world";
@@ -25,12 +25,19 @@ const FRAMES = 60 * 120;
 const STANDING = { held: new Set<string>(), azimuth: 0, seconds: 1 / 60, snapTurn: false };
 
 /** Where you stand once the click-to-walk path from `from` to `to` has been walked out. */
-function walkOut(map: WalkMap, planner: Planner, from: MapPoint, to: MapPoint): MapPoint | null {
+function walkOut(
+  map: WalkMap,
+  planner: Planner,
+  from: MapPoint,
+  to: MapPoint,
+  onStep: (at: MapPoint) => void = () => undefined,
+): MapPoint | null {
   const path = findPath(planner, from, to);
   if (path === null) return null;
   let session = withPath(arrive(map, from), path);
   for (let frame = 0; frame < FRAMES && session.walker.path.length > 0; frame++) {
     session = advance(map, session, STANDING).session;
+    onStep(session.walker.at);
   }
   return session.walker.at;
 }
@@ -63,4 +70,28 @@ describe("walking Bern from every plot", () => {
       expect(missed).toEqual([]);
     },
   );
+});
+
+describe("the bridges", () => {
+  test("each is crossed end to end over its deck, stepping on and off at its open ends", () => {
+    const world = walkWorld(CITY, BUILDINGS, null);
+    const planner = walkPlanner(world.map);
+    const crossed = Object.entries(BRIDGES).map(([name, [a, b]]) => {
+      const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const beyond = ([x, z]: MapPoint, by: number): MapPoint => [
+        x + ((b[0] - a[0]) / length) * by,
+        z + ((b[1] - a[1]) / length) * by,
+      ];
+      const [from, to] = [beyond(a, -0.6), beyond(b, 0.6)];
+      let highest = 0;
+      const end = walkOut(world.map, planner, from, to, (at) => {
+        highest = Math.max(highest, groundHeight(world.map, at));
+      });
+      const there = end !== null && Math.hypot(end[0] - to[0], end[1] - to[1]) <= 1e-3;
+      return { name, there, highest };
+    });
+    expect(crossed).toEqual(
+      Object.keys(BRIDGES).map((name) => ({ name, there: true, highest: DECK_HEIGHT })),
+    );
+  });
 });
