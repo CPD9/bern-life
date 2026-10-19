@@ -238,6 +238,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
                   story: storyController.progress,
                   people: connections.people,
                   onClose: () => setYouOpen(false),
+                  onMoveOffice: settle.open,
                 }
               : null
           }

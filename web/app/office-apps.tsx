@@ -20,6 +20,7 @@ import { ReportsApp } from "@/features/report/reports-app";
 import { SourcesApp } from "@/features/sources/sources-app";
 import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import type { NumbersApi } from "@/infrastructure/numbers-api";
 import { loopSearch } from "./loop-search";
 import { garageApp, libraryApp, opportunitiesApp, saveSlot } from "./shared-apps";
 
@@ -35,12 +36,15 @@ export type AgentsInput = {
   /** The snapshot the engine serves, from health; null while unknown. */
   snapshot: string | null;
   notify: (notice: AgentNotice) => void;
+  /** Where the skills' measured rows come from; the engine's /api/numbers when absent. */
+  numbersApi?: NumbersApi;
 };
 
-/** The one Agents app, on the phone and at the desk: the same loops, search and notifications.
- *  Only where "Try" goes differs, since each place opens its own Navigator. */
+/** The one Agents app, on the phone and at the desk: the same loops, search, notifications and
+ *  skill evidence. Only where "Try" goes differs, since each place opens its own Navigator. */
 export function agentsApp(
-  { navigatorApi, agentName, snapshot, notify }: AgentsInput,
+  { navigatorApi, agentName, snapshot, notify, numbersApi }: AgentsInput,
+  fixtureMode: boolean,
   onTrySkill: (skill: Skill) => void,
 ): ReactNode {
   return (
@@ -50,6 +54,8 @@ export function agentsApp(
       onTrySkill={onTrySkill}
       notify={notify}
       snapshot={snapshot}
+      fixtureMode={fixtureMode}
+      {...(numbersApi ? { numbers: numbersApi } : {})}
     />
   );
 }
@@ -112,6 +118,7 @@ export function useOfficeApps({
     });
   }
 
+  // Search and Checks the premise both start from a search in the Navigator.
   function trySkill(skill: Skill) {
     if (skill.id === "brief") openNavigator("brief");
     else if (skill.id === "report") desktop.open("reports");
@@ -129,7 +136,7 @@ export function useOfficeApps({
           {...saveSlot(save)}
         />
       ),
-      agents: agentsApp(agents, trySkill),
+      agents: agentsApp(agents, fixtureMode, trySkill),
       reports: (
         <ReportsApp
           selectedId={reportId}
@@ -141,7 +148,7 @@ export function useOfficeApps({
       connections,
       library: libraryApp(library),
       opportunities: opportunitiesApp(save),
-      garage: garageApp(fixtureMode, events),
+      garage: garageApp(fixtureMode, events, agents.numbersApi),
       sources: <SourcesApp fixtureMode={fixtureMode} />,
       settings: <SettingsApp health={health} />,
     },

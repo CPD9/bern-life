@@ -1,12 +1,13 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { type ReactNode, useId, useRef } from "react";
 import { formatBernShortDate, formatBernTime } from "@/infrastructure/bern-time";
+import type { Numbers } from "@/infrastructure/numbers";
+import { type NumbersApi, httpNumbersApi } from "@/infrastructure/numbers-api";
+import { type NumbersState, useNumbers } from "@/infrastructure/use-numbers";
 import { EvalNumbersView } from "./eval-numbers";
 import { ModelNumbersView } from "./model-numbers";
-import type { Numbers } from "./numbers";
-import { type GarageApi, httpGarageApi } from "./numbers-api";
-import { type NumbersState, useNumbers, useOnce } from "./use-numbers";
+import { useOnce } from "./use-once";
 
 export type GarageAppProps = {
   /** The engine serves invented fixtures (DEMO_FIXTURES); its numbers are labelled, never "seen". */
@@ -16,19 +17,24 @@ export type GarageAppProps = {
   /** Once, when measured numbers from the engine (not a fixture) are on screen. */
   onNumbersSeen?: () => void;
   /** Pass a stable object; a new one asks again. */
-  api?: GarageApi;
+  api?: NumbersApi;
+  /** The agent's skills with their evidence, drawn by the host from the numbers loaded here. */
+  renderSkills?: (numbers: NumbersState) => ReactNode;
 };
 
 // The Apertus models behind the Navigator and the numbers measured for this snapshot, shown
-// exactly as /api/numbers gives them. Nothing here is estimated, compared or filled in.
+// exactly as /api/numbers gives them, then the agent's skills. Nothing here is estimated, compared
+// or filled in, and nothing is added: models and skills are read-only.
 export function GarageApp({
   fixtureMode,
   onVisited,
   onNumbersSeen,
-  api = httpGarageApi,
+  api = httpNumbersApi,
+  renderSkills,
 }: GarageAppProps) {
   const { state, retry } = useNumbers(api);
   const status = useRef<HTMLDivElement>(null);
+  const id = useId();
   useOnce(true, onVisited);
   useOnce(!fixtureMode && state.status === "ok" && state.numbers.eval !== null, onNumbersSeen);
 
@@ -57,6 +63,18 @@ export function GarageApp({
         />
       </div>
       {state.status === "ok" && <NumbersView numbers={state.numbers} fixtureMode={fixtureMode} />}
+      {renderSkills && (
+        <section aria-labelledby={`${id}-skills`} className="flex flex-col gap-3">
+          <h3 id={`${id}-skills`} className="text-lg font-extrabold">
+            Skills
+          </h3>
+          <p className="text-muted text-sm">
+            Each skill with the evidence behind it. Skills come with the app and models are set on
+            the server, as endpoints in its settings; neither is added here.
+          </p>
+          {renderSkills(state)}
+        </section>
+      )}
     </div>
   );
 }

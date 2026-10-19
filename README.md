@@ -47,14 +47,14 @@ room give way to a short note, and Ask, the office desk and every app still work
    stands; each plot lists the nearest places with their sourced addresses.
 6. **Your office.** Onboarding ends in your office, the **Home** tab. Sit at the desk to use the
    computer, nine apps: **Navigator** (the same search as Ask, and a project brief), **Agents**
-   (Lumi's skills, and loops: saved searches you run again, whose new and dropped results reach
-   the bell), **Reports** (match reports with their sources), **Messages** (to members who
-   joined), **Library** (what you saved, and your documents with their trace),
-   **Opportunities** (funding calls, services and spaces; an amount or deadline appears only
-   inside the sentence it was read from), **Garage** (the Apertus models and the evaluator's
-   numbers for this snapshot, as the engine serves them), **Sources** (the institutions crawled,
-   and how to add one) and **Settings**. The door leads back to the map; the phone carries Ask,
-   Messages, Agents, Opportunities, Library and Settings.
+   (Lumi's skills, each with its evidence, and loops: saved searches you run again, whose new and
+   dropped results reach the bell), **Reports** (match reports with their sources), **Messages** (to
+   members who joined), **Library** (what you saved, and your documents with their trace),
+   **Opportunities** (funding calls, services and spaces; an amount or deadline appears only inside
+   the sentence it was read from), **Garage** (the Apertus models and the evaluator's numbers for
+   this snapshot, as the engine serves them, and the skills with their evidence), **Sources** (the
+   institutions crawled, and how to add one) and **Settings**. The door leads back to the map; the
+   phone carries Ask, Messages, Agents, Opportunities, Library and Settings.
 7. **Lumi.** Your agent floats beside you as the bear you made, and stands in front of the city
    hall on the map; either opens its chat. Lumi searches with the engine's own tools and answers
    with the same source cards as Ask. A person it names must be among those results, a reply it
@@ -102,7 +102,10 @@ over base questions, proportions have Wilson intervals. Every number in the tabl
 Snapshot `bundle-20261019-3`, 48 gold questions. To reproduce: `make fetch && make eval && python3 infra/readme_numbers.py`. CI fails when this block differs from the evaluator's output.
 <!-- numbers:end -->
 
-How the numbers on each result are computed is in [`docs/metrics.md`](docs/metrics.md).
+How the numbers on each result are computed is in [`docs/metrics.md`](docs/metrics.md). It also
+has exploratory evaluator numbers this table leaves out, with the commands that compute them:
+top-10 overlap across wordings of one need for criterion 2 (built on the case's glucose example),
+exposure by unit size, and the two-person check of criterion 4.
 
 ## How it works
 

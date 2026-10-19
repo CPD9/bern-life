@@ -1,6 +1,6 @@
 // Invented bodies in the shape Run A gave for GET /api/numbers. They mirror that shape until
 // PR-A1's own fixtures land in contracts/; no value here was measured.
-import type { GarageApi, NumbersOutcome } from "./numbers-api";
+import type { NumbersApi, NumbersOutcome } from "@/infrastructure/numbers-api";
 
 export function numbersBody() {
   return {
@@ -41,7 +41,7 @@ export function jsonResponse(body: unknown, status = 200): Response {
 }
 
 /** Answers each call with the next outcome in the queue and counts the calls. */
-export function queuedApi(outcomes: NumbersOutcome[]): GarageApi & { calls: () => number } {
+export function queuedApi(outcomes: NumbersOutcome[]): NumbersApi & { calls: () => number } {
   let calls = 0;
   return {
     calls: () => calls,

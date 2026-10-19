@@ -1,6 +1,6 @@
 // The shape of GET /api/numbers, typed here until the generated `Numbers` type lands with the
 // contract. The body is checked field by field: anything that does not fit is no answer, so the
-// garage shows an error instead of a half-read table.
+// Garage and the Agents app show an error instead of a half-read table.
 
 export type Interval = { readonly value: number; readonly low: number; readonly high: number };
 export type Tally = { readonly n: number; readonly of: number };

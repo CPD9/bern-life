@@ -9,10 +9,10 @@ COPY web/package.json web/bun.lock web/bunfig.toml ./
 RUN bun install --frozen-lockfile
 COPY contracts /app/contracts
 COPY web ./
-# Next calls each GET handler once while building, which parses the accounts env. With no session
-# cookie nothing connects, so the build gets an address without credentials; compose sets the
-# real one.
-ENV NEXT_TELEMETRY_DISABLED=1 DATABASE_URL=postgresql://db:5432/bernlife
+# Next calls each GET handler once while building, which parses the accounts env and, for the
+# member routes, the engine env. With no session cookie nothing connects, so the build gets
+# addresses without credentials; compose sets the real ones.
+ENV NEXT_TELEMETRY_DISABLED=1 DATABASE_URL=postgresql://db:5432/bernlife ENGINE_URL=http://127.0.0.1:8100
 RUN bun run build
 
 FROM node:24-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
