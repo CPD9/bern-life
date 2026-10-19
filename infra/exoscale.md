@@ -140,10 +140,11 @@ searches from loopback only). Steps in order; each says where it runs. `ssh` and
    ```
 
 7. **VM: health check.** It asks `https://<site>/api/health`, which travels through Caddy, the web
-   app, the engine and the database, and passes only on replay or live mode, the version in
-   `bundle.lock` and the page and profile counts in the bundle's manifest. The DEMO fixtures fail
-   it. When the engine reports them, it also prints its status, uptime and failures in the last
-   hour.
+   app, the engine and the database, and passes only on replay mode, the version in `bundle.lock`
+   and the page and profile counts in the bundle's manifest. The DEMO fixtures fail it, and so does
+   live mode, which this VM must never be in (`--mode live` is for a stack meant to call models).
+   When the engine reports them, it also prints its status, uptime and failed model calls in the
+   last hour per role and marker.
 
    ```bash
    cd /opt/bernlife
@@ -175,7 +176,7 @@ the code that ran before step 1: `sudo mv /opt/bernlife /opt/bernlife.search`, t
 | Web app unreachable after `serve` restarted on its own | `docker compose up -d --force-recreate web` (it shares `serve`'s network, which a restart replaces). A slow database does not cause this: `serve` waits up to two minutes for it instead of exiting |
 | Backup now | `sudo ./backup.sh` |
 | Restore a backup | "Back up and restore" below |
-| Watch uptime | From your machine, in a clone with `make fetch` done: `python3 -m infra.check_hosted --url https://<site> --watch`. One line per check every 30 s (time, HTTP status, mode, status, ms); it exits 1 after 3 failed checks in a row (`--interval`, `--max-failures`). A `degraded` status is shown, not counted |
+| Watch uptime | From your machine, in a clone with `make fetch` done: `python3 -m infra.check_hosted --url https://<site> --watch`. One line per check every 30 s (time, HTTP status, mode, status, failures in the last hour per role and marker, ms); it exits 1 after 3 failed checks in a row (`--interval`, `--max-failures`). A `degraded` status is shown, not counted |
 | New SSH IP | Exoscale portal → Security Groups → `bernlife-web` → edit the port 22 rule |
 
 ## Back up and restore
@@ -191,7 +192,18 @@ the code that ran before step 1: `sudo mv /opt/bernlife /opt/bernlife.search`, t
 
 The folder appears only when all three are written; a `bernlife-<time>.part` folder is a run that
 failed. It holds personal data and private keys, so it stays root only. A document's file and its
-row restore together, from the same folder.
+row restore together, from the same folder. An account or document deleted in the app stays in
+the backups for up to 14 days, and a restore brings back everything deleted after that backup was
+taken: delete it again in the app after a restore.
+
+Uploads need the `uploads` volume to be owned by `node`, the web app's user. `web/Dockerfile` does
+not create `/data/uploads`, so Docker makes a new volume there owned by root: the app cannot write
+an upload, and `uploads.tar.gz` stays empty. Until the image creates that folder for `node`, run
+this once for each new volume:
+
+```bash
+docker compose exec -T -u 0 web chown node /data/uploads
+```
 
 **Restore**, on the VM in `/opt/bernlife/infra/exoscale`. The dump goes into an empty database,
 before `migrate` runs: on a new VM (set up as above up to `docker compose up`, the folder copied to
@@ -204,7 +216,9 @@ docker compose up -d --wait db
 sudo gunzip -c "$b/db.sql.gz" \
   | docker compose exec -T db psql -q -v ON_ERROR_STOP=1 -U bernlife -d bernlife
 docker compose up -d --build --wait      # migrate applies only what the dump lacks
-sudo cat "$b/uploads.tar.gz" | docker compose exec -T web tar -xzf - -C /data/uploads
+# As root, since the folder may be root's (above); then the files go back to the app's user.
+sudo cat "$b/uploads.tar.gz" | docker compose exec -T -u 0 web tar -xzf - -C /data/uploads
+docker compose exec -T -u 0 web chown -R node /data/uploads
 sudo cat "$b/caddy-data.tar.gz" | docker compose exec -T caddy tar -xzf - -C /data
 docker compose restart caddy             # serves the restored certificate
 ```
@@ -216,31 +230,59 @@ up; no bucket, key or passphrase exists, and none of it has run. The bucket stay
 the data stays in Switzerland, and each folder is encrypted on the VM before it leaves, because it
 holds accounts, documents and Caddy's private key.
 
-Once: a private bucket, and an IAM key whose role may only write objects to it (portal → IAM). On
-the VM, as root, `exo config` stores that key for the `exo` CLI, and a passphrase goes into
-`/root/bernlife-backup.pass` (mode 600). Keep the passphrase off the VM too, in Peter's password
-manager: without it the copy cannot be read once the VM is gone.
+Copies are kept 14 days, as on the VM, so a deletion in the app leaves the bucket within 14 days
+too. The bucket expires them itself with a lifecycle rule, because the key on the VM may only write:
+whoever takes the VM cannot erase the copies, and the VM cannot prune them either. Bucket lifecycle
+is in Early Access at Exoscale and their support enables it on request; without it, do not set up
+this copy, since nothing else would expire it.
+
+Once: a private bucket with that rule, and an IAM key whose role may only write objects to it
+(portal → IAM). On the VM, as root, `exo config` stores that key for the `exo` CLI, and a
+passphrase goes into `/root/bernlife-backup.pass` (mode 600). Keep the passphrase off the VM too, in
+Peter's password manager: without it the copy cannot be read once the VM is gone.
 
 ```bash
 exo storage mb sos://bernlife-backups --zone ch-gva-2
+echo '{"Rules": [{"ID": "expire-after-14-days", "Status": "Enabled", "Filter": {"Prefix": ""},
+  "Expiration": {"Days": 14}}]}' > expire-14-days.json
+exo storage bucket lifecycle set sos://bernlife-backups expire-14-days.json
+exo storage bucket lifecycle show sos://bernlife-backups
 ```
 
-After `backup.sh`, as root:
+After `backup.sh`, as root. Each step writes a file and the next starts only when it succeeded, so
+an archive cut short is never encrypted and sent. `gpg --symmetric` adds an integrity check, so a
+copy that was cut or altered fails to decrypt; the `.sha256` file records the copy that left the VM.
 
 ```bash
-cd /var/backups/bernlife && run="$(ls -d bernlife-*Z | tail -1)"
-tar -cf - "$run" | openssl enc -aes-256-cbc -pbkdf2 -pass file:/root/bernlife-backup.pass \
-  -out "/root/$run.tar.enc"
-exo storage upload "/root/$run.tar.enc" sos://bernlife-backups/ && rm "/root/$run.tar.enc"
+run="$(ls -d /var/backups/bernlife/bernlife-*Z | tail -1 | xargs basename)" && cd /root \
+  && tar -cf "$run.tar" -C /var/backups/bernlife "$run" \
+  && gpg --batch --pinentry-mode loopback --passphrase-file /root/bernlife-backup.pass \
+       --symmetric --cipher-algo AES256 -o "$run.tar.gpg" "$run.tar" \
+  && sha256sum "$run.tar.gpg" > "$run.tar.gpg.sha256" \
+  && exo storage upload "$run.tar.gpg" sos://bernlife-backups/ \
+  && exo storage upload "$run.tar.gpg.sha256" sos://bernlife-backups/ \
+  && rm "$run.tar" "$run.tar.gpg" "$run.tar.gpg.sha256"
 ```
 
-To restore from it: `exo storage download sos://bernlife-backups/<run>.tar.enc`, then
-`openssl enc -d -aes-256-cbc -pbkdf2 -pass file:<passphrase file> -in <run>.tar.enc | sudo tar -xf - -C /var/backups/bernlife`,
-then the restore above.
+To restore from it, as root in an empty folder: `exo storage download` both
+`sos://bernlife-backups/<run>.tar.gpg` and `sos://bernlife-backups/<run>.tar.gpg.sha256`, then
+
+```bash
+sha256sum -c <run>.tar.gpg.sha256 \
+  && gpg --batch --pinentry-mode loopback --passphrase-file <passphrase file> \
+       -o <run>.tar -d <run>.tar.gpg \
+  && tar -xf <run>.tar -C /var/backups/bernlife
+```
+
+and then the restore above.
 
 ## Not done yet
 
-- **Off-VM backup copy:** needs an SOS bucket, a key allowed to write to it and a passphrase
-  (Peter's decision); the commands are under "Back up and restore". Not provisioned.
+- **Off-VM backup copy:** needs an SOS bucket with lifecycle enabled by Exoscale, a key allowed to
+  write to it and a passphrase (Peter's decision); the commands are under "Back up and restore".
+  Not provisioned.
+- **Uploads volume:** `web/Dockerfile` should create `/data/uploads` owned by `node` before
+  `USER node`, so a new volume is writable without the one-time `chown` under "Back up and
+  restore".
 - **Credentials:** Peter holds the account; a compute-only IAM key for Yaseen replaces the master
   login for day-to-day work.

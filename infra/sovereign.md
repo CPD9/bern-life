@@ -12,10 +12,13 @@ Peter's go-ahead.
 
 ## Apertus on your own GPUs
 
-The 70B FP8 build needs one GPU with at least 80 GB; the scripts were written for a two-GPU pod
-(70B on GPU 1, the optional 8B on GPU 0). They keep the virtualenv and the Hugging Face cache in
-`/workspace`; on another machine, make that directory on a disk with room for the weights (about
-70 GB for the 70B FP8).
+The 70B FP8 build ran on one 96 GB GPU (RTX PRO 6000 Blackwell); an 80 GB card is untested and may
+be too small for the weights plus the cache at `--max-model-len 16384`. The scripts were written
+for a two-GPU pod: `serve_70b.sh` sets `CUDA_VISIBLE_DEVICES=1`, and the optional 8B uses GPU 0. On
+a host with one GPU, change that 1 to 0 in `serve_70b.sh` first; the script sets the variable
+itself, so one from the shell does not override it. The scripts keep the virtualenv and the Hugging
+Face cache in `/workspace`; on another machine, make that directory on a disk with room for the
+weights (about 70 GB for the 70B FP8).
 
 | Script (`infra/runpod/`) | What | Listens on | Pinned at |
 |---|---|---|---|
@@ -42,8 +45,10 @@ HF_HUB_OFFLINE=1 bash serve_70b.sh                   # GPU host, after the copy
 ```
 
 Both serve scripts pass `--host 127.0.0.1`, so nothing on the GPU host listens on a public
-interface, and vLLM takes no key: the SSH tunnel is the access control. From the machine that runs
-the engine:
+interface, and vLLM takes no key: the SSH tunnel is the access control, so the GPU host must be
+yours alone. Anyone else with a shell there could call the model, or answer on its port in its
+place. On a shared host, add `--api-key <key>` to the serve script's `vllm serve` line and put the
+same key in `EXPAND_LLM_API_KEY`. From the machine that runs the engine:
 
 ```bash
 ssh -N -L 127.0.0.1:8002:127.0.0.1:8002 <gpu-host>
@@ -54,10 +59,11 @@ Then in that machine's `.env`:
 | Name | Value |
 |---|---|
 | `EXPAND_LLM_BASE_URL` | `http://127.0.0.1:8002/v1` |
-| `EXPAND_LLM_MODEL` | empty (the one served model is used) or `onprem-ai/Apertus-v1.5-70B-FP8` |
-| `EXPAND_LLM_API_KEY` | empty: the engine then sends no `Authorization` header |
+| `EXPAND_LLM_MODEL` | `onprem-ai/Apertus-v1.5-70B-FP8`, required: left empty, the engine takes whatever one model answers on the port |
+| `EXPAND_LLM_API_KEY` | empty on a host of your own: the engine then sends no `Authorization` header; the vLLM key on a shared one |
 
-Every role takes this route while it is set, so nothing reaches an 8B. `make live` prints the mode
+Every role takes this route while it is set, and the engine stops with `model_not_served` when the
+port serves any other model, such as the 8B tunnelled there by mistake. `make live` prints the mode
 and the model per role, or stops with a marker (`unreachable`, `model_not_served`);
 `make live ARGS="<command>"` then runs that engine command against it. Answers are cached under the
 served name, `onprem-ai/Apertus-v1.5-70B-FP8`, so they never mix with the gateway's
