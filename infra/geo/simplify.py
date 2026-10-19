@@ -1,4 +1,4 @@
-"""Douglas-Peucker for open lines and closed rings, and the area of a ring.
+"""Douglas-Peucker for open lines and closed rings; a ring's area, and where a point is from it.
 
 A footprint keeps its corners and loses the near-straight points the 3D model carries along walls;
 1 m of tolerance is below what one stored step (1.25 m) can show anyway.
@@ -54,3 +54,20 @@ def ring_area(ring: list[Point]) -> float:
     for (x1, y1), (x2, y2) in zip(ring, [*ring[1:], ring[0]], strict=True):
         total += x1 * y2 - x2 * y1
     return abs(total) / 2
+
+
+def inside(point: Point, ring: list[Point]) -> bool:
+    """Even-odd rule, the same test as pointInPolygon in web/features/world/geometry.ts."""
+    x, y = point
+    result = False
+    for (xi, yi), (xj, yj) in zip(ring, [ring[-1], *ring[:-1]], strict=True):
+        if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
+            result = not result
+    return result
+
+
+def distance_to_ring(point: Point, ring: list[Point]) -> float:
+    """Distance from the point to the nearest edge of the ring (0 on an edge)."""
+    return min(
+        _distance_to_segment(point, a, b) for a, b in zip(ring, [*ring[1:], ring[0]], strict=True)
+    )
