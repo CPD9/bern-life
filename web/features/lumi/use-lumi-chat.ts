@@ -1,31 +1,15 @@
 "use client";
 
 // One conversation with Lumi. Actions in a reply are dispatched from the request that received it,
-// not from rendering, so a re-render can never repeat them. One message is in flight at a time.
+// not from rendering, so a re-render can never repeat them; a reply that lands while the panel is
+// closed keeps its actions on its turn until the player runs them. One message is in flight.
 import { useEffect, useRef, useState } from "react";
-import type { SearchResponse } from "@/infrastructure/contract-types.generated";
-import type { AgentReply } from "./agent-reply";
+import type { AgentAction } from "./agent-reply";
 import { type SearchState, type Turn, isBusy, messagesFor } from "./conversation";
 import type { ChatMessage, LumiApi } from "./lumi-api";
+import { type LumiActions, canRun, runAction } from "./reply-actions";
 
-export type LumiActions = {
-  onShowOnMap?: ((response: SearchResponse) => void) | undefined;
-  onOpenProfile?: ((profileId: string) => void) | undefined;
-  onStartMatchReport?: ((response: SearchResponse) => void) | undefined;
-};
-
-export function dispatchActions(reply: AgentReply, actions: LumiActions): void {
-  for (const action of reply.actions) {
-    if (action.type === "open_profile") {
-      actions.onOpenProfile?.(action.profile_id);
-      continue;
-    }
-    const response = reply.results[action.result];
-    if (!response) continue;
-    if (action.type === "show_on_map") actions.onShowOnMap?.(response);
-    else actions.onStartMatchReport?.(response);
-  }
-}
+export type { LumiActions } from "./reply-actions";
 
 export type LumiChatController = {
   readonly turns: readonly Turn[];
@@ -33,6 +17,8 @@ export type LumiChatController = {
   /** False when nothing was sent: an empty message, or one still in flight. */
   send(text: string): boolean;
   retry(): boolean;
+  /** Runs an action that waited while the panel was closed; false if it already ran. */
+  runHeld(turnId: number, action: AgentAction): boolean;
 };
 
 const waiting = { status: "waiting" } as const;
@@ -42,8 +28,9 @@ export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): 
   const nextId = useRef(0);
   // State lags a render behind, so a quick second tap is stopped by this as well.
   const inFlight = useRef(false);
-  // A reply acts through the callbacks of the moment it lands, and not at all once the panel is
-  // closed: a late answer must not move the map or open anything behind the player's back.
+  const ran = useRef(new Set<AgentAction>());
+  // A reply acts through the callbacks of the moment it lands, and never on its own once the panel
+  // is closed: a late answer must not move the map or open anything behind the player's back.
   const current = useRef({ actions, open });
   useEffect(() => {
     current.current = { actions, open };
@@ -66,13 +53,15 @@ export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): 
   async function exchange(id: number, text: string, messages: ChatMessage[]) {
     const asked = await api.ask(messages);
     if (asked.ok) {
-      const { abstained } = asked.value;
+      const reply = asked.value;
+      const { open: shown, actions: now } = current.current;
+      const held = shown ? [] : reply.actions.filter((action) => canRun(action, reply, now));
       update(id, {
-        lumi: { status: "replied", reply: asked.value },
-        search: abstained ? waiting : null,
+        lumi: { status: "replied", reply, held },
+        search: reply.abstained ? waiting : null,
       });
-      if (current.current.open) dispatchActions(asked.value, current.current.actions);
-      if (!abstained) return;
+      if (shown) for (const action of reply.actions) runAction(action, reply, now);
+      if (!reply.abstained) return;
     } else {
       // Without the server a plain search cannot answer either, so there is nothing to fall back to.
       const fallback = asked.failure !== "network";
@@ -106,5 +95,18 @@ export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): 
       void answer(last.id, last.text, messagesFor(turns.slice(0, -1), last.text));
       return true;
     },
+    runHeld: (turnId, action) => {
+      const turn = turns.find((candidate) => candidate.id === turnId);
+      if (turn?.lumi.status !== "replied" || ran.current.has(action)) return false;
+      ran.current.add(action);
+      setTurns((shown) => shown.map((t) => (t.id === turnId ? withoutHeld(t, action) : t)));
+      runAction(action, turn.lumi.reply, current.current.actions);
+      return true;
+    },
   };
+}
+
+function withoutHeld(turn: Turn, action: AgentAction): Turn {
+  if (turn.lumi.status !== "replied") return turn;
+  return { ...turn, lumi: { ...turn.lumi, held: turn.lumi.held.filter((a) => a !== action) } };
 }

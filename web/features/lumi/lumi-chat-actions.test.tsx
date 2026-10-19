@@ -20,7 +20,7 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 describe("LumiChat actions", () => {
   test("each action in a reply is dispatched once, and never again on re-render", async () => {
     const shown: SearchResponse[] = [];
-    const opened: string[] = [];
+    const opened: [string, SearchResponse][] = [];
     const reported: SearchResponse[] = [];
     const withReport: AgentReply = {
       ...reply,
@@ -33,7 +33,7 @@ describe("LumiChat actions", () => {
     const props: HarnessProps = {
       api,
       onShowOnMap: (response) => void shown.push(response),
-      onOpenProfile: (id) => void opened.push(id),
+      onOpenProfile: (id, response) => void opened.push([id, response]),
       onStartMatchReport: (response) => void reported.push(response),
     };
     const { rerender } = render(<Harness {...props} />);
@@ -43,7 +43,7 @@ describe("LumiChat actions", () => {
     rerender(<Harness {...props} agentName="Lumi" />);
     await say("Thanks");
     expect(shown).toEqual([reply.results[0]!]);
-    expect(opened).toEqual(["person-example-ada-muster"]);
+    expect(opened).toEqual([["person-example-ada-muster", reply.results[0]!]]);
     expect(reported).toEqual([reply.results[0]!]);
   });
 
@@ -60,23 +60,40 @@ describe("LumiChat actions", () => {
     expect(opened).toEqual(["latest person-example-ada-muster"]);
   });
 
-  test("a reply that lands after the panel closed moves nothing", async () => {
+  test("a reply that lands after the panel closed waits for a click, then acts once", async () => {
     const shown: SearchResponse[] = [];
-    const opened: string[] = [];
+    const opened: [string, SearchResponse][] = [];
     const api = held();
-    render(
-      <Harness
-        api={api}
-        onShowOnMap={(response) => void shown.push(response)}
-        onOpenProfile={(id) => void opened.push(id)}
-      />,
-    );
+    const props: HarnessProps = {
+      api,
+      onShowOnMap: (response) => void shown.push(response),
+      onOpenProfile: (id, response) => void opened.push([id, response]),
+    };
+    const { rerender } = render(<Harness {...props} />);
     openPanel();
     await say("Who works on glucose sensors at DCB?");
     await closePanel();
     await act(async () => api.land({ ok: true, value: reply }));
     expect(shown).toEqual([]);
     expect(opened).toEqual([]);
+
+    openPanel();
+    expect(
+      screen.getByText("This answer came while the panel was closed, so nothing was done yet."),
+    ).toBeTruthy();
+    const showOnMap = screen.getByRole("button", { name: "Show on the map" });
+    act(() => {
+      fireEvent.click(showOnMap);
+      fireEvent.click(showOnMap);
+    });
+    rerender(<Harness {...props} />);
+    expect(shown).toEqual([reply.results[0]!]);
+    expect(screen.queryByRole("button", { name: "Show on the map" })).toBeNull();
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
+    fireEvent.click(screen.getByRole("button", { name: "Open the card" }));
+    expect(opened).toEqual([["person-example-ada-muster", reply.results[0]!]]);
+    expect(shown).toHaveLength(1);
+    expect(screen.queryByText(/while the panel was closed/)).toBeNull();
   });
 });
 
