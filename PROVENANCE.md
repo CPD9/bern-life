@@ -10,6 +10,10 @@ Where code, data and models come from. Update this file in the same PR that adds
 | `engine/src/bernlife/cache.py`, `llm.py`, `llm_http.py`, `llm_json.py` | `CPD9/apertus-redteam-graph` `track_1a/src/redteam/cache.py`, `llm.py`, `llm_json.py` (f5e07d3) | Apache-2.0 | Brief I2. Five engine roles instead of target and red team; failures become markers; prompt version in the cache key; audit log. |
 | `infra/pack_cache.py` | `CPD9/apertus-redteam-graph` `track_1a/scripts/pack_cache.py` (f5e07d3) | Apache-2.0 | Brief I4. Folds the live call files into the bundle's pack (not the live folder's own) and carries `models.json`. |
 | `eval/src/evaluator/stats.py` | `CPD9/apertus-redteam-graph` `track_1a/src/redteam/stats.py` (f5e07d3) | Apache-2.0 | Brief I3. `wilson` unchanged; the two-way cluster bootstrap becomes one-way (a base need with its variants). |
+| `infra/report/report_markdown.py` | `CPD9/apertus-redteam-graph` `track_1a/scripts/report_markdown.py` (d1a1fc2) | Apache-2.0 | Technical report (#287). The Markdown-to-HTML conversion, unchanged but for type hints; HTML comments are dropped, and a figure's `{width}` also lifts the stylesheet's maximum. |
+| `infra/report/build_report.py` | `CPD9/apertus-redteam-graph` `track_1a/scripts/build_report.py` (501db67) | Apache-2.0 | Technical report (#287). A4, fonts, stylesheet and the references-last rule kept; the six-page limit and the body-only print dropped; tables may break between rows. |
+| `infra/report/report_charts.py` | `CPD9/apertus-redteam-graph` `track_1a/scripts/report_charts.py` (501db67) | Apache-2.0 | Technical report (#287). The bar chart kept and given a reference line, a count axis and row groups; the heatmap and the red-team colours dropped. |
+| `infra/report/report_figures.py` | `CPD9/apertus-redteam-graph` `track_1a/scripts/report_figures.py` (777dec9) | Apache-2.0 | Technical report (#287). The main loop and the shape of `numbers.json` follow it; the figures read the evaluator's `metrics.json` and are Bern Life's. |
 
 ## Characters and art
 

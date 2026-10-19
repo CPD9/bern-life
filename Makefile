@@ -16,6 +16,7 @@ endef
 
 .PHONY: help fetch db-up db-migrate db-reset-throwaway db-drop-throwaway test live eval eval-fixture
 .PHONY: pack-cache bundle run live-run stop predict-consistency
+.PHONY: figures report
 
 help:
 	@echo "make fetch                    download and verify the snapshot bundle into data/bundle/"
@@ -33,6 +34,8 @@ help:
 	@echo "make eval-fixture             the same on the invented fixture in eval/tests/fixtures/"
 	@echo "make pack-cache               fold recorded model calls into the bundle's cache pack"
 	@echo "make bundle [BUNDLE_VERSION=bundle-YYYYMMDD-N]   check and pack the snapshot bundle"
+	@echo "make figures                  the technical report's figures and numbers.json from eval/out/metrics.json"
+	@echo "make report                   the figures, then docs/report/technical_report.md as an A4 PDF (headless Chrome)"
 
 fetch:
 	$(PYTHON) infra/fetch_bundle.py
@@ -168,3 +171,13 @@ live-run:
 # Only the run and live-run services: the database is shared by every worktree's lane.
 stop:
 	$(RUN_COMPOSE) --profile live rm --stop --force $(sort $(RUN_SERVICES) $(LIVE_SERVICES))
+
+# The technical report (docs/report/). figures draws every figure and numbers.json from the
+# evaluator's full output, so the report's numbers can be checked against them; report then prints
+# the Markdown to an A4 PDF with headless Chrome (CHROME names the executable when it is not on
+# PATH). The PDF is committed, and this reproduces it from a checkout plus eval/out/metrics.json.
+figures:
+	$(PYTHON) -m infra.report.report_figures --metrics eval/out/metrics.json
+
+report: figures
+	$(PYTHON) -m infra.report.build_report
