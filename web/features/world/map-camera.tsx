@@ -21,6 +21,7 @@ import {
   ZOOM_STEP,
 } from "./camera-moves";
 import { MAP_BOUNDS, type MapPoint } from "./geography";
+import { DECK_HEIGHT } from "./scene/bridge-plan";
 
 export type CameraHandle = {
   run: (command: CameraCommand) => void;
@@ -38,6 +39,20 @@ const FRAME_MIN_SPAN = 60;
 const MIN_DISTANCE = 35;
 /** Closer than this the camera is already on you. */
 const ON_TARGET = 1e-3;
+
+/**
+ * Where the camera may look: over the map, from the ground up to a bridge's deck. Held at the
+ * ground, the follow camera could never reach you on a bridge and would chase you every frame.
+ */
+export const TARGET_BOUNDS = new Box3(
+  new Vector3(MAP_BOUNDS.minX, 0, MAP_BOUNDS.minZ),
+  new Vector3(MAP_BOUNDS.maxX, DECK_HEIGHT, MAP_BOUNDS.maxZ),
+);
+
+/** Whether the camera already looks at `at`, so a resting walker lets the frames rest too. */
+export function onTarget(looking: Vector3, [x, y, z]: readonly [number, number, number]): boolean {
+  return Math.hypot(looking.x - x, looking.y - y, looking.z - z) <= ON_TARGET;
+}
 
 /** The map drags like paper; following, a drag or one finger turns the view round you instead. */
 function setGestures(controls: Controls, following: boolean) {
@@ -57,12 +72,7 @@ function configure(controls: Controls) {
   controls.mouseButtons.right = ACTION.ROTATE;
   controls.mouseButtons.wheel = ACTION.DOLLY;
   controls.touches.two = ACTION.TOUCH_DOLLY_ROTATE;
-  controls.setBoundary(
-    new Box3(
-      new Vector3(MAP_BOUNDS.minX, 0, MAP_BOUNDS.minZ),
-      new Vector3(MAP_BOUNDS.maxX, 0, MAP_BOUNDS.maxZ),
-    ),
-  );
+  controls.setBoundary(TARGET_BOUNDS);
   const aspect = "aspect" in controls.camera ? controls.camera.aspect : 1;
   const [x, y, z] = startPosition(aspect);
   const [tx, ty, tz] = START_VIEW.target;
@@ -127,10 +137,9 @@ export function MapCamera({
   useFrame(() => {
     const current = controls.current;
     if (current === null || follow === null) return;
-    const [x, y, z] = follow();
-    current.getTarget(target);
-    if (Math.hypot(target.x - x, target.y - y, target.z - z) <= ON_TARGET) return;
-    void current.moveTo(x, y, z, !reducedMotion);
+    const at = follow();
+    if (onTarget(current.getTarget(target), at)) return;
+    void current.moveTo(at[0], at[1], at[2], !reducedMotion);
     invalidate();
   });
 
