@@ -54,6 +54,11 @@ class CanExplainTest(unittest.TestCase):
         self.assertEqual(matched_claims(asked("proteines"), DORA), [("expertise", 0)])
         self.assertEqual(matched_claims(asked("Kohlenhydraten"), ADA), [])
 
+    def test_an_exact_match_needs_the_word_as_written(self):
+        question = asked("glucose sensors")
+        self.assertEqual(matched_claims(question, ADA), [("expertise", 0), ("unit", 0)])
+        self.assertEqual(matched_claims(question, ADA, exact=True), [("expertise", 0)])
+
     def test_a_claim_matches_through_its_enrichment_terms(self):
         enrichment = {"wearable biosensors": ["smart skin patches"]}
         self.assertEqual(matched_claims(asked("patches"), ADA, enrichment), [("expertise", 1)])

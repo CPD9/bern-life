@@ -137,9 +137,11 @@ reorders a few results below rank 10.
    stay, so "Kohlenhydrate" matches "Kohlenhydraten" and "psychotropes" matches "psychotroper".
    A short de/en/fr list of function and generic search words ("and", "der", "qui", "research",
    "forscht") never counts, in any of their forms. The same test picks the claims the reason
-   cites, so every shown result's reason cites a claim that matches. This rule exists because E2's
-   final run added 1,241 people who are a bare name from a news or partner page. A passage they
-   appear in credits them, and without the rule they would fill the top ten with nothing to show.
+   cites, so every shown result's reason cites a claim that matches: the claims sharing a word as
+   written when there are any, else those sharing only its form, so a reason cites what an exact
+   match would. This rule exists because E2's final run added 1,241 people who are a bare name
+   from a news or partner page. A passage they appear in credits them, and without the rule they
+   would fill the top ten with nothing to show.
    The rule asks whether a result can show its reason, not how prominent it is, so it adds no
    prominence signal.
    **Through a project (`via`):** a candidate with no matching claim of its own is still shown
