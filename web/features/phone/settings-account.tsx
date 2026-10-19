@@ -41,7 +41,7 @@ export function AccountSettings({ api, signInHref }: AccountSettingsProps) {
     return (
       <p className="text-sm">
         You are not signed in, so there is no profile to show.{" "}
-        <a href={signInHref} className="text-primary font-bold underline">
+        <a href={signInHref} className="text-primary font-bold whitespace-nowrap underline">
           Sign in
         </a>
       </p>
