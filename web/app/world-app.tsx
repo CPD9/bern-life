@@ -29,6 +29,7 @@ import { showMeRoute } from "./show-me-route";
 import { useWorldApps } from "./use-world-apps";
 import { WorldHud, WorldSide, focusBeside } from "./world-hud";
 import { useWorldLumi } from "./world-lumi";
+import { visitedOffice } from "./visited-office";
 import { useMessageWith, useWorldConnections } from "./world-connections";
 import { WorldOverlay } from "./world-overlay";
 import { WorldScene } from "./world-scene";
@@ -81,7 +82,10 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   // Messages and connection requests reach the bell from the server; a new message moves the
   // unread count, which reads the server's notifications again.
   useInboxSync(signedIn, unreadMessages);
-  const connections = useWorldConnections({ signedIn, lite: settings.lite, reducedMotion });
+  const connections = useWorldConnections({
+    signedIn,
+    renderRoom: visitedOffice(settings.lite, reducedMotion),
+  });
   const shownView = view ?? landingView(onboarding.done);
   // Called after useStory, so the story already listens when the office reports it is ready.
   const sitAtDesk = useOfficeReady(shownView === "home", onboarding.done);

@@ -1,9 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
-import type { ReactElement } from "react";
 import type { ConnectionsApi } from "@/features/connections/connections-api";
 import type { ConnectionView } from "@/features/connections/types";
-import { OfficeRoom } from "@/features/office/office-room";
 import type { AppEventName } from "@/infrastructure/app-events";
 import { useMessageWith, useWorldConnections } from "./world-connections";
 
@@ -18,6 +16,8 @@ function asked(status: ConnectionView["status"]): ConnectionView {
     respondedAt: null,
   };
 }
+
+const renderRoom = (ownerName: string) => `room of ${ownerName}`;
 
 function fakeApi(signedIn: boolean) {
   let requests = [asked("pending")];
@@ -39,8 +39,7 @@ describe("useWorldConnections", () => {
     const { result } = renderHook(() =>
       useWorldConnections({
         signedIn: true,
-        lite: true,
-        reducedMotion: true,
+        renderRoom,
         api: server.api,
         events: { emit: (name) => void heard.push(name) },
       }),
@@ -54,18 +53,12 @@ describe("useWorldConnections", () => {
     expect(result.current.people).toEqual([{ handle: "bea", displayName: "Bea Example" }]);
   });
 
-  test("signed out there are no people, and a visited office is drawn read-only", async () => {
+  test("signed out there are no people, and the host's room is what a visit shows", async () => {
     const { api } = fakeApi(false);
-    const { result } = renderHook(() =>
-      useWorldConnections({ signedIn: false, lite: true, reducedMotion: true, api }),
-    );
+    const { result } = renderHook(() => useWorldConnections({ signedIn: false, renderRoom, api }));
     await act(async () => {});
     expect(result.current.people).toBeNull();
-    const room = result.current.wiring.renderRoom("Lena Beispiel") as ReactElement<{
-      visiting: string;
-    }>;
-    const { type, props } = room;
-    expect([type === OfficeRoom, props.visiting]).toEqual([true, "Lena Beispiel"]);
+    expect(result.current.wiring.renderRoom).toBe(renderRoom);
   });
 });
 

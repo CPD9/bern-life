@@ -15,6 +15,7 @@ import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useSettings } from "@/infrastructure/use-settings";
 import { notifyLoop, useOfficeApps } from "../office-apps";
 import { unreadRefresh, useUnreadMessages } from "../use-unread-messages";
+import { visitedOffice } from "../visited-office";
 import { connectionsApp, useMessageWith, useWorldConnections } from "../world-connections";
 
 export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
@@ -29,7 +30,10 @@ export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
   useInboxSync(signedIn, unreadMessages);
   const [settings] = useSettings();
   const reducedMotion = useReducedMotion();
-  const connections = useWorldConnections({ signedIn, lite: settings.lite, reducedMotion });
+  const connections = useWorldConnections({
+    signedIn,
+    renderRoom: visitedOffice(settings.lite, reducedMotion),
+  });
   const message = useMessageWith();
   const { apps } = useOfficeApps({
     navigator,

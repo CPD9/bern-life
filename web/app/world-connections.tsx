@@ -7,12 +7,12 @@ import { connectedPeople } from "@/features/connections/network";
 import { type ConnectionsController, useConnections } from "@/features/connections/use-connections";
 import type { StartWith } from "@/features/messages/messages-app";
 import { notificationStore, useNotifications } from "@/features/notifications/use-notifications";
-import { OfficeRoom } from "@/features/office/office-room";
 import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 
 // Connections as the app composes them: one controller for the desk, the phone and You's People
-// tab; a visited office drawn by the office feature, read-only; and the story told when a
-// connection is made, which only an accepted request does.
+// tab; a visited office drawn read-only by the host (app/visited-office.tsx), which keeps the 3D
+// scene out of this module; and the story told when a connection is made, which only an accepted
+// request does.
 
 export type ConnectionsWiring = {
   controller: ConnectionsController;
@@ -22,16 +22,15 @@ export type ConnectionsWiring = {
 
 type Input = {
   signedIn: boolean;
-  lite: boolean;
-  reducedMotion: boolean;
+  /** The office as a visitor sees it. */
+  renderRoom: (ownerName: string) => ReactNode;
   events?: AppEventSink;
   api?: ConnectionsApi;
 };
 
 export function useWorldConnections({
   signedIn,
-  lite,
-  reducedMotion,
+  renderRoom,
   events = appEvents,
   api = httpConnectionsApi,
 }: Input) {
@@ -42,13 +41,7 @@ export function useWorldConnections({
     refreshKey: `${signedIn}:${latest}`,
     onConnected: () => events.emit("connection_saved"),
   });
-  const wiring: ConnectionsWiring = {
-    controller,
-    api,
-    renderRoom: (ownerName) => (
-      <OfficeRoom visiting={ownerName} lite={lite} reducedMotion={reducedMotion} />
-    ),
-  };
+  const wiring: ConnectionsWiring = { controller, api, renderRoom };
   return {
     wiring,
     /** Accepted connections for You's People tab; null when signed out. */
