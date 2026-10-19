@@ -4,7 +4,7 @@
 
 import { type Profile, emptyProfile, parseProfile } from "./profile";
 
-export const onboardingSteps = ["role", "look", "goal", "visibility"] as const;
+export const onboardingSteps = ["role", "look", "goal", "visibility", "agent"] as const;
 
 export type StepId = (typeof onboardingSteps)[number];
 
@@ -13,6 +13,7 @@ export const stepTitles: Readonly<Record<StepId, string>> = {
   look: "Your look",
   goal: "What brings you here?",
   visibility: "Who sees what",
+  agent: "Create your agent",
 };
 
 export type OnboardingState = {

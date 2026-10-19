@@ -45,11 +45,17 @@ export type MatchReport = {
   readonly madeAt: string;
 };
 
-const modeLabel: Record<SearchResponse["mode"], string> = {
-  live: "Live",
-  replay: "Replay",
-  mock: "MOCK",
-};
+/** "mock" from the engine is real pages searched without a model; only fixtures are MOCK. */
+function modeLabel(mode: SearchResponse["mode"], fixture: boolean): string {
+  switch (mode) {
+    case "live":
+      return "Live";
+    case "replay":
+      return "Replay";
+    case "mock":
+      return fixture ? "MOCK" : "Plain search";
+  }
+}
 
 function percent(value: number | null): string {
   return value === null ? notComputed : `${Math.round(value * 100)}%`;
@@ -142,7 +148,7 @@ export function buildReport(
     addedWordings: response.expanded_terms,
     highlightTerms,
     cards: response.results.map((result) => card(result, highlightTerms)),
-    modeLabels: [modeLabel[response.mode], ...(fixture ? ["FIXTURE"] : [])],
+    modeLabels: [modeLabel(response.mode, fixture), ...(fixture ? ["FIXTURE"] : [])],
     snapshot: response.versions.snapshot,
     madeAt,
   };
