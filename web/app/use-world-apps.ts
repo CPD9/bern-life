@@ -40,8 +40,11 @@ export function useWorldApps({
     unreadMessages,
     health,
   };
+  const office = useOfficeApps({ ...shared, desktop });
   return {
-    office: useOfficeApps({ ...shared, desktop }),
+    office: office.apps,
+    /** Saves an answer as a match report and selects it in the desk's Reports window. */
+    makeDeskReport: office.makeReport,
     phone: phoneApps({ ...shared, onShowOnMap, onOpenApp }),
   };
 }

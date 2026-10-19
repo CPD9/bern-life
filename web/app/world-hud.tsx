@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type Ref, useState } from "react";
 import type { AccountState } from "@/features/accounts/use-account";
 import { type PersonConfig, personBadgeColour } from "@/features/avatar/person-config";
 import { NotificationBell } from "@/features/notifications/notification-bell";
@@ -58,6 +58,8 @@ type WorldSideProps = {
   settle: { readonly settled: boolean; readonly dismissed: boolean; open(): void; dismiss(): void };
   onShowMe: (target: ShowMeTarget) => void;
   onOpenStoryMenu: () => void;
+  /** Takes focus when the card that had it goes away, such as after settling. */
+  landingRef?: Ref<HTMLDivElement>;
 };
 
 export function WorldSide({
@@ -68,6 +70,7 @@ export function WorldSide({
   settle,
   onShowMe,
   onOpenStoryMenu,
+  landingRef,
 }: WorldSideProps) {
   const [greetingDismissed, setGreetingDismissed] = useState(false);
   const [joinDismissed, setJoinDismissed] = useState(false);
@@ -82,7 +85,7 @@ export function WorldSide({
     settleDismissed: settle.dismissed,
   });
   return (
-    <>
+    <div ref={landingRef} tabIndex={-1} className="flex flex-col items-start gap-3">
       {card === "greeting" && <GuideGreeting onDismiss={() => setGreetingDismissed(true)} />}
       {card === "join" && <JoinPrompt onNotNow={() => setJoinDismissed(true)} />}
       {card === "onboarding" && <OnboardingPrompt />}
@@ -92,6 +95,6 @@ export function WorldSide({
         <QuestPanel controller={story} onShowMe={onShowMe} onOpenMenu={onOpenStoryMenu} />
       )}
       {storyDemo && <CriteriaChecklist controller={story} />}
-    </>
+    </div>
   );
 }

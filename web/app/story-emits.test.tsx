@@ -3,7 +3,8 @@ import { act, fireEvent, render, renderHook, screen } from "@testing-library/rea
 import { type ReactElement, type ReactNode, cloneElement } from "react";
 import { parseNumbers } from "@/features/garage/numbers";
 import { numbersBody, queuedApi } from "@/features/garage/testing";
-import { browserLibrary } from "@/features/library/library-store";
+import { type LibraryStore, createLibraryStore } from "@/features/library/library-store";
+import { memoryStorage } from "@/features/library/testing";
 import { callResult } from "@/features/opportunities/testing";
 import type { OpportunitiesAppProps } from "@/features/opportunities/opportunities-app";
 import { createSettleStore } from "@/features/settle/settle-store";
@@ -20,14 +21,15 @@ function recorder() {
 }
 
 describe("saving from Opportunities", () => {
+  let library: LibraryStore;
   beforeEach(() => {
-    for (const item of browserLibrary().get()) browserLibrary().remove(item);
+    library = createLibraryStore(() => memoryStorage());
   });
 
   function saveControl(result: Parameters<NonNullable<OpportunitiesAppProps["renderSave"]>>[0]) {
     const { emitted, events } = recorder();
-    const app = opportunitiesApp(false, events) as ReactElement<OpportunitiesAppProps>;
-    render(<>{app.props.renderSave!(result)}</>);
+    const app = opportunitiesApp({ fixtureMode: false, events, library });
+    render(<>{(app as ReactElement<OpportunitiesAppProps>).props.renderSave!(result)}</>);
     return emitted;
   }
 
@@ -38,6 +40,9 @@ describe("saving from Opportunities", () => {
     expect(emitted).toEqual(["library_item_saved", "opportunity_saved"]);
     act(() => fireEvent.click(screen.getByRole("button", { name: /^Saved/ })));
     expect(emitted).toEqual(["library_item_saved", "opportunity_saved"]);
+    expect(library.get().map((item) => [item.kind, item.ref])).toEqual([
+      ["opportunity", callResult().profile.id],
+    ]);
   });
 
   test("a person counts as a library item only", () => {
@@ -86,7 +91,7 @@ describe("settling", () => {
   test("choosing a plot reports settled once, and the plot is kept", () => {
     const { emitted, events } = recorder();
     const store = memoryStore();
-    const { result } = renderHook(() => useWorldSettle(events, () => store));
+    const { result } = renderHook(() => useWorldSettle(events, { store: () => store }));
     expect(result.current.plot).toBeNull();
     act(() => result.current.open());
     const { rerender } = render(<>{result.current.dialog as ReactNode}</>);
@@ -100,7 +105,9 @@ describe("settling", () => {
   });
 
   test("the dialog is mounted only while it is open", () => {
-    const { result } = renderHook(() => useWorldSettle(recorder().events, () => memoryStore()));
+    const { result } = renderHook(() =>
+      useWorldSettle(recorder().events, { store: () => memoryStore() }),
+    );
     expect(result.current.dialog).toBe(false);
     act(() => result.current.open());
     expect(result.current.dialog).not.toBe(false);

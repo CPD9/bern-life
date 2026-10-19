@@ -17,11 +17,25 @@ export type WorldSettle = {
   dialog: ReactNode;
 };
 
+type SettleOptions = {
+  store?: () => SettleStore;
+  /** Where focus goes when what opened the dialog is gone: settling replaces the card. */
+  landing?: () => HTMLElement | null;
+};
+
+/** Once the page has settled, puts focus on `landing` if it fell to the page or went away. */
+export function keepFocus(landing: (() => HTMLElement | null) | undefined): void {
+  setTimeout(() => {
+    const active = document.activeElement;
+    if (active === null || active === document.body || !active.isConnected) landing?.()?.focus();
+  }, 0);
+}
+
 // Settling after onboarding: the card and the quest's "Show me" open the dialog; choosing a plot
 // stores it on this device and reports `settled` to the story.
 export function useWorldSettle(
   events: AppEventSink,
-  store: () => SettleStore = browserSettleStore,
+  { store = browserSettleStore, landing }: SettleOptions = {},
 ): WorldSettle {
   const plot = useSyncExternalStore(
     (listener) => store().subscribe(listener),
@@ -35,13 +49,19 @@ export function useWorldSettle(
     plot,
     dismissed,
     open: () => setOpen(true),
-    dismiss: () => setDismissed(true),
+    dismiss: () => {
+      setDismissed(true);
+      keepFocus(landing);
+    },
     dialog: open && (
       <Settle
         places={PLACES}
         store={store()}
         onSettled={() => events.emit("settled")}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          keepFocus(landing);
+        }}
       />
     ),
   };

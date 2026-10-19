@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { httpAccountApi } from "@/features/accounts/account-api";
 import { useAccount } from "@/features/accounts/use-account";
 import { useAvatar } from "@/features/avatar/use-avatar";
@@ -24,6 +24,7 @@ import { useSettings } from "@/infrastructure/use-settings";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
 import { useWorldPhone } from "./world-phone";
 import { unreadRefresh, useUnreadMessages } from "./use-unread-messages";
+import { showMeRoute } from "./show-me-route";
 import { useWorldApps } from "./use-world-apps";
 import { WorldHud, WorldSide } from "./world-hud";
 import { useWorldLumi } from "./world-lumi";
@@ -106,13 +107,17 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     navigator,
     onShowOnMap: showOnMap,
     onOpenAsk: () => phone.openApp("ask"),
+    onMakeReport: apps.makeDeskReport,
+    onOpenReports: () => setDesktopOpen(true),
   });
-  const settle = useWorldSettle(appEvents);
+  const sideLanding = useRef<HTMLDivElement>(null);
+  const settle = useWorldSettle(appEvents, { landing: () => sideLanding.current });
 
   function showMe(target: ShowMeTarget) {
-    if (target === "map") setView("map");
-    else if (target === "settle") settle.open();
-    else phone.openApp(target);
+    const route = showMeRoute(target);
+    if (route.kind === "view") setView(route.view);
+    else if (route.kind === "settle") settle.open();
+    else phone.openApp(route.appId);
   }
 
   function sitDown() {
@@ -145,6 +150,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           settle={{ ...settle, settled: settle.plot !== null }}
           onShowMe={showMe}
           onOpenStoryMenu={() => setStoryMenuOpen(true)}
+          landingRef={sideLanding}
         />
       }
       canvas={
