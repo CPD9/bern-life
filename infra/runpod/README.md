@@ -1,8 +1,9 @@
 # Apertus on RunPod (vLLM), for smoke tests
 
 The demo runs on CSCS (`infra/cscs.md`). RunPod is not in Switzerland, so it serves smoke tests
-only. The same scripts run Apertus on local or air-gapped GPUs. Peter owns the pod; nothing runs on
-it without his go-ahead.
+only. The same scripts run Apertus on local or air-gapped GPUs
+([`../sovereign.md`](../sovereign.md)). Peter owns the pod; nothing runs on it without his
+go-ahead.
 
 Pod: two GPUs with at least 80 GB each (the recorded runs used 2 × RTX PRO 6000 Blackwell, 96 GB).
 
