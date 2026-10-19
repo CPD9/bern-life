@@ -76,7 +76,9 @@ export function createLibraryStore(storage: () => LibraryStorage): LibraryStore 
       return true;
     },
     remove: (item) => set(removeItem(latest(), item)),
+    // Another tab just wrote, so storage is fresh again, even if this tab's last write failed.
     refresh: () => {
+      memoryOnly = false;
       current = latest();
       notify();
     },

@@ -92,6 +92,36 @@ describe("storage that reads but cannot write", () => {
   });
 });
 
+describe("a tab whose write failed, then another tab writes", () => {
+  test("a storage event makes storage the truth again, and later writes keep both tabs' changes", () => {
+    const shared = memoryStorage();
+    let failing = false;
+    const flaky = {
+      getItem: shared.getItem,
+      setItem: (key: string, value: string) => {
+        if (failing) throw new Error("quota exceeded");
+        shared.setItem(key, value);
+      },
+    };
+    const x = savedItem("demo-x", "profile", "2026-10-19T01:00:00.000Z");
+    const y = savedItem("demo-y", "profile", "2026-10-19T02:00:00.000Z");
+    const z = savedItem("demo-z", "profile", "2026-10-19T03:00:00.000Z");
+    const w = savedItem("demo-w", "profile", "2026-10-19T04:00:00.000Z");
+    const a = createLibraryStore(() => flaky);
+    const b = createLibraryStore(() => shared);
+    a.save(x);
+    failing = true;
+    a.save(y);
+    b.remove(x);
+    b.save(z);
+    a.refresh();
+    expect(a.get()).toEqual([z]);
+    failing = false;
+    expect(a.save(w)).toBe(true);
+    expect(createLibraryStore(() => shared).get()).toEqual([w, z]);
+  });
+});
+
 describe("parseItems", () => {
   test("drops what does not parse and duplicates, keeping the first copy", () => {
     const raw = JSON.parse(JSON.stringify([older, newer])) as Record<string, unknown>[];
