@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { exampleSource, guideSteps, sourceFields } from "./source-guide";
+import { exampleSourceText, guideSteps, sourceFields } from "./source-guide";
 
 function Names({ names }: { names: readonly string[] }) {
   return names.map((name, index) => (
@@ -42,8 +42,8 @@ export function AddSourceGuide() {
         ))}
       </dl>
       <h4 className="font-extrabold">An invented example</h4>
-      <pre className="bg-chip rounded-2xl p-4 text-xs break-all whitespace-pre-wrap">
-        <code>{JSON.stringify(exampleSource, null, 2)}</code>
+      <pre className="bg-chip rounded-2xl p-4 text-xs break-words whitespace-pre-wrap">
+        <code>{exampleSourceText}</code>
       </pre>
       <h4 className="font-extrabold">Then run, from the repository root</h4>
       <ol className="flex list-decimal flex-col gap-3 pl-5">
@@ -51,7 +51,10 @@ export function AddSourceGuide() {
           <li key={step.text}>
             <p>{step.text}</p>
             {step.commands.map((command) => (
-              <pre key={command} className="text-xs break-all whitespace-pre-wrap">
+              <pre
+                key={command}
+                className="bg-chip mt-1 rounded-lg px-3 py-2 text-xs break-words whitespace-pre-wrap"
+              >
                 <code>{command}</code>
               </pre>
             ))}

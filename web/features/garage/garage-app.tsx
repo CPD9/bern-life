@@ -34,7 +34,7 @@ export function GarageApp({
   return (
     <div className="flex flex-col gap-6">
       <p>The models behind the Navigator, and what the engine measured on this snapshot.</p>
-      {fixtureMode && (
+      {fixtureMode && state.status === "ok" && (
         <p className="bg-warn-bg text-warn-ink rounded-2xl px-4 py-3 text-sm">
           <span className="font-extrabold">FIXTURE</span> Invented numbers for the demo. Nothing
           here was measured.
@@ -49,37 +49,46 @@ export function GarageApp({
 }
 
 function StatusLine({ state, onRetry }: { state: NumbersState; onRetry: () => void }) {
-  if (state.status === "loading") return <p>Loading the measured numbers.</p>;
-  if (state.status === "not_connected") return <p>The numbers are not connected yet.</p>;
-  if (state.status === "error") {
-    return (
-      <>
-        <p>The numbers could not be loaded.</p>
-        <button
-          type="button"
-          onClick={onRetry}
-          className="bg-primary text-primary-ink rounded-pill px-5 py-2 font-bold"
-        >
-          Try again
-        </button>
-      </>
-    );
+  switch (state.status) {
+    case "loading":
+      return <p>Loading the measured numbers.</p>;
+    case "not_connected":
+      return <p>The numbers are not connected yet.</p>;
+    case "error":
+      return (
+        <>
+          <p>The numbers could not be loaded.</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="bg-primary text-primary-ink rounded-pill px-5 py-2 font-bold"
+          >
+            Try again
+          </button>
+        </>
+      );
+    case "ok":
+      return <Generated numbers={state.numbers} />;
   }
-  return null;
+}
+
+function Generated({ numbers }: { numbers: Numbers }) {
+  const generated = new Date(numbers.generated_at);
+  return (
+    <p className="text-muted text-sm">
+      Snapshot <span className="font-bold">{numbers.snapshot}</span>, numbers generated{" "}
+      <time dateTime={numbers.generated_at}>
+        {formatBernShortDate(generated)} {formatBernTime(generated)}
+      </time>{" "}
+      Bern time.
+    </p>
+  );
 }
 
 function NumbersView({ numbers }: { numbers: Numbers }) {
   const id = useId();
-  const generated = new Date(numbers.generated_at);
   return (
     <>
-      <p className="text-muted text-sm">
-        Snapshot <span className="font-bold">{numbers.snapshot}</span>, numbers generated{" "}
-        <time dateTime={numbers.generated_at}>
-          {formatBernShortDate(generated)} {formatBernTime(generated)}
-        </time>{" "}
-        Bern time.
-      </p>
       <section aria-labelledby={`${id}-eval`} className="flex flex-col gap-3">
         <h3 id={`${id}-eval`} className="text-lg font-extrabold">
           Search quality

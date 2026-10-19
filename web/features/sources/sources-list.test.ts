@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 import schema from "../../../contracts/source.schema.json";
-import { exampleSource, guideSteps, sourceFields } from "./source-guide";
+import { exampleSourceText, guideSteps, sourceFields } from "./source-guide";
 import { readSources } from "./sources-api";
 import { formatFetchedDate, parseSourcesList, siteRoot } from "./sources-list";
 import { jsonResponse, sourcesBody } from "./testing";
@@ -79,9 +79,11 @@ describe("source guide", () => {
   test("the invented example is a valid source file", () => {
     const ajv = new Ajv2020({ strict: true });
     addFormats(ajv);
-    const valid = ajv.validate(schema, exampleSource);
+    const example: unknown = JSON.parse(exampleSourceText);
+    const valid = ajv.validate(schema, example);
     expect(ajv.errors ?? []).toEqual([]);
     expect(valid).toBe(true);
+    expect(example).toMatchObject({ id: "demo-institute", sites: [{ host: "example.org" }] });
   });
 
   test("the steps crawl and extract the example's id", () => {

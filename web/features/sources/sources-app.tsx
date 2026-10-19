@@ -22,10 +22,10 @@ export function SourcesApp({ fixtureMode, api = httpSourcesApi }: SourcesAppProp
     <div className="flex flex-col gap-8">
       <section aria-labelledby={`${id}-list`} className="flex flex-col gap-3">
         <h3 id={`${id}-list`} className="text-lg font-extrabold">
-          Sources
+          Institutions crawled
         </h3>
         <p>Each source is an institution whose public pages the engine crawls.</p>
-        {fixtureMode && (
+        {fixtureMode && state.status === "ok" && (
           <p className="bg-warn-bg text-warn-ink rounded-2xl px-4 py-3 text-sm">
             <span className="font-extrabold">FIXTURE</span> Invented sources and counts for the
             demo.
