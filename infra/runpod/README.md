@@ -18,7 +18,8 @@ On the pod, in `/workspace`:
 1. `bash install_vllm.sh`: the swiss-ai vLLM fork `apertus-1-5-final` and the swiss-ai
    Transformers fork at the commit the model card names.
 2. `hf auth login`, by hand: the 8B is gated, the 70B FP8 build is not.
-3. `bash serve_70b.sh`: `onprem-ai/Apertus-v1.5-70B-FP8` on GPU 1, `127.0.0.1:8002`.
+3. `bash serve_70b.sh`: `onprem-ai/Apertus-v1.5-70B-FP8` on GPU 1, `127.0.0.1:8002`. On a pod
+   with one GPU: `CUDA_VISIBLE_DEVICES=0 bash serve_70b.sh`.
 4. Optional: `bash serve_8b.sh`: `swiss-ai/Apertus-v1.5-8B` on GPU 0, `127.0.0.1:8000`.
 
 ## Tunnel

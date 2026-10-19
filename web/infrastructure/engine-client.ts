@@ -23,6 +23,7 @@ type Post = { readonly body: unknown; readonly live: boolean };
 function errorForStatus(status: number): EngineError {
   if (status === 400) return "bad_request";
   if (status === 404) return "not_found";
+  if (status === 429) return "rate_limited";
   return "engine_error";
 }
 

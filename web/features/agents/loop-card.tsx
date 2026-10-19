@@ -93,9 +93,11 @@ export function LoopCard({ loop, status, snapshot, onRun, onRemove }: LoopCardPr
           New snapshot: run again
         </p>
       )}
-      {status === "failed" && (
+      {(status === "failed" || status === "rate_limited") && (
         <p role="alert" className="bg-warn-bg text-warn-ink rounded-xl px-3 py-1.5 text-sm">
-          The search did not answer. Try again.
+          {status === "failed"
+            ? "The search did not answer. Try again."
+            : "Too many requests from here right now; try again in a few minutes."}
         </p>
       )}
       <ChangeList changes={loop.changes} />

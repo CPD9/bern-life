@@ -17,57 +17,91 @@ make run      # Postgres, the engine and the web app, replaying the bundle: no G
 ```
 
 Open **http://127.0.0.1:3000**. `make stop` stops it again. The search without the world is at
-http://127.0.0.1:3000/navigator.
+http://127.0.0.1:3000/navigator, and the office computer without the 3D room at
+http://127.0.0.1:3000/office.
 
-**A 60-second tour**
+**A short tour**
 
 1. **Land on the map.** A drawn Bern with the Aare, the old town and the bridges. Institutes stand
-   at their own street addresses. There are no map tiles and nothing loads from elsewhere.
+   at the street address their own pages give (in their district when no page gives one), and so
+   do places for business in Bern such as the Bern Economic Development Agency, Innosuisse,
+   Effinger coworking and PROGR. There are no map tiles and nothing loads from elsewhere.
 2. **Ask.** Tap **Phone**, then **Ask**, and paste
    `Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?`
    The answer lists the extra search terms Apertus added (labelled as search terms, never as
-   facts) and up to 20 results. Then try
+   facts) and the results. Then try
    `Results of the ALPENHITZE cohort study led by Prof. Beat Zurbriggen at ISPM`: the professor and
    the study are invented, so it says that no verifiable source exists instead of guessing.
 3. **Open the evidence.** Tap any role, unit or expertise on a result card. The sentence from the
    page opens with its link and the date it was fetched. "Why it matches" cites only those claims.
+   **Show on map** lights the places that hold results; open a place to see its units, each with
+   its address and source page (or its district, when its pages give no address), and the matches
+   found there.
 4. **Join.** Joining is by invite. Make a code with
    `cd web && bun install && DATABASE_URL=postgresql://bernlife:bernlife@127.0.0.1:5433/bernlife bun run invite:create`
    (needs [Bun](https://bun.sh)), then choose **Join Bern Life**.
-5. **Onboarding.** Five short steps: who you are in Bern, your look (you are a person), what
-   brings you here, who sees what, and your first agent: a bear called Lumi, which you can rename.
-6. **Back in Bern.** Onboarding ends on the map again. A card beside it offers **Start the
-   story**, short quests that each walk through one part of the case and finish only when you
-   actually do the step, or **Explore freely**.
-7. **What is next.** On the phone, Agents, Messages and Projects & calls are marked
-   **Coming next**: what each will do is written there, and none of it is in this build yet.
+5. **Onboarding.** Lumi, your first agent, greets you. Five short steps follow: who you are in
+   Bern, your look (players are people), what brings you here, who sees what, and your agent:
+   Lumi is a bear you can rename and restyle. A card then offers to choose where your office
+   stands; each plot lists the nearest places with their sourced addresses.
+6. **Your office.** Onboarding ends in your office, the **Home** tab. Sit at the desk to use the
+   computer, nine apps: **Navigator** (the same search as Ask, and a project brief), **Agents**
+   (Lumi's skills, and loops: saved searches you run again, whose new and dropped results reach
+   the bell), **Reports** (match reports with their sources), **Messages** (to members who
+   joined), **Library** (what you saved, and your documents with their trace),
+   **Opportunities** (funding calls, services and spaces; an amount or deadline appears only
+   inside the sentence it was read from), **Garage** (the Apertus models and the evaluator's
+   numbers for this snapshot, as the engine serves them), **Sources** (the institutions crawled,
+   and how to add one) and **Settings**. The door leads back to the map; the phone carries Ask,
+   Messages, Agents, Opportunities, Library and Settings.
+7. **Lumi.** Your agent floats beside you as the bear you made, and stands in front of the city
+   hall on the map; either opens its chat. Lumi searches with the engine's own tools and answers
+   with the same source cards as Ask. A person it names must be among those results, a reply it
+   cannot support is replaced by a summary of the cited claims, and with nothing behind it Lumi
+   says it found no verifiable source. An answer lights its places on the map and may open a card
+   in Ask; a match report waits for your click and opens in the desk's Reports window.
+8. **The story.** A card offers **Start the story**, quests about moving a business to Bern that
+   each walk through one part of the case and complete only when you actually do the step in the
+   app, or **Explore freely**. Your badge opens the **You** sheet: profile, goals, skills, people
+   and agents, with real content only.
 
-Questions that are not recorded in the bundle's model cache still get an answer: plain search
-over the stored pages, and the app says so. Only `make live` with a model endpoint in `.env`
-calls Apertus.
+Replay is the default. Questions recorded in the bundle's model cache get Apertus's search terms
+and explanations; any other question still gets plain search over the stored pages, and the app
+says so. A new project brief needs the model: replay has only the briefs recorded in the bundle,
+and the app says so for any other. In replay Lumi searches your message and summarises the cited
+claims; its own recorded answers ship with the next bundle. Only `make live-run` (in place of
+`make run`) calls Apertus: it starts only when the model endpoint set in `.env` answers, and the
+model is called only for signed-in members under their limits, at most `LLM_CALL_BUDGET` calls a
+day (unset: none). Everyone else is answered from the recordings.
 
 ## Against the case
 
-Measured on the frozen gold set (48 questions in English, German and French, written from public
-pages before search existed) with the snapshot bundle `bundle-20261019-1`. The numbers are the
-evaluator's output: after `pip install -e engine`, `make fetch && make eval` prints the same
-table and writes `eval/out/metrics.json`. Recall@10 and MRR intervals are a bootstrap over base
-questions (2,000 draws, seed 1); proportions have Wilson intervals. Metrics and decision rules
-were fixed in advance in [`eval/PREREGISTRATION.md`](eval/PREREGISTRATION.md).
+Measured by the evaluator on the frozen gold set: questions in English, German and French, written
+from public pages before search existed, scored on the pinned snapshot bundle. The evaluator is
+separate code from the search ([`eval/src/evaluator/`](eval/src/evaluator/)) and imports nothing
+from the engine. Its metrics, intervals and decision rules were fixed in advance in
+[`eval/PREREGISTRATION.md`](eval/PREREGISTRATION.md): recall@10 and MRR intervals are a bootstrap
+over base questions, proportions have Wilson intervals. Every number in the table is written by
+[`infra/readme_numbers.py`](infra/readme_numbers.py) from the evaluator's output (`make eval` needs
+`jsonschema`, which `pip install -e engine` brings), and CI fails when the two differ.
 
-| Case success criterion | Where it shows | Measured (95% interval) |
+<!-- numbers:start -->
+<!-- Written by infra/readme_numbers.py from eval/out/metrics.json: change the script, not this block. -->
+
+| What the case asks | Where it shows | Measured (95% interval) |
 |---|---|---|
 | 1. Finds the right people: ≥ 80% of expected experts and units in the top 10 | The result list in Ask | recall@10 **0.36** [0.20, 0.53] against the case's **0.80**: **not met**. MRR 0.43 [0.26, 0.59]. |
-| 2. Different wording finds the same experts | "Also searched for" on every answer: synonyms, lay terms, translations, acronyms | recall@10 on the site's own wording 0.39 [0.21, 0.57]; synonyms 0.82 [0.67, 1.00] (3 questions); lay terms 0.33 [0.00, 1.00] (3); translations 0.24 [0.08, 0.43] (12). By language: en 0.51 [0.32, 0.70], de 0.18 [0.05, 0.41], fr 0.12 [0.00, 0.25]. |
-| 3. Every result traceable, nothing invented | The evidence panel behind every claim: verbatim sentence, source link, fetch date | Claims whose sentence is verbatim on their stored page: 4,823 / 4,823, **100%** [1.00, 1.00]. Results not in the snapshot (invented entities): **0**. |
-| 3. (ethics) Says so when no source exists | "No verifiable source" instead of results | Invented questions abstained **8 / 10** [0.49, 0.94], below the pre-registered 9 / 10. False abstentions **0 / 38** [0.00, 0.09]. |
-| 4. Structured results | Result card fields: person, role, unit, expertise, projects, infrastructure and services, why it matches, source link | Mean share of the 8 fields filled: 0.61 over 371 shown results. No interval: the pre-registered human check of what each page could fill is still to do. |
-| 5. Covers UniBE, ARTORG and Diabetes Center Berne | Places on the map; the source on every card | recall@10 UniBE 0.18 [0.05, 0.31], ARTORG 0.44 [0.17, 0.76], DCB 0.58 [0.32, 0.88]. Share of top-10 slots 0.60 / 0.23 / 0.17 against share of profiles 0.79 / 0.13 / 0.07. |
+| 2. Different wording finds the same experts | "Also searched for" on every answer: synonyms, lay terms, translations, acronyms | recall@10 on the site's own wording 0.39 [0.21, 0.57] (14 questions); synonyms 0.82 [0.67, 1.00] (3); lay terms 0.33 [0.00, 1.00] (3); translations 0.24 [0.08, 0.43] (12). By language: en 0.51 [0.32, 0.70] (22), de 0.18 [0.05, 0.41] (11), fr 0.12 [0.00, 0.25] (5). Top-10 overlap with the site's wording (mean Jaccard): synonyms 0.32, lay terms 0.17, translations 0.27. |
+| 3. Every result traceable, nothing invented | The evidence panel behind every claim: verbatim sentence, source link, fetch date | Claims whose sentence is verbatim on their stored page: 4,819 / 4,819, **100%** [99.9%, 100%]. Results not in the snapshot (invented entities): **0**. Pre-registered rule: **met**. |
+| Ethics: says so when no reliable source exists | "No verifiable source" instead of results | Invented questions abstained **8 / 10** [0.49, 0.94]; the pre-registered rule asks ≥ 9 / 10, and at most 1 false abstention on the site's own wording, where there are **0**: **not met**. False abstentions on all answerable questions **0 / 38** [0.00, 0.09]. |
+| 4. Structured results | Result card fields: person, role, unit, expertise, projects, infrastructure and services, why it matches, source link | Mean share of the 8 fields filled: 0.61 over 371 shown results. Filled per field: person 371, role/affiliation 134, unit 190, expertise 278, projects 44, infrastructure/services 53, reason 371, source link 371. No interval: the pre-registered human check of what each page could fill is still to do. |
+| 5. Covers UniBE, ARTORG and Diabetes Center Berne | Places on the map; the source on every card | recall@10 UniBE 0.18 [0.05, 0.31], ARTORG 0.44 [0.17, 0.76], DCB 0.58 [0.32, 0.88]. Share of top-10 slots 0.60 / 0.23 / 0.17 against share of profiles in the snapshot 0.76 / 0.13 / 0.07. |
 | 6. Easy to extend | One JSON file in [`sources/`](sources/) and one command ([playbook](docs/playbooks/add-a-source.md)) | Not a measured number. `python -m bernlife crawl --source <id>` crawls a new file, and only that source's records are replaced. |
 
-The evaluator is separate code from the search ([`eval/src/evaluator/`](eval/src/evaluator/)) and
-imports nothing from the engine. How the numbers on each result are computed is in
-[`docs/metrics.md`](docs/metrics.md).
+Snapshot `bundle-20261019-2`, 48 gold questions. To reproduce: `make fetch && make eval && python3 infra/readme_numbers.py`. CI fails when this block differs from the evaluator's output.
+<!-- numbers:end -->
+
+How the numbers on each result are computed is in [`docs/metrics.md`](docs/metrics.md).
 
 ## How it works
 
@@ -106,6 +140,7 @@ public pages ─► crawl ─► extract with evidence ─► verify in code ─
 
 A company can also upload a project PDF. Each need keeps the sentence of the PDF it came from, and
 each matched expert shows which needs their cited claims cover. The PDF is read once and not kept.
+Reading a new brief needs the model, so it works in a live run, not in replay.
 
 ## Sovereignty
 
@@ -115,12 +150,14 @@ each matched expert shows which needs their cited claims cover. The PDF is read 
 - **Replay with no model.** Every model call goes through a cache that ships in the snapshot
   bundle, so `make run` answers without a GPU, a key or a network connection to any model.
 - **Your own hardware.** The vLLM scripts in [`infra/runpod/`](infra/runpod/README.md) serve
-  Apertus 70B (FP8) or 8B at pinned revisions on any machine with suitable GPUs, local or
-  air-gapped, behind a loopback tunnel.
+  Apertus 70B (FP8) or 8B at pinned revisions on GPUs you control, behind a loopback tunnel, and
+  the bundle replays on a machine with no network at all. Both paths are in
+  [`infra/sovereign.md`](infra/sovereign.md); they are documented, not yet rehearsed end to end.
 - **Self-hosted.** Postgres with pgvector, the engine and the web app run in Docker. The embedding
   model is downloaded once on the first start, at a pinned revision checked by sha256. The map is
   drawn in three.js without tiles, and the app loads no fonts or scripts from elsewhere. A hosted
-  copy runs on Exoscale in Geneva, invite-only ([`infra/exoscale.md`](infra/exoscale.md)).
+  copy runs on Exoscale in Geneva, invite-only, with nightly backups and an uptime check
+  (`python3 -m infra.check_hosted --watch`, [`infra/exoscale.md`](infra/exoscale.md)).
 
 ## Data protection
 
@@ -128,25 +165,40 @@ each matched expert shows which needs their cited claims cover. The PDF is read 
 - **No e-mail addresses or phone numbers are stored.** The contact is the source page.
 - **People from public pages are entries with sources, never avatars or characters** in the world.
 - **The snapshot bundle never enters git.** It is a sha256-pinned release asset
-  ([`bundle.lock`](bundle.lock)), so a page can be removed by publishing a new bundle.
+  ([`bundle.lock`](bundle.lock)) that carries the pages so that the replay demo, the hosted copy
+  and the evaluation all run from the same snapshot; it grants no licence to reuse them. A page is
+  removed on request by publishing a new bundle without it and reloading the hosted copy, whose
+  nightly backups age out after 14 days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)).
 - **Accounts are invite-only**, and a project PDF is read once and not kept.
-- Source pages remain the institutions' property; results quote only short evidence sentences
+- **Nothing leaves the app on its own.** Notifications are in-app (the bell); the agent sends
+  nothing outside the app without a click.
+- Source pages remain their publishers' property; results quote only short evidence sentences
   ([`NOTICE`](NOTICE), [`PROVENANCE.md`](PROVENANCE.md)).
 
 ## Limits and roadmap
 
-- **Recall is below the case's bar:** 0.36 against 0.80. A candidate is shown only when a claim
-  it cites shares a word with the question, so someone found only through a passage or a phrase in
-  another language stays hidden rather than shown without a reason.
-- **German and French questions find less** (de 0.18, fr 0.12) than English (0.51). There is no
-  stemming, so word forms such as "Kohlenhydrate" and "Kohlenhydraten" do not match.
-- **Two of ten invented questions still get results:** one asks about an invented project, and
-  one uses a French title the premise check does not know.
-- **UniBE is found least often** (0.18) of the three sources.
+- **Recall is below the case's bar** (criterion 1 in the table). A candidate is shown only when a
+  claim it cites shares a word with the question, so someone found only through a passage or a
+  phrase in another language stays hidden rather than shown without a reason.
+- **German and French questions find less than English** (criterion 2). There is no stemming, so
+  word forms such as "Kohlenhydrate" and "Kohlenhydraten" do not match.
+- **Not every invented question abstains:** 8 of 10, where the pre-registered rule asks 9 (the
+  ethics row). The two that still get results ask in French, one about an invented project and one
+  with a title the premise check does not know.
+- **UniBE is found least often** of the three sources (criterion 5).
 - Explanations are written in English only, and field completeness still needs its human check.
-- Next: matching word forms and claims across languages, the human completeness labels, a
-  calibrated confidence per result, and the funding, service and space sources already configured
-  in `sources/` loaded into the next bundle.
+- **In the game:** you cannot walk around the office yet, and on a phone-width screen (390 px) the
+  HUD covers the map's search summary. Two optional quests say why one of their steps cannot be
+  done yet: adding a source is a file in `sources/`, not an action in the app, and there is no
+  network of labs and experts. What you save to the Library and your office plot stay on this
+  device. A map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the
+  repository but not yet drawn in the world.
+- **Notifications stay in the app** (the bell). Opt-in e-mail or push notifications are not
+  decided yet.
+- **The next bundle is not pinned yet.** Replay and every number above come from
+  `bundle-20261019-2`, which holds no recorded answers of Lumi's own.
+- Next: matching word forms and claims across languages, the human completeness labels, and a
+  calibrated confidence per result.
 
 ## Team
 
@@ -157,5 +209,5 @@ each matched expert shows which needs their cited claims cover. The PDF is read 
 ## Licence
 
 Code under Apache-2.0 ([`LICENSE`](LICENSE)). Models: Apertus v1.5 (Swiss AI Initiative) and
-multilingual-e5-small. The case text is in [`docs/case.md`](docs/case.md); to contribute, read
-[`CONTRIBUTING.md`](CONTRIBUTING.md).
+multilingual-e5-small. Map geodata ©swisstopo ([`NOTICE`](NOTICE)). The case text is in
+[`docs/case.md`](docs/case.md); to contribute, read [`CONTRIBUTING.md`](CONTRIBUTING.md).

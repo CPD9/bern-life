@@ -20,6 +20,7 @@ import { ReportsApp } from "@/features/report/reports-app";
 import { SourcesApp } from "@/features/sources/sources-app";
 import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import { loopSearch } from "./loop-search";
 import { garageApp, libraryApp, opportunitiesApp, saveSlot } from "./shared-apps";
 
 /** A loop's news goes to the same store as the bell and the toasts. */
@@ -42,14 +43,10 @@ export function agentsApp(
   { navigatorApi, agentName, snapshot, notify }: AgentsInput,
   onTrySkill: (skill: Skill) => void,
 ): ReactNode {
-  async function search(query: string): Promise<SearchResponse | null> {
-    const outcome = await navigatorApi.search({ query });
-    return outcome.ok ? outcome.response : null;
-  }
   return (
     <AgentsApp
       agent={{ name: agentName }}
-      search={search}
+      search={loopSearch(navigatorApi)}
       onTrySkill={onTrySkill}
       notify={notify}
       snapshot={snapshot}

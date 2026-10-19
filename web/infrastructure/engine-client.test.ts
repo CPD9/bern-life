@@ -124,6 +124,9 @@ describe("createEngineClient", () => {
     expect(await clientReturning(() => new Response("", { status: 404 })).client.sources()).toEqual(
       { ok: false, error: "not_found" },
     );
+    expect(
+      await clientReturning(() => new Response("", { status: 429 })).client.search({ query: "x" }),
+    ).toEqual({ ok: false, error: "rate_limited" });
     expect(await clientReturning(() => new Response("", { status: 503 })).client.health()).toEqual({
       ok: false,
       error: "engine_error",

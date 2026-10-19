@@ -1,27 +1,33 @@
 """The Navigator agent (POST /api/agent): Apertus with three tools, answering only from them.
 
-The model may call search, brief and profile, MAX_TOOL_CALLS times a turn at most; each runs the
-engine's own functions, never HTTP, and every search or brief it ran comes back in `results`, so
-the app shows the evidence the reply rests on. The reply is checked in code: a person it names must
-be a profile among those results (grounding.py), every word must be a word of their names or
-claims or a linking word (reply_support.py), and it may hold no e-mail address or phone number.
-Otherwise it is replaced by a summary of the results' cited claims, so a premise in the question
-("Prof. X, who leads Y") does not come back as a fact. A reply with no result behind it is
-NO_SOURCE_REPLY, whatever the model wrote: there is nothing it could have been written from.
+The model may call search, brief and profile, MAX_TOOL_CALLS times a turn at most, as native tool
+calls or as the JSON steps any chat endpoint carries (agent_steps.py); each runs the engine's own
+functions, never HTTP, and every search or brief it ran comes back in `results`, so the app shows
+the evidence the reply rests on. The conversation so far goes to the model as context, never as
+evidence. The reply is checked in code: a person it names must be a profile among those results
+(grounding.py), every word must be a word of their names or claims or a linking word
+(reply_support.py), and it may hold no e-mail address or phone number. Otherwise it is replaced by
+a summary of the results' cited claims, so a premise in the question ("Prof. X, who leads Y") does
+not come back as a fact. A reply with no result behind it is NO_SOURCE_REPLY, whatever the model
+wrote: there is nothing it could have been written from.
 
-With no model (mock, a replay miss, a refused budget, a failure marker), or when the model ran no
-search, the turn is deterministic: the last user message is searched and the summary is the reply.
-Actions only point at returned results: the map shows the last results, a brief's results offer a
-match report, and a reply naming exactly one person opens that profile.
+When the model ran no search (no model, a replay miss, a refused budget, a failure marker, text
+that holds no step), the turn is deterministic: the user's last message is searched, or for a
+follow-up the earlier question (agent_follow_up.py), and the summary is the reply. Its mode is the
+mode that search answered in, so "mock" unless the model's expansion was used. When the model
+searched and then failed or wrote no answer, the reply summarises its own searches, and no plain
+search runs. Actions point only at returned results (agent_actions.py).
 """
 
-import json
 import unicodedata
 from collections.abc import Mapping, Sequence
 from importlib.metadata import version
 from typing import Any, Protocol
 
+from bernlife.agent_actions import actions
+from bernlife.agent_follow_up import search_query
 from bernlife.agent_prompt import AGENT_PROMPT_VERSION, PROMPT, TOOLS
+from bernlife.agent_steps import Answer, ToolStep, history, read_step
 from bernlife.agent_views import profile_view, results_view, summary
 from bernlife.api_requests import MAX_BRIEF, MAX_QUERY, is_clean
 from bernlife.brief_search import brief_search
@@ -41,7 +47,6 @@ MAX_TOOL_CALLS = 4
 MAX_ROUNDS = MAX_TOOL_CALLS + 1
 MAX_TOKENS = 600
 MAX_REPLY = 800
-MAX_ACTIONS = 6
 
 
 class AgentTools(Protocol):
@@ -126,23 +131,25 @@ def answer(
 ) -> dict[str, Any]:
     """One turn: `messages` is the conversation so far, newest last, and the last is the user's."""
     turn = Turn(tools)
-    text = _converse(messages, turn, llm) if _may_ask(llm) else None
+    said = _converse(messages, turn, llm) if _may_ask(llm) else None
     model_searched = bool(turn.responses)
     if not model_searched:
-        query = " ".join(messages[-1]["content"].split())[:MAX_QUERY]
+        query = search_query(messages)
         if query:
             turn.search(query)
     found = any(response["results"] for response in turn.responses)
-    kept = text.strip() if text and model_searched and found and _fits(text) else None
-    if kept is not None and not _supported(kept, turn.responses):
-        kept = None
-    reply = kept or summary(turn.responses)
+    text = said.text.strip() if said and model_searched and found and _fits(said.text) else ""
+    if text and not _supported(text, turn.responses):
+        text = ""
+    reply = text or summary(turn.responses)
     mentions = ground(reply, turn.responses).mentions
+    proposed = said.actions if said and text else ()
+    mentioned = [profile_id for profile_id, _ in mentions]
     return {
         "reply": reply,
-        "mode": request_mode(llm.backend) if model_searched else NO_MODEL,
+        "mode": _mode(llm, turn.responses, model_searched),
         "abstained": not found,
-        "actions": actions(turn, [profile_id for profile_id, _ in mentions]),
+        "actions": actions(turn.responses, turn.made_by, mentioned, proposed),
         "results": turn.responses,
         "mentions": [{"profile_id": profile_id, "name": name} for profile_id, name in mentions],
         "tool_calls": turn.calls,
@@ -155,15 +162,12 @@ def answer(
     }
 
 
-def actions(turn: Turn, mentioned: Sequence[str]) -> list[dict[str, Any]]:
-    found = [i for i, response in enumerate(turn.responses) if response["results"]]
-    planned: list[dict[str, Any]] = [{"type": "show_on_map", "result": i} for i in found[-1:]]
-    planned += [
-        {"type": "start_match_report", "result": i} for i in found if turn.made_by[i] == "brief"
-    ]
-    if len(mentioned) == 1:
-        planned.append({"type": "open_profile", "profile_id": mentioned[0]})
-    return planned[:MAX_ACTIONS]
+def _mode(llm: ToolChat, responses: Sequence[Mapping[str, Any]], model_searched: bool) -> str:
+    """The request's mode when the model drove the searches; else the plain search's own, which
+    says "mock" when it used no model text."""
+    if model_searched:
+        return request_mode(llm.backend)
+    return responses[-1]["mode"] if responses else NO_MODEL
 
 
 def _may_ask(llm: ToolChat) -> bool:
@@ -172,10 +176,11 @@ def _may_ask(llm: ToolChat) -> bool:
     return llm.backend != "mock" and "thinking" not in llm.models().get("agent", "").lower()
 
 
-def _converse(messages: Sequence[Mapping[str, str]], turn: Turn, llm: ToolChat) -> str | None:
-    """The model's last text, or None when it failed or was still calling tools at the end."""
+def _converse(messages: Sequence[Mapping[str, str]], turn: Turn, llm: ToolChat) -> Answer | None:
+    """The model's answer, or None when it failed, wrote no step or was still calling tools at
+    the end."""
     conversation: list[dict[str, Any]] = [{"role": "system", "content": PROMPT}]
-    conversation += [{"role": m["role"], "content": m["content"]} for m in messages]
+    conversation += history(messages)
     for _ in range(MAX_ROUNDS):
         try:
             message = llm.chat_tools(
@@ -187,29 +192,11 @@ def _converse(messages: Sequence[Mapping[str, str]], turn: Turn, llm: ToolChat) 
             )
         except (ModelUnavailable, CacheMiss):
             return None
-        if not message["tool_calls"]:
-            return message["content"]
-        conversation.append(_model_turn(message))
-        for call in message["tool_calls"]:
-            output = json.dumps(turn.run(call), ensure_ascii=False)
-            conversation.append({"role": "tool", "tool_call_id": call["id"], "content": output})
+        step = read_step(message)
+        if not isinstance(step, ToolStep):
+            return step
+        conversation += step.messages([turn.run(call) for call in step.calls])
     return None
-
-
-def _model_turn(message: Mapping[str, Any]) -> dict[str, Any]:
-    """The model's message as it is sent back, its arguments as the JSON text OpenAI uses."""
-    calls = [
-        {
-            "id": call["id"],
-            "type": "function",
-            "function": {
-                "name": call["name"],
-                "arguments": json.dumps(call["arguments"], ensure_ascii=False, sort_keys=True),
-            },
-        }
-        for call in message["tool_calls"]
-    ]
-    return {"role": "assistant", "content": message["content"], "tool_calls": calls}
 
 
 def _search_arguments(arguments: Mapping[str, Any]) -> bool:

@@ -15,7 +15,9 @@ against a schema in this folder. POST is accepted from loopback only.
 | `GET /api/numbers` | — | `numbers.schema.json` (the snapshot's committed evaluation, `metrics.schema.json`'s `eval`, or null; model calls per role from the cache pack) |
 
 Errors: HTTP 4xx/5xx with `{ "error": "<marker>" }`, where the marker is one of `bad_request`,
-`not_found`, `engine_error`. No exception text, no provider message.
+`not_found`, `rate_limited` (HTTP 429), `engine_error`. No exception text, no provider message.
+The web app's proxies answer `rate_limited` when an address is over its limit
+(`web/infrastructure/engine-limits.ts`), and the browser asks the player to wait a few minutes.
 
 Only a request carrying `X-Bernlife-Live: 1` may reach a model; every other request is answered
 from the cache alone, and a cache miss falls back as in replay. The web app's proxies set that
@@ -29,6 +31,13 @@ The `assistant` turns in an agent request come from the browser and are untruste
 evidence: a reply names only profiles in its own `results`, and the web app drops a reply whose
 mentions (under the profile's name, or the related name a result is shown through) or actions
 point anywhere else.
+
+A reply the model did not write is a summary of searches. When the model ran no search (no model,
+a failure, or text that holds no step), it is a plain search: of the last user message, or of the
+latest earlier one when the last only asks to see those results again ("Show them on the map",
+"Zeig sie auf der Karte"), and its `mode` is that search's, `mock` unless the model's expansion
+was used. When the model searched and then failed, wrote no answer or wrote a reply the checks
+refuse, it summarises the model's own searches and no plain search runs.
 
 `POST /api/agent` is served once the engine's agent lands. Until then the web proxy at
 `/api/agent` checks the body and passes it on; the engine's 404 reaches the browser as

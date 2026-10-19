@@ -11,6 +11,8 @@ export function lumiFailureMessage(failure: LumiFailure, name: string): string {
       return "We could not reach the Bern Life server. Check your connection and try again.";
     case "bad_request":
       return `${name} could not read this message. Try rephrasing it.`;
+    case "rate_limited":
+      return "Too many requests from here right now; try again in a few minutes.";
     case "malformed":
       return `${name}'s answer could not be read, so nothing of it is shown.`;
     case "engine_error":
@@ -24,6 +26,8 @@ export function searchFailureMessage(failure: LumiFailure): string {
       return "We could not reach the Bern Life server. Check your connection and try again.";
     case "bad_request":
       return "The search could not read this message. Try rephrasing it.";
+    case "rate_limited":
+      return "Too many requests from here right now; try again in a few minutes.";
     case "not_connected":
       return "The search is not connected yet.";
     case "malformed":

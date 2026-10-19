@@ -12,6 +12,7 @@ bun run format:check
 bun run test
 bun run build
 bun run contract:types   # regenerate types after a change in contracts/
+bun run contract:validators   # and the validators
 ```
 
 Each lane runs the dev server on its own port (`CONTRIBUTING.md`). The server binds to 127.0.0.1.
@@ -31,9 +32,12 @@ Accounts are invite-only: `bun run invite:create --count 3` prints codes once an
 
 ## Contract
 
-Engine responses are checked with Ajv against `contracts/*.schema.json`; a body that does not match
-is shown as an error, never half rendered. TypeScript types are generated from the same schemas into
-`infrastructure/contract-types.generated.ts`; a test fails when they are out of date.
+Engine responses are checked against `contracts/*.schema.json`; a body that does not match is shown
+as an error, never half rendered. Ajv compiles the validators ahead of time into
+`infrastructure/contract-validators.generated.js`, so no schema is compiled at run time and the
+Content-Security-Policy needs no `'unsafe-eval'` (only `next dev` allows it, for React's error
+stacks). TypeScript types are generated from the same schemas into
+`infrastructure/contract-types.generated.ts`; a test fails when either is out of date.
 
 The browser talks only to this app's routes: `POST /api/search` (JSON), `POST /api/brief` (form
 data with `text` or a PDF `file`, at most 5 MB and 20 pages, read in memory and not kept; a larger

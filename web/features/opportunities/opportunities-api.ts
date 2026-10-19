@@ -2,7 +2,8 @@ import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { OpportunityRequest } from "./opportunity-request";
 
 /** `not_connected`: the search answered 404, so there is nothing behind it yet. */
-export type OpportunitiesFailure = "not_connected" | "bad_request" | "engine_error" | "network";
+export type OpportunitiesFailure =
+  "not_connected" | "bad_request" | "rate_limited" | "engine_error" | "network";
 
 export type OpportunitiesOutcome =
   { ok: true; response: SearchResponse } | { ok: false; failure: OpportunitiesFailure };
@@ -14,7 +15,7 @@ export type OpportunitiesApi = {
 function failureFrom(status: number, body: unknown): OpportunitiesFailure {
   if (status === 404) return "not_connected";
   const error = typeof body === "object" && body !== null ? Reflect.get(body, "error") : null;
-  return error === "bad_request" ? "bad_request" : "engine_error";
+  return error === "bad_request" || error === "rate_limited" ? error : "engine_error";
 }
 
 export type Fetcher = (input: string, init: RequestInit) => Promise<Response>;

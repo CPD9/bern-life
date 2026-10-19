@@ -6,7 +6,7 @@
 // for the player's click. One message is in flight.
 import { useEffect, useRef, useState } from "react";
 import type { AgentAction } from "./agent-reply";
-import { type SearchState, type Turn, isBusy, messagesFor } from "./conversation";
+import { type SearchState, type Turn, canRetry, isBusy, messagesFor } from "./conversation";
 import type { ChatMessage, LumiApi } from "./lumi-api";
 import { type LumiActions, canRun, runAction, waitsForClick } from "./reply-actions";
 
@@ -94,7 +94,7 @@ export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): 
       return true;
     },
     retry: () => {
-      if (!last || inFlight.current || isBusy(last)) return false;
+      if (!last || inFlight.current || !canRetry(last)) return false;
       update(last.id, { lumi: waiting, search: null });
       void answer(last.id, last.text, messagesFor(turns.slice(0, -1), last.text));
       return true;
