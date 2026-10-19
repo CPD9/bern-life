@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { AppEventName } from "@/infrastructure/app-events";
 import { copyOf, resultFixture, viaFixture } from "@/test/fixtures";
 import { CORRECTIONS_PATH } from "./claim-evidence";
@@ -93,7 +93,15 @@ describe("ResultCard: correcting a sentence", () => {
 
   test("the sentence that ties a result to a project says it too", () => {
     render(<ResultCard result={teamResult()} />);
-    expect(screen.getAllByText("Wrong or outdated?")).toHaveLength(1);
+    const through = screen.getByRole("region", { name: "Through the project PlateScan" });
+    const notes = within(through).getAllByText("Wrong or outdated?");
+    expect(notes).toHaveLength(1);
+    // Under the relation sentence itself, before any of the project's claims is opened.
+    const note = notes[0]!.closest("details")!;
+    expect(note.parentElement!.textContent).toContain("“Project team: Lena Beispiel”");
+    expect(note.textContent).toContain(
+      "quoted from the institution's page as it read on 18 Oct 2026. A correction made on that page reaches Bern Life with the next snapshot;",
+    );
   });
 });
 

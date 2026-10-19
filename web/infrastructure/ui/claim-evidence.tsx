@@ -62,8 +62,8 @@ const quotes = {
 
 type CorrectionNoteProps = {
   fetchedAt?: string | null | undefined;
-  /** What is quoted: a sentence from the snapshot (the default), a map address, or a sentence the
-   * player saved to the Library. */
+  /** What is quoted: a sentence from the snapshot (the default), a map address, or a sentence in
+   * a copy kept in this browser, saved to the Library or in a match report. */
   quoted?: keyof typeof quotes;
 };
 

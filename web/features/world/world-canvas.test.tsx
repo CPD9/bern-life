@@ -118,3 +118,15 @@ test("a map that stops drawing behind the office leaves focus alone", () => {
     quiet.mockRestore();
   }
 });
+
+test("while the office covers it, the card and its buttons are out of the tab order", () => {
+  assumeWebgl(false);
+  const { rerender } = renderWorld({ covered: true });
+  const card = screen.getByText(NO_MAP).closest("section")!;
+  const button = screen.getByRole("button", { name: "Open Ask" });
+  expect(button.closest("[inert]")).not.toBeNull();
+  expect(card.closest("[inert]")).not.toBeNull();
+  // Uncovered, the card's buttons are reachable again.
+  rerender({ covered: false });
+  expect(button.closest("[inert]")).toBeNull();
+});

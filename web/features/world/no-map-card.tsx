@@ -7,7 +7,8 @@ type NoMapCardProps = {
   onOpenDesk: () => void;
   /** Given when trying again may help: the scene threw or its context was lost. */
   onRetry: (() => void) | null;
-  /** True while the office covers the map: its card then leaves focus where it is. */
+  /** True while the office covers the map: its card then leaves focus where it is, and its
+   * buttons leave the tab order with it. */
   covered?: boolean;
 };
 
@@ -19,7 +20,7 @@ export function NoMapCard({ onOpenAsk, onOpenDesk, onRetry, covered = false }: N
   const textId = useId();
   useTakeLostFocus(card, onRetry !== null && !covered);
   return (
-    <div className="flex size-full items-center justify-center px-4">
+    <div inert={covered} className="flex size-full items-center justify-center px-4">
       <section
         ref={card}
         tabIndex={-1}

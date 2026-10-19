@@ -99,9 +99,10 @@ export function ReportCard({ card, highlightTerms }: { card: Card; highlightTerm
               )}
             </figcaption>
           </figure>
-          {/* Paper cannot open it; the legend says the same in print. */}
+          {/* Paper cannot open it; the legend says the same in print. A report is a copy kept in
+              this browser, so a corrected page never changes it: the note says so. */}
           <div className="text-sm print:hidden">
-            <CorrectionNote fetchedAt={card.proof.fetchedAt} />
+            <CorrectionNote fetchedAt={card.proof.fetchedAt} quoted="saved" />
           </div>
         </>
       ) : (

@@ -193,15 +193,17 @@ this section says; the note only explains, and nothing is sent from the app.
   [`web/features/world/places.json`](web/features/world/places.json) with page, date and sha256
   per row. One is corrected or removed by a commit to that file, and git history keeps the
   earlier value.
-- **Removal:** open an issue on this repository with the page link and the sentence (nothing
-  else about you is needed), or contact the team at the address given at the hackathon. Others
-  can read an issue, so use the address for a request you would rather not make in the open.
+- **Removal:** write to [peter.dike@unibe.ch](mailto:peter.dike@unibe.ch) with the page link and
+  the sentence; nothing else about you is needed. The `/corrections` page shows the address as a
+  plain mail link that opens your own mail program; the app sends and keeps nothing. If you do
+  not mind others reading the request, open an issue on this repository instead.
 - **What happens:** the page is left out. Its path goes into `deny_paths` in its source's file in
   [`sources/`](sources/), and a new bundle is built without it and pinned; the earlier release
   assets that hold it are withdrawn and the hosted copy is reloaded. Its nightly backups age out
   after 14 days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)). Git holds no page, so
-  nothing in its history needs rewriting. Sentences someone saved to the Library stay in their
-  browser until they remove them.
+  nothing in its history needs rewriting. Sentences someone saved to the Library, and the match
+  reports they made, are copies kept in their browser that do not change: they stay there until
+  that person removes them (each has a **Remove**).
 
 ## Limits and roadmap
 

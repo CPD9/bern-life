@@ -6,6 +6,9 @@ export const metadata: Metadata = {
 };
 
 const REPOSITORY = "https://github.com/CPD9/bern-life";
+// The private route for corrections and removal. A plain mailto link: the visitor's own mail
+// program writes the message, and the app sends and keeps nothing.
+const CONTACT = "peter.dike@unibe.ch";
 
 // Where every "Wrong or outdated?" note links, served by the app itself so the note works wherever
 // the app runs. It says what the README's "Corrections and removal" says; change both together.
@@ -48,13 +51,17 @@ export default function CorrectionsPage() {
         <div className="flex flex-col gap-1">
           <dt className="font-extrabold">Asking for removal</dt>
           <dd>
-            Open an issue on{" "}
+            Write to{" "}
+            <a href={`mailto:${CONTACT}`} className="text-primary font-bold underline">
+              {CONTACT}
+            </a>{" "}
+            with the page link and the sentence; nothing else about you is needed. The link opens
+            your own mail program: Bern Life sends nothing and keeps nothing. If you do not mind
+            others reading your request, you can instead open an issue on{" "}
             <a href={REPOSITORY} className="text-primary font-bold underline">
               the repository
-            </a>{" "}
-            with the page link and the sentence; nothing else about you is needed. Others can read
-            an issue, so for a request you would rather not make in the open, contact the team at
-            the address given at the hackathon.
+            </a>
+            .
           </dd>
         </div>
         <div className="flex flex-col gap-1">
@@ -64,7 +71,8 @@ export default function CorrectionsPage() {
             a new snapshot is built without it. The earlier snapshots that hold it are withdrawn and
             the hosted copy is reloaded; its nightly backups age out after 14 days. A single
             sentence cannot be left out on its own: its page goes with it. Sentences someone saved
-            to their Library stay in their browser until they remove them.
+            to their Library, and the match reports they made, are copies kept in their own browser
+            that do not change: they stay there until that person removes them.
           </dd>
         </div>
       </dl>

@@ -39,8 +39,9 @@ export function ReportLegend() {
         number. Every quote is word for word from the public page linked beside it.
       </p>
       <p className="text-muted">
-        A quote that is wrong or outdated is corrected on its page and reaches Bern Life with the
-        next snapshot. To ask for a quote to be removed from Bern Life, see{" "}
+        This report is a copy kept in the browser that made it, and it does not change. A quote that
+        is wrong or outdated is corrected on its page and reaches Bern Life&apos;s search with the
+        next snapshot, not this copy. To ask for a quote to be removed from Bern Life, see{" "}
         <a href={CORRECTIONS_PATH} target="_blank" rel="noopener noreferrer" className="underline">
           {corrections}
         </a>

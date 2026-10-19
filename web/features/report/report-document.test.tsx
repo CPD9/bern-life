@@ -64,7 +64,15 @@ test("each quote says how to correct it on screen, and the legend says so on pap
   expect(note.closest("figure")).toBeNull();
   expect(document.querySelector("figure")!.lastElementChild!.tagName).toBe("FIGCAPTION");
   expect(note.textContent).toContain("as it read on 18 Oct 2026");
+  // A report is a copy kept in this browser: a corrected page does not change it.
+  expect(note.textContent).toContain(
+    "Your saved copy stays as it is in this browser until you remove it;",
+  );
+  expect(note.textContent).not.toContain("next snapshot");
   const legend = screen.getByRole("heading", { name: "How to read this report" }).parentElement!;
+  expect(legend.textContent).toContain(
+    "This report is a copy kept in the browser that made it, and it does not change.",
+  );
   expect(legend.textContent).toContain(
     "To ask for a quote to be removed from Bern Life, see /corrections.",
   );
