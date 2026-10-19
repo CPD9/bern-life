@@ -7,10 +7,9 @@ export type NightMode = "off" | "on" | "auto";
 export type Settings = {
   readonly night: NightMode;
   readonly lite: boolean;
-  readonly dataSaver: boolean;
 };
 
-export const defaultSettings: Settings = { night: "auto", lite: false, dataSaver: false };
+export const defaultSettings: Settings = { night: "auto", lite: false };
 
 export const settingsKey = "bernlife.settings";
 
@@ -25,13 +24,14 @@ export function parseSettings(raw: string | null): Settings {
   } catch {
     return defaultSettings;
   }
-  const { night, lite, dataSaver } = (
-    typeof value === "object" && value !== null ? value : {}
-  ) as Record<string, unknown>;
+  // Fields this version no longer has (an old `dataSaver`) are dropped, not refused.
+  const { night, lite } = (typeof value === "object" && value !== null ? value : {}) as Record<
+    string,
+    unknown
+  >;
   return {
     night: nightModes.find((mode) => mode === night) ?? defaultSettings.night,
     lite: typeof lite === "boolean" ? lite : defaultSettings.lite,
-    dataSaver: typeof dataSaver === "boolean" ? dataSaver : defaultSettings.dataSaver,
   };
 }
 
@@ -47,14 +47,13 @@ export function applySettings(root: HTMLElement, settings: Settings) {
     settings.night === "auto" ? null : settings.night === "on" ? "night" : "day",
   );
   setFlag(root, "data-graphics", settings.lite ? "lite" : null);
-  setFlag(root, "data-saver", settings.dataSaver ? "on" : null);
 }
 
 // Runs inline in <head> before first paint, so a night-mode player never sees a day flash. It
 // repeats applySettings in plain ES5 because it runs before any bundle loads.
 export const settingsBootScript = `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(
   settingsKey,
-)})||"{}"),r=document.documentElement;if(s.night==="on")r.setAttribute("data-theme","night");if(s.night==="off")r.setAttribute("data-theme","day");if(s.lite===true)r.setAttribute("data-graphics","lite");if(s.dataSaver===true)r.setAttribute("data-saver","on")}catch(e){}`;
+)})||"{}"),r=document.documentElement;if(s.night==="on")r.setAttribute("data-theme","night");if(s.night==="off")r.setAttribute("data-theme","day");if(s.lite===true)r.setAttribute("data-graphics","lite")}catch(e){}`;
 
 export type SettingsStore = {
   get(): Settings;
