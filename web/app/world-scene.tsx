@@ -21,6 +21,7 @@ type WorldSceneProps = {
   reducedMotion: boolean;
   onAgentOpen: () => void;
   onSearchHere: (building: Building) => void;
+  onPlacePanel: (open: boolean) => void;
   onUseDesk: () => void;
   onGoOutside: () => void;
 };
@@ -37,6 +38,7 @@ export function WorldScene({ view, person, bear, agentName, lite, ...props }: Wo
         }}
         onAgentOpen={props.onAgentOpen}
         onSearchHere={props.onSearchHere}
+        onPlacePanel={props.onPlacePanel}
       />
       {view === "home" && (
         <OfficeView

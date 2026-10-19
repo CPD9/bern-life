@@ -16,6 +16,8 @@ type GameShellProps = {
   canvas: ReactNode;
   /** The player's agent floating at the side of the world, above the tab bar. */
   floatie?: ReactNode;
+  /** Hides the floatie while something on the world needs its corner, such as a place's panel. */
+  floatieHidden?: boolean;
   overlay: ReactNode;
 };
 
@@ -30,6 +32,7 @@ export function GameShell({
   side,
   canvas,
   floatie,
+  floatieHidden = false,
   overlay,
 }: GameShellProps) {
   return (
@@ -48,7 +51,10 @@ export function GameShell({
       </div>
       {floatie && (
         // Above the office's own buttons on a phone, beside them on a wider screen.
-        <div className="absolute right-3 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+9.5rem)] sm:bottom-[calc(max(1rem,env(safe-area-inset-bottom))+4.5rem)]">
+        <div
+          hidden={floatieHidden}
+          className="absolute right-3 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+9.5rem)] sm:bottom-[calc(max(1rem,env(safe-area-inset-bottom))+4.5rem)]"
+        >
           {floatie}
         </div>
       )}

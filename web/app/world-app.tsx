@@ -51,6 +51,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const [desktopOpen, setDesktopOpen] = useState(false);
   const [youOpen, setYouOpen] = useState(false);
   const [storyMenuOpen, setStoryMenuOpen] = useState(false);
+  const [placeOpen, setPlaceOpen] = useState(false);
   const storyController = useStory({ story, demo: storyDemo, emitted: emittedToday });
   const account = useAccount(httpAccountApi);
   const [person] = usePerson();
@@ -161,11 +162,15 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           reducedMotion={reducedMotion}
           onAgentOpen={lumi.open}
           onSearchHere={searchHere}
+          onPlacePanel={setPlaceOpen}
           onUseDesk={sitDown}
           onGoOutside={() => setView("map")}
         />
       }
       floatie={lumi.floatie}
+      // A place's panel fills the bottom of a phone's screen, and a tall one reaches the floatie's
+      // corner on a wide screen; the bear on the map still opens Lumi meanwhile.
+      floatieHidden={shownView === "map" && placeOpen}
       overlay={
         <WorldOverlay
           phone={{
