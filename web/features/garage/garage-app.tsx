@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useRef } from "react";
 import { formatBernShortDate, formatBernTime } from "@/infrastructure/bern-time";
 import { EvalNumbersView } from "./eval-numbers";
 import { ModelNumbersView } from "./model-numbers";
@@ -28,22 +28,35 @@ export function GarageApp({
   api = httpGarageApi,
 }: GarageAppProps) {
   const { state, retry } = useNumbers(api);
+  const status = useRef<HTMLDivElement>(null);
   useOnce(true, onVisited);
   useOnce(!fixtureMode && state.status === "ok" && state.numbers.eval !== null, onNumbersSeen);
 
   return (
     <div className="flex flex-col gap-6">
-      <p>The models behind the Navigator, and what the engine measured on this snapshot.</p>
+      <p>The models behind the Navigator, and the numbers for this snapshot.</p>
       {fixtureMode && state.status === "ok" && (
         <p className="bg-warn-bg text-warn-ink rounded-2xl px-4 py-3 text-sm">
-          <span className="font-extrabold">FIXTURE</span> Invented numbers for the demo. Nothing
-          here was measured.
+          <span className="font-extrabold">FIXTURE</span> Invented numbers for the demo, not from
+          the evaluator or the engine.
         </p>
       )}
-      <div aria-live="polite" className="flex flex-col items-start gap-3">
-        <StatusLine state={state} onRetry={retry} />
+      {/* Try again unmounts its own button, so focus moves here instead of falling to the page. */}
+      <div
+        ref={status}
+        tabIndex={-1}
+        aria-live="polite"
+        className="flex flex-col items-start gap-3"
+      >
+        <StatusLine
+          state={state}
+          onRetry={() => {
+            status.current?.focus();
+            retry();
+          }}
+        />
       </div>
-      {state.status === "ok" && <NumbersView numbers={state.numbers} />}
+      {state.status === "ok" && <NumbersView numbers={state.numbers} fixtureMode={fixtureMode} />}
     </div>
   );
 }
@@ -51,7 +64,7 @@ export function GarageApp({
 function StatusLine({ state, onRetry }: { state: NumbersState; onRetry: () => void }) {
   switch (state.status) {
     case "loading":
-      return <p>Loading the measured numbers.</p>;
+      return <p>Loading the numbers.</p>;
     case "not_connected":
       return <p>The numbers are not connected yet.</p>;
     case "error":
@@ -85,7 +98,7 @@ function Generated({ numbers }: { numbers: Numbers }) {
   );
 }
 
-function NumbersView({ numbers }: { numbers: Numbers }) {
+function NumbersView({ numbers, fixtureMode }: { numbers: Numbers; fixtureMode: boolean }) {
   const id = useId();
   return (
     <>
@@ -94,7 +107,7 @@ function NumbersView({ numbers }: { numbers: Numbers }) {
           Search quality
         </h3>
         {numbers.eval ? (
-          <EvalNumbersView numbers={numbers.eval} />
+          <EvalNumbersView numbers={numbers.eval} fixtureMode={fixtureMode} />
         ) : (
           <p>The evaluator has not run on this snapshot.</p>
         )}

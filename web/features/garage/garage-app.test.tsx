@@ -80,11 +80,25 @@ describe("GarageApp numbers", () => {
     expect(stat("Recall@10")).toBe("0.4375 [0.29, 0.58]");
   });
 
-  test("fixture mode labels the numbers as invented", async () => {
+  test("Try again keeps focus in the garage, on the status line", async () => {
+    await mount([{ status: "error" }, { status: "error" }]);
+    const button = screen.getByRole("button", { name: "Try again" });
+    button.focus();
+    await act(async () => {
+      fireEvent.click(button);
+    });
+    const live = document.activeElement;
+    expect(live?.getAttribute("aria-live")).toBe("polite");
+    expect(live?.textContent).toBe("The numbers could not be loaded.Try again");
+  });
+
+  test("fixture mode labels the numbers as invented and never calls them measured", async () => {
     await mount([measured()], true);
     expect(screen.getByText("FIXTURE").parentElement?.textContent).toBe(
-      "FIXTURE Invented numbers for the demo. Nothing here was measured.",
+      "FIXTURE Invented numbers for the demo, not from the evaluator or the engine.",
     );
+    expect(screen.getByText("48 invented queries.")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/measured/i);
   });
 });
 

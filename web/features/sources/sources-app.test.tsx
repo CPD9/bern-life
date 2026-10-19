@@ -55,6 +55,25 @@ describe("SourcesApp list", () => {
     expect(screen.getByRole("list", { name: "Sources" })).toBeTruthy();
   });
 
+  test("Try again keeps focus in the app, on the status line", async () => {
+    await mount([{ status: "error" }, listed()]);
+    const button = screen.getByRole("button", { name: "Try again" });
+    button.focus();
+    await act(async () => {
+      fireEvent.click(button);
+    });
+    const live = document.activeElement;
+    expect(live?.getAttribute("aria-live")).toBe("polite");
+    expect(live?.textContent).toBe("Snapshot demo-snapshot-1: 2 sources.");
+  });
+
+  test("host links use the ink colour, which keeps 4.5:1 on the card in light and dark", async () => {
+    await mount([listed()]);
+    const link = screen.getByRole("link", { name: "calls.demo.test" });
+    expect(link.className.split(" ")).toContain("text-ink");
+    expect(link.className).not.toContain("text-primary");
+  });
+
   test("fixture mode labels the list as invented", async () => {
     await mount([listed()], true);
     expect(screen.getByText("FIXTURE").parentElement?.textContent).toBe(
