@@ -26,6 +26,20 @@ export function createAppEvents(): AppEvents {
 
 export const appEvents: AppEvents = createAppEvents();
 
+/** Events some feature emits, but not in this mode, each with why its steps wait. */
+export type OffEvents = Partial<Record<AppEventName, string>>;
+
+/**
+ * Events that never fire under DEMO_FIXTURES, where every person, call and number is invented:
+ * nothing can be saved (app/shared-apps.tsx), and the garage's numbers are not the engine's
+ * (features/garage/garage-app.tsx).
+ */
+export const offInFixtures: OffEvents = {
+  opportunity_saved: "Saving is off for the invented demo data.",
+  library_item_saved: "Saving is off for the invented demo data.",
+  numbers_seen: "The Garage shows invented demo numbers here; only the engine's own numbers count.",
+};
+
 /**
  * Events some feature emits today. A quest that needs any other event shows as "coming next".
  * Add an event here in the same PR that emits it:

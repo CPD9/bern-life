@@ -1,4 +1,4 @@
-import { type Criterion, type StoryProgress, comingReason } from "./engine";
+import type { Criterion, StoryProgress } from "./engine";
 
 /** The case's success criteria (docs/case.md), short enough for a tag on the quest card. */
 export const criterionTags: Record<Criterion, string> = {
@@ -33,7 +33,7 @@ export type CriterionRow = {
   readonly note: string | null;
 };
 
-// A criterion is met only by a finished quest. An unmet one says why it waits: the reason of its
+// A criterion is met only by a finished quest. An unmet one says why it waits: the reasons of its
 // quest that cannot be finished today, or that no quest covers it, so the checklist never implies
 // more. A quest open for some steps but not all still waits, since only finishing it meets it.
 export function criterionRows(progress: StoryProgress): CriterionRow[] {
@@ -43,7 +43,7 @@ export function criterionRows(progress: StoryProgress): CriterionRow[] {
     const met = finished.has(criterion);
     const finishable = quests.some((entry) => entry.finishable);
     const waiting = quests.find((entry) => !entry.finishable);
-    const note = met || finishable ? null : waiting ? comingReason(waiting.quest) : noQuestYet;
+    const note = met || finishable ? null : waiting ? waiting.reasons.join(" ") : noQuestYet;
     return { criterion, label, met, note };
   });
 }

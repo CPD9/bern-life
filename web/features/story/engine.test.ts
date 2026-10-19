@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { type AppEventName, emittedToday } from "@/infrastructure/app-events";
+import { type AppEventName, emittedToday, offInFixtures } from "@/infrastructure/app-events";
 import type { Story } from "@/infrastructure/contract-types.generated";
 import { storyFixture as story } from "@/test/story";
 import {
@@ -149,6 +149,37 @@ describe("storyProgress", () => {
     expect(
       storyProgress(story, done, []).quests.find((q) => q.quest.id === "honest"),
     ).toMatchObject({ status: "done", finishable: true });
+  });
+
+  test("a quest that cannot be finished gives the story's reason; a finishable one gives none", () => {
+    const reasons = Object.fromEntries(
+      storyProgress(story, started, emittedToday).quests.map((q) => [q.quest.id, q.reasons]),
+    );
+    expect(reasons["find-experts"]).toEqual([]);
+    expect(reasons["extend"]).toEqual([
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+    ]);
+    expect(reasons["grow"]).toEqual([
+      "A network of labs and experts is not built yet, so its step cannot be done.",
+    ]);
+  });
+
+  test("under the demo fixtures saving and the numbers wait with their reason, never offered", () => {
+    const quest = (off: typeof offInFixtures, id: string) =>
+      storyProgress(story, started, emittedToday, off).quests.find((q) => q.quest.id === id)!;
+    expect(quest({}, "grow").nextStep?.id).toBe("opportunity");
+    const grow = quest(offInFixtures, "grow");
+    expect([grow.status, grow.nextStep?.id, grow.finishable]).toEqual(["ready", "message", false]);
+    expect(grow.reasons).toEqual([
+      "Saving is off for the invented demo data.",
+      "A network of labs and experts is not built yet, so its step cannot be done.",
+    ]);
+    const extend = quest(offInFixtures, "extend");
+    expect(extend.status).toBe("coming");
+    expect(extend.reasons).toEqual([
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+      "The Garage shows invented demo numbers here; only the engine's own numbers count.",
+    ]);
   });
 
   test("quests whose events nothing emits yet are coming next and never current", () => {

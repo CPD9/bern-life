@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { criterionTags } from "./criteria";
-import { type QuestStatus, comingReason } from "./engine";
+import type { QuestStatus } from "./engine";
 import { ProgressDots } from "./progress-dots";
 import type { StoryController } from "./use-story";
 
@@ -64,7 +64,7 @@ export function StoryMenu({ controller, open, onClose }: StoryMenuProps) {
           </button>
         </div>
         <ol className="flex flex-col gap-2">
-          {controller.progress.quests.map(({ quest, status, stepsDone, finishable }) => (
+          {controller.progress.quests.map(({ quest, status, stepsDone, reasons }) => (
             <li
               key={quest.id}
               className={`border-panel-border flex flex-col gap-1.5 rounded-2xl border p-3 ${
@@ -79,7 +79,11 @@ export function StoryMenu({ controller, open, onClose }: StoryMenuProps) {
                 </span>
               </div>
               <p className="text-muted text-sm">{quest.goal}</p>
-              {!finishable && <p className="text-sm">{comingReason(quest)}</p>}
+              {reasons.map((reason) => (
+                <p key={reason} className="text-sm">
+                  {reason}
+                </p>
+              ))}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="bg-chip rounded-pill px-2.5 py-0.5 text-xs font-bold">
                   {criterionTags[quest.criterion]}

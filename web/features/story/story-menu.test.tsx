@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { type AppEventName, emittedToday } from "@/infrastructure/app-events";
+import {
+  type AppEventName,
+  type OffEvents,
+  emittedToday,
+  offInFixtures,
+} from "@/infrastructure/app-events";
 import { storyFixture } from "@/test/story";
 import { emptyStoryState, storyProgress } from "./engine";
 import { StoryMenu } from "./story-menu";
@@ -9,11 +14,11 @@ import type { StoryController } from "./use-story";
 
 const state = { ...emptyStoryState, choice: "story" as const };
 const noop = () => undefined;
-function controllerWith(emitted: readonly AppEventName[]): StoryController {
+function controllerWith(emitted: readonly AppEventName[], off: OffEvents = {}): StoryController {
   return {
     story: storyFixture,
     state,
-    progress: storyProgress(storyFixture, state, emitted),
+    progress: storyProgress(storyFixture, state, emitted, off),
     start: noop,
     explore: noop,
     focus: noop,
@@ -74,6 +79,26 @@ describe("StoryMenu", () => {
       "Open · optional",
       "Save opportunities, keep results, message members and meet the models behind the Navigator, in any order.",
       "A network of labs and experts is not built yet, so its step cannot be done.",
+    ]);
+  });
+
+  test("under the demo fixtures, quests that need a save or the numbers say why those wait", () => {
+    render(<Harness controller={controllerWith(emittedToday, offInFixtures)} />);
+    openMenu();
+    const row = (title: string) => screen.getByRole("heading", { name: title }).closest("li")!;
+    const lines = (title: string) =>
+      Array.from(row(title).querySelectorAll("p, span")).map((element) => element.textContent);
+    expect(lines("Grow in Bern").slice(0, 4)).toEqual([
+      "Open · optional",
+      "Save opportunities, keep results, message members and meet the models behind the Navigator, in any order.",
+      "Saving is off for the invented demo data.",
+      "A network of labs and experts is not built yet, so its step cannot be done.",
+    ]);
+    expect(lines("Add a new source").slice(0, 4)).toEqual([
+      "Coming next · optional",
+      "Add an institution's website with one configuration file.",
+      "Adding a source does not report to the story yet; a new site is one file in sources/.",
+      "The Garage shows invented demo numbers here; only the engine's own numbers count.",
     ]);
   });
 

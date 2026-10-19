@@ -17,7 +17,7 @@ import type { ShowMeTarget } from "@/features/story/show-me";
 import { useStory } from "@/features/story/use-story";
 import type { Building } from "@/features/world/buildings";
 import { worldSearch } from "@/features/world/world-search";
-import { appEvents, emittedToday } from "@/infrastructure/app-events";
+import { appEvents, emittedToday, offInFixtures } from "@/infrastructure/app-events";
 import { useNow } from "@/infrastructure/bern-time";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useSettings } from "@/infrastructure/use-settings";
@@ -52,7 +52,12 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const [youOpen, setYouOpen] = useState(false);
   const [storyMenuOpen, setStoryMenuOpen] = useState(false);
   const [placeOpen, setPlaceOpen] = useState(false);
-  const storyController = useStory({ story, demo: storyDemo, emitted: emittedToday });
+  const storyController = useStory({
+    story,
+    demo: storyDemo,
+    emitted: emittedToday,
+    off: fixtureMode ? offInFixtures : {},
+  });
   const account = useAccount(httpAccountApi);
   const [person] = usePerson();
   const [bear] = useAvatar();
