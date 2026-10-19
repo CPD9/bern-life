@@ -6,6 +6,7 @@ import {
   currentUser,
   deleteAccount,
   saveProfile,
+  seedAccount,
   signIn,
   signOut,
   signUp,
@@ -79,6 +80,31 @@ describe.skipIf(testDb === null)("accounts against a throwaway database", () => 
     await signUp(sql, joining(await invite()), IP, NOW);
     const [row] = await sql<{ hash: string }[]>`select hash from credential`;
     expect(row?.hash.startsWith("$argon2id$v=19$m=19456,t=2,p=1$")).toBe(true);
+  });
+
+  test("a seeded account signs in with its printed password, needs no invite, and seeds once", async () => {
+    const seeded = await seedAccount(sql, "test01", "Test 01");
+    if (seeded === "exists") throw new Error("expected a new account");
+    expect(seeded.password).toMatch(/^[A-Za-z0-9_-]{24}$/);
+    const signedInOk = await signIn(
+      sql,
+      { handle: "test01", password: seeded.password },
+      IP,
+      NOW,
+      null,
+    );
+    expect(signedInOk.ok && signedInOk.value.user).toEqual({
+      id: expect.any(String),
+      handle: "test01",
+      displayName: "Test 01",
+    });
+    expect(await seedAccount(sql, "test01", "Someone else")).toBe("exists");
+    expect(
+      (await signIn(sql, { handle: "test01", password: seeded.password }, IP, NOW, null)).ok,
+    ).toBe(true);
+    const [counts] = await sql<{ invites: number; users: number }[]>`
+      select (select count(*)::int from invite) as invites, (select count(*)::int from app_user) as users`;
+    expect(counts).toEqual({ invites: 0, users: 1 });
   });
 
   test("a wrong password is refused and the sixth failure for a handle is rate limited", async () => {

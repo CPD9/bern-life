@@ -49,6 +49,27 @@ export async function createInvites(
   return codes;
 }
 
+/** 120 random bits as 24 base64url characters: well over the 12-character minimum. */
+export function newPassword(): string {
+  return randomBytes(18).toString("base64url");
+}
+
+/** Creates an account without an invite and returns its new password, or "exists" when the
+ *  handle is taken (its password is left alone). Only the operator's seeding script calls this. */
+export async function seedAccount(
+  sql: Sql,
+  handle: string,
+  displayName: string,
+): Promise<{ handle: string; password: string } | "exists"> {
+  const password = newPassword();
+  const created = await store.insertSeededUser(sql, {
+    handle,
+    displayName,
+    passwordHash: await hashPassword(password),
+  });
+  return created === "handle_taken" ? "exists" : { handle, password };
+}
+
 async function startSession(
   db: Db,
   userId: string,
