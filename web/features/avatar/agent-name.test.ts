@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { agentNameMaxLength, parseAgentName, shownAgentName } from "./agent-name";
 
 describe("shownAgentName", () => {
-  test("a blank or whitespace-only name reads as Bärli", () => {
-    expect(["", " ", "\t\n "].map(shownAgentName)).toEqual(["Bärli", "Bärli", "Bärli"]);
+  test("a blank or whitespace-only name reads as Bärnli", () => {
+    expect(["", " ", "\t\n "].map(shownAgentName)).toEqual(["Bärnli", "Bärnli", "Bärnli"]);
   });
 
   test("a name is shown trimmed", () => {

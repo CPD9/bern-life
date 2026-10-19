@@ -1,6 +1,6 @@
 "use client";
 
-// One conversation with Bärli. Actions in a reply are dispatched from the request that received it,
+// One conversation with Bärnli. Actions in a reply are dispatched from the request that received it,
 // not from rendering, so a re-render can never repeat them; a reply that lands while the panel is
 // closed keeps its actions on its turn until the player runs them, and a match report always waits
 // for the player's click. One message is in flight.

@@ -177,17 +177,17 @@ describe("the agent on the map", () => {
 
   test("has one button, named for the agent, registered at one anchor", () => {
     const elements = anchors();
-    render(<AgentButton name="Bärli" onOpen={() => undefined} elementsRef={elements} />);
+    render(<AgentButton name="Bärnli" onOpen={() => undefined} elementsRef={elements} />);
     expect(
       screen.getAllByRole("button").map((button) => button.getAttribute("aria-label")),
-    ).toEqual(["Bärli, your agent"]);
+    ).toEqual(["Bärnli, your agent"]);
     expect([...elements.current.keys()]).toEqual([AGENT_KEY]);
   });
 
   test("a tap opens it once; it is a page button, so Enter and Space reach it too", () => {
     const onOpen = mock(() => undefined);
-    render(<AgentButton name="Bärli" onOpen={onOpen} elementsRef={anchors()} />);
-    const button = screen.getByRole("button", { name: "Bärli, your agent" });
+    render(<AgentButton name="Bärnli" onOpen={onOpen} elementsRef={anchors()} />);
+    const button = screen.getByRole("button", { name: "Bärnli, your agent" });
     act(() => button.focus());
     expect(document.activeElement).toBe(button);
     expect([button.tagName, button.getAttribute("type")]).toEqual(["BUTTON", "button"]);

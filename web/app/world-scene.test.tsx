@@ -20,7 +20,7 @@ function Host({ plot, first }: { plot: Plot | null; first: WorldView }) {
       demoSearch={undefined}
       person={defaultPerson}
       bear={defaultBear}
-      agentName="Bärli"
+      agentName="Bärnli"
       plot={plot}
       lite
       reducedMotion

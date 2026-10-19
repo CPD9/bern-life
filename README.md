@@ -41,13 +41,13 @@ room give way to a short note, and Ask, the office desk and every app still work
 4. **Join.** Joining is by invite. Make a code with
    `cd web && bun install && DATABASE_URL=postgresql://bernlife:bernlife@127.0.0.1:5433/bernlife bun run invite:create`
    (needs [Bun](https://bun.sh)), then choose **Join Bern Life**.
-5. **Onboarding.** Bärli, your first agent, greets you. Five short steps follow: who you are in
+5. **Onboarding.** Bärnli, your first agent, greets you. Five short steps follow: who you are in
    Bern, your look (players are people), what brings you here, who sees what, and your agent:
-   Bärli is a bear you can rename and restyle. A card then offers to choose where your office
+   Bärnli is a bear you can rename and restyle. A card then offers to choose where your office
    stands; each plot lists the nearest places with their sourced addresses.
 6. **Your office.** Onboarding ends in your office, the **Home** tab. Sit at the desk to use the
    computer, nine apps: **Navigator** (the same search as Ask, and a project brief), **Agents**
-   (Bärli's skills, each with its evidence, and loops: saved searches you run again, whose new and
+   (Bärnli's skills, each with its evidence, and loops: saved searches you run again, whose new and
    dropped results reach the bell), **Reports** (match reports with their sources), **Messages** (to
    members who joined), **Library** (what you saved, and your documents with their trace),
    **Opportunities** (funding calls, services and spaces; an amount or deadline appears only inside
@@ -55,10 +55,10 @@ room give way to a short note, and Ask, the office desk and every app still work
    this snapshot, as the engine serves them, and the skills with their evidence), **Sources** (the
    institutions crawled, and how to add one) and **Settings**. The door leads back to the map; the
    phone carries Ask, Messages, Agents, Opportunities, Library and Settings.
-7. **Bärli.** Your agent floats beside you as the bear you made, and walks beside you on the map;
-   either opens its chat. Bärli searches with the engine's own tools and answers
+7. **Bärnli.** Your agent floats beside you as the bear you made, and walks beside you on the map;
+   either opens its chat. Bärnli searches with the engine's own tools and answers
    with the same source cards as Ask. A person it names must be among those results, a reply it
-   cannot support is replaced by a summary of the cited claims, and with nothing behind it Bärli
+   cannot support is replaced by a summary of the cited claims, and with nothing behind it Bärnli
    says it found no verifiable source. An answer lights its places on the map and may open a card
    in Ask; a match report waits for your click and opens in the desk's Reports window.
 8. **The story.** A card offers **Start the story**, quests about moving a business to Bern that
@@ -66,7 +66,7 @@ room give way to a short note, and Ask, the office desk and every app still work
    app, or **Explore freely**. Your badge opens the **You** sheet: profile, goals, skills, people
    and agents, with real content only.
 9. **Walk Bern.** Out of the office you stand at your office door (at the station before you
-   settle), Bärli beside you. Press **Walk** on the map: the arrows or W A S D walk you and the
+   settle), Bärnli beside you. Press **Walk** on the map: the arrows or W A S D walk you and the
    camera follows; a click on the ground or a bridge finds the way round the houses and over the
    bridges, and a click on a place's building or your office, or **Walk here** on a place, walks
    you to its door. At a place's door **Enter** opens its lobby; at your own door **Go home**
@@ -75,7 +75,7 @@ room give way to a short note, and Ask, the office desk and every app still work
 Replay is the default. Questions recorded in the bundle's model cache get Apertus's search terms
 and explanations; any other question still gets plain search over the stored pages, and the app
 says so. A new project brief needs the model: replay has only the briefs recorded in the bundle,
-and the app says so for any other. In replay Bärli searches your message and summarises the cited
+and the app says so for any other. In replay Bärnli searches your message and summarises the cited
 claims; its own recorded answers ship with the next bundle. Only `make live-run` (in place of
 `make run`) calls Apertus: it starts only when the model endpoint set in `.env` answers, and the
 model is called only for signed-in members under their limits, at most `LLM_CALL_BUDGET` calls a
@@ -234,7 +234,7 @@ this section says; the note only explains, and nothing is sent from the app.
 - **Notifications stay in the app** (the bell). Opt-in e-mail or push notifications are not
   decided yet.
 - **The next bundle is not pinned yet.** Replay and every number above come from
-  `bundle-20261019-2`, which holds no recorded answers of Bärli's own.
+  `bundle-20261019-2`, which holds no recorded answers of Bärnli's own.
 - Next: matching word forms and claims across languages, the human completeness labels, and a
   calibrated confidence per result.
 

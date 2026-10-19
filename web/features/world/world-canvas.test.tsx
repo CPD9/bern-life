@@ -41,7 +41,7 @@ function renderWorld(props: WorldProps = {}) {
   const onOpenDesk = mock(() => undefined);
   const world = ({ home, inside = false, ...shown }: WorldProps) => (
     <WorldCanvas
-      agent={{ name: "Bärli", figure: () => null }}
+      agent={{ name: "Bärnli", figure: () => null }}
       player={{ figure: () => null, home: home ?? null, inside }}
       onAgentOpen={() => undefined}
       onOpenAsk={onOpenAsk}

@@ -1,5 +1,5 @@
-// Moves Bärli's light and the figure it wears each frame from the pose maths. Parts are found by
-// name, so no refs travel through props. The canvas renders on demand: Bärli asks for the next frame
+// Moves Bärnli's light and the figure it wears each frame from the pose maths. Parts are found by
+// name, so no refs travel through props. The canvas renders on demand: Bärnli asks for the next frame
 // only while it moves, and under reduced motion it draws its resting pose once per state change.
 
 import { useFrame, useThree } from "@react-three/fiber";

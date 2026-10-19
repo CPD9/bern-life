@@ -43,7 +43,7 @@ describe("furOptions", () => {
 
 describe("parseBear", () => {
   test("keeps a valid config and drops fields it does not know", () => {
-    expect(parseBear({ ...defaultBear, name: "Bärli" })).toEqual(defaultBear);
+    expect(parseBear({ ...defaultBear, name: "Bärnli" })).toEqual(defaultBear);
   });
 
   test("rejects a fur that belongs to another kind", () => {

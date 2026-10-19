@@ -1,8 +1,8 @@
 "use client";
 
-// Bärli in its own small canvas inside a real button, so a tap, Enter or Space all reach `onSelect`
-// and the focus ring is the page's own. Bärli wears the figure passed in (the agent's bear, from
-// app/). A soft radial glow behind the canvas lets the light spill onto whatever Bärli floats over.
+// Bärnli in its own small canvas inside a real button, so a tap, Enter or Space all reach `onSelect`
+// and the focus ring is the page's own. Bärnli wears the figure passed in (the agent's bear, from
+// app/). A soft radial glow behind the canvas lets the light spill onto whatever Bärnli floats over.
 
 import { type ReactNode, useState } from "react";
 import { SceneCanvas } from "@/infrastructure/ui/scene-guard";
@@ -11,10 +11,10 @@ import { FloatieFigure } from "./floatie-figure";
 import { type FloatieState, shownState } from "./floatie-motion";
 
 type FloatieProps = {
-  /** The agent's name, which a player may change from Bärli. */
+  /** The agent's name, which a player may change from Bärnli. */
   name: string;
   /**
-   * The 3D figure Bärli wears, feet on y = 0 and about 1.4 m tall. It is told when the player asks
+   * The 3D figure Bärnli wears, feet on y = 0 and about 1.4 m tall. It is told when the player asks
    * for reduced motion, so it can stand still too.
    */
   figure: (reducedMotion: boolean) => ReactNode;

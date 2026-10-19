@@ -21,8 +21,8 @@ import { browserOnboardingStore, useOnboarding } from "@/features/onboarding/use
 import { useSettings } from "@/infrastructure/use-settings";
 import { saveToAccount } from "./save-to-account";
 
-// Composes onboarding with the avatar editors and Bärli's greeting, which are other features: your
-// look is a person, and your first agent is a bear. Bärli wears the agent's bear, the default one
+// Composes onboarding with the avatar editors and Bärnli's greeting, which are other features: your
+// look is a person, and your first agent is a bear. Bärnli wears the agent's bear, the default one
 // until the player makes theirs in the last step. A player who finished before starts again at the
 // first step with their answers kept. Finishing while signed in also saves them and both looks to
 // the account.
