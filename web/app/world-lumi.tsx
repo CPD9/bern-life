@@ -101,7 +101,7 @@ function SmallBear({ config }: { config: BearConfig }) {
       frameloop="demand"
       dpr={1}
       gl={{ alpha: true }}
-      camera={{ position: [0, 0.95, 1.7], fov: 30 }}
+      camera={{ position: [0, 0.75, 2.5], fov: 30 }}
     >
       <hemisphereLight color="#fff8ee" groundColor="#e8d8c0" intensity={1.4} />
       <directionalLight position={[1, 2, 3]} intensity={0.8} />
