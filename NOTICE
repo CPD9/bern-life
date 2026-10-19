@@ -6,9 +6,7 @@ Licensed under the Apache License, Version 2.0 (see LICENSE).
 This product includes code adapted from Apertus Red-Team Graph
 (https://github.com/CPD9/apertus-redteam-graph), Copyright 2026 its authors,
 Apache License 2.0. Where a file is adapted, it says so in its opening comment
-and PROVENANCE.md lists it. Lumi's "Checks the premise" skill quotes two of its
-results (track_1a/technical_report.md and track_1a/docs/audit/stats.json), and a
-skill's evidence rows follow the shape of its
+and PROVENANCE.md lists it. A skill's evidence rows follow the shape of its
 track_1a/src/redteam/agent_facts.py.
 
 Models used at run time (not distributed in this repository):

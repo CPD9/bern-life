@@ -5,8 +5,10 @@ import { EvidenceList } from "./evidence-list";
 import { skillEvidence } from "./skill-evidence";
 import { type Skill, skills } from "./skills";
 
+const NO_EVIDENCE = "No numbers back this skill yet.";
+
 type SkillListProps = {
-  /** /api/numbers as loaded by the host, for the measured rows. */
+  /** /api/numbers as loaded by the host, which also says when they are missing. */
   numbers: NumbersState;
   fixtureMode: boolean;
   /** Without it the list is read-only, as in the Garage. */
@@ -34,10 +36,14 @@ export function SkillList({ numbers, fixtureMode, onTry }: SkillListProps) {
               </button>
             )}
           </div>
-          <EvidenceList
-            evidence={skillEvidence(skill, numbers, fixtureMode)}
-            label={`Evidence: ${skill.name}`}
-          />
+          {skill.measured.length === 0 ? (
+            <p className="text-muted text-sm">{NO_EVIDENCE}</p>
+          ) : (
+            <EvidenceList
+              rows={skillEvidence(skill, numbers, fixtureMode)}
+              label={`Evidence: ${skill.name}`}
+            />
+          )}
         </li>
       ))}
     </ul>

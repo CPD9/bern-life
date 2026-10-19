@@ -66,14 +66,25 @@ async function runNow(query: string) {
 
 const ENGINE: NumbersOutcome = { status: "ok", numbers: parseNumbers(numbersBody())! };
 
-/** The Agents app once /api/numbers has answered with `outcome`. */
-async function withNumbers(outcome: NumbersOutcome, fixtureMode = false) {
-  const api = queuedApi([outcome]);
+/** The Agents app once /api/numbers has answered with `outcome`; `later` answers Try again. */
+async function withNumbers(
+  outcome: NumbersOutcome,
+  fixtureMode = false,
+  later: NumbersOutcome[] = [],
+) {
+  const api = queuedApi([outcome, ...later]);
   let result: ReturnType<typeof setup> | undefined;
   await act(async () => {
     result = setup([], "s1", undefined, api, fixtureMode);
   });
   return { ...result!, api };
+}
+
+/** The live line above the skills that says where their numbers are. */
+function status(): HTMLElement {
+  const line = document.querySelector<HTMLElement>('[aria-live="polite"][tabindex="-1"]');
+  if (!line) throw new Error("no live status line");
+  return line;
 }
 
 /** Each evidence row of a skill as [label, value, source]. */
@@ -83,19 +94,6 @@ function evidence(skill: string): (string | null)[][] {
     Array.from(row.children).map((cell) => cell.textContent),
   );
 }
-
-const RED_TEAM = [
-  [
-    "Apertus 70B: answers counted wrong, without and then with a system prompt that asks it to check the premise",
-    "152 / 522 to 63 / 522",
-    "Source: Apertus Red-Team Graph: technical report, Lessons Learnt; docs/audit/stats.json, mitigation",
-  ],
-  [
-    "Apertus 8B: answers that confirmed made-up details about a private person",
-    "15 / 18",
-    "Source: Apertus Red-Team Graph: technical report, finding 2; docs/audit/stats.json, privacy_fabricated_person",
-  ],
-];
 
 describe("AgentsApp skills", () => {
   test("lists the five real skills, Checks the premise second, and Try hands the skill over", async () => {
@@ -115,13 +113,13 @@ describe("AgentsApp skills", () => {
     expect(tried.map((skill) => skill.id)).toEqual(["premise", "brief"]);
   });
 
-  test("Checks the premise shows the engine's numbers as sent, then the two red-team results", async () => {
+  test("Checks the premise shows the engine's numbers as sent, each linked to them", async () => {
     await withNumbers(ENGINE);
     const source = "Source: Bern Life’s evaluator on snapshot demo-snapshot-1, 48 queries";
+    expect(status().textContent).toBe("Numbers for snapshot demo-snapshot-1.");
     expect(evidence("Checks the premise")).toEqual([
       ["Invented questions abstained", "7 / 10", source],
       ["False abstentions", "2 / 38", source],
-      ...RED_TEAM,
     ]);
     expect(evidence("Search people and units")).toEqual([
       ["Recall@10", "0.4375 [0.29, 0.58]", source],
@@ -142,17 +140,35 @@ describe("AgentsApp skills", () => {
     expect(evidence("Checks the premise")).toEqual([
       ["Invented questions abstained", "FIXTURE 7 / 10", source],
       ["False abstentions", "FIXTURE 2 / 38", source],
-      ...RED_TEAM,
     ]);
     expect(document.body.textContent).not.toMatch(/evaluator on snapshot/);
   });
 
-  test("without the numbers the quoted results stay and a note says why", async () => {
+  test("without the numbers no row is guessed and the status line says why", async () => {
     await withNumbers({ status: "not_connected" });
-    expect(evidence("Checks the premise")).toEqual(RED_TEAM);
-    const card = screen.getByRole("heading", { name: "Checks the premise" }).closest("li")!;
-    expect(within(card).getByText("Bern Life’s numbers are not connected yet.")).toBeTruthy();
+    expect(status().textContent).toBe("Bern Life’s numbers are not connected yet.");
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.queryByLabelText("Evidence: Checks the premise")).toBeNull();
     expect(screen.queryByLabelText("Evidence: Search people and units")).toBeNull();
+  });
+
+  test("an error says so in the live status line; Try again asks once more", async () => {
+    const { api } = await withNumbers({ status: "error" }, false, [ENGINE]);
+    expect(status().textContent).toBe("Bern Life’s numbers could not be loaded.Try again");
+    expect(screen.queryByLabelText("Evidence: Checks the premise")).toBeNull();
+    const button = screen.getByRole("button", { name: "Try again" });
+    button.focus();
+    await act(async () => {
+      fireEvent.click(button);
+    });
+    expect(api.calls()).toBe(2);
+    expect(document.activeElement).toBe(status());
+    expect(status().textContent).toBe("Numbers for snapshot demo-snapshot-1.");
+    expect(evidence("Checks the premise")[0]).toEqual([
+      "Invented questions abstained",
+      "7 / 10",
+      "Source: Bern Life’s evaluator on snapshot demo-snapshot-1, 48 queries",
+    ]);
   });
 
   test("a skill with no number behind it says so and shows no row", async () => {
