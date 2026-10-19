@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/infrastructure/ui/button";
 import { StatusChip } from "@/infrastructure/ui/status-chip";
 import { ConnectForm } from "./connect-form";
@@ -37,11 +37,22 @@ function RelationControls({
   onAnswer,
 }: Pick<MemberRowProps, "member" | "relation" | "onAsk" | "onAnswer">) {
   const [asking, setAsking] = useState(false);
+  const connect = useRef<HTMLButtonElement>(null);
+  const cancelled = useRef(false);
+  // Cancel gives focus back to the Connect button that opened the form.
+  useEffect(() => {
+    if (asking || !cancelled.current) return;
+    cancelled.current = false;
+    connect.current?.focus();
+  }, [asking]);
   if (asking) {
     return (
       <ConnectForm
         name={member.displayName}
-        onCancel={() => setAsking(false)}
+        onCancel={() => {
+          cancelled.current = true;
+          setAsking(false);
+        }}
         onSend={async (note) => {
           const sent = await onAsk(note);
           if (sent) setAsking(false);
@@ -72,7 +83,11 @@ function RelationControls({
         </>
       );
     default:
-      return <Button onClick={() => setAsking(true)}>Connect</Button>;
+      return (
+        <Button ref={connect} onClick={() => setAsking(true)}>
+          Connect
+        </Button>
+      );
   }
 }
 

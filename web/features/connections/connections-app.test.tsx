@@ -141,7 +141,7 @@ describe("ConnectionsApp", () => {
     await click("Send request");
     expect(server.asked).toEqual([{ handle: "bea", note: "Glucose sensors?" }]);
     expect(row("Bea Example").textContent).toContain("Request sent");
-    expect(screen.getByText("Request sent to Bea Example.")).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByText("Request sent to Bea Example."));
     await click("Withdraw", row("Bea Example"));
     expect(server.answered).toEqual([{ id: "r-bea", answer: "withdraw" }]);
     expect(within(row("Bea Example")).getByRole("button", { name: "Connect" })).toBeTruthy();
@@ -178,6 +178,17 @@ describe("ConnectionsApp", () => {
     expect(screen.getByText("This office is not open to you.")).toBeTruthy();
     expect(screen.queryByText("Room of Cem Example")).toBeNull();
     expect(server.visited).toEqual(["demo_lena", "cem"]);
+  });
+
+  test("Cancel closes the note and gives focus back to Connect", async () => {
+    const server = fakeServer();
+    await shown(server.api);
+    await click("Connect", row("Bea Example"));
+    await click("Cancel");
+    expect(document.activeElement).toBe(
+      within(row("Bea Example")).getByRole("button", { name: "Connect" }),
+    );
+    expect(server.asked).toEqual([]);
   });
 
   test("a refused request says why in plain words", async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Button } from "@/infrastructure/ui/button";
 import { type ConnectionsApi, FAILURE_TEXT, type Member } from "./connections-api";
 import type { Answer } from "./input";
@@ -39,6 +39,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export function ConnectionsApp({ controller, api, onMessage, renderRoom }: ConnectionsAppProps) {
   const [visiting, setVisiting] = useState<Member | null>(null);
   const [notice, setNotice] = useState("");
+  // When an answer or a request removes the button that was pressed, focus moves to the sentence
+  // that says what happened, not to the top of the page.
+  const status = useRef<HTMLParagraphElement>(null);
   const { refresh } = controller;
   useEffect(() => void refresh(), [refresh]);
 
@@ -63,7 +66,9 @@ export function ConnectionsApp({ controller, api, onMessage, renderRoom }: Conne
   const connected = connectedPeople(requests);
 
   async function respond(id: string, answer: Answer) {
-    setNotice((await controller.answer(id, answer)) ? answered[answer] : "");
+    const done = await controller.answer(id, answer);
+    setNotice(done ? answered[answer] : "");
+    status.current?.focus();
   }
 
   return (
@@ -151,6 +156,7 @@ export function ConnectionsApp({ controller, api, onMessage, renderRoom }: Conne
                 onAsk={async (note) => {
                   const sent = await controller.ask(member.handle, note);
                   setNotice(sent ? `Request sent to ${member.displayName}.` : "");
+                  if (sent) status.current?.focus();
                   return sent;
                 }}
                 onAnswer={(id, answer) => void respond(id, answer)}
@@ -159,7 +165,12 @@ export function ConnectionsApp({ controller, api, onMessage, renderRoom }: Conne
           </ul>
         )}
       </Section>
-      <p aria-live="polite" className="text-muted min-h-5 text-sm">
+      <p
+        ref={status}
+        tabIndex={-1}
+        aria-live="polite"
+        className="text-muted min-h-5 text-sm outline-none"
+      >
         {notice}
       </p>
       {controller.failure !== null && (
