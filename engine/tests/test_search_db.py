@@ -253,7 +253,11 @@ class SearchDbTest(unittest.TestCase):
             found["expanded_terms"],
             [{"term": "glucose monitoring", "kind": "translation", "lang": "en"}],
         )
-        self.assertEqual(found["results"][0]["profile"]["id"], "person-example-ada-muster")
+        # The same order as the recorded wording: the project's own passage first (#231).
+        self.assertEqual(
+            [r["profile"]["id"] for r in found["results"]][:2],
+            ["project-example-glucopatch", "person-example-ada-muster"],
+        )
         self.assertIn(f"<question>\n{recorded}\n</question>", llm.prompts[0])
         self.assertIn(f"<question>\n{recorded}\n</question>", llm.prompts[1])
         plain = search(typed, None, self.store, fake_embedder(), llm, recorded=Recorded([]))
