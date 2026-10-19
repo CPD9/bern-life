@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { AccountBadge, inkOn } from "./account-badge";
 
 describe("AccountBadge", () => {
@@ -17,6 +17,19 @@ describe("AccountBadge", () => {
     expect(link.querySelector("span")!.getAttribute("style")).toBe(
       "background-color: #5e3b26; color: #ffffff;",
     );
+  });
+
+  test("signed in with the You sheet, the badge is a button that opens it", () => {
+    const opened: string[] = [];
+    render(
+      <AccountBadge
+        account={{ status: "signed-in", handle: "ada", colour: "#5e3b26" }}
+        onOpen={() => opened.push("you")}
+      />,
+    );
+    expect(screen.queryByRole("link")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "You, @ada" }));
+    expect(opened).toEqual(["you"]);
   });
 
   test("while the account is checked, it shows nothing", () => {

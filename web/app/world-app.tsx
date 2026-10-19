@@ -12,6 +12,9 @@ import { useDesktop } from "@/features/desktop/use-desktop";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
 import { Navigator } from "@/features/navigator/navigator";
 import { useNavigator } from "@/features/navigator/use-navigator";
+import { NotificationBell } from "@/features/notifications/notification-bell";
+import { Toasts } from "@/features/notifications/toasts";
+import { notificationStore } from "@/features/notifications/use-notifications";
 import { OfficeView } from "@/features/office/office-view";
 import { useOnboarding } from "@/features/onboarding/use-onboarding";
 import { comingNextText } from "@/features/phone/coming-next-text";
@@ -32,6 +35,7 @@ import { StoryMenu } from "@/features/story/story-menu";
 import { StoryStart } from "@/features/story/story-start";
 import { useStory } from "@/features/story/use-story";
 import { WorldCanvas } from "@/features/world/world-canvas";
+import { YouSheet } from "@/features/you/you-sheet";
 import { emittedToday } from "@/infrastructure/app-events";
 import { useNow } from "@/infrastructure/bern-time";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
@@ -58,6 +62,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [phoneApp, setPhoneApp] = useState<string | null>(null);
   const [desktopOpen, setDesktopOpen] = useState(false);
+  const [youOpen, setYouOpen] = useState(false);
   const [storyMenuOpen, setStoryMenuOpen] = useState(false);
   const storyController = useStory({ story, demo: storyDemo, emitted: emittedToday });
   const account = useAccount(httpAccountApi);
@@ -160,7 +165,16 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
       view={shownView}
       phoneOpen={phoneOpen}
       onSelectTab={(tab) => (tab === "phone" ? setPhoneOpen(true) : setView(tab))}
-      hud={<Hud now={now} health={health} goal={goal} account={hudAccount} />}
+      hud={
+        <Hud
+          now={now}
+          health={health}
+          goal={goal}
+          account={hudAccount}
+          bell={<NotificationBell store={notificationStore()} />}
+          onOpenYou={() => setYouOpen(true)}
+        />
+      }
       side={
         <>
           {card === "greeting" && <GuideGreeting onDismiss={() => setGreetingDismissed(true)} />}
@@ -209,6 +223,16 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
             controller={desktop}
             now={now}
           />
+          {youOpen && (
+            <YouSheet
+              profile={onboarding.profile}
+              person={person}
+              agent={{ name: agentName, bear }}
+              story={storyController.progress}
+              onClose={() => setYouOpen(false)}
+            />
+          )}
+          <Toasts store={notificationStore()} reducedMotion={reducedMotion} />
           <StoryMenu
             controller={storyController}
             open={storyMenuOpen}
