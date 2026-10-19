@@ -107,7 +107,7 @@ class SearchDbTest(unittest.TestCase):
             patch["passage"],
             {
                 "kind": "own_page",
-                "span": "GlucoPatch\nA skin",
+                "span": "GlucoPatch\nA skin-worn",
                 "page_url": "https://www.example-institute.test/projects/glucopatch",
                 "page_sha256": PATCH_PAGE["sha256"],
                 "start": 0,

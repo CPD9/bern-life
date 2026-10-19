@@ -150,19 +150,20 @@ reorders a few results below rank 10.
    (`member_of`) does not count: on the dev set it added nothing, and a broad unit would vouch
    for everyone in it.
    **On their own page (`passage`):** a candidate with neither is still shown when its own page,
-   the page its name claim cites, has a word matching the question (the same word-form test)
-   next to its name: within 300 characters after the name, and as far before it unless another
+   the page its name claim cites, has words matching two distinct word forms of the question
+   (the same word-form test; all of them if the question has only one) next to its name: one
+   shared word is enough for a claim, which is about its profile, but not for a page window.
+   Next to the name means within 300 characters after the name, and as far before it unless another
    profile's name ends there. The window never holds another profile's name from that page, so
    on a team list the line under one name is never lent to the next. Words of the name itself
    do not count. The result then carries `passage`: the verbatim span from the name to the
-   nearest matching word, with the page's url, sha256, offset and fetch date. Code checks that
+   nearest matching words, with the page's url, sha256, offset and fetch date. Code checks that
    the page text hashes to the name claim's sha256 and that the span is that text at that
    offset, and the evaluator checks the span like a claim. It is a passage on their page, not a
    claim of their profile: its `reason` stays the plain one from its own claims, it is not sent
    to the explainer, and abstention never reads it (the third check below counts only claims
-   and `via`). Such results rank after every result with a matching claim or a `via` (the
-   claim results keep their ranks, and the passage results take the top ten's free places under
-   the unit cap, counting the claim results already there). 300 characters was fixed before the
+   and `via`). Such results rank with the others by fused score, after a result with a
+   matching claim or a `via` at an equal score, under one unit cap. 300 characters was fixed before the
    first dev run: on pages naming several profiles half of all gaps between two names are under
    102 characters, so there the next name ends the window; a page about one profile has a median
    text of 734 characters.

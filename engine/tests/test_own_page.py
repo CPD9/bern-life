@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from bernlife.explain import explain_top
 from bernlife.matching import asked
 from bernlife.own_page import (
+    MIN_WORDS,
     WINDOW,
     OwnPage,
     PageWords,
@@ -75,7 +76,7 @@ class PassageNearTest(unittest.TestCase):
             Passage(
                 TEAM_URL,
                 sha(TEAM),
-                "Ben Beispiel\nPhD student, sweat",
+                "Ben Beispiel\nPhD student, sweat patches",
                 TEAM.index("Ben Beispiel"),
                 FETCHED,
             ),
@@ -87,10 +88,18 @@ class PassageNearTest(unittest.TestCase):
         ada = near("glucose", TEAM_PAGE, "Dr. Ada Muster")
         self.assertEqual(ada.span, "Dr. Ada Muster\nGroup leader, glucose")
 
-    def test_the_nearest_matching_word_ends_the_span(self):
-        passage = near("sensors for glucose", TEAM_PAGE, "Dr. Ada Muster")
-        expected = ("Dr. Ada Muster\nGroup leader, glucose", 24)
+    def test_two_distinct_question_words_are_needed_and_the_nearest_two_end_the_span(self):
+        self.assertEqual(MIN_WORDS, 2)
+        passage = near("glucose sensors and sensor arrays", TEAM_PAGE, "Dr. Ada Muster")
+        expected = ("Dr. Ada Muster\nGroup leader, glucose sensors", 24)
         self.assertEqual((passage.span, passage.start), expected)
+        self.assertIsNone(near("glucose meters", TEAM_PAGE, "Dr. Ada Muster"))
+
+    def test_a_question_with_one_content_word_needs_only_that_word(self):
+        self.assertEqual(
+            near("who studies glucose?", TEAM_PAGE, "Dr. Ada Muster").span,
+            "Dr. Ada Muster\nGroup leader, glucose",
+        )
 
     def test_a_word_form_matches_as_in_the_claim_rule(self):
         ben = near("patch", TEAM_PAGE, "Ben Beispiel")

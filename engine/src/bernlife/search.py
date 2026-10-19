@@ -9,7 +9,7 @@ reorder results. The body carries no timings: the same query on the same snapsho
 the same bytes.
 
 A candidate rule 5 drops may still be shown through a passage on its own page (own_page.py),
-after the results with a matching claim (PASSAGE_ORDER). Abstention never reads those passages.
+ranked among the others by fused score (PASSAGE_ORDER). Abstention never reads those passages.
 """
 
 from collections.abc import Sequence

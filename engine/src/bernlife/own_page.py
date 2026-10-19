@@ -3,19 +3,21 @@
 Rule 5 shows a candidate only if a claim of its own (or of a project it works on) matches the
 question. Most people are a name and a role from a team page, and that page often says, right
 next to the name, what the question asks: "Neuro Robotics" under a master student's name. Such a
-candidate may still be shown when its own page, the page its name claim cites, has a word within
-WINDOW characters of that name whose form matches the question, by the same test the claim rule
-uses (matching.py). Words of the name itself never count. The window never holds another
+candidate may still be shown when its own page, the page its name claim cites, has words within
+WINDOW characters of that name whose forms match MIN_WORDS distinct word forms of the question
+(all of them if it has fewer), by the same test the claim rule uses (matching.py). One shared word
+is enough for a claim, which is about its profile; a page window is not, so it needs two. Words of
+the name itself never count. The window never holds another
 profile's name from that page: it stops before the next name, and it reaches back before the name
 only when no other name ends within WINDOW characters before it. On a team list the lines under
 a name belong to that name, so one person's line is never lent to the next.
 
-The result then carries `passage`: the verbatim span from the name to the nearest matching word,
+The result then carries `passage`: the verbatim span from the name to the nearest matching words,
 with the page's url, sha256, offset and fetch date. Code checks that the page text hashes to the
 name claim's sha256 and that the span is that text at that offset. It is a passage on their page,
 not a claim of their profile: the reason stays the plain one from the profile's own claims, the
-explainer never sees it, it ranks after results with a matching claim, and abstention never reads
-it.
+explainer never sees it, it ranks after a result with a matching claim at an equal fused score,
+and abstention never reads it.
 """
 
 import bisect
@@ -34,6 +36,7 @@ from bernlife.profiles_db import timestamp
 # are under 102 characters, so there the next name ends the window; on a page about one profile
 # (median text 734 characters), 300 on each side reaches most of what surrounds the name.
 WINDOW = 300
+MIN_WORDS = 2
 KIND = "own_page"
 TOKEN = re.compile(r"[^\W\d_]+")
 
@@ -90,7 +93,8 @@ def bounds(names: Sequence[tuple[int, int]], start: int, end: int, length: int) 
 
 
 def passage_near(question: Asked, words: PageWords, span: str, start: int | None) -> Passage | None:
-    """The span from the name to the nearest word matching the question, or None."""
+    """The span from the name to the nearest words matching MIN_WORDS distinct word forms of the
+    question, or None."""
     page = words.page
     if not words.verified:
         return None
@@ -99,19 +103,25 @@ def passage_near(question: Asked, words: PageWords, span: str, start: int | None
         return None
     end = at + len(span)
     low, high = bounds(page.names, at, end, len(page.text))
-    nearest: tuple[int, int, int] | None = None  # (gap to the name, start, end) of a word
+    matches = []  # (gap to the name, start, end, shared forms) of each matching word
     for token_start, token_end, token in words.between(low, high):
         if token_start < end and token_end > at:
             continue
-        if not token_forms(token) & question.forms:
+        shared = token_forms(token) & question.forms
+        if shared:
+            gap = token_start - end if token_start >= end else at - token_end
+            matches.append((gap, token_start, token_end, shared))
+    need = min(MIN_WORDS, len(question.forms))
+    seen: set[str] = set()
+    first, last = at, end
+    for _, token_start, token_end, shared in sorted(matches, key=lambda m: m[:2]):
+        if shared <= seen:
             continue
-        gap = token_start - end if token_start >= end else at - token_end
-        if nearest is None or (gap, token_start) < nearest[:2]:
-            nearest = (gap, token_start, token_end)
-    if nearest is None:
-        return None
-    first, last = min(at, nearest[1]), max(end, nearest[2])
-    return Passage(page.url, page.sha256, page.text[first:last], first, page.fetched_at)
+        seen |= shared
+        first, last = min(first, token_start), max(last, token_end)
+        if len(seen) >= need:
+            return Passage(page.url, page.sha256, page.text[first:last], first, page.fetched_at)
+    return None
 
 
 def own_page_passages(
