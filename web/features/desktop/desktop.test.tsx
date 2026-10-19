@@ -137,6 +137,9 @@ describe("DesktopSurface", () => {
     const { rerender } = render(<Dialog open={false} />);
     expect(screen.queryByText("A toast")).toBeNull();
     rerender(<Dialog open />);
-    expect(screen.getByText("A toast").closest("dialog")).toBe(document.querySelector("dialog"));
+    const toast = screen.getByText("A toast");
+    expect(toast.closest("dialog")).toBe(document.querySelector("dialog"));
+    // Below the header, so "Leave the desk" stays reachable.
+    expect(toast.closest("[data-desktop-overlay]")?.className.split(" ")).toContain("top-14");
   });
 });
