@@ -47,8 +47,8 @@ export function OfficeVisit({ member, api, renderRoom, onClose }: OfficeVisitPro
           <>
             <p className="text-muted text-sm">
               {member.demo
-                ? "DEMO: an invented member's office, for the demo only. "
-                : "You are a visitor: look around; nothing here can be changed. "}
+                ? "DEMO: an invented member's office, for the demo only."
+                : "You are a visitor: look around; nothing here can be changed."}
             </p>
             <div className="h-80 overflow-hidden rounded-2xl">{renderRoom(member.displayName)}</div>
           </>
