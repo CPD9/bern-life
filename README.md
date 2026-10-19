@@ -42,14 +42,25 @@ http://127.0.0.1:3000/office.
    (needs [Bun](https://bun.sh)), then choose **Join Bern Life**.
 5. **Onboarding.** Lumi, your first agent, greets you. Five short steps follow: who you are in
    Bern, your look (players are people), what brings you here, who sees what, and your agent:
-   Lumi is a bear you can rename and restyle.
-6. **Your office.** Onboarding ends in your office, the **Home** tab, with you and your agent's
-   bear. Sit at the desk to use the computer: **Navigator** (the same search as Ask, and a project
-   brief), **Agents** (Lumi's skills, and loops: saved searches you run again, whose new and
-   dropped results reach the bell), **Reports** (match reports with their sources) and
-   **Messages** (to members who joined). The door leads back to the map; the phone stays quick
-   access to Ask.
-7. **The story.** A card offers **Start the story**, quests about moving a business to Bern that
+   Lumi is a bear you can rename and restyle. A card then offers to choose where your office
+   stands; each plot lists the nearest places with their sourced addresses.
+6. **Your office.** Onboarding ends in your office, the **Home** tab. Sit at the desk to use the
+   computer, nine apps: **Navigator** (the same search as Ask, and a project brief), **Agents**
+   (Lumi's skills, and loops: saved searches you run again, whose new and dropped results reach
+   the bell), **Reports** (match reports with their sources), **Messages** (to members who
+   joined), **Library** (what you saved, and your documents with their trace),
+   **Opportunities** (funding calls, services and spaces; an amount or deadline appears only
+   inside the sentence it was read from), **Garage** (the Apertus models and the evaluator's
+   numbers for this snapshot, as the engine serves them), **Sources** (the institutions crawled,
+   and how to add one) and **Settings**. The door leads back to the map; the phone carries Ask,
+   Messages, Agents, Opportunities, Library and Settings.
+7. **Lumi.** Your agent floats beside you as the bear you made, and stands in front of the city
+   hall on the map; either opens its chat. Lumi searches with the engine's own tools and answers
+   with the same source cards as Ask. A person it names must be among those results, a reply it
+   cannot support is replaced by a summary of the cited claims, and with nothing behind it Lumi
+   says it found no verifiable source. An answer lights its places on the map and may open a card
+   in Ask; a match report waits for your click and opens in the desk's Reports window.
+8. **The story.** A card offers **Start the story**, quests about moving a business to Bern that
    each walk through one part of the case and complete only when you actually do the step in the
    app, or **Explore freely**. Your badge opens the **You** sheet: profile, goals, skills, people
    and agents, with real content only.
@@ -57,8 +68,11 @@ http://127.0.0.1:3000/office.
 Replay is the default. Questions recorded in the bundle's model cache get Apertus's search terms
 and explanations; any other question still gets plain search over the stored pages, and the app
 says so. A new project brief needs the model: replay has only the briefs recorded in the bundle,
-and the app says so for any other. Only a live run (`make live ARGS=serve`, with a model endpoint
-set in `.env`) calls Apertus, and it refuses to start when that endpoint does not answer.
+and the app says so for any other. In replay Lumi searches your message and summarises the cited
+claims; its own recorded answers ship with the next bundle. Only `make live-run` (in place of
+`make run`) calls Apertus: it starts only when the model endpoint set in `.env` answers, and the
+model is called only for signed-in members under their limits, at most `LLM_CALL_BUDGET` calls a
+day (unset: none). Everyone else is answered from the recordings.
 
 ## Against the case
 
@@ -136,12 +150,14 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
 - **Replay with no model.** Every model call goes through a cache that ships in the snapshot
   bundle, so `make run` answers without a GPU, a key or a network connection to any model.
 - **Your own hardware.** The vLLM scripts in [`infra/runpod/`](infra/runpod/README.md) serve
-  Apertus 70B (FP8) or 8B at pinned revisions on any machine with suitable GPUs, local or
-  air-gapped, behind a loopback tunnel.
+  Apertus 70B (FP8) or 8B at pinned revisions on GPUs you control, behind a loopback tunnel, and
+  the bundle replays on a machine with no network at all. Both paths are in
+  [`infra/sovereign.md`](infra/sovereign.md); they are documented, not yet rehearsed end to end.
 - **Self-hosted.** Postgres with pgvector, the engine and the web app run in Docker. The embedding
   model is downloaded once on the first start, at a pinned revision checked by sha256. The map is
   drawn in three.js without tiles, and the app loads no fonts or scripts from elsewhere. A hosted
-  copy runs on Exoscale in Geneva, invite-only ([`infra/exoscale.md`](infra/exoscale.md)).
+  copy runs on Exoscale in Geneva, invite-only, with nightly backups and an uptime check
+  (`python3 -m infra.check_hosted --watch`, [`infra/exoscale.md`](infra/exoscale.md)).
 
 ## Data protection
 
@@ -166,19 +182,23 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
   phrase in another language stays hidden rather than shown without a reason.
 - **German and French questions find less than English** (criterion 2). There is no stemming, so
   word forms such as "Kohlenhydrate" and "Kohlenhydraten" do not match.
-- **Not every invented question abstains** (the ethics row). Those that still get results include
-  one about an invented project and one with a French title the premise check does not know.
+- **Not every invented question abstains:** 8 of 10, where the pre-registered rule asks 9 (the
+  ethics row). The two that still get results ask in French, one about an invented project and one
+  with a title the premise check does not know.
 - **UniBE is found least often** of the three sources (criterion 5).
 - Explanations are written in English only, and field completeness still needs its human check.
-- **In the game:** on the phone, Messages, Agents and Projects & calls are still marked **Coming
-  next** (Messages and Agents work at the office desk), and so are the desk's Library,
-  Opportunities and Garage. Quests that no app event can finish yet are optional and say why. A
-  map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the repository
-  but not yet drawn in the world.
-- Next: matching word forms and claims across languages, the human completeness labels, a
-  calibrated confidence per result, and an Opportunities app for the funding calls, services and
-  spaces the bundle already holds. The engine's API can search them, but no search in the app
-  asks for them yet, an agent's loops included.
+- **In the game:** you cannot walk around the office yet, and on a phone-width screen (390 px) the
+  HUD covers the map's search summary. Two optional quests say why one of their steps cannot be
+  done yet: adding a source is a file in `sources/`, not an action in the app, and there is no
+  network of labs and experts. What you save to the Library and your office plot stay on this
+  device. A map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the
+  repository but not yet drawn in the world.
+- **Notifications stay in the app** (the bell). Opt-in e-mail or push notifications are not
+  decided yet.
+- **The next bundle is not pinned yet.** Replay and every number above come from
+  `bundle-20261019-2`, which holds no recorded answers of Lumi's own.
+- Next: matching word forms and claims across languages, the human completeness labels, and a
+  calibrated confidence per result.
 
 ## Team
 

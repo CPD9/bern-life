@@ -28,10 +28,10 @@ Phone → Ask → **Project brief**, paste the invented brief below, send.
 > sleep and movement at night, and for testing such a device with older patients.
 
 Apertus reads each need from a sentence of the brief; the results show which needs each expert
-covers and which stay open. Reading a new brief needs the model, so run this step against a live
-engine (`make live ARGS=serve`, with a model endpoint set in `.env`). Replay has only the briefs
-recorded in the bundle, and this one is not among them: there the app says that reading a new
-brief needs the model.
+covers and which stay open. Reading a new brief needs the model, so run this step signed in
+against `make live-run`, with a model endpoint and `LLM_CALL_BUDGET` set in `.env`. Replay has only
+the briefs recorded in the bundle, and this one is not among them: there the app says that reading
+a new brief needs the model.
 
 ## 2. Ask in your own words
 
@@ -76,12 +76,18 @@ Back in any result card, open a claim (a role, an expertise, a project). The evi
 verbatim sentence, the page, and the date it was fetched; **Open the page at this sentence** opens
 the institution's page scrolled to that sentence.
 
-## 7. Your agent and your office
+## 7. Lumi, your agent
 
-After onboarding you land in your office (the **Home** tab) with your agent, Lumi, the bear you
-made in the last onboarding step. Sit at the desk to use the computer: **Agents** lists Lumi's
-skills, such as search, project brief and match report, each with a **Try** that opens it (Find
-opportunities opens the Opportunities sheet, marked Coming next), and loops: saved searches you
-run again by hand, whose new and dropped results reach the bell. On the map, three placeholder
-figures named Navigator, Scout and Matchmaker still stand in front of the city hall: **Navigator**
-opens Ask; Scout and Matchmaker open the phone's Agents app, marked Coming next.
+After onboarding you land in your office (the **Home** tab). Lumi, the bear you made in the last
+onboarding step, floats beside you in the office and on the map, and stands in front of the city
+hall; tap either to open Lumi's chat, then ask in your own words or tap a suggestion. Lumi
+searches with the engine's own tools and answers with the same cards as Ask: a person it names must
+be among those results, and a reply with nothing behind it says that no verifiable source was
+found. The answer goes where you would go by hand: it lights its places on the map and may open a
+card in Ask, and a match report waits for your click on **Make a match report**, then opens in the
+desk's Reports window. In replay Lumi searches your message and summarises the cited claims; its
+own recorded answers ship with the next bundle.
+
+At the desk, **Agents** lists Lumi's skills, such as search, project brief and match report, each
+with a **Try** that opens it (Find opportunities opens Opportunities), and loops: saved searches
+you run again by hand, whose new and dropped results reach the bell.
