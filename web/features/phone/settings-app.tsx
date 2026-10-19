@@ -65,7 +65,7 @@ export function SettingsApp({
           onChange={() => undefined}
         />
       </SettingsSection>
-      <SettingsSection title="Display">
+      <SettingsSection title="Display" footer="Saved on this device only.">
         <ChoiceRow
           title="Night mode"
           description="Darker colours for the evening. Auto follows your device."
@@ -79,7 +79,6 @@ export function SettingsApp({
           checked={settings.lite}
           onChange={(lite) => setSettings({ ...settings, lite })}
         />
-        <p className="text-muted text-sm">Saved on this device only.</p>
       </SettingsSection>
       <SettingsSection title="About & data sources">
         <AboutDataSources health={health} fixtureMode={fixtureMode} />

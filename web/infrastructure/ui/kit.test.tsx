@@ -22,12 +22,29 @@ describe("Toggle", () => {
     expect(toggle.getAttribute("aria-checked")).toBe("false");
   });
 
-  test("a disabled switch does not flip", () => {
+  test("a disabled switch does not flip, and its row is dimmed", () => {
     render(<ToggleHarness disabled />);
     const toggle = screen.getByRole("switch", { name: "Lite graphics" });
     fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-checked")).toBe("false");
     expect((toggle as HTMLButtonElement).disabled).toBe(true);
+    expect(toggle.parentElement!.classList.contains("opacity-40")).toBe(true);
+  });
+
+  test("is an iOS switch: a 51 by 31 pt track, a 27 pt knob, green when on", () => {
+    render(<ToggleHarness />);
+    const toggle = screen.getByRole("switch", { name: "Lite graphics" });
+    const has = (name: string) => toggle.classList.contains(name);
+    expect([has("w-[51px]"), has("h-[31px]"), has("bg-primary"), has("duration-200")]).toEqual([
+      true,
+      true,
+      false,
+      true,
+    ]);
+    expect(toggle.firstElementChild!.classList.contains("size-[27px]")).toBe(true);
+    fireEvent.click(toggle);
+    expect(has("bg-primary")).toBe(true);
+    expect(toggle.firstElementChild!.classList.contains("translate-x-5")).toBe(true);
   });
 });
 
@@ -124,4 +141,20 @@ describe("Sheet", () => {
     await act(async () => fireEvent.keyDown(document.body, { key: "Escape" }));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
+});
+
+test("a sheet with a grabber puts its action between the title and Close", () => {
+  render(
+    <Sheet title="Notifications" onClose={() => undefined} grabber actions={<button>Mark</button>}>
+      <p>Rows</p>
+    </Sheet>,
+  );
+  const dialog = screen.getByRole("dialog", { name: "Notifications" });
+  const names = Array.from(dialog.querySelectorAll("h2, button")).map(
+    (node) => node.getAttribute("aria-label") ?? node.textContent,
+  );
+  expect(names).toEqual(["Notifications", "Mark", "Close"]);
+  expect(dialog.querySelector("header")!.previousElementSibling!.getAttribute("aria-hidden")).toBe(
+    "true",
+  );
 });

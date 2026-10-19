@@ -3,7 +3,7 @@
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useEscapeLayer } from "@/infrastructure/ui/escape-layers";
-import { WindowChrome, belowWindowHeader } from "@/infrastructure/ui/window-chrome";
+import { WindowChrome, belowPhoneHeader } from "@/infrastructure/ui/window-chrome";
 import { NotificationCentre } from "./notification-centre";
 import { PhoneHome } from "./phone-home";
 import { PhoneStatusBar } from "./phone-status-bar";
@@ -115,7 +115,12 @@ export function Phone({
         onOpenNotification(notification);
       }
     : undefined;
-  const transition = reducedMotion ? "" : "motion-safe:animate-phone-in";
+  const push = reducedMotion ? "" : "motion-safe:animate-phone-push";
+  const fade = reducedMotion ? "" : "motion-safe:animate-phone-in";
+  const backTitle =
+    history.previous === null
+      ? "Home"
+      : (apps.find((candidate) => candidate.id === history.previous)?.label ?? "Back");
 
   return (
     <dialog
@@ -138,19 +143,21 @@ export function Phone({
             <section
               key={app.id}
               aria-labelledby={headingId}
-              className={`flex min-h-0 flex-1 flex-col ${transition}`}
+              className={`flex min-h-0 flex-1 flex-col ${push}`}
             >
               <WindowChrome
                 title={app.label}
                 headingId={headingId}
                 headingRef={heading}
                 onBack={history.back}
+                backLabel={backTitle}
+                variant="phone"
               >
                 {app.content}
               </WindowChrome>
             </section>
           ) : (
-            <div key="home" className={`flex min-h-0 flex-1 flex-col ${transition}`}>
+            <div key="home" className={`flex min-h-0 flex-1 flex-col ${fade}`}>
               <PhoneHome now={now} apps={apps} onOpen={onAppChange} />
             </div>
           )}
@@ -170,7 +177,7 @@ export function Phone({
             <div
               data-phone-overlay
               className={`pointer-events-none absolute inset-x-0 bottom-0 z-30 [contain:layout] ${
-                app && !centreOpen ? belowWindowHeader : "top-0"
+                app && !centreOpen ? belowPhoneHeader : "top-0"
               }`}
             >
               {overlay}
