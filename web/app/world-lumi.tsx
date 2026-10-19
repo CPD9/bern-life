@@ -95,18 +95,21 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
   };
 }
 
-/** The agent's bear, still and lite, in the chat's header. */
+/** The agent's bear, still and lite, in the chat's header: head and body, 1.4 tall, feet at 0. */
 function SmallBear({ config }: { config: BearConfig }) {
+  // The default camera looks at the origin, so the bear moves down instead of the camera up.
   return (
     <Canvas
       frameloop="demand"
       dpr={1}
       gl={{ alpha: true }}
-      camera={{ position: [0, 0.75, 2.5], fov: 30 }}
+      camera={{ position: [0, 0, 2.2], fov: 30 }}
     >
       <hemisphereLight color="#fff8ee" groundColor="#e8d8c0" intensity={1.4} />
       <directionalLight position={[1, 2, 3]} intensity={0.8} />
-      <BearFigure config={config} lite motion="still" />
+      <group position={[0, -0.9, 0]}>
+        <BearFigure config={config} lite motion="still" />
+      </group>
     </Canvas>
   );
 }
