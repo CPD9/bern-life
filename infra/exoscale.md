@@ -92,11 +92,13 @@ searches from loopback only). Steps in order; each says where it runs. `ssh` and
    ```
 
 2. **Your machine: get the verified tarball and copy it over.** `make fetch` checks the download
-   against `bundle.lock`'s sha256 and keeps it in the data folder's `downloads/`.
+   against `bundle.lock`'s sha256 and keeps it in the data folder's `downloads/`, under the name in
+   `bundle.lock`'s `asset`.
 
    ```bash
    make fetch
-   scp "${BERNLIFE_DATA_DIR:-data}/downloads/bundle-20261019-1.tar.gz" ubuntu@<ip>:
+   asset="$(python3 -c 'import json; print(json.load(open("bundle.lock"))["asset"])')"
+   scp "${BERNLIFE_DATA_DIR:-data}/downloads/$asset" ubuntu@<ip>:
    ```
 
 3. **Your machine: copy the tracked files** of the `main` that pins that bundle (the command from
@@ -113,12 +115,12 @@ searches from loopback only). Steps in order; each says where it runs. `ssh` and
 
    ```bash
    cd /opt/bernlife
-   (umask 022 && python3 infra/fetch_bundle.py --archive ~/bundle-20261019-1.tar.gz) \
-     && rm ~/bundle-20261019-1.tar.gz
+   asset="$(python3 -c 'import json; print(json.load(open("bundle.lock"))["asset"])')"
+   (umask 022 && python3 infra/fetch_bundle.py --archive ~/"$asset") && rm ~/"$asset"
    ```
 
-   It prints `bundle-20261019-1 verified and unpacked to /opt/bernlife/data/bundle`; anything else
-   is a refusal, and nothing was replaced.
+   It prints `<version> verified and unpacked to /opt/bernlife/data/bundle`, with the version in
+   `bundle.lock`; anything else is a refusal, and nothing was replaced.
 
 5. **VM: switch the settings off DEMO and check that both compose files parse.**
 
@@ -166,7 +168,7 @@ the code that ran before step 1: `sudo mv /opt/bernlife /opt/bernlife.search`, t
 | Deploy a new `main` | back up (step 1 above), copy the files again, then `docker compose up -d --build --wait` |
 | New bundle in `bundle.lock` | steps 1 to 4 and 7 above, with `docker compose up -d --build --wait --force-recreate load serve web` as step 6 |
 | Status and logs | `docker compose ps`, `docker compose logs -f web serve` |
-| Web app unreachable after `serve` restarted on its own | `docker compose up -d --force-recreate web` (it shares `serve`'s network, which a restart replaces) |
+| Web app unreachable after `serve` restarted on its own | `docker compose up -d --force-recreate web` (it shares `serve`'s network, which a restart replaces). A slow database does not cause this: `serve` waits up to two minutes for it instead of exiting |
 | Backup now | `sudo ./backup.sh` |
 | Restore a backup | `sudo sh -c 'gunzip -c /var/backups/bernlife/<file>.sql.gz' \| docker compose exec -T db psql -U bernlife -d bernlife` (into an empty database) |
 | New SSH IP | Exoscale portal → Security Groups → `bernlife-web` → edit the port 22 rule |

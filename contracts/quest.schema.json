@@ -57,7 +57,13 @@
             ]
           },
           "optional": {
+            "description": "Not needed to finish the story; its steps may complete in any order.",
             "type": "boolean"
+          },
+          "coming": {
+            "description": "One line for the player: why the quest cannot be played yet. Shown while a step's event is not emitted by any feature.",
+            "type": "string",
+            "maxLength": 120
           },
           "steps": {
             "type": "array",
