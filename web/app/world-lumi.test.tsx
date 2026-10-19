@@ -46,7 +46,10 @@ function setUp(api: LumiApi, { reportSaved = true } = {}) {
   const focusWhen: Record<string, Element | null> = {};
   const navigator = { show: (response: SearchResponse) => void shown.push(response) };
   const calls = {
-    shownOnMap: mock((response: SearchResponse) => response.query),
+    shownOnMap: mock((response: SearchResponse) => {
+      focusWhen["map"] = document.activeElement;
+      return response.query;
+    }),
     askOpened: mock(() => void (focusWhen["ask"] = document.activeElement)),
     reportMade: mock((response: SearchResponse) => Boolean(response) && reportSaved),
     reportsOpened: mock(() => void (focusWhen["reports"] = document.activeElement)),
@@ -85,10 +88,14 @@ async function ask(refresh: () => void, open: () => void, text: string) {
 
 test("show on map closes the chat and shows Lumi's answer on the map, once", async () => {
   const opener = floatie();
-  const { result, refresh, calls } = setUp(lumiAnswering([{ type: "show_on_map", result: 0 }]));
+  const { result, refresh, calls, focusWhen } = setUp(
+    lumiAnswering([{ type: "show_on_map", result: 0 }]),
+  );
   await ask(refresh, result.current.open, "glucose sensors");
   expect(calls.shownOnMap.mock.calls).toEqual([[answer]]);
   expect(document.querySelector("dialog")!.open).toBe(false);
+  // The map hides the floatie only once focus is back on it, so the shell can move focus on.
+  expect(focusWhen["map"]).toBe(opener);
   expect(document.activeElement).toBe(opener);
 });
 

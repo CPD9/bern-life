@@ -47,8 +47,9 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
   const afterClose = useRef<(() => void) | null>(null);
   const name = shownAgentName(agentName);
 
-  // The phone or the desk opens only once the chat has closed and given focus back to what opened
-  // it, so that dialog records a live element to return focus to.
+  // What an action opens or changes comes only once the chat has closed and given focus back to
+  // what opened it: the phone or the desk then records a live element to return focus to, and the
+  // map hides the floatie only after focus is on it, so the shell can move focus on (GameShell).
   function closeThen(next: () => void) {
     if (!open) {
       next();
@@ -66,8 +67,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
   }
 
   function showOnMap(response: SearchResponse) {
-    setOpen(false);
-    input.onShowOnMap(response);
+    closeThen(() => input.onShowOnMap(response));
   }
 
   // Ask shows the answer that lists the profile, as it came, without asking the engine again.
