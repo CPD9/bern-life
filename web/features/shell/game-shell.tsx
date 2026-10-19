@@ -14,6 +14,8 @@ type GameShellProps = {
   /** Cards that float at the side of the world, such as the story quest. */
   side: ReactNode;
   canvas: ReactNode;
+  /** The player's agent floating at the side of the world, above the tab bar. */
+  floatie?: ReactNode;
   overlay: ReactNode;
 };
 
@@ -27,6 +29,7 @@ export function GameShell({
   hud,
   side,
   canvas,
+  floatie,
   overlay,
 }: GameShellProps) {
   return (
@@ -43,6 +46,11 @@ export function GameShell({
       <div className="pointer-events-none absolute top-[calc(env(safe-area-inset-top)+10.5rem)] left-4 sm:top-[calc(env(safe-area-inset-top)+5.5rem)] flex flex-col items-start gap-3">
         <div className="pointer-events-auto flex flex-col items-start gap-3">{side}</div>
       </div>
+      {floatie && (
+        <div className="absolute right-3 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+4.5rem)]">
+          {floatie}
+        </div>
+      )}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="pointer-events-auto">
           <TabBar selected={phoneOpen ? "phone" : view} onSelect={onSelectTab} badges={tabBadges} />
