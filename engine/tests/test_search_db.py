@@ -12,6 +12,7 @@ from pathlib import Path
 
 from bernlife.abstain import NO_SOURCE
 from bernlife.brief_search import brief_search
+from bernlife.cache import CacheMiss
 from bernlife.database import connect
 from bernlife.llm import MockLLM
 from bernlife.load_command import load
@@ -19,6 +20,7 @@ from bernlife.search import search
 from bernlife.serve_command import EngineApi
 from bernlife.server import make_server
 from bernlife.store import PostgresStore
+from bernlife.wording import Recorded
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 from search_fakes import KRYO_TERM, SOURCES, FakeChat, fake_embedder, truncate_all, write_bundle
@@ -35,6 +37,21 @@ def result_validator() -> Draft202012Validator:
     ]
     registry = Registry().with_resources(resources)
     return Draft202012Validator(registry.contents("result.schema.json"), registry=registry)
+
+
+class RecordedChat(FakeChat):
+    """A replay cache that holds one wording: a prompt without it is a miss."""
+
+    def __init__(self, wording: str, replies: dict[str, object]):
+        super().__init__(replies)
+        self.wording = wording
+        self.prompts: list[str] = []
+
+    def chat(self, messages, *, role, prompt_version, temperature=0.0, seed=None, max_tokens=700):
+        self.prompts.append(messages[0]["content"])
+        if self.wording not in messages[0]["content"]:
+            raise CacheMiss(f"{role} call not in cache")
+        return super().chat(messages, role=role, prompt_version=prompt_version)
 
 
 class SearchDbTest(unittest.TestCase):
@@ -146,6 +163,48 @@ class SearchDbTest(unittest.TestCase):
         self.assertEqual(first["results"][0]["metrics"]["covers"], ["Blutzucker"])
         plain = search(query, None, self.store, fake_embedder())
         self.assertEqual((plain["abstained"], plain["mode"]), (True, "mock"))
+
+    def test_a_question_typed_in_other_capitals_and_spaces_replays_its_recording(self):
+        expansion = {
+            "topics": [
+                {
+                    "topic": "Blutzucker",
+                    "terms": [{"term": "glucose monitoring", "kind": "translation", "lang": "en"}],
+                }
+            ]
+        }
+        recorded, typed = "skin-worn Blutzucker", "  Skin-Worn  BLUTZUCKER "
+        llm = RecordedChat(recorded, {"expand": expansion})
+        found = search(typed, None, self.store, fake_embedder(), llm, recorded=Recorded([recorded]))
+        self.assertEqual((found["query"], found["mode"]), (typed, "replay"))
+        self.assertEqual(
+            found["expanded_terms"],
+            [{"term": "glucose monitoring", "kind": "translation", "lang": "en"}],
+        )
+        self.assertEqual(found["results"][0]["profile"]["id"], "person-example-ada-muster")
+        self.assertIn(f"<question>\n{recorded}\n</question>", llm.prompts[0])
+        self.assertIn(f"<question>\n{recorded}\n</question>", llm.prompts[1])
+        plain = search(typed, None, self.store, fake_embedder(), llm, recorded=Recorded([]))
+        self.assertEqual((plain["mode"], plain["expanded_terms"]), ("mock", []))
+        self.assertIn("<question>\nSkin-Worn BLUTZUCKER\n</question>", llm.prompts[-1])
+
+    def test_a_brief_typed_in_other_capitals_replays_its_recorded_needs(self):
+        recorded = "Invented Demo AG needs wearable sensors for continuous glucose monitoring."
+        needs = {"needs": [{"term": "wearable glucose sensors", "span": "needs wearable sensors"}]}
+        llm = RecordedChat(recorded, {"brief": needs})
+        response = brief_search(
+            "invented demo ag NEEDS  wearable sensors for continuous glucose monitoring.",
+            None,
+            self.store,
+            fake_embedder(),
+            llm,
+            recorded=Recorded([recorded]),
+        )
+        self.assertEqual([t["term"] for t in response["brief_terms"]], ["wearable glucose sensors"])
+        self.assertEqual(response["results"][0]["profile"]["id"], "person-example-ada-muster")
+        self.assertEqual(
+            (response["mode"], response["versions"]["prompts"]), ("replay", "brief-v1")
+        )
 
     def test_mock_runs_end_to_end_and_says_so(self):
         response = search("glucose monitoring", None, self.store, fake_embedder(), MockLLM())
