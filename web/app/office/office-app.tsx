@@ -29,6 +29,7 @@ export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
     snapshot: health.status === "ok" ? health.health.snapshot : null,
     notify: notifyLoop,
     unreadMessages: useUnreadMessages(account.state.status === "signed-in"),
+    health,
   });
   const now = useNow();
   // A loop's news shows as a toast here too, since this page has no bell.

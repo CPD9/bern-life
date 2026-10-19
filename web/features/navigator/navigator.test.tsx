@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import type { AppEventName, AppEventSink } from "@/infrastructure/app-events";
+import type { SearchResult } from "@/infrastructure/claims";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { SearchRequest } from "@/infrastructure/engine-types";
 import { abstainedFixture, briefFixture, copyOf, resultFixture } from "@/test/fixtures";
@@ -12,15 +14,17 @@ type HarnessProps = {
   api: NavigatorApi;
   fixtureMode?: boolean;
   onMakeReport?: (response: SearchResponse) => boolean;
+  renderSave?: (result: SearchResult) => ReactNode;
   events?: AppEventSink;
 };
 
-function Harness({ api, fixtureMode = false, onMakeReport, events }: HarnessProps) {
+function Harness({ api, fixtureMode = false, onMakeReport, renderSave, events }: HarnessProps) {
   return (
     <Navigator
       controller={useNavigator(api, events)}
       fixtureMode={fixtureMode}
       {...(onMakeReport ? { onMakeReport } : {})}
+      {...(renderSave ? { renderSave } : {})}
     />
   );
 }
@@ -194,6 +198,32 @@ describe("Navigator", () => {
     render(<Harness api={answering(abstainedFixture)} onMakeReport={() => true} />);
     await ask("quantum origami");
     expect(screen.queryByRole("button", { name: "Make a report" })).toBeNull();
+  });
+
+  test("the save slot sits under each result card, given that card's result", async () => {
+    const shown: string[] = [];
+    render(
+      <Harness
+        api={answering(resultFixture)}
+        renderSave={(result) => {
+          shown.push(result.profile.id);
+          return <button type="button">Keep {result.profile.name.value}</button>;
+        }}
+      />,
+    );
+    await ask("glucose sensors");
+    expect([...new Set(shown)]).toEqual(resultFixture.results.map((result) => result.profile.id));
+    for (const result of resultFixture.results) {
+      const name = result.profile.name.value;
+      const item = screen.getByRole("button", { name: `Keep ${name}` }).closest("li")!;
+      expect(item.querySelector("article, section, div")?.textContent).toContain(name);
+    }
+  });
+
+  test("no save slot without a renderer", async () => {
+    render(<Harness api={answering(resultFixture)} />);
+    await ask("glucose sensors");
+    expect(screen.queryByRole("button", { name: /^Keep / })).toBeNull();
   });
 
   test("answers become story events through the injected sink", async () => {

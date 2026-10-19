@@ -9,6 +9,7 @@ const everyApp = {
   library: "saved",
   opportunities: "calls",
   garage: "models",
+  sources: "sites",
   settings: "toggles",
 };
 
@@ -21,6 +22,7 @@ test("the dock order and labels are fixed", () => {
     "Library",
     "Opportunities",
     "Garage",
+    "Sources",
     "Settings",
   ]);
 });

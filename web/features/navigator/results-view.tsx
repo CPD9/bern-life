@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
+import type { SearchResult } from "@/infrastructure/claims";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { aspectMatrix } from "./aspect-matrix";
 import { BriefNeeds } from "./brief-needs";
@@ -14,6 +15,8 @@ type ResultsViewProps = {
   onRetry: () => void;
   onShowOnMap?: ((response: SearchResponse) => void) | undefined;
   onMakeReport?: ((response: SearchResponse) => boolean) | undefined;
+  /** A control under each card, such as the Library's save button. */
+  renderSave?: ((result: SearchResult) => ReactNode) | undefined;
 };
 
 function RetryButton({ onRetry }: { onRetry: () => void }) {
@@ -78,6 +81,7 @@ function Answer({
   onRetry,
   onShowOnMap,
   onMakeReport,
+  renderSave,
 }: ResultsViewProps & { response: SearchResponse; asked: NavigatorRequest["kind"] }) {
   const matrix = aspectMatrix(response);
   // An unread brief ran no search, so the status line alone says what happened.
@@ -106,8 +110,9 @@ function Answer({
       )}
       <ol className="flex flex-col gap-4">
         {response.results.map((result) => (
-          <li key={result.profile.id}>
+          <li key={result.profile.id} className="flex flex-col gap-2">
             <ResultCard result={result} />
+            {renderSave && <div className="self-start">{renderSave(result)}</div>}
           </li>
         ))}
       </ol>

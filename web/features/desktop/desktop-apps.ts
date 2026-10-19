@@ -11,6 +11,7 @@ export const desktopAppIds = [
   "library",
   "opportunities",
   "garage",
+  "sources",
   "settings",
 ] as const;
 
@@ -26,6 +27,7 @@ export const desktopAppLooks: Record<DesktopAppId, AppLook> = {
   library: { label: "Library", icon: "library", tile: "#9a3412" },
   opportunities: { label: "Opportunities", icon: "opportunities", tile: "#b45309" },
   garage: { label: "Garage", icon: "garage", tile: "#334155" },
+  sources: { label: "Sources", icon: "sources", tile: "#0f766e" },
   settings: { label: "Settings", icon: "settings", tile: "#475569" },
 };
 
