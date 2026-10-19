@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from infra.fetch_bundle import BundleError, Lock, fetch, read_lock
+from infra.fetch_bundle import BundleError, Lock, copy_archive, fetch, read_lock
 
 VERSION = "bundle-20261018-1"
 PAGES = b'{"url": "https://www.example-institute.test/team/ada-muster"}\n'
@@ -154,6 +154,44 @@ class FetchBundleTest(unittest.TestCase):
             archive,
             f"Refusing the bundle: manifest says bundle-20261017-1, lock says {VERSION}.",
         )
+
+
+class CopyArchiveTest(unittest.TestCase):
+    def setUp(self):
+        self.data = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.data, ignore_errors=True)
+        self.copied = self.data / "copied.tar.gz"
+
+    def test_a_copied_archive_is_checked_and_unpacked_like_a_download(self):
+        archive = good_archive()
+        self.copied.write_bytes(archive)
+        lock = Lock("CPD9/bern-life", VERSION, "bundle.tar.gz", sha256(archive))
+
+        target = fetch(lock, self.data, copy_archive(self.copied))
+
+        self.assertEqual((target / "pages.jsonl").read_bytes(), PAGES)
+        self.assertEqual((self.data / "downloads" / "bundle.tar.gz").read_bytes(), archive)
+
+    def test_a_copied_archive_with_another_sha256_is_refused(self):
+        archive = good_archive()
+        self.copied.write_bytes(archive)
+        wrong = "0" * 64
+        lock = Lock("CPD9/bern-life", VERSION, "bundle.tar.gz", wrong)
+
+        with self.assertRaises(BundleError) as caught:
+            fetch(lock, self.data, copy_archive(self.copied))
+
+        self.assertEqual(
+            str(caught.exception),
+            f"Refusing bundle.tar.gz: its sha256 is {sha256(archive)}, bundle.lock says {wrong}.",
+        )
+        self.assertFalse((self.data / "bundle").exists())
+
+    def test_a_missing_archive_is_named(self):
+        lock = Lock("CPD9/bern-life", VERSION, "bundle.tar.gz", "0" * 64)
+        with self.assertRaises(BundleError) as caught:
+            fetch(lock, self.data, copy_archive(self.copied))
+        self.assertEqual(str(caught.exception), f"Could not read {self.copied}.")
 
 
 if __name__ == "__main__":

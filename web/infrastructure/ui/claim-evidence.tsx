@@ -1,4 +1,4 @@
-import type { Claim } from "@/infrastructure/contract-types.generated";
+import type { Claim, Evidence } from "@/infrastructure/contract-types.generated";
 import { fragmentUrl } from "@/infrastructure/text-fragment";
 
 const fetchedFormat = new Intl.DateTimeFormat("en-GB", {
@@ -42,7 +42,14 @@ function pageLabel(pageUrl: string): string {
 }
 
 export function EvidencePanel({ claim, id }: { claim: Claim; id: string }) {
-  const { evidence } = claim;
+  return <SpanEvidence evidence={claim.evidence} note={methodText[claim.method]} id={id} />;
+}
+
+type SpanEvidenceProps = { evidence: Evidence; note: string; id?: string };
+
+/** A verbatim span with its page, fetch date and a link to the sentence: a claim's evidence, or
+ * the sentence that ties a result to a related project. */
+export function SpanEvidence({ evidence, note, id }: SpanEvidenceProps) {
   return (
     <div id={id} className="bg-chip mt-2 flex flex-col gap-2 rounded-2xl p-4 text-sm">
       <blockquote className="text-ink">
@@ -61,7 +68,7 @@ export function EvidencePanel({ claim, id }: { claim: Claim; id: string }) {
         {evidence.fetched_at && (
           <>, fetched {fetchedFormat.format(new Date(evidence.fetched_at))}</>
         )}
-        . {methodText[claim.method]}
+        . {note}
       </p>
       <a
         href={fragmentUrl(evidence.page_url, evidence.span)}

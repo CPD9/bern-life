@@ -11,6 +11,7 @@ export type MapPoint = readonly [x: number, z: number];
 
 export type LandmarkId =
   | "zytglogge"
+  | "muenster"
   | "bahnhof"
   | "bundeshaus"
   | "rathaus"
@@ -26,7 +27,9 @@ export type LandmarkId =
 
 export const LANDMARKS: Readonly<Record<LandmarkId, MapPoint>> = {
   zytglogge: [0, 0],
-  bahnhof: [-31.3, -5.3],
+  muenster: [14.5, 4.2],
+  /** The station hall; the roads meet on Bahnhofplatz in front of it. */
+  bahnhof: [-28.4, -7.4],
   bundeshaus: [-11.9, 8],
   rathaus: [23.1, -5.3],
   nydegg: [38.3, -0.9],
@@ -74,6 +77,9 @@ export const AARE_PATH: readonly MapPoint[] = [
 /** About 60 m: wide enough to read as a river at the default zoom. */
 export const AARE_WIDTH = 3;
 
+/** The wooded slopes either side of the water, drawn darker than the ground. */
+export const BANK_WIDTH = 0.7;
+
 export type BridgeId = "monbijou" | "kirchenfeld" | "nydegg" | "kornhaus" | "lorraine";
 
 export const BRIDGES: Readonly<Record<BridgeId, readonly [MapPoint, MapPoint]>> = {
@@ -97,6 +103,15 @@ export const BRIDGES: Readonly<Record<BridgeId, readonly [MapPoint, MapPoint]>> 
     [-18.7, -27.6],
     [-10.4, -43.1],
   ],
+};
+
+/** Openings per bridge: Kirchenfeld's two arches, Nydegg's one great arch, the others more. */
+export const BRIDGE_ARCHES: Readonly<Record<BridgeId, number>> = {
+  monbijou: 3,
+  kirchenfeld: 2,
+  nydegg: 1,
+  kornhaus: 3,
+  lorraine: 2,
 };
 
 export type DistrictId =
@@ -214,15 +229,27 @@ export const DISTRICTS: readonly District[] = [
   },
 ];
 
-/** Main streets as centre lines: the Old Town axis, Länggassstrasse, Murtenstrasse, the road to
- * Liebefeld, and the streets off the three big bridges. */
+/** Spitalgasse to Gerechtigkeitsgasse: from Bahnhofplatz under the Zytglogge to the Nydegg. The
+ * Old Town's house rows follow it. */
+export const OLD_TOWN_AXIS: readonly MapPoint[] = [
+  [-31.3, -5.3],
+  [-20, -2.6],
+  [-10, -0.8],
+  [0, 0],
+  [12, 0.4],
+  [26, -0.4],
+  [38.3, -0.9],
+];
+
+/** Main streets as centre lines: the Old Town axis, the street from the Kornhaus bridge across
+ * the axis to the Kirchenfeld bridge, Länggassstrasse, Murtenstrasse, the road to Liebefeld, and
+ * the streets off the three big bridges. */
 export const ROADS: readonly (readonly MapPoint[])[] = [
+  OLD_TOWN_AXIS,
   [
-    [-31.3, -5.3],
-    [-12, -4.5],
-    [8, -4],
-    [26, -3],
-    [38.3, -0.9],
+    [3.7, -19.2],
+    [2.4, 0.1],
+    [2.9, 5.8],
   ],
   [
     [-31.3, -5.3],
@@ -258,6 +285,26 @@ export const ROADS: readonly (readonly MapPoint[])[] = [
 ];
 
 export const ROAD_WIDTH = 1.4;
+
+export type MapLabel = {
+  readonly key: string;
+  readonly name: string;
+  readonly at: MapPoint;
+  /** The district the label names, or null for the river. */
+  readonly district: DistrictId | null;
+};
+
+/** Names on the ground, set where few place markers stand so the two rarely cover each other. */
+export const MAP_LABELS: readonly MapLabel[] = [
+  { key: "aare", name: "Aare", at: [-5.9, 54], district: null },
+  { key: "altstadt", name: "Altstadt", at: [10, -12], district: "old-town" },
+  { key: "laenggasse", name: "Länggasse", at: [-58, -52], district: "laenggasse" },
+  { key: "insel", name: "Insel", at: [-80, 13], district: "insel" },
+  { key: "kirchenfeld", name: "Kirchenfeld", at: [26, 40], district: "kirchenfeld" },
+  { key: "lorraine", name: "Lorraine", at: [-1, -55], district: "lorraine" },
+  { key: "mattenhof", name: "Mattenhof", at: [-60, 40], district: "mattenhof" },
+  { key: "liebefeld", name: "Liebefeld", at: [-119, 104], district: "liebefeld" },
+];
 
 /** The ground and the camera's pan limits: every district and the river, plus a margin. */
 export const MAP_BOUNDS = { minX: -150, maxX: 60, minZ: -120, maxZ: 120 } as const;

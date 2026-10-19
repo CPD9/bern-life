@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { httpAccountApi } from "@/features/accounts/account-api";
 import { useAccount } from "@/features/accounts/use-account";
-import { type BearConfig, furOptions } from "@/features/avatar/bear-config";
-import { useAvatar } from "@/features/avatar/use-avatar";
+import { personBadgeColour } from "@/features/avatar/person-config";
+import { usePerson } from "@/features/avatar/use-person";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
 import { Navigator } from "@/features/navigator/navigator";
 import { useNavigator } from "@/features/navigator/use-navigator";
@@ -36,14 +36,6 @@ import { useNow } from "@/infrastructure/bern-time";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
 import { applyWorldAction, searchHereDraft, worldActionFor } from "./world-search-bridge";
 
-// The badge reads the colour from the stored bear on each render, so there is no second copy.
-function furColourOf(bear: BearConfig): string {
-  const shades = furOptions(bear.kind);
-  const shade = shades.find((candidate) => candidate.id === bear.fur) ?? shades[0];
-  if (!shade) throw new Error(`bear kind ${bear.kind} has no fur shades`);
-  return shade.colour;
-}
-
 // Composes the features. One Navigator controller lives here, above the phone, so a search
 // survives closing the phone and the agent can drive the same instance.
 type WorldAppProps = {
@@ -62,7 +54,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const [storyMenuOpen, setStoryMenuOpen] = useState(false);
   const storyController = useStory({ story, demo: storyDemo, emitted: emittedToday });
   const account = useAccount(httpAccountApi);
-  const [avatar] = useAvatar();
+  const [person] = usePerson();
   const [onboarding] = useOnboarding();
   const [greetingDismissed, setGreetingDismissed] = useState(false);
   const [joinDismissed, setJoinDismissed] = useState(false);
@@ -150,10 +142,10 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     greetingDismissed,
     joinDismissed,
   });
-  const furColour = furColourOf(avatar);
+  const badgeColour = personBadgeColour(person);
   const hudAccount: HudAccount =
     account.state.status === "signed-in"
-      ? { status: "signed-in", handle: account.state.user.handle, colour: furColour }
+      ? { status: "signed-in", handle: account.state.user.handle, colour: badgeColour }
       : { status: account.state.status };
   const current = storyController.progress.current;
   const goal = choice !== "story" ? "Explore" : current ? current.quest.title : "Open quests done";

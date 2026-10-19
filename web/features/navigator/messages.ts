@@ -31,8 +31,23 @@ export function canRetry(failure: NavigatorFailure): boolean {
   return failure.kind !== "brief";
 }
 
-export function abstainMessage(reason: SearchResponse["abstain_reason"]): string {
-  switch (reason) {
+/**
+ * A brief the engine returned without reading it: no model answered and the replay holds no call
+ * for this text, so there were no needs to search for. That says nothing about the pages we hold.
+ */
+export function briefUnread(response: SearchResponse): boolean {
+  return (
+    response.abstain_reason === "no_verifiable_source" &&
+    response.mode === "mock" &&
+    (response.brief_terms ?? []).length === 0
+  );
+}
+
+export function abstainMessage(response: SearchResponse, asked: "search" | "brief"): string {
+  if (asked === "brief" && briefUnread(response)) {
+    return "Reading a new brief needs the model; this replay has the recorded briefs only.";
+  }
+  switch (response.abstain_reason) {
     case "no_verifiable_source":
       return "No public page we hold supports an answer to this. We would rather say so than guess.";
     case "query_out_of_scope":
