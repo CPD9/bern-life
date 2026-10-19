@@ -1,5 +1,5 @@
-import { formatMillis } from "./format";
-import type { ModelNumbers } from "./numbers";
+import { formatMillis } from "@/infrastructure/number-format";
+import type { ModelNumbers } from "@/infrastructure/numbers";
 
 // One card per role rather than a table, so the six columns still read at phone width.
 export function ModelNumbersView({ models }: { models: readonly ModelNumbers[] }) {

@@ -17,6 +17,12 @@ Where code, data and models come from. Update this file in the same PR that adds
 |---|---|---|---|
 | `web/features/avatar/` (the bear family) | drawn by the team from three.js primitives | ours | Brief W3-bear. Style reference only: the Apertus Agents avatars in `CPD9/apertus-redteam-graph` `track_1a/web/avatars/`. The Dot Avatar Maker studio that made those was not used: its repo records no licence that allows redistributing it (`track_1a/.gitignore`), so no code or asset from it is in Bern Life. |
 
+## Design references
+
+| Bern Life file | Reference | Licence | Notes |
+|---|---|---|---|
+| `web/features/agents/skills.ts`, `skill-evidence.ts`, `evidence-list.tsx` (a skill's evidence rows) | `CPD9/apertus-redteam-graph` `track_1a/src/redteam/agent_facts.py` `skill()` and `evidence()` (`ml/win-sprint`, 13f7ec9) | Apache-2.0 | Brief R3. The shape is followed (each row a label, a value and a source); the TypeScript is written anew and no code is copied. |
+
 ## Models
 
 | Model | Revision | Role | Where it runs |

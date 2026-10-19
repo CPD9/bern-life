@@ -6,7 +6,7 @@ export type NumbersOutcome =
   | { readonly status: "not_connected" }
   | { readonly status: "error" };
 
-export type GarageApi = { numbers(): Promise<NumbersOutcome> };
+export type NumbersApi = { numbers(): Promise<NumbersOutcome> };
 
 const ERROR: NumbersOutcome = { status: "error" };
 
@@ -23,6 +23,6 @@ export async function readNumbers(fetchNumbers: () => Promise<Response>): Promis
   return numbers ? { status: "ok", numbers } : ERROR;
 }
 
-export const httpGarageApi: GarageApi = {
+export const httpNumbersApi: NumbersApi = {
   numbers: () => readNumbers(() => fetch("/api/numbers")),
 };

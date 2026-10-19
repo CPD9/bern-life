@@ -53,7 +53,8 @@ export function phoneApps({
   ...agents
 }: PhoneAppsInput): PhoneApp[] {
   const save = { fixtureMode, events, library };
-  // Opportunities has its own app; every other skill starts from Ask, where a report is made too.
+  // Opportunities has its own app; every other skill starts from Ask, where a report is made too,
+  // and all but the brief in search mode.
   function trySkill(skill: Skill) {
     if (skill.id === "opportunities") {
       onOpenApp("opportunities");
@@ -103,7 +104,7 @@ export function phoneApps({
       label: "Agents",
       icon: <AppIcon app="agents" />,
       tile: "#6d4bd8",
-      content: agentsApp(agents, trySkill),
+      content: agentsApp(agents, fixtureMode, trySkill),
     },
     {
       id: "opportunities",

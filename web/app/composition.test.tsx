@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, within } from "@testing-library/react";
 import { type ReactElement, isValidElement } from "react";
 import { AgentsApp } from "@/features/agents/agents-app";
 import { useDesktop } from "@/features/desktop/use-desktop";
@@ -15,7 +15,10 @@ import { SettingsApp } from "@/features/phone/settings-app";
 import { SourcesApp } from "@/features/sources/sources-app";
 import type { AppEventName } from "@/infrastructure/app-events";
 import type { SearchResult } from "@/infrastructure/claims";
+import { parseNumbers } from "@/infrastructure/numbers";
+import type { NumbersApi } from "@/infrastructure/numbers-api";
 import { healthFixture, resultFixture } from "@/test/fixtures";
+import { numbersBody, queuedApi } from "@/test/numbers";
 import { useOfficeApps } from "./office-apps";
 import { phoneApps } from "./phone-apps";
 
@@ -23,12 +26,20 @@ const offline: NavigatorApi = {
   search: async () => ({ ok: false, failure: { kind: "network" } }),
   brief: async () => ({ ok: false, failure: { kind: "network" } }),
 };
+/** Numbers that never arrive: the skills wait on "Loading" and nothing is fetched. */
+const pending: NumbersApi = { numbers: () => new Promise(() => undefined) };
 const agents = {
   navigatorApi: offline,
   agentName: "Lumi",
   snapshot: null,
   notify: () => undefined,
 };
+const engineNumbers = () => queuedApi([{ status: "ok", numbers: parseNumbers(numbersBody())! }]);
+
+/** The value cell of a skill's first evidence row. */
+function firstValue(skill: string): string | null | undefined {
+  return screen.getByLabelText(`Evidence: ${skill}`).querySelector("dd")?.textContent;
+}
 
 const health = { status: "ok", health: healthFixture } as const;
 const heard: AppEventName[] = [];
@@ -58,12 +69,13 @@ function typeOf(content: unknown): unknown {
 }
 
 describe("phone apps", () => {
-  function setUp(fixtureMode = false) {
+  function setUp(fixtureMode = false, numbersApi: NumbersApi = pending) {
     const opened: string[] = [];
     const { result } = renderHook(() => {
       const navigator = useNavigator(offline);
       const apps = phoneApps({
         ...agents,
+        numbersApi,
         navigator,
         fixtureMode,
         onShowOnMap: () => undefined,
@@ -168,15 +180,40 @@ describe("phone apps", () => {
     expect(opened).toEqual(["ask"]);
     expect(result.current.navigator.inputMode).toBe("brief");
   });
+
+  test("Try on Checks the premise opens Ask in search mode, even after a brief", () => {
+    const { result, opened } = setUp();
+    act(() => result.current.navigator.setInputMode("brief"));
+    render(<>{result.current.apps.find((app) => app.id === "agents")!.content}</>);
+    act(() => fireEvent.click(screen.getByRole("button", { name: "Try Checks the premise" })));
+    expect(opened).toEqual(["ask"]);
+    expect(result.current.navigator.inputMode).toBe("search");
+  });
+
+  test("the skills' numbers are marked FIXTURE only when the engine serves fixtures", async () => {
+    for (const [fixtureMode, value] of [
+      [false, "7 / 10"],
+      [true, "FIXTURE 7 / 10"],
+    ] as const) {
+      const { result } = setUp(fixtureMode, engineNumbers());
+      const view = await act(async () =>
+        render(<>{result.current.apps.find((app) => app.id === "agents")!.content}</>),
+      );
+      expect(firstValue("Checks the premise")).toBe(value);
+      view.unmount();
+    }
+  });
 });
 
 describe("office apps", () => {
-  function setUp(fixtureMode = false) {
+  function setUp(fixtureMode = false, numbersApi: NumbersApi = pending) {
     return renderHook(() => {
       const desktop = useDesktop();
+      const navigator = useNavigator(offline);
       const { apps } = useOfficeApps({
         ...agents,
-        navigator: useNavigator(offline),
+        numbersApi,
+        navigator,
         desktop,
         fixtureMode,
         unreadMessages: 4,
@@ -184,7 +221,7 @@ describe("office apps", () => {
         events,
         library,
       });
-      return { desktop, apps };
+      return { desktop, navigator, apps };
     }).result;
   }
 
@@ -231,5 +268,50 @@ describe("office apps", () => {
     render(<>{result.current.apps.find((app) => app.id === "agents")!.content}</>);
     act(() => fireEvent.click(screen.getByRole("button", { name: "Try Find opportunities" })));
     expect(result.current.desktop.windows.map((place) => place.appId)).toEqual(["opportunities"]);
+  });
+
+  test("Try on Checks the premise opens the Navigator in search mode", () => {
+    const result = setUp();
+    act(() => result.current.navigator.setInputMode("brief"));
+    render(<>{result.current.apps.find((app) => app.id === "agents")!.content}</>);
+    act(() => fireEvent.click(screen.getByRole("button", { name: "Try Checks the premise" })));
+    expect(result.current.desktop.windows.map((place) => place.appId)).toEqual(["navigator"]);
+    expect(result.current.navigator.inputMode).toBe("search");
+  });
+
+  test("the Garage lists each skill with its evidence, read-only, from its one numbers call", async () => {
+    const numbersApi = engineNumbers();
+    const result = setUp(false, numbersApi);
+    await act(async () =>
+      render(<>{result.current.apps.find((app) => app.id === "garage")!.content}</>),
+    );
+    const section = screen.getByRole("region", { name: "Skills" });
+    expect(
+      within(section)
+        .getAllByRole("heading", { level: 4 })
+        .map((heading) => heading.textContent),
+    ).toEqual([
+      "Search people and units",
+      "Checks the premise",
+      "Read a project brief",
+      "Make a match report",
+      "Find opportunities",
+    ]);
+    expect(within(section).queryAllByRole("button")).toEqual([]);
+    expect(firstValue("Checks the premise")).toBe("7 / 10");
+    expect(firstValue("Search people and units")).toBe("0.4375 [0.29, 0.58]");
+    expect(
+      within(section).getByText(/models are set on the server, as endpoints in its settings/),
+    ).toBeTruthy();
+    expect(numbersApi.calls()).toBe(1);
+  });
+
+  test("in fixture mode the Garage's skills are marked FIXTURE and nothing is called measured", async () => {
+    const result = setUp(true, engineNumbers());
+    await act(async () =>
+      render(<>{result.current.apps.find((app) => app.id === "garage")!.content}</>),
+    );
+    expect(firstValue("Checks the premise")).toBe("FIXTURE 7 / 10");
+    expect(document.body.textContent).not.toMatch(/measured/i);
   });
 });

@@ -46,14 +46,14 @@ http://127.0.0.1:3000/office.
    stands; each plot lists the nearest places with their sourced addresses.
 6. **Your office.** Onboarding ends in your office, the **Home** tab. Sit at the desk to use the
    computer, nine apps: **Navigator** (the same search as Ask, and a project brief), **Agents**
-   (Lumi's skills, and loops: saved searches you run again, whose new and dropped results reach
-   the bell), **Reports** (match reports with their sources), **Messages** (to members who
-   joined), **Library** (what you saved, and your documents with their trace),
-   **Opportunities** (funding calls, services and spaces; an amount or deadline appears only
-   inside the sentence it was read from), **Garage** (the Apertus models and the evaluator's
-   numbers for this snapshot, as the engine serves them), **Sources** (the institutions crawled,
-   and how to add one) and **Settings**. The door leads back to the map; the phone carries Ask,
-   Messages, Agents, Opportunities, Library and Settings.
+   (Lumi's skills, each with its evidence, and loops: saved searches you run again, whose new and
+   dropped results reach the bell), **Reports** (match reports with their sources), **Messages** (to
+   members who joined), **Library** (what you saved, and your documents with their trace),
+   **Opportunities** (funding calls, services and spaces; an amount or deadline appears only inside
+   the sentence it was read from), **Garage** (the Apertus models and the evaluator's numbers for
+   this snapshot, as the engine serves them, and the skills with their evidence), **Sources** (the
+   institutions crawled, and how to add one) and **Settings**. The door leads back to the map; the
+   phone carries Ask, Messages, Agents, Opportunities, Library and Settings.
 7. **Lumi.** Your agent floats beside you as the bear you made, and walks beside you on the map;
    either opens its chat. Lumi searches with the engine's own tools and answers
    with the same source cards as Ask. A person it names must be among those results, a reply it
