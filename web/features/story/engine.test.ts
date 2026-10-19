@@ -111,10 +111,10 @@ describe("storyProgress", () => {
       "find-experts": "current",
       "other-words": "ready",
       brief: "ready",
-      visit: "coming",
+      visit: "ready",
       honest: "ready",
       extend: "coming",
-      grow: "coming",
+      grow: "ready",
     });
   });
 
@@ -146,6 +146,8 @@ describe("storyProgress", () => {
       "brief_answered",
       "report_made",
       "abstained_seen",
+      "lobby_entered",
+      "message_sent",
     ]);
     const progress = storyProgress(story, state, emittedToday);
     expect(progress.current).toBeNull();
@@ -153,6 +155,7 @@ describe("storyProgress", () => {
       "c1-right-people",
       "c2-wording",
       "c3-traceable",
+      "c4-structured",
       "ethics-abstain",
     ]);
   });

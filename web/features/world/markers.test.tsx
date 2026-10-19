@@ -78,6 +78,21 @@ describe("PlacePanel", () => {
     ).toBeTruthy();
   });
 
+  test("opening a place tells the story the lobby was entered, once", () => {
+    const emit = mock((name: string) => name);
+    render(
+      <PlacePanel
+        building={shared}
+        light={undefined}
+        fixture={false}
+        onClose={() => undefined}
+        onSearchHere={undefined}
+        events={{ emit }}
+      />,
+    );
+    expect(emit.mock.calls).toEqual([["lobby_entered"]]);
+  });
+
   test("Close calls back and the heading takes focus on open", () => {
     const onClose = mock(() => undefined);
     render(

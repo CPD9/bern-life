@@ -20,6 +20,7 @@ function Harness({ source, onDone }: { source: () => OnboardingStore; onDone: ()
       dispatch={dispatch}
       lookStep={<p>Person editor slot</p>}
       agentStep={<p>Agent editor slot</p>}
+      greeting={<p>Greeting slot</p>}
       onDone={onDone}
     />
   );
@@ -70,6 +71,13 @@ describe("Onboarding", () => {
     fireEvent.click(screen.getByRole("button", { name: "Skip" }));
     expect(store.get()).toMatchObject({ done: true, profile: { visibility: "private" } });
     expect(done).toEqual(["done"]);
+  });
+
+  test("the greeting shows on the first step only", () => {
+    setup();
+    expect(screen.getByText("Greeting slot")).toBeTruthy();
+    proceed();
+    expect(screen.queryByText("Greeting slot")).toBeNull();
   });
 
   test("Back is hidden on the first step", () => {

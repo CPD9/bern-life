@@ -9,6 +9,10 @@ function memoryStorage() {
     storage: {
       getItem: (key: string) => saved.get(key) ?? null,
       setItem: (key: string, value: string) => void saved.set(key, value),
+      key: (index: number) => [...saved.keys()][index] ?? null,
+      get length() {
+        return saved.size;
+      },
     },
   };
 }
@@ -40,6 +44,23 @@ describe("createReportStore", () => {
     expect(store.load("junk")).toBeNull();
   });
 
+  test("lists readable reports newest first and leaves out broken ones and other keys", () => {
+    const { saved, storage } = memoryStorage();
+    const older = { ...report, madeAt: "2026-10-18T18:00:00Z" };
+    saved.set("bernlife.report.old", JSON.stringify(older));
+    saved.set("bernlife.report.junk", "{not json");
+    saved.set("bernlife.settings", JSON.stringify(report));
+    saved.set("bernlife.report.new", JSON.stringify(report));
+    const store = createReportStore(
+      () => storage,
+      () => "unused",
+    );
+    expect(store.list()).toEqual([
+      { id: "new", report },
+      { id: "old", report: older },
+    ]);
+  });
+
   test("blocked storage saves nothing and loads nothing", () => {
     const blocked = () => {
       throw new DOMException("denied", "SecurityError");
@@ -47,5 +68,6 @@ describe("createReportStore", () => {
     const store = createReportStore(blocked, () => "r1");
     expect(store.save(report)).toBeNull();
     expect(store.load("r1")).toBeNull();
+    expect(store.list()).toEqual([]);
   });
 });

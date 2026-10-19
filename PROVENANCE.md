@@ -36,6 +36,7 @@ No profile field comes from a model's memory. Every field carries a verbatim spa
 | Crawled pages, LLM cache, vectors | public pages of the hosts in `sources/` | copyright of the institutions; personal data under nDSG | **no**: SHA-pinned release asset (`make fetch`) |
 | Gold set `eval/gold.jsonl` | written by the team from public pages, before search existed | names and proof URLs only | yes |
 | Contract fixtures `contracts/fixtures/` | invented, describe no real person | ours | yes |
-| Place addresses `web/features/world/places.json` | one street line per unit from its own home or contact page (URL, date, sha256 per row) | facts (institutional addresses); no page copies | yes |
+| Place addresses `web/features/world/places.json` | one street address per unit, a verbatim span of a stored page of its own host (URL, date, sha256 per row) | facts (institutional addresses); no page copies | yes |
+| Opportunity place positions in `places.json` | the address's LV95 point in the federal building address register (geo.admin.ch, open data), mapped into the frame of `geography.ts`; coordinates not stored | facts | yes |
 | Map geography `web/features/world/geography.ts` | drawn by hand from public maps (Aare, bridges, districts, landmarks), approximate | ours | yes |
 | Map geodata `web/public/world/bern.geo` | swisstopo: swissBUILDINGS3D 3.0 (2021 CityGML tiles 1166-24, 1166-41, 1166-42), swissTLM3D roads, water network and railways (geo.admin identify API), building address register (geo.admin search); built by `infra/geo/build.py` | swisstopo free geodata (OGD), use and redistribution allowed with attribution "©swisstopo" | the derived file only (sha256 in `web/public/world/manifest.json`); raw downloads stay in `$BERNLIFE_DATA_DIR/geo/raw` |

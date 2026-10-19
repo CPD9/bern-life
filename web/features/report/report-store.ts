@@ -10,14 +10,32 @@ export type StoredReport = {
   readonly fixture: boolean;
 };
 
-type ReportStorage = Pick<Storage, "getItem" | "setItem">;
+type ReportStorage = Pick<Storage, "getItem" | "setItem" | "key" | "length">;
 
 const keyPrefix = "bernlife.report.";
+
+export type ListedReport = { readonly id: string; readonly report: StoredReport };
 
 export type ReportStore = {
   save(report: StoredReport): string | null;
   load(id: string): StoredReport | null;
+  /** Every readable report in this browser, newest first; broken entries are left out. */
+  list(): ListedReport[];
 };
+
+function parseStored(raw: string | null): StoredReport | null {
+  if (raw === null) return null;
+  try {
+    const { response, madeAt, fixture } = JSON.parse(raw) as Record<string, unknown>;
+    const parsed = parseSearchResponse(response);
+    if (parsed === null || typeof madeAt !== "string" || typeof fixture !== "boolean") {
+      return null;
+    }
+    return { response: parsed, madeAt, fixture };
+  } catch {
+    return null;
+  }
+}
 
 export function createReportStore(storage: () => ReportStorage, newId: () => string): ReportStore {
   return {
@@ -31,23 +49,26 @@ export function createReportStore(storage: () => ReportStorage, newId: () => str
       }
     },
     load: (id) => {
-      let raw: string | null;
       try {
-        raw = storage().getItem(keyPrefix + id);
+        return parseStored(storage().getItem(keyPrefix + id));
       } catch {
         return null;
       }
-      if (raw === null) return null;
+    },
+    list: () => {
+      const listed: ListedReport[] = [];
       try {
-        const { response, madeAt, fixture } = JSON.parse(raw) as Record<string, unknown>;
-        const parsed = parseSearchResponse(response);
-        if (parsed === null || typeof madeAt !== "string" || typeof fixture !== "boolean") {
-          return null;
+        const keys = storage();
+        for (let index = 0; index < keys.length; index++) {
+          const key = keys.key(index);
+          if (!key?.startsWith(keyPrefix)) continue;
+          const report = parseStored(keys.getItem(key));
+          if (report) listed.push({ id: key.slice(keyPrefix.length), report });
         }
-        return { response: parsed, madeAt, fixture };
       } catch {
-        return null;
+        return [];
       }
+      return listed.sort((a, b) => b.report.madeAt.localeCompare(a.report.madeAt));
     },
   };
 }

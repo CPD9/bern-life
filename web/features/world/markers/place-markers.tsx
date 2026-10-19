@@ -15,6 +15,8 @@ export const KIND_LABELS: Readonly<Record<PlaceKind, string>> = {
   institute: "Institute",
   platform: "Platform",
   centre: "Centre",
+  agency: "Agency",
+  space: "Space",
 };
 
 export function buildingLabel(building: Building): string {

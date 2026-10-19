@@ -28,7 +28,7 @@ describe("criterionRows", () => {
       ["c1-right-people", false, null],
       ["c2-wording", false, null],
       ["c3-traceable", false, null],
-      ["c4-structured", false, "Opening a place on the map does not report to the story yet."],
+      ["c4-structured", false, null],
       ["c5-sources", false, noQuestYet],
       [
         "c6-extend",
