@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 263" width="720" height="263" role="img" aria-labelledby="title" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+<title id="title">Gold recall@10 by change</title>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="12.0" y="12.5" width="9" height="9" rx="2" fill="#c8102e"/>
+<text x="25.0" y="21.0" font-size="10.5" fill="#4b5260" text-anchor="start">recall@10</text>
+<path d="M83.1,17.0H97.1M83.1,14.0V20.0M97.1,14.0V20.0" stroke="#4b5260" fill="none"/>
+<text x="102.1" y="21.0" font-size="10.5" fill="#4b5260" text-anchor="start">95% interval</text>
+<path d="M310.7,35V189.0" stroke="#c3c1b8"/>
+<text x="310.7" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">0</text>
+<path d="M400.5,35V189.0" stroke="#e6e4de"/>
+<text x="400.5" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">0.25</text>
+<path d="M490.4,35V189.0" stroke="#e6e4de"/>
+<text x="490.4" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">0.5</text>
+<path d="M580.2,35V189.0" stroke="#e6e4de"/>
+<text x="580.2" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">0.75</text>
+<path d="M670.0,35V189.0" stroke="#e6e4de"/>
+<text x="670.0" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">1</text>
+<path d="M12,170.5H708" stroke="#c3c1b8"/>
+<path d="M598.1,35V189.0" stroke="#1f2430" stroke-dasharray="3 3"/>
+<text x="594.1" y="31.0" font-size="10" fill="#1f2430" text-anchor="end">the case asks 0.80</text>
+<text x="708.0" y="21.0" font-size="10" fill="#868b94" text-anchor="end">MRR</text>
+<text x="302.7" y="48.4" font-size="11" fill="#1f2430" text-anchor="end">Hybrid search, no claim rule</text>
+<path d="M310.7,40.0h109.4a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-109.4z" fill="#c8102e"><title>Hybrid search, no claim rule, recall@10: 0.31</title></path>
+<path d="M375.4,44.5H483.2M375.4,39.0V50.0M483.2,39.0V50.0" stroke="#4b5260" fill="none"/>
+<text x="708.0" y="48.4" font-size="11" fill="#4b5260" text-anchor="end">0.29</text>
+<text x="302.7" y="66.3" font-size="11" fill="#1f2430" text-anchor="end">Claim rule: a result cites a matching claim</text>
+<path d="M310.7,58.0h77.0a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-77.0z" fill="#c8102e"><title>Claim rule: a result cites a matching claim, recall@10: 0.22</title></path>
+<path d="M346.7,62.5H436.5M346.7,57.0V68.0M436.5,57.0V68.0" stroke="#4b5260" fill="none"/>
+<text x="708.0" y="66.3" font-size="11" fill="#4b5260" text-anchor="end">0.27</text>
+<text x="302.7" y="84.3" font-size="11" fill="#1f2430" text-anchor="end">Enrichment terms on expertise values</text>
+<path d="M310.7,76.0h84.2a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-84.2z" fill="#c8102e"><title>Enrichment terms on expertise values, recall@10: 0.24</title></path>
+<path d="M353.8,80.5H447.3M353.8,75.0V86.0M447.3,75.0V86.0" stroke="#4b5260" fill="none"/>
+<text x="708.0" y="84.3" font-size="11" fill="#4b5260" text-anchor="end">0.32</text>
+<text x="302.7" y="102.3" font-size="11" fill="#1f2430" text-anchor="end">Query expansion</text>
+<path d="M310.7,94.0h95.0a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-95.0z" fill="#c8102e"><title>Query expansion, recall@10: 0.27</title></path>
+<path d="M357.4,98.5H461.6M357.4,93.0V104.0M461.6,93.0V104.0" stroke="#4b5260" fill="none"/>
+<text x="708.0" y="102.3" font-size="11" fill="#4b5260" text-anchor="end">0.32</text>
+<text x="302.7" y="120.3" font-size="11" fill="#1f2430" text-anchor="end">Reasons through a project</text>
+<path d="M310.7,112.0h127.3a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-127.3z" fill="#c8102e"><title>Reasons through a project, recall@10: 0.36</title></path>
+<path d="M382.6,116.5H501.1M382.6,111.0V122.0M501.1,111.0V122.0" stroke="#4b5260" fill="none"/>
+<text x="708.0" y="120.3" font-size="11" fill="#4b5260" text-anchor="end">0.43</text>
+<text x="302.7" y="138.3" font-size="11" fill="#1f2430" text-anchor="end">Listing headings dropped, bundle-3 (#162)</text>
+<path d="M310.7,130.0h134.5a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-134.5z" fill="#c8102e"><title>Listing headings dropped, bundle-3 (#162), recall@10: 0.38</title></path>
+<path d="M389.8,134.5H511.9M389.8,129.0V140.0M511.9,129.0V140.0" stroke="#4b5260" fill="none"/>
+<text x="708.0" y="138.3" font-size="11" fill="#4b5260" text-anchor="end">0.46</text>
+<text x="302.7" y="156.3" font-size="11" fill="#1f2430" text-anchor="end">Titles and word forms, before the review fixes (#226)</text>
+<path d="M310.7,148.0h141.7a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-141.7z" fill="#c8102e"><title>Titles and word forms, before the review fixes (#226), recall@10: 0.40</title></path>
+<path d="M393.4,152.5H515.5M393.4,147.0V158.0M515.5,147.0V158.0" stroke="#4b5260" fill="none"/>
+<text x="708.0" y="156.3" font-size="11" fill="#4b5260" text-anchor="end">0.44</text>
+<text x="302.7" y="183.3" font-size="11" fill="#1f2430" text-anchor="end">Passages on the own page, review fixes: bundle-4 (#226)</text>
+<path d="M310.7,175.0h139.2a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-139.2z" fill="#c8102e"><title>Passages on the own page, review fixes: bundle-4 (#226), recall@10: 0.39</title></path>
+<path d="M395.7,179.5H513.0M395.7,174.0V185.0M513.0,174.0V185.0" stroke="#4b5260" fill="none"/>
+<text x="708.0" y="183.3" font-size="11" fill="#4b5260" text-anchor="end">0.45</text>
+<text x="12.0" y="220.0" font-size="10" fill="#4b5260" text-anchor="start">Gold recall@10 after each change to the search, oldest first, with the 95% bootstrap interval; the right column is MRR. The gold set never changed. Every</text>
+<text x="12.0" y="233.5" font-size="10" fill="#4b5260" text-anchor="start">change was decided on the dev sets and gold scored afterwards as measurement; the last two rows are gold-informed, not held-out</text>
+<text x="12.0" y="247.0" font-size="10" fill="#4b5260" text-anchor="start">(eval/PREREGISTRATION.md). The dashed line is the case's bar.</text>
+</svg>

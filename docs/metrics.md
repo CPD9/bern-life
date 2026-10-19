@@ -71,26 +71,27 @@ make predict-consistency BERNLIFE_DATA_DIR=<data folder with the bundle> DATABAS
 make eval BERNLIFE_DATA_DIR=<the same folder>
 ```
 
-On `bundle-20261019-3` (engine 0.2.0, replay, no model called), copied from the evaluator's report:
+On `bundle-20261019-4` (engine 0.2.0, replay, no model called), copied from the evaluator's report:
 
 | Set | Wordings | Mean pairwise Jaccard | Share of each top 10 the first wording also finds |
 |---|---|---|---|
-| glucose sensors | 5 | 0.10 | 0.29 (CGM 0.40, biosensing 0.17, Blutzucker messen 0.20, continuous glucose monitoring 0.40) |
-| metabolite sensors | 4 | 0.18 | 0.37 |
-| carbs from meal photos | 4 | 0.10 | 0.07 |
+| glucose sensors | 5 | 0.11 | 0.23 (CGM 0.20, biosensing 0.40, Blutzucker messen 0.10, continuous glucose monitoring 0.20) |
+| metabolite sensors | 4 | 0.23 | 0.43 |
+| carbs from meal photos | 4 | 0.20 | 0.57 |
 
-Over all 22 pairs the mean Jaccard is 0.12. Every wording's expansion was recorded in the
+Over all 22 pairs the mean Jaccard is 0.17. Every wording's expansion was recorded in the
 bundle's cache (no cache miss); for two, the recorded call gave no terms search could use, so they
 were searched plain: dev q912 and gold q008b ("An app that counts the carbs in my meal from a
-photo taken with my phone", which shows one result).
+photo taken with my phone", which shows three results).
 
 Different wordings share little of their top 10. That alone does not say the expected people are
 lost, and the second and third sets have two limits:
 
-- **On the carbs set the first wording is the one that misses.** Gold q008, q008b and q008c all
-  have recall@10 0. The top 10 of q008 shows neither the Intelligent Nutrition project nor the
-  AI in Health and Nutrition (AIHN) unit, while q008b, q008c and dev q920 show the project. The
-  set's 0.07 measures the reference wording failing more than the others drifting.
+- **On the carbs set the wordings agree on a project, not on the expected answer.** Gold q008,
+  q008b and q008c all have recall@10 0. Each shows the Intelligent Nutrition project (q008b shows
+  only three results), and none shows the AI in Health and Nutrition (AIHN) unit or its head,
+  which the gold label expects; only dev q920 shows the unit. So the set's 0.57 measures three
+  wordings finding the same project while the expected answer stays missing.
 - **The labels of one set do not name the same answers**, so "one need" in these two sets is our
   reading of the questions, not something the gold and dev labels back:
 
@@ -135,11 +136,11 @@ here:
 Snapshot `bundle-20261019-4`: median unit 125.5 profiles; top-10 slots outside these units 0. To reproduce: `make fetch && make eval && python3 infra/readme_numbers.py`. CI fails when this block differs from the evaluator's output.
 <!-- exposure:end -->
 
-On `bundle-20261019-3`, small units get fewer top-10 slots than their share of profiles over the
-three sources, and that gap comes from ARTORG and the Diabetes Center Berne: each is one large
-unit here, and 22 of the 38 questions ask about one of them. Within UniBE, small units get about
-their share of slots (0.28 of slots for 0.29 of profiles), although 4 of the 11 small units never
-reach a top 10. So the first table is no evidence that the ranking favours large units: the slots
+On `bundle-20261019-4`, small units get fewer top-10 slots (0.18) than their share of profiles
+(0.23) over the three sources, and that gap comes from ARTORG and the Diabetes Center Berne: each
+is one large unit here, and 22 of the 38 questions ask about one of them. Within UniBE, small
+units get their share of slots (0.31 of slots for 0.29 of profiles), although 3 of the 11 small
+units never reach a top 10. So the first table is no evidence that the ranking favours large units: the slots
 follow what the gold questions ask. The ranking has no popularity or size signal and lets at most
 4 profiles of one unit into a top 10 ([search](search.md)).
 

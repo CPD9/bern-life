@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 290" width="360" height="290" role="img" aria-labelledby="title" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+<title id="title">Abstention: invented questions refused, answerable questions kept</title>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="12.0" y="12.5" width="9" height="9" rx="2" fill="#c8102e"/>
+<text x="25.0" y="21.0" font-size="10.5" fill="#4b5260" text-anchor="start">Share abstained</text>
+<path d="M116.6,17.0H130.6M116.6,14.0V20.0M130.6,14.0V20.0" stroke="#4b5260" fill="none"/>
+<text x="135.6" y="21.0" font-size="10.5" fill="#4b5260" text-anchor="start">95% interval</text>
+<path d="M153.7,35V189.0" stroke="#c3c1b8"/>
+<text x="153.7" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">0</text>
+<path d="M192.3,35V189.0" stroke="#e6e4de"/>
+<text x="192.3" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">0.25</text>
+<path d="M230.9,35V189.0" stroke="#e6e4de"/>
+<text x="230.9" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">0.5</text>
+<path d="M269.5,35V189.0" stroke="#e6e4de"/>
+<text x="269.5" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">0.75</text>
+<path d="M308.1,35V189.0" stroke="#e6e4de"/>
+<text x="308.1" y="201.0" font-size="10" fill="#868b94" text-anchor="middle">1</text>
+<path d="M12,116.5H348" stroke="#c3c1b8"/>
+<path d="M292.7,35V189.0" stroke="#1f2430" stroke-dasharray="3 3"/>
+<text x="288.7" y="31.0" font-size="10" fill="#1f2430" text-anchor="end">rule: ≥ 0.90</text>
+<text x="348.0" y="21.0" font-size="10" fill="#868b94" text-anchor="end">abstained</text>
+<text x="145.7" y="48.4" font-size="11" fill="#1f2430" text-anchor="end">Invented, all languages</text>
+<path d="M153.7,40.0h137.0a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-137.0z" fill="#c8102e"><title>Invented, all languages, Share abstained: 0.90</title></path>
+<path d="M245.7,44.5H305.4M245.7,39.0V50.0M305.4,39.0V50.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="48.4" font-size="11" fill="#4b5260" text-anchor="end">9 of 10</text>
+<text x="145.7" y="66.3" font-size="11" fill="#1f2430" text-anchor="end">Invented, English</text>
+<path d="M153.7,58.0h152.5a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-152.5z" fill="#c8102e"><title>Invented, English, Share abstained: 1.00</title></path>
+<path d="M232.4,62.5H308.1M232.4,57.0V68.0M308.1,57.0V68.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="66.3" font-size="11" fill="#4b5260" text-anchor="end">4 of 4</text>
+<text x="145.7" y="84.3" font-size="11" fill="#1f2430" text-anchor="end">Invented, German</text>
+<path d="M153.7,76.0h152.5a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-152.5z" fill="#c8102e"><title>Invented, German, Share abstained: 1.00</title></path>
+<path d="M221.4,80.5H308.1M221.4,75.0V86.0M308.1,75.0V86.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="84.3" font-size="11" fill="#4b5260" text-anchor="end">3 of 3</text>
+<text x="145.7" y="102.3" font-size="11" fill="#1f2430" text-anchor="end">Invented, French</text>
+<path d="M153.7,94.0h101.0a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-101.0z" fill="#c8102e"><title>Invented, French, Share abstained: 0.67</title></path>
+<path d="M185.7,98.5H298.6M185.7,93.0V104.0M298.6,93.0V104.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="102.3" font-size="11" fill="#4b5260" text-anchor="end">2 of 3</text>
+<text x="145.7" y="129.3" font-size="11" fill="#1f2430" text-anchor="end">Answerable, all languages</text>
+
+<path d="M153.7,125.5H167.8M153.7,120.0V131.0M167.8,120.0V131.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="129.3" font-size="11" fill="#4b5260" text-anchor="end">0 of 38</text>
+<text x="145.7" y="147.3" font-size="11" fill="#1f2430" text-anchor="end">Answerable, English</text>
+
+<path d="M153.7,143.5H176.6M153.7,138.0V149.0M176.6,138.0V149.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="147.3" font-size="11" fill="#4b5260" text-anchor="end">0 of 22</text>
+<text x="145.7" y="165.3" font-size="11" fill="#1f2430" text-anchor="end">Answerable, German</text>
+
+<path d="M153.7,161.5H193.6M153.7,156.0V167.0M193.6,156.0V167.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="165.3" font-size="11" fill="#4b5260" text-anchor="end">0 of 11</text>
+<text x="145.7" y="183.3" font-size="11" fill="#1f2430" text-anchor="end">Answerable, French</text>
+
+<path d="M153.7,179.5H220.8M153.7,174.0V185.0M220.8,174.0V185.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="183.3" font-size="11" fill="#4b5260" text-anchor="end">0 of 5</text>
+<text x="12.0" y="220.0" font-size="10" fill="#4b5260" text-anchor="start">Above the rule: the share of the invented questions (a person, project or</text>
+<text x="12.0" y="233.5" font-size="10" fill="#4b5260" text-anchor="start">study that exists on no page) answered with no verifiable source. Below:</text>
+<text x="12.0" y="247.0" font-size="10" fill="#4b5260" text-anchor="start">the share of answerable questions wrongly answered that way. Wilson</text>
+<text x="12.0" y="260.5" font-size="10" fill="#4b5260" text-anchor="start">95% intervals. The dashed line is the pre-registered bar for invented</text>
+<text x="12.0" y="274.0" font-size="10" fill="#4b5260" text-anchor="start">questions, 0.90.</text>
+</svg>

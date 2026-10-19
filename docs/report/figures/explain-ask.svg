@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" width="800" height="380" role="img" aria-labelledby="t d">
+  <title id="t">Ask in your words</title>
+  <desc id="d">A question is typed in plain words. Apertus adds three search terms under the label "search terms, not facts". Two result cards slide in, each with a name, a role and a highlighted sentence quoted from the institute's own page. Example data is invented.</desc>
+  <style>
+    text { font-family: ui-rounded, "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .bg { fill: #eef4fa; }
+    .card { fill: #ffffff; stroke: #dfe6ee; }
+    .card-fill { fill: #ffffff; }
+    .chip { fill: #eef1f4; }
+    .ink { fill: #14202b; }
+    .muted { fill: #5b6773; }
+    .mark { fill: #fff3b0; }
+    .green { fill: #13804a; }
+    .icon { fill: none; stroke: #13804a; }
+    .lens { fill: none; stroke: #5b6773; }
+    .shadow { fill: #14202b; opacity: 0.07; }
+    /* Resting styles are the last frame, so with motion reduced the picture is complete. */
+    .cover { transform-box: fill-box; transform-origin: right center; transform: scaleX(0); }
+    .caret { opacity: 0; }
+    .label { }
+    .pop { transform-box: fill-box; transform-origin: center; }
+    .c1 { }
+    .c2 { }
+    .c3 { }
+    .r1 { }
+    .r2 { }
+    .sweep { transform-box: fill-box; transform-origin: left center; }
+    .m1 { }
+    .m2 { }
+    .s1 { }
+    .s2 { }
+  </style>
+  <rect class="bg" width="800" height="380" rx="24"/>
+  <text class="ink" x="32" y="42" font-size="20" font-weight="800">Ask in your words</text>
+  <text class="muted" x="32" y="64" font-size="13">Apertus only widens the search. Every result shows the sentence it rests on.</text>
+  <!-- The question -->
+  <rect class="shadow" x="34" y="90" width="736" height="46" rx="23"/>
+  <rect class="card" x="32" y="84" width="736" height="46" rx="23"/>
+  <circle class="lens" cx="54" cy="105" r="6" stroke-width="2"/>
+  <path class="lens" d="M58.5 109.5 64 115" stroke-width="2" stroke-linecap="round"/>
+  <text class="ink" x="76" y="113" font-size="17" font-weight="700">Who in Bern works on blood sugar sensors?</text>
+  <rect class="card-fill cover" x="76" y="92" width="360" height="30"/>
+  <rect class="ink caret" x="77" y="95" width="2" height="22"/>
+  <!-- Search terms, not facts -->
+  <text class="muted label" x="32" y="160" font-size="12" font-weight="700">Apertus added these search terms, not facts</text>
+  <g class="pop c1">
+    <rect class="chip" x="32" y="170" width="60" height="30" rx="15"/>
+    <text class="ink" x="62" y="190" font-size="13" font-weight="700" text-anchor="middle">CGM</text>
+  </g>
+  <g class="pop c2">
+    <rect class="chip" x="100" y="170" width="130" height="30" rx="15"/>
+    <text class="ink" x="165" y="190" font-size="13" font-weight="700" text-anchor="middle">Glukosesensor</text>
+  </g>
+  <g class="pop c3">
+    <rect class="chip" x="238" y="170" width="250" height="30" rx="15"/>
+    <text class="ink" x="363" y="190" font-size="13" font-weight="700" text-anchor="middle">continuous glucose monitoring</text>
+  </g>
+  <!-- Result 1 -->
+  <g class="r1">
+    <rect class="shadow" x="34" y="220" width="736" height="66" rx="14"/>
+    <rect class="card" x="32" y="214" width="736" height="66" rx="14"/>
+    <text class="ink" x="48" y="238" font-size="15" font-weight="800">Dr. Example Person</text>
+    <text class="muted" x="752" y="238" font-size="12" text-anchor="end">Group Leader, Sensor Lab</text>
+    <rect class="mark sweep m1" x="46" y="250" width="440" height="22" rx="5"/>
+    <text class="ink" x="52" y="266" font-size="13" font-weight="600">“develops wearable sensors for continuous glucose monitoring”</text>
+    <g class="s1">
+      <path class="icon" transform="translate(562 254)" d="M8 1.5H3a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 11.5h7a1.5 1.5 0 0 0 1.5-1.5V5M8 1.5h3.5V5M11.5 1.5 6 7" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="green" x="752" y="266" font-size="11" font-weight="700" text-anchor="end">from the institute's own page</text>
+    </g>
+  </g>
+  <!-- Result 2 -->
+  <g class="r2">
+    <rect class="shadow" x="34" y="296" width="736" height="66" rx="14"/>
+    <rect class="card" x="32" y="290" width="736" height="66" rx="14"/>
+    <text class="ink" x="48" y="314" font-size="15" font-weight="800">Dr. Sample Expert</text>
+    <text class="muted" x="752" y="314" font-size="12" text-anchor="end">Senior Researcher, Diabetes Technology</text>
+    <rect class="mark sweep m2" x="46" y="326" width="372" height="22" rx="5"/>
+    <text class="ink" x="52" y="342" font-size="13" font-weight="600">“tests glucose sensors with older patients at home”</text>
+    <g class="s2">
+      <path class="icon" transform="translate(562 330)" d="M8 1.5H3a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 11.5h7a1.5 1.5 0 0 0 1.5-1.5V5M8 1.5h3.5V5M11.5 1.5 6 7" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="green" x="752" y="342" font-size="11" font-weight="700" text-anchor="end">from the institute's own page</text>
+    </g>
+  </g>
+  <text class="muted" x="768" y="372" font-size="10" text-anchor="end">Example data is invented.</text>
+</svg>

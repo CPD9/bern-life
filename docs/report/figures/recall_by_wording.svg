@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 227" width="360" height="227" role="img" aria-labelledby="title" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+<title id="title">recall@10 by wording, with the top-10 overlap with the site's wording</title>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="12.0" y="12.5" width="9" height="9" rx="2" fill="#c8102e"/>
+<text x="25.0" y="21.0" font-size="10.5" fill="#4b5260" text-anchor="start">recall@10</text>
+<path d="M83.1,17.0H97.1M83.1,14.0V20.0M97.1,14.0V20.0" stroke="#4b5260" fill="none"/>
+<text x="102.1" y="21.0" font-size="10.5" fill="#4b5260" text-anchor="start">95% interval</text>
+<path d="M138.2,35V126.0" stroke="#c3c1b8"/>
+<text x="138.2" y="138.0" font-size="10" fill="#868b94" text-anchor="middle">0</text>
+<path d="M181.2,35V126.0" stroke="#e6e4de"/>
+<text x="181.2" y="138.0" font-size="10" fill="#868b94" text-anchor="middle">0.25</text>
+<path d="M224.1,35V126.0" stroke="#e6e4de"/>
+<text x="224.1" y="138.0" font-size="10" fill="#868b94" text-anchor="middle">0.5</text>
+<path d="M267.1,35V126.0" stroke="#e6e4de"/>
+<text x="267.1" y="138.0" font-size="10" fill="#868b94" text-anchor="middle">0.75</text>
+<path d="M310.0,35V126.0" stroke="#e6e4de"/>
+<text x="310.0" y="138.0" font-size="10" fill="#868b94" text-anchor="middle">1</text>
+<path d="M275.6,35V126.0" stroke="#1f2430" stroke-dasharray="3 3"/>
+<text x="271.6" y="31.0" font-size="10" fill="#1f2430" text-anchor="end">the case asks 0.80</text>
+<text x="348.0" y="21.0" font-size="10" fill="#868b94" text-anchor="end">Jaccard with site</text>
+<text x="130.2" y="48.4" font-size="11" fill="#1f2430" text-anchor="end">Site's own wording (14)</text>
+<path d="M138.2,40.0h71.2a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-71.2z" fill="#c8102e"><title>Site's own wording (14), recall@10: 0.43</title></path>
+<path d="M184.9,44.5H238.4M184.9,39.0V50.0M238.4,39.0V50.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="48.4" font-size="11" fill="#4b5260" text-anchor="end">—</text>
+<text x="130.2" y="66.3" font-size="11" fill="#1f2430" text-anchor="end">Synonyms (3)</text>
+<path d="M138.2,58.0h139.2a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-139.2z" fill="#c8102e"><title>Synonyms (3), recall@10: 0.82</title></path>
+<path d="M252.8,62.5H310.0M252.8,57.0V68.0M310.0,57.0V68.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="66.3" font-size="11" fill="#4b5260" text-anchor="end">0.31</text>
+<text x="130.2" y="84.3" font-size="11" fill="#1f2430" text-anchor="end">Lay terms (3)</text>
+<path d="M138.2,76.0h69.6a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-69.6z" fill="#c8102e"><title>Lay terms (3), recall@10: 0.42</title></path>
+<path d="M138.2,80.5H310.0M138.2,75.0V86.0M310.0,75.0V86.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="84.3" font-size="11" fill="#4b5260" text-anchor="end">0.24</text>
+<text x="130.2" y="102.3" font-size="11" fill="#1f2430" text-anchor="end">Translations (12)</text>
+<path d="M138.2,94.0h44.5a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-44.5z" fill="#c8102e"><title>Translations (12), recall@10: 0.27</title></path>
+<path d="M154.9,98.5H217.0M154.9,93.0V104.0M217.0,93.0V104.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="102.3" font-size="11" fill="#4b5260" text-anchor="end">0.24</text>
+<text x="130.2" y="120.3" font-size="11" fill="#1f2430" text-anchor="end">Control (6)</text>
+<path d="M138.2,112.0h55.2a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-55.2z" fill="#c8102e"><title>Control (6), recall@10: 0.33</title></path>
+<path d="M138.2,116.5H252.8M138.2,111.0V122.0M252.8,111.0V122.0" stroke="#4b5260" fill="none"/>
+<text x="348.0" y="120.3" font-size="11" fill="#4b5260" text-anchor="end">—</text>
+<text x="12.0" y="157.0" font-size="10" fill="#4b5260" text-anchor="start">recall@10 per wording of the gold questions; 95% interval by bootstrap</text>
+<text x="12.0" y="170.5" font-size="10" fill="#4b5260" text-anchor="start">over base needs. The right column is the mean Jaccard overlap of a</text>
+<text x="12.0" y="184.0" font-size="10" fill="#4b5260" text-anchor="start">rewording's top 10 with the top 10 of the site's own wording of the same</text>
+<text x="12.0" y="197.5" font-size="10" fill="#4b5260" text-anchor="start">need. Control questions ask about the right topic with a premise the</text>
+<text x="12.0" y="211.0" font-size="10" fill="#4b5260" text-anchor="start">pages do not state. The dashed line is the case's bar.</text>
+</svg>
