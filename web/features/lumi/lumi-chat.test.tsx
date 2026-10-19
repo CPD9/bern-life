@@ -191,4 +191,17 @@ describe("LumiChat", () => {
     expect(screen.queryByRole("article")).toBeNull();
     expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
+
+  test("a refusal over the limit says to wait, for Lumi and for the plain search", async () => {
+    const api = scripted([failed("rate_limited")], [failed("rate_limited")]);
+    render(<Harness api={api} />);
+    openPanel();
+    fireEvent.change(screen.getByLabelText("Message Lumi"), { target: { value: "CGM" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    });
+    expect(
+      screen.getAllByText("Too many requests from here right now; try again in a few minutes."),
+    ).toHaveLength(2);
+  });
 });

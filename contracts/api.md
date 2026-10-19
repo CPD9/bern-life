@@ -15,7 +15,9 @@ against a schema in this folder. POST is accepted from loopback only.
 | `GET /api/numbers` | — | `numbers.schema.json` (the snapshot's committed evaluation, `metrics.schema.json`'s `eval`, or null; model calls per role from the cache pack) |
 
 Errors: HTTP 4xx/5xx with `{ "error": "<marker>" }`, where the marker is one of `bad_request`,
-`not_found`, `engine_error`. No exception text, no provider message.
+`not_found`, `rate_limited` (HTTP 429), `engine_error`. No exception text, no provider message.
+The web app's proxies answer `rate_limited` when an address is over its limit
+(`web/infrastructure/engine-limits.ts`), and the browser asks the player to wait a few minutes.
 
 Only a request carrying `X-Bernlife-Live: 1` may reach a model; every other request is answered
 from the cache alone, and a cache miss falls back as in replay. The web app's proxies set that

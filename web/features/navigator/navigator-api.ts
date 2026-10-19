@@ -25,7 +25,12 @@ const briefRejections: readonly BriefRejection[] = [
   "unreadable",
   "no_text",
 ];
-const engineErrors: readonly EngineError[] = ["bad_request", "not_found", "engine_error"];
+const engineErrors: readonly EngineError[] = [
+  "bad_request",
+  "not_found",
+  "rate_limited",
+  "engine_error",
+];
 
 function failureFrom(body: unknown): NavigatorFailure {
   const { error, reason } = (typeof body === "object" && body !== null ? body : {}) as Record<
@@ -37,10 +42,12 @@ function failureFrom(body: unknown): NavigatorFailure {
   return { kind: "engine", error: engineErrors.find((known) => known === error) ?? "engine_error" };
 }
 
-async function send(path: string, init: RequestInit): Promise<NavigatorOutcome> {
+type Fetch = (path: string, init: RequestInit) => Promise<Response>;
+
+async function send(fetchFrom: Fetch, path: string, init: RequestInit): Promise<NavigatorOutcome> {
   let response: Response;
   try {
-    response = await fetch(path, { ...init, method: "POST" });
+    response = await fetchFrom(path, { ...init, method: "POST" });
   } catch {
     return { ok: false, failure: { kind: "network" } };
   }
@@ -50,16 +57,22 @@ async function send(path: string, init: RequestInit): Promise<NavigatorOutcome> 
   return { ok: true, response: body as SearchResponse };
 }
 
-export const httpNavigatorApi: NavigatorApi = {
-  search: (request) =>
-    send("/api/search", {
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(request),
-    }),
-  brief: (input) => {
-    const form = new FormData();
-    if (input.kind === "pdf") form.set("file", input.file);
-    else form.set("text", input.text);
-    return send("/api/brief", { body: form });
-  },
-};
+export function createHttpNavigatorApi(fetchFrom: Fetch): NavigatorApi {
+  return {
+    search: (request) =>
+      send(fetchFrom, "/api/search", {
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(request),
+      }),
+    brief: (input) => {
+      const form = new FormData();
+      if (input.kind === "pdf") form.set("file", input.file);
+      else form.set("text", input.text);
+      return send(fetchFrom, "/api/brief", { body: form });
+    },
+  };
+}
+
+export const httpNavigatorApi: NavigatorApi = createHttpNavigatorApi((path, init) =>
+  fetch(path, init),
+);

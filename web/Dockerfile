@@ -17,6 +17,9 @@ RUN bun run build
 
 FROM node:24-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+# Docker fills a new, empty named volume from the image's folder, owner included, so the uploads
+# volume mounted here is writable by node from the start.
+RUN mkdir -p /data/uploads && chown node:node /data/uploads
 WORKDIR /app/web
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 COPY web/package.json web/bun.lock web/bunfig.toml ./

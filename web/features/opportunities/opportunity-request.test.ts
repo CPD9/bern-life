@@ -54,6 +54,9 @@ describe("httpOpportunitiesApi", () => {
       await answer(Response.json({ error: "bad_request" }, { status: 400 })).search(request),
     ).toEqual({ ok: false, failure: "bad_request" });
     expect(
+      await answer(Response.json({ error: "rate_limited" }, { status: 429 })).search(request),
+    ).toEqual({ ok: false, failure: "rate_limited" });
+    expect(
       await answer(Response.json({ error: "engine_error" }, { status: 502 })).search(request),
     ).toEqual({ ok: false, failure: "engine_error" });
     const offline = httpOpportunitiesApi(async () => {

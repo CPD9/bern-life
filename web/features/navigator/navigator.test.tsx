@@ -111,6 +111,19 @@ describe("Navigator", () => {
     expect(screen.getByRole("status").textContent).toBe("1 result");
   });
 
+  test("a refusal over the limit says to wait and offers no retry", async () => {
+    const api: NavigatorApi = {
+      search: async () => ({ ok: false, failure: { kind: "engine", error: "rate_limited" } }),
+      brief: async () => ({ ok: false, failure: { kind: "engine", error: "rate_limited" } }),
+    };
+    render(<Harness api={api} />);
+    await ask("CGM");
+    expect(screen.getByRole("status").textContent).toBe(
+      "Too many requests from here right now; try again in a few minutes.",
+    );
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
   test("the controller decides which input shows, so an agent can open the brief", () => {
     function Driven() {
       const controller = useNavigator(answering(resultFixture));

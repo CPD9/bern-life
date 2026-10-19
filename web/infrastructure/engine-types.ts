@@ -27,7 +27,8 @@ export type AgentRequest = { readonly messages: readonly AgentMessage[] };
 /** live: true lets this one call reach a model; anything else is answered from the cache. */
 export type EngineCallOptions = { readonly live?: boolean };
 
-export type EngineError = "bad_request" | "not_found" | "engine_error";
+/** The API's error markers (contracts/api.md); `rate_limited` is HTTP 429. */
+export type EngineError = "bad_request" | "not_found" | "rate_limited" | "engine_error";
 
 export type EngineResult<T> = { ok: true; value: T } | { ok: false; error: EngineError };
 

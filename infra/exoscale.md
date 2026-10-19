@@ -204,10 +204,10 @@ row restore together, from the same folder. An account or document deleted in th
 the backups for up to 14 days, and a restore brings back everything deleted after that backup was
 taken: delete it again in the app after a restore.
 
-Uploads need the `uploads` volume to be owned by `node`, the web app's user. `web/Dockerfile` does
-not create `/data/uploads`, so Docker makes a new volume there owned by root: the app cannot write
-an upload, and `uploads.tar.gz` stays empty. Until the image creates that folder for `node`, run
-this once for each new volume:
+Uploads need the `uploads` volume to be owned by `node`, the web app's user. `web/Dockerfile`
+creates `/data/uploads` for `node`, and Docker copies that owner into a new, empty volume, so a
+volume made from this image is writable. A volume made from an older image is owned by root: the
+app cannot write an upload, and `uploads.tar.gz` stays empty. Fix it once:
 
 ```bash
 docker compose exec -T -u 0 web chown node /data/uploads
@@ -289,8 +289,5 @@ and then the restore above.
 - **Off-VM backup copy:** needs an SOS bucket with lifecycle enabled by Exoscale, a key allowed to
   write to it and a passphrase (Peter's decision); the commands are under "Back up and restore".
   Not provisioned.
-- **Uploads volume:** `web/Dockerfile` should create `/data/uploads` owned by `node` before
-  `USER node`, so a new volume is writable without the one-time `chown` under "Back up and
-  restore".
 - **Credentials:** Peter holds the account; a compute-only IAM key for Yaseen replaces the master
   login for day-to-day work.
