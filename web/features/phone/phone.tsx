@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useEscapeLayer } from "@/infrastructure/ui/escape-layers";
+import { focusOnOpen } from "@/infrastructure/ui/focus-on-open";
 import { WindowChrome, belowPhoneHeader } from "@/infrastructure/ui/window-chrome";
 import { NotificationCentre } from "./notification-centre";
 import { PhoneHome } from "./phone-home";
@@ -39,8 +40,9 @@ type PhoneProps = {
 
 // A native modal dialog: the page behind it is inert and Escape closes it from the home screen.
 // Inside an app, Back and Escape return to the app before or home. Whenever the app changes,
-// focus moves to the new app's title, or home to the tile of the app just left, so it never
-// falls to <body>. Focus goes back to whatever opened the phone (the Phone tab) on close.
+// focus moves into the new app (the field it marks, else its title), or home to the tile of the
+// app just left, so it never falls to <body>. Focus goes back to whatever opened the phone (the
+// Phone tab) on close.
 export function Phone({
   open,
   onClose,
@@ -58,6 +60,7 @@ export function Phone({
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const frame = useRef<HTMLElement>(null);
   const shownApp = useRef<string | null>(appId);
   const headingId = useId();
   const [centreOpen, setCentreOpen] = useState(false);
@@ -83,7 +86,7 @@ export function Phone({
     const element = dialog.current;
     if (left === appId || !element?.open) return;
     if (appId !== null) {
-      heading.current?.focus({ preventScroll: true });
+      focusOnOpen(frame.current, heading.current);
       return;
     }
     const tile =
@@ -145,6 +148,7 @@ export function Phone({
           {app ? (
             <section
               key={app.id}
+              ref={frame}
               aria-labelledby={headingId}
               className={`flex min-h-0 flex-1 flex-col ${push}`}
             >

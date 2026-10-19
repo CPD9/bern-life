@@ -6,7 +6,13 @@ import { useDesktop } from "./use-desktop";
 
 const apps = desktopApps(
   {
-    navigator: <p>Navigator content</p>,
+    // The Navigator marks its search field, so opening it lands there rather than on the title.
+    navigator: (
+      <>
+        <p>Navigator content</p>
+        <input aria-label="Ask in your words" data-autofocus="" />
+      </>
+    ),
     agents: <p>Agents content</p>,
     reports: <p>Reports content</p>,
     messages: <p>Messages content</p>,
@@ -65,12 +71,15 @@ describe("DesktopSurface", () => {
     expect(screen.queryByText("Open an app from the dock.")).toBeNull();
   });
 
-  test("the dock opens an app in a window whose title takes focus", () => {
+  test("the dock opens an app in a window; focus lands on its title, or in the field it marks", () => {
     render(<Harness />);
+    fireEvent.click(dockButton("Reports"));
+    expect(windowOf("Reports").textContent).toContain("Reports content");
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Reports" }));
+    expect(dockButton("Reports").textContent).toContain(", open");
     fireEvent.click(dockButton("Navigator"));
     expect(windowOf("Navigator").textContent).toContain("Navigator content");
-    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Navigator" }));
-    expect(dockButton("Navigator").textContent).toContain(", open");
+    expect(document.activeElement).toBe(screen.getByLabelText("Ask in your words"));
   });
 
   test("only wired apps are in the dock, and Messages carries its unread count", () => {
@@ -133,7 +142,7 @@ describe("DesktopSurface", () => {
     expect(frontWindow().dataset.appWindow).toBe("reports");
     fireEvent.keyDown(document.activeElement!, { key: "F6" });
     expect(frontWindow().dataset.appWindow).toBe("navigator");
-    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Navigator" }));
+    expect(document.activeElement).toBe(screen.getByLabelText("Ask in your words"));
   });
 
   test("clicking a back window raises it", () => {

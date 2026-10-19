@@ -5,7 +5,19 @@ import { useState } from "react";
 import { type PhoneApp, type PhoneHealth, type PhoneNotification, Phone } from "./phone";
 
 const apps: PhoneApp[] = [
-  { id: "ask", label: "Ask", icon: null, tile: "#13804a", content: <p>Ask content</p> },
+  {
+    id: "ask",
+    label: "Ask",
+    icon: null,
+    tile: "#13804a",
+    // Ask marks its search field, so opening it lands there rather than on the title.
+    content: (
+      <>
+        <p>Ask content</p>
+        <input aria-label="Ask in your words" data-autofocus="" />
+      </>
+    ),
+  },
   {
     id: "messages",
     label: "Messages",
@@ -95,6 +107,16 @@ describe("Phone", () => {
     ).toHaveLength(3);
   });
 
+  test("opening an app puts focus in the field it marks, else on its title", async () => {
+    render(<Harness />);
+    openPhone();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
+    expect(document.activeElement).toBe(screen.getByLabelText("Ask in your words"));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Back to Home" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Messages" })));
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Messages" }));
+  });
+
   test("neither the dialog nor the frame can scroll, so the status bar never drifts away", () => {
     render(<Harness />);
     openPhone();
@@ -141,7 +163,7 @@ describe("Phone", () => {
     render(<Harness />);
     openPhone();
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
-    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Ask" }));
+    expect(document.activeElement).toBe(screen.getByLabelText("Ask in your words"));
     await act(async () =>
       fireEvent.click(screen.getByRole("button", { name: "Open settings from outside" })),
     );
@@ -166,14 +188,14 @@ describe("Phone", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Ask" }));
   });
 
-  test("switching apps from inside an app moves focus to the new app's title", async () => {
+  test("switching apps from inside an app moves focus into the new app", async () => {
     render(<Harness />);
     openPhone();
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Try settings" })));
     expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Settings" }));
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Back to Ask" })));
-    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Ask" }));
+    expect(document.activeElement).toBe(screen.getByLabelText("Ask in your words"));
   });
 
   test("an overlay renders inside the phone's dialog, below an open app's header", async () => {

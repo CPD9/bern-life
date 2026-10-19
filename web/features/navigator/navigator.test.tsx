@@ -52,6 +52,13 @@ async function submitBrief(text: string) {
 }
 
 describe("Navigator", () => {
+  test("the search field is marked as where focus lands when Ask opens; a brief marks nothing", () => {
+    render(<Harness api={answering(resultFixture)} />);
+    expect(screen.getByLabelText("Ask in your words").hasAttribute("data-autofocus")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Project brief" }));
+    expect(document.querySelector("[data-autofocus]")).toBeNull();
+  });
+
   test("tapping an example question searches it at once, and the examples leave with the answer", async () => {
     const asked: SearchRequest[] = [];
     const api: NavigatorApi = {
