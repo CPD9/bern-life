@@ -2,7 +2,8 @@
 
 // A bell with the unread count; pressing it opens the list, newest first. Opening the list does not
 // mark anything read: following a notification, or Mark all read, does. Escape closes the list and
-// puts focus back on the bell.
+// puts focus back on the bell, but only while focus is on the bell or in its list, so an Escape
+// meant for something else on the page leaves the list alone.
 
 import { useEffect, useId, useRef, useState } from "react";
 import { formatBernTime, useNow } from "@/infrastructure/bern-time";
@@ -21,6 +22,7 @@ export function NotificationBell({ store, now }: { store: NotificationStore; now
   const items = useNotifications(store);
   const clock = useNow();
   const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const listId = useId();
   const unread = unreadCount(items);
@@ -30,6 +32,7 @@ export function NotificationBell({ store, now }: { store: NotificationStore; now
     if (!open) return;
     const close = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
+      if (!(event.target instanceof Node && root.current?.contains(event.target))) return;
       setOpen(false);
       button.current?.focus();
     };
@@ -38,7 +41,7 @@ export function NotificationBell({ store, now }: { store: NotificationStore; now
   }, [open]);
 
   return (
-    <div className="relative">
+    <div ref={root} className="relative">
       <button
         ref={button}
         type="button"

@@ -77,6 +77,73 @@ describe("Toasts", () => {
     expect(live()).toHaveLength(1);
   });
 
+  test("the pointer leaving does not cut short a toast held by keyboard focus", () => {
+    const store = freshStore();
+    const { schedule, live } = manualTimers();
+    render(<Toasts store={store} schedule={schedule} reducedMotion={false} />);
+    act(() => {
+      store.notify(message);
+    });
+    const card = screen.getByRole("listitem");
+    const dismiss = screen.getByRole("button", { name: "Dismiss Bea wrote" });
+    fireEvent.focusIn(dismiss);
+    fireEvent.pointerEnter(card);
+    fireEvent.pointerLeave(card);
+    expect(live()).toEqual([]);
+    fireEvent.focusOut(dismiss);
+    expect(live()).toHaveLength(1);
+  });
+
+  test("focus moving inside a toast keeps it held", () => {
+    const store = freshStore();
+    const { schedule, live } = manualTimers();
+    render(<Toasts store={store} schedule={schedule} reducedMotion={false} />);
+    act(() => {
+      store.notify({ ...message, href: "/messages" });
+    });
+    const link = screen.getByRole("link", { name: "Bea wrote" });
+    const dismiss = screen.getByRole("button", { name: "Dismiss Bea wrote" });
+    fireEvent.focusIn(link);
+    fireEvent.focusOut(link, { relatedTarget: dismiss });
+    fireEvent.focusIn(dismiss);
+    expect(live()).toEqual([]);
+  });
+
+  test("Dismiss moves focus to the next toast, then back to where focus came from", () => {
+    const store = freshStore();
+    render(
+      <>
+        <button type="button">Before</button>
+        <Toasts store={store} schedule={manualTimers().schedule} reducedMotion={false} />
+      </>,
+    );
+    act(() => {
+      store.notify({ kind: "message", title: "First", body: "One" });
+      store.notify({ kind: "message", title: "Second", body: "Two" });
+    });
+    const before = screen.getByRole("button", { name: "Before" });
+    const second = screen.getByRole("button", { name: "Dismiss Second" });
+    second.focus();
+    fireEvent.focusIn(second, { relatedTarget: before });
+    fireEvent.click(second);
+    const first = screen.getByRole("button", { name: "Dismiss First" });
+    expect(document.activeElement).toBe(first);
+    fireEvent.click(first);
+    expect(screen.queryByRole("listitem")).toBeNull();
+    expect(document.activeElement).toBe(before);
+  });
+
+  test("a Dismiss pressed without focus on it leaves focus alone", () => {
+    const store = freshStore();
+    render(<Toasts store={store} schedule={manualTimers().schedule} reducedMotion={false} />);
+    act(() => {
+      store.notify({ kind: "message", title: "First", body: "One" });
+      store.notify({ kind: "message", title: "Second", body: "Two" });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss Second" }));
+    expect(document.activeElement).toBe(document.body);
+  });
+
   test("notifications from before mount do not pop up when they change", () => {
     const store = freshStore();
     store.notify(message);

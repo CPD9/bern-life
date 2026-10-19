@@ -91,4 +91,20 @@ describe("NotificationBell", () => {
     expect(bell.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(bell);
   });
+
+  test("an Escape from outside the bell and its list leaves the list open", () => {
+    render(
+      <>
+        <input aria-label="Elsewhere" />
+        <NotificationBell store={storeWith(null)} now={now} />
+      </>,
+    );
+    const bell = screen.getByRole("button", { name: "Notifications" });
+    fireEvent.click(bell);
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Elsewhere" }), { key: "Escape" });
+    expect(screen.getByRole("region", { name: "Notifications" })).toBeTruthy();
+    expect(bell.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.keyDown(bell, { key: "Escape" });
+    expect(bell.getAttribute("aria-expanded")).toBe("false");
+  });
 });
