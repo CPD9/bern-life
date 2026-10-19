@@ -47,8 +47,12 @@ export function GameShell({
         <div className="pointer-events-auto flex flex-col items-start gap-3">{side}</div>
       </div>
       {floatie && (
-        // Above the office's own buttons on a phone, beside them on a wider screen.
-        <div className="absolute right-3 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+9.5rem)] sm:bottom-[calc(max(1rem,env(safe-area-inset-bottom))+4.5rem)]">
+        // Above the office's own buttons on a phone, beside them on a wider screen. On a phone's
+        // map it would sit over the place panel, and the bear on the map opens the same chat.
+        <div
+          data-floatie
+          className={`absolute right-3 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+9.5rem)] sm:bottom-[calc(max(1rem,env(safe-area-inset-bottom))+4.5rem)] ${view === "map" ? "hidden sm:block" : ""}`}
+        >
           {floatie}
         </div>
       )}
