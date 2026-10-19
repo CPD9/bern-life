@@ -1,9 +1,10 @@
 """A project brief in, a SearchResponse with `brief_terms` out (POST /api/brief).
 
-Each verified need is expanded (in parallel) and searched like a question. A profile found by
-several needs keeps its best rank, ties going to the higher fused score, then to its id; the unit
-cap then applies to the merged list. A result's reason and explanation answer the need that
-ranked it best, so "why it matches" always names a need the company wrote.
+Each verified need is expanded (in parallel, in the request's scope) and searched like a
+question. A profile found by several needs keeps its best rank, ties going to the higher fused
+score, then to its id; the unit cap then applies to the merged list. A result's reason and
+explanation answer the need that ranked it best, so "why it matches" always names a need the
+company wrote.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -15,6 +16,7 @@ from bernlife.embed import Embedder
 from bernlife.expand import expand
 from bernlife.explain import explain_top
 from bernlife.llm import Chat
+from bernlife.llm_gate import map_in_scope
 from bernlife.metrics import Topic, with_metrics
 from bernlife.ranking import Candidate, cap_units
 from bernlife.search import RESULTS, Assessment, assess, cited_pages, model_use, result
@@ -26,7 +28,7 @@ def brief_search(
 ) -> dict[str, Any]:
     needs = read_needs(llm, text)
     with ThreadPoolExecutor(max_workers=max(1, len(needs))) as pool:
-        expansions = list(pool.map(lambda need: expand(llm, need.term), needs))
+        expansions = map_in_scope(pool, lambda need: expand(llm, need.term), needs)
     assessments = [
         assess(need.term, sources, store, embedder, expansion)
         for need, expansion in zip(needs, expansions, strict=True)

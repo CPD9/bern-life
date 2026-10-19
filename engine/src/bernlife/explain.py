@@ -20,6 +20,7 @@ from typing import Any
 
 from bernlife.cache import CacheMiss
 from bernlife.llm import Chat
+from bernlife.llm_gate import map_in_scope
 from bernlife.llm_http import ModelUnavailable
 from bernlife.llm_json import ask_json
 from bernlife.names import fold
@@ -161,10 +162,10 @@ def explain(
 def explain_top(
     llm: Chat, results: list[dict[str, Any]], questions: list[str]
 ) -> tuple[list[dict[str, Any]], list[str]]:
-    """The first EXPLAIN_TOP results explained in parallel (the router still limits live calls);
-    `questions[i]` is what result i answers. A result shown through a project (`via`) keeps its
-    plain reason: its own claims are not what matched. Returns the results and one outcome per
-    call."""
+    """The first EXPLAIN_TOP results explained in parallel, each in the request's scope (the
+    router still limits live calls); `questions[i]` is what result i answers. A result shown
+    through a project (`via`) keeps its plain reason: its own claims are not what matched.
+    Returns the results and one outcome per call."""
     top = [i for i, r in enumerate(results[:EXPLAIN_TOP]) if "via" not in r]
     if llm.backend == "mock" or not top:
         return results, []
@@ -173,6 +174,6 @@ def explain_top(
         return explain(llm, questions[i], results[i]["profile"], results[i]["reason"])
 
     with ThreadPoolExecutor(max_workers=len(top)) as pool:
-        done = dict(zip(top, pool.map(one, top), strict=True))
+        done = dict(zip(top, map_in_scope(pool, one, top), strict=True))
     explained = [r | {"reason": done[i][0]} if i in done else r for i, r in enumerate(results)]
     return explained, [done[i][1] for i in top]
