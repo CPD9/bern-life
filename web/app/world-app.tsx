@@ -79,7 +79,11 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const desktop = useDesktop();
   const now = useNow();
   const health = useHealth();
-  const unreadMessages = useUnreadMessages(account.state.status === "signed-in");
+  // Read again when the phone or the desk closes, since reading a thread sends no live notice.
+  const unreadMessages = useUnreadMessages(
+    account.state.status === "signed-in",
+    phoneOpen || desktopOpen,
+  );
   const agents = {
     navigatorApi: httpNavigatorApi,
     agentName,
@@ -89,7 +93,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const officeApps = useOfficeApps({ ...agents, navigator, desktop, fixtureMode, unreadMessages });
   const shownView = view ?? landingView(onboarding.done);
   // Called after useStory, so the story already listens when the office reports it is ready.
-  const sitAtDesk = useOfficeReady(shownView === "home" && onboarding.done);
+  const sitAtDesk = useOfficeReady(shownView === "home", onboarding.done);
 
   useEffect(
     () => applyWorldAction(worldActionFor(navigator.state), worldSearch),
@@ -151,6 +155,9 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   }
 
   // The desktop is a modal dialog, so toasts move inside it while it is open, or nobody sees them.
+  // Moving remounts them: a toast still up when the desk opens or closes leaves the screen (under
+  // reduced motion too) but stays unread in the bell. One instance would need the toasts to live
+  // above the dialog, which a modal makes inert.
   const toasts = <Toasts store={notificationStore()} reducedMotion={reducedMotion} />;
 
   function sitDown() {

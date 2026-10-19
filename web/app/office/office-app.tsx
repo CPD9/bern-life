@@ -20,6 +20,9 @@ export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
   const [agentName] = useAgentName();
   const health = useHealth();
   const account = useAccount(httpAccountApi);
+  // Read again when the Messages window opens or closes, since reading sends no live notice.
+  const messagesOpen = desktop.windows.some((place) => place.appId === "messages");
+  const unreadMessages = useUnreadMessages(account.state.status === "signed-in", messagesOpen);
   const apps = useOfficeApps({
     navigator,
     navigatorApi: httpNavigatorApi,
@@ -28,7 +31,7 @@ export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
     agentName,
     snapshot: health.status === "ok" ? health.health.snapshot : null,
     notify: notifyLoop,
-    unreadMessages: useUnreadMessages(account.state.status === "signed-in"),
+    unreadMessages,
   });
   const now = useNow();
   // A loop's news shows as a toast here too, since this page has no bell.
