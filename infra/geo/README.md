@@ -5,9 +5,12 @@ water and railways that the world map loads. Python standard library only. Map d
 (see `PROVENANCE.md` and `NOTICE`).
 
 ```bash
-python3 -m infra.geo.build fetch   # swissTLM3D lines and address lookups, cached, >= 1 s apart
-python3 -m infra.geo.build build   # tiles + cache -> web/public/world/bern.geo, prints its sha256
+python3 -m infra.geo.build fetch     # swissTLM3D lines and address lookups, cached, >= 1 s apart
+python3 -m infra.geo.build build     # tiles + cache -> web/public/world/bern.geo, prints its sha256
+python3 -m infra.geo.build anchors   # shipped bern.geo + addresses -> anchors for new places
 ```
+
+Either way, copy the printed sha256 into `web/public/world/manifest.json`.
 
 Raw data stays outside git in `$BERNLIFE_DATA_DIR/geo/raw` (default
 `~/Developer/bern-life-data/geo/raw`):
@@ -38,3 +41,18 @@ Format in `encode.py`, decoder in `web/features/world/bern-geo.ts`.
   and smaller streams, railways.
 - Place anchors: each place with an address, at its address point in its own building, matched
   by EGID (the federal building id both the address register and swissBUILDINGS3D carry).
+
+## Anchors without the tiles
+
+A place that gains an address after the map was built needs an anchor, and `build` needs the
+CityGML tiles. `anchors` works on the shipped file instead (`anchors.py`): it decodes it, copies
+buildings and lines byte for byte, keeps every anchor already there, and adds one for each
+addressed place without, from the address cache (a missing lookup is fetched once).
+
+The file stores no EGIDs, so a new place is matched by containment: its address point, as stored,
+in a footprint. An address point sits on its entrance wall and a footprint is simplified by 1 m
+and rounded to 1.25 m, so a point within 2.5 m outside a footprint is anchored at that footprint's
+centre, as `build` does for a point outside its own building. A point farther from every
+footprint, or an address the search does not find, is named and the file is left unchanged.
+`progr` (Speichergasse 4, 0.77 m outside its footprint) is anchored at the centre this way; a full
+`build` matches every place by EGID again.
