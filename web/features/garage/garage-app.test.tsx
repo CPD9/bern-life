@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { GarageApp } from "./garage-app";
 import { parseNumbers } from "./numbers";
 import type { NumbersOutcome } from "./numbers-api";
@@ -80,6 +80,16 @@ describe("GarageApp numbers", () => {
     expect(stat("Recall@10")).toBe("0.4375 [0.29, 0.58]");
   });
 
+  test("one query is written in the singular, measured or made up", async () => {
+    const body = numbersBody();
+    const single = { ...body, eval: { ...body.eval, queries: 1 } };
+    await mount([measured(single)]);
+    expect(screen.getByText("Measured by the evaluator on 1 query.")).toBeTruthy();
+    cleanup();
+    await mount([measured(single)], true);
+    expect(screen.getByText("1 query, made up for the demo.")).toBeTruthy();
+  });
+
   test("Try again keeps focus in the garage, on the status line", async () => {
     await mount([{ status: "error" }, { status: "error" }]);
     const button = screen.getByRole("button", { name: "Try again" });
@@ -97,7 +107,7 @@ describe("GarageApp numbers", () => {
     expect(screen.getByText("FIXTURE").parentElement?.textContent).toBe(
       "FIXTURE Invented numbers for the demo, not from the evaluator or the engine.",
     );
-    expect(screen.getByText("48 invented queries.")).toBeTruthy();
+    expect(screen.getByText("48 queries, made up for the demo.")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/measured/i);
   });
 });
