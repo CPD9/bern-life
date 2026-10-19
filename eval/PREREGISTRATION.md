@@ -184,4 +184,10 @@ number (bundle-20261019-3: recall@10 0.38 [0.22, 0.56], MRR 0.46) next to the ne
 intervals and every slice, whatever the outcome. The gold run in the entry above measured those
 two changes and is not used to choose levers.
 
+Disclosure: before this entry was written, a diagnosis script also scored gold for a few
+counterfactual variants (raising or removing the unit cap, keeping profiles through a matching
+passage on their own page). Those scores are kept outside the repository and play no part in the
+rule above: each lever is adopted or rejected on dev and dev2 only. The final gold run is therefore
+the third time gold is scored for this work, and the report says so.
+
 Results: pending.
