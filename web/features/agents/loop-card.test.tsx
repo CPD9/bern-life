@@ -73,6 +73,31 @@ describe("LoopCard", () => {
     expect(region.textContent).toBe("Ran on snapshot s1: 1 new, 1 dropped.");
   });
 
+  test("runs that read the same are each announced with new content", () => {
+    let loop = saved();
+    const { rerender } = renderCard(loop);
+    const region = screen.getByRole("status");
+    const observer = new MutationObserver(() => {});
+    observer.observe(region, { childList: true, subtree: true, characterData: true });
+    const added: string[] = [];
+    for (let run = 0; run < 3; run += 1) {
+      loop = recordRun(loop, people("s1", ["a"]));
+      rerender(loop);
+      added.push(
+        observer
+          .takeRecords()
+          .flatMap((record) => [...record.addedNodes].map((node) => node.textContent))
+          .join(""),
+      );
+    }
+    observer.disconnect();
+    expect(added).toEqual([
+      "Ran on snapshot s1. The next run lists what changed.",
+      "Ran on snapshot s1: nothing new or dropped.",
+      "Ran on snapshot s1: nothing new or dropped.",
+    ]);
+  });
+
   test("a loop shown again after a reload announces nothing", () => {
     renderCard(recordRun(saved(), people("s1", ["a"])));
     expect(screen.getByRole("status").textContent).toBe("");

@@ -2,7 +2,8 @@
 
 // One saved loop. What a run just did is announced in a polite live region, so a screen reader
 // hears the outcome without moving focus; Run now stays focusable while it runs (aria-disabled,
-// not disabled), so keyboard focus is not dropped mid-run.
+// not disabled), so keyboard focus is not dropped mid-run. Each run's summary is a new node (keyed
+// by a run count), so a run that reads the same as the one before is still announced.
 
 import { useState } from "react";
 import { kindsText } from "./kinds";
@@ -48,10 +49,10 @@ export function LoopCard({ loop, status, snapshot, onRun, onRemove }: LoopCardPr
   const runLabel = running ? "Running…" : "Run now";
   // A new `last` means a run just finished; the run it replaced says what to compare against.
   const [seenRun, setSeenRun] = useState(loop.last);
-  const [summary, setSummary] = useState("");
+  const [summary, setSummary] = useState({ text: "", run: 0 });
   if (loop.last !== seenRun) {
     setSeenRun(loop.last);
-    setSummary(runSummary(seenRun, loop));
+    setSummary({ text: runSummary(seenRun, loop), run: summary.run + 1 });
   }
   return (
     <li className="border-panel-border flex flex-col gap-2 rounded-2xl border p-4">
@@ -85,7 +86,7 @@ export function LoopCard({ loop, status, snapshot, onRun, onRemove }: LoopCardPr
         {loop.last?.mock === true && <span className="ml-2 font-bold">MOCK</span>}
       </p>
       <p role="status" aria-live="polite" className="text-sm empty:sr-only">
-        {summary}
+        {summary.text !== "" && <span key={summary.run}>{summary.text}</span>}
       </p>
       {needsRun(loop, snapshot) && (
         <p className="bg-warn-bg text-warn-ink rounded-xl px-3 py-1.5 text-sm font-bold">
