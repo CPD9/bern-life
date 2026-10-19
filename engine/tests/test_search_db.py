@@ -180,8 +180,17 @@ class SearchDbTest(unittest.TestCase):
             first["expanded_terms"],
             [{"term": "glucose monitoring", "kind": "translation", "lang": "en"}],
         )
-        self.assertEqual(first["results"][0]["profile"]["id"], "person-example-ada-muster")
-        self.assertEqual(first["results"][0]["metrics"]["covers"], ["Blutzucker"])
+        # Interleaved by fused score: the project's own page says "skin-worn" next to its name.
+        by_id = {r["profile"]["id"]: r for r in first["results"]}
+        self.assertEqual(
+            [(r["profile"]["id"], "passage" in r) for r in first["results"]],
+            [
+                ("project-example-glucopatch", True),
+                ("person-example-ada-muster", False),
+                ("person-demo-cleo-beispiel", False),
+            ],
+        )
+        self.assertEqual(by_id["person-example-ada-muster"]["metrics"]["covers"], ["Blutzucker"])
         plain = search(query, None, self.store, fake_embedder())
         self.assertEqual((plain["abstained"], plain["mode"]), (True, "mock"))
 
