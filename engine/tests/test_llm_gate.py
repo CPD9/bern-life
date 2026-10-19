@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import threading
 import time
@@ -7,11 +8,18 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from bernlife.cache import CacheMiss, Message, append_audit, cache_key, cache_roots
+from bernlife.cache import (
+    CacheMiss,
+    Message,
+    append_audit,
+    cache_key,
+    cache_roots,
+    entry_path,
+)
 from bernlife.config import ConfigError, call_budget
 from bernlife.explain import explain_top
 from bernlife.llm import ROLES, Router, connect
-from bernlife.llm_gate import CallTally, request_scope
+from bernlife.llm_gate import CallTally, answered_mode, request_mode, request_scope
 from bernlife.llm_http import ModelUnavailable
 from fake_llm import FakeTransport, models_body
 from search_fakes import PROFILES
@@ -46,6 +54,21 @@ class CountingClient:
         if self.marker is not None:
             raise ModelUnavailable(self.marker)
         return self.reply
+
+
+class BrokenClient:
+    """A live endpoint whose every call breaks with an error that is no failure marker."""
+
+    def chat(
+        self,
+        model: str,
+        messages: Sequence[Message],
+        *,
+        temperature: float,
+        seed: int | None,
+        max_tokens: int,
+    ) -> str:
+        raise LookupError("provider-internal-detail")
 
 
 def ask(router: Router, text: str, role: str = "expand") -> str:
@@ -109,6 +132,45 @@ class GateTest(unittest.TestCase):
         self.assertEqual(client.calls, 0)
         self.assertEqual(ask(router, "glucose"), "ok")
         self.assertEqual(client.calls, 1)
+
+    def test_a_live_engine_answers_as_replay_unless_a_call_went_live(self) -> None:
+        router = self.router(CountingClient(), serving=True, budget=10)
+        with request_scope(live=True):
+            ask(router, "glucose")
+            went_live = request_mode("live")
+        with request_scope(live=True):
+            ask(router, "glucose")
+            from_cache = request_mode("live")
+        with request_scope(live=False):
+            cache_only = [request_mode(backend) for backend in ("live", "replay", "mock")]
+        self.assertEqual((went_live, from_cache), ("live", "replay"))
+        self.assertEqual(cache_only, ["replay", "replay", "mock"])
+        self.assertEqual(request_mode("live"), "live")
+        self.assertEqual([answered_mode("live", n) for n in (0, 2)], ["replay", "live"])
+
+    def test_a_call_that_breaks_unexpectedly_is_audited_and_spent(self) -> None:
+        router = self.router(BrokenClient(), budget=2)
+        with self.assertRaises(LookupError):
+            ask(router, "glucose")
+        self.assertEqual(self.outcomes(), ["engine_error"])
+        self.assertEqual(router.recent_failures(), {"expand": {"engine_error": 1}})
+        self.assertEqual(
+            self.router(CountingClient(), budget=2).budget_status(), {"limit": 2, "used": 1}
+        )
+
+    def test_a_reply_that_cannot_be_stored_is_still_spent(self) -> None:
+        key = cache_key(MODEL, [{"role": "user", "content": "glucose"}], 0.0, None, 700, "v1")
+        entry = entry_path(self.roots[0], key)
+        # A folder in the place of write_json's temporary file makes the write fail.
+        entry.with_name(f"{entry.name}.{os.getpid()}-{threading.get_ident()}.tmp").mkdir(
+            parents=True
+        )
+        with self.assertRaises(OSError):
+            ask(self.router(CountingClient(), budget=2), "glucose")
+        self.assertEqual(self.outcomes(), ["live"])
+        self.assertEqual(
+            self.router(CountingClient(), budget=2).budget_status(), {"limit": 2, "used": 1}
+        )
 
     def test_explain_threads_keep_the_request_scope(self) -> None:
         results = [{"rank": n, "profile": ADA, "reason": PLAIN} for n in range(1, 6)]

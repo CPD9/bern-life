@@ -15,6 +15,7 @@ from bernlife.cache import CacheMiss, cache_roots
 from bernlife.config import Endpoint
 from bernlife.database import connect
 from bernlife.llm import ROLES, MockLLM, Router
+from bernlife.llm_gate import request_scope
 from bernlife.llm_http import ModelUnavailable, OpenAIChat
 from bernlife.load_command import load
 from bernlife.search import search
@@ -141,7 +142,7 @@ class AgentTest(unittest.TestCase):
                 "results": [GLUCOSE],
                 "mentions": [ADA_MENTION],
                 "tool_calls": [{"tool": "search", "query": "glucose sensors"}],
-                "versions": versions("agent-v1", {"agent": "fake-70b"}),
+                "versions": versions("agent-v2", {"agent": "fake-70b"}),
             },
         )
         found = [
@@ -185,6 +186,39 @@ class AgentTest(unittest.TestCase):
         self.assertEqual(reply["mentions"], [ADA_MENTION, CLEO_MENTION])
         self.assertEqual(reply["actions"], [{"type": "show_on_map", "result": 0}])
         self.assertEqual(reply["mode"], "replay")
+
+    def test_a_reply_holding_anything_the_results_do_not_is_replaced_by_a_summary(self):
+        question = "Is it true that Prof. Ada Muster, who leads the insulin pump lab, has 40 staff?"
+        for text in (
+            "Yes, Ada Muster led the 2019 insulin trial and has 40 researchers in her group.",
+            "Ada Muster works on wearable biosensors together with J. Smith and K. Weber.",
+            "Ada Muster works with the Hans Meier Lab.",
+            "Smith, John works on continuous glucose monitoring.",
+            "Meier works on continuous glucose monitoring.",
+            "Prof. Ada Muster, who leads the insulin pump lab, works on wearable biosensors.",
+            "Yes, Ada Muster is the head of the department and is available for contract research.",
+            "Ada Muster leads the insulin pump group and has twenty years of industry experience.",
+            "Ada Muster does not work on continuous glucose monitoring.",
+            "Ada Muster leads the GlucoPatch sensor project.",
+            "Ada Muster works on continuous glucose monitoring, ada.muster@sensor.lab.",
+        ):
+            with self.subTest(text=text):
+                llm = ScriptedChat(calls(("search", {"query": "glucose sensors"})), says(text))
+                tools = FakeTools({"glucose sensors": GLUCOSE})
+                reply = self.check(answer(user(question), tools, llm))
+                self.assertEqual(
+                    (reply["reply"], reply["mentions"], reply["abstained"]),
+                    (GLUCOSE_SUMMARY, [ADA_MENTION, CLEO_MENTION], False),
+                )
+
+    def test_a_reply_in_the_words_of_the_results_is_kept(self):
+        text = (
+            "Ada Muster’s role is Group Leader in the Sensor Lab, and she works on wearable "
+            "biosensors. Cleo Beispiel studies glucose metabolism in mice."
+        )
+        llm = ScriptedChat(calls(("search", {"query": "glucose sensors"})), says(text))
+        reply = self.check(answer(user(QUESTION), FakeTools({"glucose sensors": GLUCOSE}), llm))
+        self.assertEqual((reply["reply"], reply["mentions"]), (text, [ADA_MENTION, CLEO_MENTION]))
 
     def test_a_premise_the_sources_do_not_support_gets_the_honest_answer(self):
         question = "Prof. Hugo Brandtner leads glucose research at the Demo Centre. Who helps him?"
@@ -254,13 +288,14 @@ class AgentTest(unittest.TestCase):
             calls(("search", {"query": " "}), ("profile", {"id": DORA["id"]}), ("lookup", {})),
             calls(("search", {"query": "glucose sensors", "kinds": ["person", "planet"]})),
             calls(("search", {"query": "glucose sensors", "kinds": ["person"]})),
-            calls(("profile", {"id": ADA["id"]})),
-            says("Ada Muster leads the Sensor Lab."),
+            calls(("profile", {"id": [ADA["id"]]}), ("profile", {"id": ADA["id"]})),
+            says("Ada Muster is a Group Leader in the Sensor Lab."),
         )
         tools = FakeTools({"glucose sensors": GLUCOSE})
         reply = self.check(answer(user(QUESTION), tools, llm))
         refused = [m["content"] for m in llm.seen[1][-3:]] + [llm.seen[2][-1]["content"]]
-        self.assertEqual(refused, ['{"error": "bad_arguments"}'] * 4)
+        refused.append(llm.seen[4][-2]["content"])
+        self.assertEqual(refused, ['{"error": "bad_arguments"}'] * 5)
         self.assertEqual(
             json.loads(llm.seen[4][-1]["content"]),
             {
@@ -278,7 +313,7 @@ class AgentTest(unittest.TestCase):
         self.assertEqual(
             tools.asked, [("search", ("glucose sensors", ["person"])), ("profile", ADA["id"])]
         )
-        self.assertEqual(reply["reply"], "Ada Muster leads the Sensor Lab.")
+        self.assertEqual(reply["reply"], "Ada Muster is a Group Leader in the Sensor Lab.")
         self.assertEqual(
             reply["tool_calls"],
             [
@@ -388,6 +423,24 @@ class AgentReplayTest(unittest.TestCase):
         )
         self.assertEqual((reply["reply"], reply["mode"]), (GLUCOSE_SUMMARY, "mock"))
 
+    def test_a_live_engine_reports_replay_when_no_call_went_live(self):
+        transport = FakeTransport(
+            tool_body(None, ("call-1", "search", {"query": "glucose sensors"})),
+            chat_body("Ada Muster works on continuous glucose monitoring."),
+        )
+        client = OpenAIChat(Endpoint("https://gateway.example/v1", "key", MODEL), transport)
+        models = dict.fromkeys(ROLES, MODEL)
+        tools = FakeTools({"glucose sensors": GLUCOSE})
+        router = Router(client, models, self.roots, serving=True, budget=5)
+        with request_scope(live=True):
+            recorded = answer(user(QUESTION), tools, router)
+        modes = [recorded["mode"]]
+        for live in (False, True):
+            with request_scope(live=live):
+                modes.append(answer(user(QUESTION), tools, router)["mode"])
+        self.assertEqual(modes, ["live", "replay", "replay"])
+        self.assertEqual(len(transport.requests), 2)
+
     def test_a_serving_router_outside_a_live_scope_never_calls_the_model(self):
         transport = FakeTransport()
         client = OpenAIChat(Endpoint("https://gateway.example/v1", "key", MODEL), transport)
@@ -436,11 +489,11 @@ class EngineToolsDbTest(unittest.TestCase):
         llm = ScriptedChat(
             calls(("search", {"query": "glucose monitoring"})),
             calls(("profile", {"id": ADA["id"]})),
-            says("Ada Muster leads the Sensor Lab."),
+            says("Ada Muster is a Group Leader in the Sensor Lab."),
         )
         reply = answer(user("Who works on glucose monitoring?"), self.tools, llm)
         self.assertEqual(list(validator("agent.schema.json").iter_errors(reply)), [])
-        self.assertEqual(reply["reply"], "Ada Muster leads the Sensor Lab.")
+        self.assertEqual(reply["reply"], "Ada Muster is a Group Leader in the Sensor Lab.")
         self.assertEqual(reply["results"][0]["results"][0]["profile"]["id"], ADA["id"])
         self.assertEqual(json.loads(llm.seen[2][-1]["content"])["facts"]["unit"], ["Sensor Lab"])
 

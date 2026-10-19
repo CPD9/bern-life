@@ -72,6 +72,26 @@ class ChatToolsTest(unittest.TestCase):
             },
         )
 
+    def test_contact_details_are_redacted_before_the_reply_is_stored(self) -> None:
+        typed = {"query": "glucose sensors for maria.example@invented.test +41 79 555 01 23"}
+        content = "Reach Ada Muster at ada.muster@invented.test or +41 31 555 00 00."
+        reply = self.ask(self.live(FakeTransport(tool_body(content, ("call-1", "search", typed)))))
+        redacted = {
+            "content": "Reach Ada Muster at [email] or [phone].",
+            "tool_calls": [
+                {
+                    "id": "call-1",
+                    "name": "search",
+                    "arguments": {"query": "glucose sensors for [email] [phone]"},
+                }
+            ],
+        }
+        self.assertEqual(reply, redacted)
+        stored = entry_path(self.roots[0], self.key).read_text()
+        self.assertEqual({key: json.loads(stored)[key] for key in redacted}, redacted)
+        self.assertNotIn("invented.test", stored)
+        self.assertNotIn("555", stored)
+
     def test_the_tools_are_part_of_the_key(self) -> None:
         plain = cache_key(MODEL, MESSAGES, 0.0, None, 700, "agent-v1")
         self.assertNotEqual(self.key, plain)

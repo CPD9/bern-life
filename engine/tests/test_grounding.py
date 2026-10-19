@@ -76,7 +76,7 @@ ADA_ONLY = Grounding((("person-example-ada-muster", "Ada Muster"),), ())
 
 class GroundTest(unittest.TestCase):
     def test_a_result_person_is_a_mention(self):
-        reply = "Ada Muster leads the GlucoPatch sensor project. I lit up her unit on the map."
+        reply = "Ada Muster works on continuous glucose monitoring. I lit up her unit on the map."
         self.assertEqual(ground(reply, [GLUCOSE]), ADA_ONLY)
         self.assertTrue(ADA_ONLY.holds)
 

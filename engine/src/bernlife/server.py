@@ -5,8 +5,10 @@ routing and the error markers are tested without a database or a model. Any fail
 did not cause is logged here with its traceback and answered with the `engine_error` marker only.
 
 Only a request carrying `X-Bernlife-Live: 1` may reach the model; the web app sets it after its own
-checks, and every other request is answered from the cache. Each request writes one access line
-(request_log.py) in place of http.server's, which would print the raw path.
+checks, and every other request is answered from the cache. A request must name this machine as
+its Host: a web page that rebinds its own name to 127.0.0.1 still sends that name, so it cannot
+spend live calls past the web app's checks. Each request writes one access line (request_log.py)
+in place of http.server's, which would print the raw path.
 """
 
 import ipaddress
@@ -14,6 +16,7 @@ import json
 import logging
 import re
 import time
+import urllib.parse
 from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
@@ -23,7 +26,8 @@ from typing import Any, Protocol
 
 from bernlife.api_requests import BadRequest, SearchRequest, parse_agent, parse_brief, parse_search
 from bernlife.cache import Message
-from bernlife.request_log import Tally, access_line, new_request_id, request_mode
+from bernlife.llm_gate import answered_mode
+from bernlife.request_log import Tally, access_line, new_request_id
 
 MAX_BODY = 16_384
 MAX_BRIEF_BODY = 65_536
@@ -65,6 +69,17 @@ def is_loopback(host: str) -> bool:
         return ipaddress.ip_address(host).is_loopback
     except ValueError:
         return False
+
+
+def is_local_host(host: str | None) -> bool:
+    """A Host header naming this machine: localhost or a loopback address, any port."""
+    if host is None:
+        return False
+    try:
+        name = urllib.parse.urlsplit(f"//{host}").hostname
+    except ValueError:
+        return False
+    return name == "localhost" or is_loopback(name or "")
 
 
 def route_template(path: str) -> str:
@@ -128,7 +143,7 @@ def handler_class(api: Api) -> type[BaseHTTPRequestHandler]:
                 method=self.command,
                 status=status,
                 ms=round((time.monotonic() - started) * 1000),
-                mode=request_mode(api.backend, live),
+                mode=answered_mode(api.backend, tally.live),
                 live_allowed=live,
                 tally=tally,
                 text=text,
@@ -139,7 +154,8 @@ def handler_class(api: Api) -> type[BaseHTTPRequestHandler]:
         def _respond(
             self, parse: Callable[[], Call]
         ) -> tuple[HTTPStatus, Mapping[str, Any], str | None]:
-            if self.command == "POST" and not is_loopback(self.client_address[0]):
+            remote = self.command == "POST" and not is_loopback(self.client_address[0])
+            if remote or not is_local_host(self.headers.get("Host")):
                 return HTTPStatus.FORBIDDEN, {"error": "bad_request"}, None
             text = None
             try:

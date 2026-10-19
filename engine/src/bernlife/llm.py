@@ -32,9 +32,11 @@ from .cache import (
 )
 from .llm_gate import DailyBudget, FailureLog, count_call, is_failure, may_go_live
 from .llm_http import ModelUnavailable, OpenAIChat, Sleep, Transport, urlopen_transport
+from .redact import redact_strings
 
 ROLES = ("expand", "enrich", "extract", "explain", "brief", "agent")
 MOCK_MODEL = "MOCK-no-model"
+CALL_ERROR = "engine_error"
 
 
 class Chat(Protocol):
@@ -244,17 +246,23 @@ class Router:
             except ModelUnavailable as unavailable:
                 self._audit(role, model, key, unavailable.marker, self._since(started))
                 raise
+            except Exception:
+                # The budget counts this call from the audit after a restart.
+                self._audit(role, model, key, CALL_ERROR, self._since(started))
+                raise
         latency_ms = self._since(started)
         entry = {
             "role": role,
             "model": model,
             "prompt_version": prompt_version,
-            **reply,
+            # The agent's tool calls and replies carry what users typed, and the cache is packed
+            # into the published bundle.
+            **redact_strings(reply),
             "latency_ms": latency_ms,
             "created_at": self.now().isoformat(),
         }
-        write_json(entry_path(self.roots[0], key), entry)
         self._audit(role, model, key, "live", latency_ms)
+        write_json(entry_path(self.roots[0], key), entry)
         return entry
 
     def _since(self, started: float) -> int:

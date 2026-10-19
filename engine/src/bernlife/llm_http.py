@@ -8,6 +8,7 @@ logged. Callers get `ModelUnavailable` with a marker (`timeout`, `http_<status>`
 exception rides along as `__context__`.
 """
 
+import http.client
 import json
 import time
 import urllib.error
@@ -103,7 +104,7 @@ class OpenAIChat:
             return "timeout"
         except urllib.error.URLError as error:
             return "timeout" if isinstance(error.reason, TimeoutError) else "unreachable"
-        except OSError:
+        except (OSError, http.client.HTTPException):
             return "unreachable"
 
 

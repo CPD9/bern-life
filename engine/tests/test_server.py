@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import json
 import threading
 import unittest
@@ -9,7 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from bernlife.api_requests import BadRequest, SearchRequest, parse_agent, parse_search
-from bernlife.server import is_loopback, make_server, route_template
+from bernlife.request_log import PROCESS_KEY, fingerprint
+from bernlife.server import is_local_host, is_loopback, make_server, route_template
 from jsonschema import Draft202012Validator
 
 CONTRACTS = Path(__file__).resolve().parents[2] / "contracts"
@@ -46,7 +48,7 @@ class FakeApi:
     def scope(self, *, live):
         self.scope_live = live
         try:
-            yield FakeTally()
+            yield FakeTally(live=int(live))
         finally:
             self.scope_live = None
 
@@ -137,6 +139,31 @@ class ParseSearchTest(unittest.TestCase):
             [is_loopback(h) for h in ("127.0.0.1", "::1", "10.0.0.2", "x")],
             [True, True, False, False],
         )
+
+    def test_a_local_host_header(self):
+        hosts = [
+            "127.0.0.1:8100",
+            "localhost:8100",
+            "[::1]:8100",
+            "127.0.0.1",
+            "attacker.example:8100",
+            "127.0.0.1.attacker.example:8100",
+            "127.0.0.1:8100@attacker.example",
+            "[::1",
+            "",
+            None,
+        ]
+        self.assertEqual(
+            [is_local_host(host) for host in hosts],
+            [True, True, True, True, False, False, False, False, False, False],
+        )
+
+    def test_the_fingerprint_is_keyed(self):
+        self.assertEqual(
+            fingerprint("Ada Muster", b"fixed test key"), {"chars": 10, "sha256": "5f48425b0f43"}
+        )
+        self.assertNotEqual(fingerprint("Ada Muster")["sha256"], "cae32169ce7a")
+        self.assertEqual(fingerprint("Ada Muster"), fingerprint("Ada Muster"))
 
 
 class ParseAgentTest(unittest.TestCase):
@@ -290,11 +317,12 @@ class ServerTest(unittest.TestCase):
                 "ms": line["ms"],
                 "mode": "live",
                 "live_allowed": True,
-                "cache": {"hits": 3, "misses": 1, "live": 0, "failures": 0},
+                "cache": {"hits": 3, "misses": 1, "live": 1, "failures": 0},
             },
         )
-        digest = hashlib.sha256(SECRET_QUERY.encode()).hexdigest()[:12]
+        digest = hmac.new(PROCESS_KEY, SECRET_QUERY.encode(), "sha256").hexdigest()[:12]
         self.assertEqual(line["input"], {"chars": len(SECRET_QUERY), "sha256": digest})
+        self.assertNotEqual(digest, hashlib.sha256(SECRET_QUERY.encode()).hexdigest()[:12])
         self.assertRegex(line["id"], r"^[0-9a-f]{8}$")
         self.assertNotIn("Ada", json.dumps(line))
         self.assertNotIn("glucose", json.dumps(line))
@@ -302,7 +330,7 @@ class ServerTest(unittest.TestCase):
     def test_the_log_line_of_an_agent_turn_fingerprints_the_last_message(self):
         messages = conversation(SECRET_QUERY, "Ada Muster.", "And her lab?")
         (line,) = self.logged("/api/agent", agent_body(messages))
-        digest = hashlib.sha256(b"And her lab?").hexdigest()[:12]
+        digest = hmac.new(PROCESS_KEY, b"And her lab?", "sha256").hexdigest()[:12]
         self.assertEqual(line["input"], {"chars": 12, "sha256": digest})
         self.assertEqual((line["mode"], line["live_allowed"]), ("replay", False))
         self.assertNotIn("lab", json.dumps(line))
@@ -328,6 +356,21 @@ class ServerTest(unittest.TestCase):
             [record.getMessage() for record in logs.records],
             ['{"route": "unparsed", "status": 501}'],
         )
+
+    def test_a_request_naming_another_host_is_refused(self):
+        live = {"X-Bernlife-Live": "1"}
+        for host in ("attacker.example", "127.0.0.1.attacker.example"):
+            with self.subTest(host=host):
+                foreign = {"Host": f"{host}:{self.server.server_address[1]}"}
+                self.assertEqual(
+                    self.call("/api/agent", agent_body(conversation("glucose?")), foreign | live),
+                    (403, {"error": "bad_request"}),
+                )
+                self.assertEqual(self.call("/api/health", None, foreign)[0], 403)
+        self.assertEqual(self.api.calls, [])
+        local = {"Host": f"localhost:{self.server.server_address[1]}"}
+        self.assertEqual(self.call("/api/search", b'{"query": "glucose"}', local | live)[0], 200)
+        self.assertEqual(self.api.calls[0][2], True)
 
     def test_error_markers(self):
         self.assertEqual(self.call("/api/search", b"{oops"), (400, {"error": "bad_request"}))

@@ -2,11 +2,12 @@
 
 The model may call search, brief and profile, MAX_TOOL_CALLS times a turn at most; each runs the
 engine's own functions, never HTTP, and every search or brief it ran comes back in `results`, so
-the app shows the evidence the reply rests on. The reply is checked in code (grounding.py): a
-person it names must be a profile among those results, or the reply is replaced by a summary of
-the results' cited claims. A reply with no result behind it is NO_SOURCE_REPLY, whatever the model
-wrote: there is nothing it could have been written from, and a premise in the question ("Prof. X,
-who leads Y") must not come back as a fact.
+the app shows the evidence the reply rests on. The reply is checked in code: a person it names must
+be a profile among those results (grounding.py), every word must be a word of their names or
+claims or a linking word (reply_support.py), and it may hold no e-mail address or phone number.
+Otherwise it is replaced by a summary of the results' cited claims, so a premise in the question
+("Prof. X, who leads Y") does not come back as a fact. A reply with no result behind it is
+NO_SOURCE_REPLY, whatever the model wrote: there is nothing it could have been written from.
 
 With no model (mock, a replay miss, a refused budget, a failure marker), or when the model ran no
 search, the turn is deterministic: the last user message is searched and the summary is the reply.
@@ -29,7 +30,10 @@ from bernlife.embed import Embedder
 from bernlife.extract_records import PEOPLE_KINDS, PROFILE_KINDS
 from bernlife.grounding import ground, shown_names
 from bernlife.llm import Chat, ToolChat
+from bernlife.llm_gate import request_mode
 from bernlife.llm_http import ModelUnavailable
+from bernlife.redact import redact
+from bernlife.reply_support import unsupported_words
 from bernlife.search import NO_MODEL, NO_PROMPTS, search
 from bernlife.store import Store
 
@@ -101,7 +105,8 @@ class Turn:
             return _search_arguments(arguments)
         if name == "brief":
             return _text(arguments.get("text"), MAX_BRIEF)
-        return name == "profile" and arguments.get("id") in self.shown_ids()
+        profile_id = arguments.get("id")
+        return name == "profile" and isinstance(profile_id, str) and profile_id in self.shown_ids()
 
     def search(self, query: str, kinds: Sequence[str] | None = None) -> dict[str, Any]:
         return self.searched("search", query, self.tools.search(query, kinds))
@@ -129,13 +134,13 @@ def answer(
             turn.search(query)
     found = any(response["results"] for response in turn.responses)
     kept = text.strip() if text and model_searched and found and _fits(text) else None
-    if kept is not None and not ground(kept, turn.responses).holds:
+    if kept is not None and not _supported(kept, turn.responses):
         kept = None
     reply = kept or summary(turn.responses)
     mentions = ground(reply, turn.responses).mentions
     return {
         "reply": reply,
-        "mode": llm.backend if model_searched else NO_MODEL,
+        "mode": request_mode(llm.backend) if model_searched else NO_MODEL,
         "abstained": not found,
         "actions": actions(turn, [profile_id for profile_id, _ in mentions]),
         "results": turn.responses,
@@ -220,5 +225,12 @@ def _text(value: object, limit: int) -> bool:
 
 
 def _fits(text: str) -> bool:
+    """Short and printable, with no e-mail address or phone number."""
     controls = [c for c in text if c not in "\n\t" and unicodedata.category(c) == "Cc"]
-    return len(text.strip()) <= MAX_REPLY and not controls and is_clean(text)
+    return (
+        len(text.strip()) <= MAX_REPLY and not controls and is_clean(text) and redact(text) == text
+    )
+
+
+def _supported(reply: str, responses: Sequence[Mapping[str, Any]]) -> bool:
+    return ground(reply, responses).holds and not unsupported_words(reply, responses)

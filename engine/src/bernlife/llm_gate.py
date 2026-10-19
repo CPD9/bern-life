@@ -83,6 +83,17 @@ def may_go_live(serving: bool) -> bool:
     return scope.live if scope is not None else not serving
 
 
+def answered_mode(backend: str, live_calls: int) -> str:
+    """What answered: a live engine whose calls all came from the cache answered as replay."""
+    return "replay" if backend == "live" and live_calls == 0 else backend
+
+
+def request_mode(backend: str) -> str:
+    """`answered_mode` of the request in scope; outside one, a command's, as the backend says."""
+    scope = _scope.get()
+    return backend if scope is None else answered_mode(backend, scope.tally.live)
+
+
 def count_call(outcome: str) -> None:
     scope = _scope.get()
     if scope is not None:
