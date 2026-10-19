@@ -1,5 +1,6 @@
 // Numbers are written exactly as the engine sent them: no rounding, no percentages, no grouping,
-// so what the garage shows can be checked digit for digit against the evaluator's output.
+// so what the Garage and the skills show can be checked digit for digit against the evaluator's
+// output.
 import type { Interval, Measure, Tally } from "./numbers";
 
 export function formatInterval({ value, low, high }: Interval): string {

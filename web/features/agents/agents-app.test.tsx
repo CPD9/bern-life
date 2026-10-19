@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import { parseNumbers } from "@/infrastructure/numbers";
+import type { NumbersApi, NumbersOutcome } from "@/infrastructure/numbers-api";
+import { numbersBody, queuedApi } from "@/test/numbers";
 import { AgentsApp } from "./agents-app";
 import { createLoopStore, type LoopStore } from "./loop-store";
 import type { AgentNotice } from "./loops";
@@ -22,10 +25,15 @@ function fakeSearch(answers: Answer[]) {
   return { search, queries };
 }
 
+/** Numbers that never arrive, for the loop tests: the skills stay on "Loading". */
+const pending: NumbersApi = { numbers: () => new Promise(() => undefined) };
+
 function setup(
   answers: Answer[],
   snapshot: string | null = "s1",
   store: LoopStore = createLoopStore(() => memoryStorage()),
+  numbers: NumbersApi = pending,
+  fixtureMode = false,
 ) {
   const { search, queries } = fakeSearch(answers);
   const notices: AgentNotice[] = [];
@@ -36,6 +44,8 @@ function setup(
     onTrySkill: (skill: Skill) => void tried.push(skill),
     notify: (notice: AgentNotice) => void notices.push(notice),
     store,
+    numbers,
+    fixtureMode,
   };
   const view = render(<AgentsApp {...props} snapshot={snapshot} />);
   const rerender = (next: string | null) => view.rerender(<AgentsApp {...props} snapshot={next} />);
@@ -54,19 +64,104 @@ async function runNow(query: string) {
   });
 }
 
+const ENGINE: NumbersOutcome = { status: "ok", numbers: parseNumbers(numbersBody())! };
+
+/** The Agents app once /api/numbers has answered with `outcome`. */
+async function withNumbers(outcome: NumbersOutcome, fixtureMode = false) {
+  const api = queuedApi([outcome]);
+  let result: ReturnType<typeof setup> | undefined;
+  await act(async () => {
+    result = setup([], "s1", undefined, api, fixtureMode);
+  });
+  return { ...result!, api };
+}
+
+/** Each evidence row of a skill as [label, value, source]. */
+function evidence(skill: string): (string | null)[][] {
+  const list = screen.getByLabelText(`Evidence: ${skill}`);
+  return Array.from(list.children).map((row) =>
+    Array.from(row.children).map((cell) => cell.textContent),
+  );
+}
+
+const RED_TEAM = [
+  [
+    "Apertus 70B: answers counted wrong, without and then with a system prompt that asks it to check the premise",
+    "152 / 522 to 63 / 522",
+    "Source: Apertus Red-Team Graph: technical report, Lessons Learnt; docs/audit/stats.json, mitigation",
+  ],
+  [
+    "Apertus 8B: answers that confirmed made-up details about a private person",
+    "15 / 18",
+    "Source: Apertus Red-Team Graph: technical report, finding 2; docs/audit/stats.json, privacy_fabricated_person",
+  ],
+];
+
 describe("AgentsApp skills", () => {
-  test("lists the four real skills and Try hands the skill to the host", () => {
-    const { tried } = setup([]);
+  test("lists the five real skills, Checks the premise second, and Try hands the skill over", async () => {
+    const { tried, api } = await withNumbers(ENGINE);
+    expect(api.calls()).toBe(1);
     expect(screen.getByRole("heading", { name: "Lumi’s skills" })).toBeTruthy();
     const names = screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent);
     expect(names).toEqual([
       "Search people and units",
+      "Checks the premise",
       "Read a project brief",
       "Make a match report",
       "Find opportunities",
     ]);
+    fireEvent.click(screen.getByRole("button", { name: "Try Checks the premise" }));
     fireEvent.click(screen.getByRole("button", { name: "Try Read a project brief" }));
-    expect(tried.map((skill) => skill.id)).toEqual(["brief"]);
+    expect(tried.map((skill) => skill.id)).toEqual(["premise", "brief"]);
+  });
+
+  test("Checks the premise shows the engine's numbers as sent, then the two red-team results", async () => {
+    await withNumbers(ENGINE);
+    const source = "Source: Bern Life’s evaluator on snapshot demo-snapshot-1, 48 queries";
+    expect(evidence("Checks the premise")).toEqual([
+      ["Invented questions abstained", "7 / 10", source],
+      ["False abstentions", "2 / 38", source],
+      ...RED_TEAM,
+    ]);
+    expect(evidence("Search people and units")).toEqual([
+      ["Recall@10", "0.4375 [0.29, 0.58]", source],
+      ["Traceable claims", "812 / 812", source],
+    ]);
+    const links = within(screen.getByLabelText("Evidence: Checks the premise")).getAllByRole(
+      "link",
+    );
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/api/numbers",
+      "/api/numbers",
+    ]);
+  });
+
+  test("under fixtures the numbers are marked FIXTURE and never called the evaluator's", async () => {
+    await withNumbers(ENGINE, true);
+    const source = "Source: Invented for the demo (DEMO_FIXTURES), not from the evaluator";
+    expect(evidence("Checks the premise")).toEqual([
+      ["Invented questions abstained", "FIXTURE 7 / 10", source],
+      ["False abstentions", "FIXTURE 2 / 38", source],
+      ...RED_TEAM,
+    ]);
+    expect(document.body.textContent).not.toMatch(/evaluator on snapshot/);
+  });
+
+  test("without the numbers the quoted results stay and a note says why", async () => {
+    await withNumbers({ status: "not_connected" });
+    expect(evidence("Checks the premise")).toEqual(RED_TEAM);
+    const card = screen.getByRole("heading", { name: "Checks the premise" }).closest("li")!;
+    expect(within(card).getByText("Bern Life’s numbers are not connected yet.")).toBeTruthy();
+    expect(screen.queryByLabelText("Evidence: Search people and units")).toBeNull();
+  });
+
+  test("a skill with no number behind it says so and shows no row", async () => {
+    await withNumbers(ENGINE);
+    for (const name of ["Read a project brief", "Make a match report", "Find opportunities"]) {
+      const card = screen.getByRole("heading", { name }).closest("li")!;
+      expect(within(card).getByText("No numbers back this skill yet.")).toBeTruthy();
+      expect(screen.queryByLabelText(`Evidence: ${name}`)).toBeNull();
+    }
   });
 });
 
