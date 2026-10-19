@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
 import { createNotificationStore } from "@/features/notifications/notification-store";
-import { usePhoneNotifications } from "./phone-notifications";
+import { usePhoneNotifications } from "./world-phone";
 
 function memoryStore() {
   const items = new Map<string, string>();
