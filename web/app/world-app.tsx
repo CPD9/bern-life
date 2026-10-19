@@ -1,21 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { httpAccountApi } from "@/features/accounts/account-api";
 import { useAccount } from "@/features/accounts/use-account";
 import { personBadgeColour } from "@/features/avatar/person-config";
-import { usePerson } from "@/features/avatar/use-person";
+import { useAvatar } from "@/features/avatar/use-avatar";
+import { PersonFigure } from "@/features/avatar/person-figure";
+import { useAgentName, usePerson } from "@/features/avatar/use-person";
+import { DesktopDialog } from "@/features/desktop/desktop";
+import { useDesktop } from "@/features/desktop/use-desktop";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
 import { Navigator } from "@/features/navigator/navigator";
 import { useNavigator } from "@/features/navigator/use-navigator";
+import { NotificationBell } from "@/features/notifications/notification-bell";
+import { Toasts } from "@/features/notifications/toasts";
+import { notificationStore } from "@/features/notifications/use-notifications";
+import { OfficeView } from "@/features/office/office-view";
 import { useOnboarding } from "@/features/onboarding/use-onboarding";
-import { AppIcon } from "@/features/phone/app-icons";
-import { ComingNext, comingNextText } from "@/features/phone/coming-next";
+import { comingNextText } from "@/features/phone/coming-next-text";
 import { type PhoneApp, Phone } from "@/features/phone/phone";
 import { SettingsApp } from "@/features/phone/settings-app";
 import { openReport } from "@/features/report/open-report";
 import type { HudAccount } from "@/features/shell/account-badge";
-import { firstRunCard } from "@/features/shell/first-run";
+import { firstRunCard, landingView } from "@/features/shell/first-run";
 import { GameShell, type WorldView } from "@/features/shell/game-shell";
 import { GuideGreeting } from "@/features/shell/guide-greeting";
 import { Hud } from "@/features/shell/hud";
@@ -27,16 +34,26 @@ import type { ShowMeTarget } from "@/features/story/show-me";
 import { StoryMenu } from "@/features/story/story-menu";
 import { StoryStart } from "@/features/story/story-start";
 import { useStory } from "@/features/story/use-story";
+import type { Building } from "@/features/world/buildings";
+import type { AgentId } from "@/features/world/scene/agents";
 import { WorldCanvas } from "@/features/world/world-canvas";
+import { YouSheet } from "@/features/you/you-sheet";
+import { worldSearch } from "@/features/world/world-search";
 import { emittedToday } from "@/infrastructure/app-events";
 import { useNow } from "@/infrastructure/bern-time";
+import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
+import { useSettings } from "@/infrastructure/use-settings";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
+import { AppIcon } from "@/infrastructure/ui/app-icons";
+import { ComingNext } from "@/infrastructure/ui/coming-next";
+import { notifyLoop, useOfficeApps } from "./office-apps";
+import { applyWorldAction, searchHereDraft, worldActionFor } from "./world-search-bridge";
 
 // Composes the features. One Navigator controller lives here, above the phone, so a search
 // survives closing the phone and the agent can drive the same instance.
 type WorldAppProps = {
   fixtureMode: boolean;
-  /** Under DEMO_FIXTURES the map starts lit with the world fixture; W4 replaces this with live search. */
+  /** Under DEMO_FIXTURES the map starts lit with the world fixture until the first question. */
   demoSearch: SearchResponse | undefined;
   story: Story;
   /** `?story=demo`: the jury's run, started straight away with the criteria checklist. */
@@ -44,19 +61,62 @@ type WorldAppProps = {
 };
 
 export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldAppProps) {
-  const [view, setView] = useState<WorldView>("home");
+  // null until the player picks a tab: then the landing view follows onboarding (Home is the office).
+  const [view, setView] = useState<WorldView | null>(null);
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [phoneApp, setPhoneApp] = useState<string | null>(null);
+  const [desktopOpen, setDesktopOpen] = useState(false);
+  const [youOpen, setYouOpen] = useState(false);
   const [storyMenuOpen, setStoryMenuOpen] = useState(false);
   const storyController = useStory({ story, demo: storyDemo, emitted: emittedToday });
   const account = useAccount(httpAccountApi);
   const [person] = usePerson();
+  const [bear] = useAvatar();
+  const [agentName] = useAgentName();
+  const [settings] = useSettings();
+  const reducedMotion = useReducedMotion();
   const [onboarding] = useOnboarding();
   const [greetingDismissed, setGreetingDismissed] = useState(false);
   const [joinDismissed, setJoinDismissed] = useState(false);
   const navigator = useNavigator(httpNavigatorApi);
+  const desktop = useDesktop();
   const now = useNow();
   const health = useHealth();
+  const officeApps = useOfficeApps({
+    navigator,
+    navigatorApi: httpNavigatorApi,
+    desktop,
+    fixtureMode,
+    agentName,
+    snapshot: health.status === "ok" ? health.health.snapshot : null,
+    notify: notifyLoop,
+  });
+
+  useEffect(
+    () => applyWorldAction(worldActionFor(navigator.state), worldSearch),
+    [navigator.state],
+  );
+
+  function openApp(appId: string) {
+    setPhoneApp(appId);
+    setPhoneOpen(true);
+  }
+
+  function showOnMap(response: SearchResponse) {
+    worldSearch.showResults(response);
+    setPhoneOpen(false);
+    setView("map");
+  }
+
+  /** The Navigator opens Ask; the agents still to come open the Agents app, which says what they will do. */
+  function selectAgent(id: AgentId) {
+    openApp(id === "navigator" ? "ask" : "agents");
+  }
+
+  function searchHere(building: Building) {
+    navigator.setDraft(searchHereDraft(building));
+    openApp("ask");
+  }
 
   const apps: PhoneApp[] = [
     {
@@ -68,6 +128,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
         <Navigator
           controller={navigator}
           fixtureMode={fixtureMode}
+          onShowOnMap={showOnMap}
           onMakeReport={(response) => openReport(response, fixtureMode)}
         />
       ),
@@ -124,16 +185,26 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
       setView("map");
       return;
     }
-    setPhoneApp("ask");
-    setPhoneOpen(true);
+    openApp("ask");
   }
+
+  const shownView = view ?? landingView(onboarding.done);
 
   return (
     <GameShell
-      view={view}
+      view={shownView}
       phoneOpen={phoneOpen}
       onSelectTab={(tab) => (tab === "phone" ? setPhoneOpen(true) : setView(tab))}
-      hud={<Hud now={now} health={health} goal={goal} account={hudAccount} />}
+      hud={
+        <Hud
+          now={now}
+          health={health}
+          goal={goal}
+          account={hudAccount}
+          bell={<NotificationBell store={notificationStore()} />}
+          onOpenYou={() => setYouOpen(true)}
+        />
+      }
       side={
         <>
           {card === "greeting" && <GuideGreeting onDismiss={() => setGreetingDismissed(true)} />}
@@ -150,7 +221,25 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           {storyDemo && <CriteriaChecklist controller={storyController} />}
         </>
       }
-      canvas={<WorldCanvas demoSearch={demoSearch} />}
+      canvas={
+        <>
+          <WorldCanvas
+            demoSearch={demoSearch}
+            onAgentSelect={selectAgent}
+            onSearchHere={searchHere}
+          />
+          {shownView === "home" && (
+            <OfficeView
+              lite={settings.lite}
+              reducedMotion={reducedMotion}
+              player={<PersonFigure config={person} shadows={!settings.lite} />}
+              agent={bear}
+              onUseDesk={() => setDesktopOpen(true)}
+              onGoOutside={() => setView("map")}
+            />
+          )}
+        </>
+      }
       overlay={
         <>
           <Phone
@@ -161,6 +250,23 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
             onAppChange={setPhoneApp}
             now={now}
           />
+          <DesktopDialog
+            open={desktopOpen}
+            onClose={() => setDesktopOpen(false)}
+            apps={officeApps}
+            controller={desktop}
+            now={now}
+          />
+          {youOpen && (
+            <YouSheet
+              profile={onboarding.profile}
+              person={person}
+              agent={{ name: agentName, bear }}
+              story={storyController.progress}
+              onClose={() => setYouOpen(false)}
+            />
+          )}
+          <Toasts store={notificationStore()} reducedMotion={reducedMotion} />
           <StoryMenu
             controller={storyController}
             open={storyMenuOpen}

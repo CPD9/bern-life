@@ -189,7 +189,14 @@ export interface Story {
         | "c6-extend"
         | "ethics-abstain"
         | "stretch";
+      /**
+       * Not needed to finish the story; its steps may complete in any order.
+       */
       optional?: boolean;
+      /**
+       * One line for the player: why the quest cannot be played yet. Shown while a step's event is not emitted by any feature.
+       */
+      coming?: string;
       /**
        * @minItems 1
        */
@@ -259,7 +266,14 @@ export interface Story {
         | "c6-extend"
         | "ethics-abstain"
         | "stretch";
+      /**
+       * Not needed to finish the story; its steps may complete in any order.
+       */
       optional?: boolean;
+      /**
+       * One line for the player: why the quest cannot be played yet. Shown while a step's event is not emitted by any feature.
+       */
+      coming?: string;
       /**
        * @minItems 1
        */

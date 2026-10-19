@@ -3,19 +3,11 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildingKey, groupPlacesByBuilding } from "./buildings";
 import { MAP_BOUNDS } from "./geography";
+import { InvalidOffMapError, OFF_MAP, type OffMapSource, parseOffMap } from "./off-map";
 import { InvalidPlaceError, PLACES, parsePlaces, type Place, type PlaceKind } from "./places";
 
 type SourceSite = { host: string; unit: string };
-type SourceFile = { id: string; sites: SourceSite[]; page_types?: { kind: string }[] };
-
-// Opportunity sources (funders, coworking and rental spaces) name only these page kinds. They are
-// not research places yet: the world lane places them in a follow-up.
-const OPPORTUNITY_PAGE_KINDS = new Set(["call", "service", "space", "listing"]);
-
-function isOpportunitySource(source: SourceFile): boolean {
-  const kinds = (source.page_types ?? []).map((pageType) => pageType.kind);
-  return kinds.length > 0 && kinds.every((kind) => OPPORTUNITY_PAGE_KINDS.has(kind));
-}
+type SourceFile = { id: string; sites: SourceSite[] };
 
 const SOURCES_DIR = join(import.meta.dir, "..", "..", "..", "sources");
 
@@ -69,14 +61,41 @@ function invented(
 }
 
 describe("places.json against sources/", () => {
-  const sites = readSources()
-    .filter((source) => !isOpportunitySource(source))
-    .flatMap((source) => source.sites.map((site) => ({ ...site, sourceId: source.id })));
+  const allSites = readSources().flatMap((source) =>
+    source.sites.map((site) => ({ ...site, sourceId: source.id })),
+  );
+  const offMapHosts = new Set(OFF_MAP.map((entry) => entry.host));
+  const sites = allSites.filter((site) => !offMapHosts.has(site.host));
 
-  test("every source host has exactly one place and no place lacks a host", () => {
+  test("every source host has exactly one place unless it is listed off the map", () => {
     const placeHosts = PLACES.map((place) => place.host).sort();
     expect(placeHosts).toEqual(sites.map((site) => site.host).sort());
-    expect(new Set(placeHosts).size).toBe(22);
+    expect(new Set(placeHosts).size).toBe(26);
+  });
+
+  test("SIP Biel/Bienne is off the map as outside Bern, SNSF for want of a stored address", () => {
+    expect(OFF_MAP).toEqual([
+      { source_id: "sipbb", host: "sipbb.ch", reason: "outside-bern" },
+      { source_id: "snsf", host: "www.snf.ch", reason: "no-stored-address" },
+    ]);
+    for (const entry of OFF_MAP) {
+      expect(
+        allSites.some((site) => site.host === entry.host && site.sourceId === entry.source_id),
+      ).toBe(true);
+      expect(PLACES.some((place) => place.host === entry.host)).toBe(false);
+    }
+  });
+
+  test("the opportunity sources in Bern stand as agencies and spaces", () => {
+    const opportunities = PLACES.filter(
+      (place) => place.kind === "agency" || place.kind === "space",
+    );
+    expect(opportunities.map((place) => [place.id, place.kind, place.address])).toEqual([
+      ["beda", "agency", "Münsterplatz 3a"],
+      ["effinger", "space", "Effingerstrasse 10, Bern"],
+      ["innosuisse", "agency", "Einsteinstrasse 2"],
+      ["progr", "space", "Speichergasse 4"],
+    ]);
   });
 
   test("ids are unique and each place carries its unit name and source id", () => {
@@ -88,10 +107,10 @@ describe("places.json against sources/", () => {
     }
   });
 
-  test("20 places stand at their address and 2 in their district", () => {
+  test("24 places stand at their address and 2 in their district", () => {
     const district = PLACES.filter((place) => place.position_method === "district");
     expect(district.map((place) => place.id)).toEqual(["mic", "strada"]);
-    expect(PLACES.length - district.length).toBe(20);
+    expect(PLACES.length - district.length).toBe(24);
   });
 
   test("an addressed place's address is its verbatim span", () => {
@@ -111,7 +130,7 @@ describe("places.json against sources/", () => {
 
   test("three buildings hold two units each, and units in one building share a position", () => {
     const buildings = groupPlacesByBuilding(PLACES);
-    expect(buildings.length).toBe(19);
+    expect(buildings.length).toBe(23);
     const shared = buildings
       .filter((building) => building.places.length > 1)
       .map((building) => building.places.map((place) => place.id));
@@ -189,6 +208,31 @@ describe("parsePlaces", () => {
     ];
     for (const [entry, index, field] of cases) {
       expect(() => parsePlaces([entry])).toThrow(new InvalidPlaceError(index, field));
+    }
+  });
+});
+
+describe("parseOffMap", () => {
+  const valid: OffMapSource = {
+    source_id: "example",
+    host: "www.example-funder.test",
+    reason: "outside-bern",
+  };
+
+  test("accepts an entry unchanged", () => {
+    expect(parseOffMap([valid])).toEqual([valid]);
+  });
+
+  test("rejects each broken field by name", () => {
+    const cases: [unknown, number, string][] = [
+      [{ sources: [] }, -1, "sources"],
+      [[null], 0, "source"],
+      [[{ ...valid, source_id: "" }], 0, "source_id"],
+      [[valid, { ...valid, host: 7 }], 1, "host"],
+      [[{ ...valid, reason: "too far" }], 0, "reason"],
+    ];
+    for (const [raw, index, field] of cases) {
+      expect(() => parseOffMap(raw)).toThrow(new InvalidOffMapError(index, field));
     }
   });
 });

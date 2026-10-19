@@ -24,7 +24,13 @@ export function inkOn(fur: string): typeof darkInk | typeof lightInk {
   return onDark >= onLight ? darkInk : lightInk;
 }
 
-export function AccountBadge({ account }: { account: HudAccount }) {
+type AccountBadgeProps = {
+  account: HudAccount;
+  /** Opens the You sheet; without it the badge links to the account page. */
+  onOpen?: (() => void) | undefined;
+};
+
+export function AccountBadge({ account, onOpen }: AccountBadgeProps) {
   if (account.status === "checking") return null;
   if (account.status === "signed-out") {
     return (
@@ -36,12 +42,8 @@ export function AccountBadge({ account }: { account: HudAccount }) {
       </a>
     );
   }
-  return (
-    <a
-      href="/account"
-      className="flex items-center gap-1.5 font-bold"
-      aria-label={`Your account, @${account.handle}`}
-    >
+  const face = (
+    <>
       <span
         aria-hidden="true"
         style={{ backgroundColor: account.colour, color: inkOn(account.colour) }}
@@ -50,6 +52,27 @@ export function AccountBadge({ account }: { account: HudAccount }) {
         {account.handle.slice(0, 1).toUpperCase()}
       </span>
       @{account.handle}
+    </>
+  );
+  if (onOpen) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex items-center gap-1.5 font-bold"
+        aria-label={`You, @${account.handle}`}
+      >
+        {face}
+      </button>
+    );
+  }
+  return (
+    <a
+      href="/account"
+      className="flex items-center gap-1.5 font-bold"
+      aria-label={`Your account, @${account.handle}`}
+    >
+      {face}
     </a>
   );
 }

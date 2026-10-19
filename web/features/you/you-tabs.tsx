@@ -1,8 +1,9 @@
 "use client";
 
 // WAI-ARIA tabs with a roving tabindex: Tab reaches the tab list once, the arrow keys (and Home,
-// End) move between tabs, and selection follows focus because every panel is cheap to show.
-import { type KeyboardEvent, type ReactNode, useRef } from "react";
+// End) move between tabs, and selection follows focus because every panel is cheap to show. The next
+// Tab reaches the panel itself. Ids come from useId, so two tab sets on a page never share one.
+import { type KeyboardEvent, type ReactNode, useId, useRef } from "react";
 
 export type YouTab<Id extends string> = {
   readonly id: Id;
@@ -25,6 +26,9 @@ const keyMoves: Readonly<Record<string, (index: number, count: number) => number
 };
 
 export function YouTabs<Id extends string>({ tabs, selected, onSelect, label }: YouTabsProps<Id>) {
+  const baseId = useId();
+  const tabId = (id: Id) => `${baseId}-tab-${id}`;
+  const panelId = (id: Id) => `${baseId}-panel-${id}`;
   const buttons = useRef(new Map<Id, HTMLButtonElement>());
   const active = tabs.find((tab) => tab.id === selected) ?? tabs[0];
 
@@ -56,9 +60,9 @@ export function YouTabs<Id extends string>({ tabs, selected, onSelect, label }: 
               }}
               type="button"
               role="tab"
-              id={`you-tab-${tab.id}`}
+              id={tabId(tab.id)}
               aria-selected={isSelected}
-              aria-controls={isSelected ? `you-panel-${tab.id}` : undefined}
+              aria-controls={isSelected ? panelId(tab.id) : undefined}
               tabIndex={isSelected ? 0 : -1}
               onClick={() => onSelect(tab.id)}
               onKeyDown={handleKeyDown}
@@ -74,8 +78,10 @@ export function YouTabs<Id extends string>({ tabs, selected, onSelect, label }: 
       {active && (
         <div
           role="tabpanel"
-          id={`you-panel-${active.id}`}
-          aria-labelledby={`you-tab-${active.id}`}
+          id={panelId(active.id)}
+          aria-labelledby={tabId(active.id)}
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the WAI-ARIA tabs pattern: Tab from the tab list reaches the panel, even one with no control in it
+          tabIndex={0}
           className="flex flex-col gap-3"
         >
           {active.panel}

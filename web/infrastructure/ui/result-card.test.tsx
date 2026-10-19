@@ -104,6 +104,22 @@ describe("ResultCard through a related project", () => {
     expect(screen.getByText(/Leads PlateScan according to this sentence\./)).toBeTruthy();
   });
 
+  test("without a relation, a reason that cites only the name is still shown", () => {
+    const result = leadResult();
+    delete result.via;
+    render(<ResultCard result={result} />);
+    expect(headings()).toEqual(["Why it matches"]);
+    expect(screen.getByText("Name: Noah Exempel")).toBeTruthy();
+  });
+
+  test("a related id of a kind the card does not know is named without a kind", () => {
+    const result = teamResult();
+    result.via!.related_profile_id = "call-example-meal-photos";
+    result.via!.related_name = "Meal photos call";
+    render(<ResultCard result={result} />);
+    expect(headings()[0]).toBe("Through Meal photos call");
+  });
+
   test("a related unit is named as a unit", () => {
     const result = teamResult();
     result.via!.related_profile_id = "unit-example-food-lab";

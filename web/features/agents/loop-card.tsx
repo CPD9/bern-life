@@ -1,7 +1,13 @@
 "use client";
 
+// One saved loop. What a run just did is announced in a polite live region, so a screen reader
+// hears the outcome without moving focus; Run now stays focusable while it runs (aria-disabled,
+// not disabled), so keyboard focus is not dropped mid-run. Each run's summary is a new node (keyed
+// by a run count), so a run that reads the same as the one before is still announced.
+
+import { useState } from "react";
 import { kindsText } from "./kinds";
-import { type Change, type Loop, needsRun } from "./loops";
+import { type Change, type Loop, needsRun, runSummary } from "./loops";
 import type { RunStatus } from "./use-loops";
 
 type LoopCardProps = {
@@ -40,6 +46,14 @@ function ChangeList({ changes }: { changes: readonly Change[] | null }) {
 
 export function LoopCard({ loop, status, snapshot, onRun, onRemove }: LoopCardProps) {
   const running = status === "running";
+  const runLabel = running ? "Running…" : "Run now";
+  // A new `last` means a run just finished; the run it replaced says what to compare against.
+  const [seenRun, setSeenRun] = useState(loop.last);
+  const [summary, setSummary] = useState({ text: "", run: 0 });
+  if (loop.last !== seenRun) {
+    setSeenRun(loop.last);
+    setSummary({ text: runSummary(seenRun, loop), run: summary.run + 1 });
+  }
   return (
     <li className="border-panel-border flex flex-col gap-2 rounded-2xl border p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -50,12 +64,12 @@ export function LoopCard({ loop, status, snapshot, onRun, onRemove }: LoopCardPr
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={onRun}
-            disabled={running}
-            aria-label={`Run now: ${loop.query}`}
-            className="bg-primary text-primary-ink rounded-pill px-4 py-1.5 text-sm font-bold disabled:opacity-60"
+            onClick={running ? undefined : onRun}
+            aria-disabled={running}
+            aria-label={`${runLabel}: ${loop.query}`}
+            className="bg-primary text-primary-ink rounded-pill px-4 py-1.5 text-sm font-bold aria-disabled:opacity-60"
           >
-            {running ? "Running…" : "Run now"}
+            {runLabel}
           </button>
           <button
             type="button"
@@ -70,6 +84,9 @@ export function LoopCard({ loop, status, snapshot, onRun, onRemove }: LoopCardPr
       <p className="text-sm">
         {lastRunText(loop)}
         {loop.last?.mock === true && <span className="ml-2 font-bold">MOCK</span>}
+      </p>
+      <p role="status" aria-live="polite" className="text-sm empty:sr-only">
+        {summary.text !== "" && <span key={summary.run}>{summary.text}</span>}
       </p>
       {needsRun(loop, snapshot) && (
         <p className="bg-warn-bg text-warn-ink rounded-xl px-3 py-1.5 text-sm font-bold">

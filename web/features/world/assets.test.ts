@@ -1,6 +1,5 @@
 // Every file served from public/world must be listed in its manifest with a matching sha256, and
-// the folder stays under 5 MB. The world is built from primitives today, so the list is empty and
-// any file added without a manifest row fails here.
+// the folder stays under 5 MB. Any file added without a manifest row fails here.
 
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
@@ -35,7 +34,7 @@ describe("world assets", () => {
     for (const entry of manifest.files) {
       const bytes = readFileSync(join(ASSETS_DIR, entry.path));
       expect(createHash("sha256").update(bytes).digest("hex")).toBe(entry.sha256);
-      expect(entry.licence).toMatch(/^(CC0-1\.0|MIT)$/);
+      expect(entry.licence).toMatch(/^(CC0-1\.0|MIT|swisstopo-OGD)$/);
       expect(entry.source).toStartWith("https://");
     }
   });

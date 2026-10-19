@@ -8,18 +8,24 @@ import { AgentEditor } from "@/features/avatar/agent-editor";
 import { shownAgentName } from "@/features/avatar/agent-name";
 import { AvatarEditor } from "@/features/avatar/avatar-editor";
 import { AvatarTurntable } from "@/features/avatar/avatar-turntable";
+import { BearFigure } from "@/features/avatar/bear-figure";
+import { motionFor } from "@/features/avatar/bear-motion";
 import { useAvatar } from "@/features/avatar/use-avatar";
 import { PersonEditor } from "@/features/avatar/person-editor";
 import { PersonTurntable } from "@/features/avatar/person-turntable";
 import { useAgentName, usePerson } from "@/features/avatar/use-person";
+import { Floatie } from "@/features/floatie/floatie";
+import { FloatieGreeting } from "@/features/floatie/floatie-greeting";
 import { Onboarding } from "@/features/onboarding/onboarding";
 import { browserOnboardingStore, useOnboarding } from "@/features/onboarding/use-onboarding";
 import { useSettings } from "@/infrastructure/use-settings";
 import { saveToAccount } from "./save-to-account";
 
-// Composes onboarding with the avatar editors, which are another feature: your look is a person,
-// and your first agent is a bear. A player who finished before starts again at the first step with
-// their answers kept. Finishing while signed in also saves them and both looks to the account.
+// Composes onboarding with the avatar editors and Lumi's greeting, which are other features: your
+// look is a person, and your first agent is a bear. Lumi wears the agent's bear, the default one
+// until the player makes theirs in the last step. A player who finished before starts again at the
+// first step with their answers kept. Finishing while signed in also saves them and both looks to
+// the account.
 export function StartApp() {
   const router = useRouter();
   const [state, dispatch] = useOnboarding();
@@ -28,6 +34,7 @@ export function StartApp() {
   const [agentName, setAgentName] = useAgentName();
   const [settings] = useSettings();
   const account = useAccount(httpAccountApi);
+  const agentShownName = shownAgentName(agentName);
 
   // Only on arrival: `dispatch` is stable, and a later `done` comes from finishing, which leaves.
   useEffect(() => {
@@ -43,6 +50,25 @@ export function StartApp() {
           value={person}
           onChange={setPerson}
           preview={<PersonTurntable config={person} lite={settings.lite} />}
+        />
+      }
+      greeting={
+        <FloatieGreeting
+          name={agentShownName}
+          figure={(onSelect) => (
+            <Floatie
+              name={agentShownName}
+              figure={(reducedMotion) => (
+                <BearFigure
+                  config={bear}
+                  lite={settings.lite}
+                  motion={motionFor("idle", { reducedMotion, lite: settings.lite })}
+                />
+              )}
+              onSelect={onSelect}
+              lite={settings.lite}
+            />
+          )}
         />
       }
       agentStep={
@@ -62,7 +88,7 @@ export function StartApp() {
         if (account.state.status === "signed-in") {
           await saveToAccount((path, init) => fetch(path, init), state.profile, {
             person,
-            agent: { name: shownAgentName(agentName), bear },
+            agent: { name: agentShownName, bear },
           });
         }
         router.push("/");

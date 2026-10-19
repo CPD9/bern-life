@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { type FirstRunInput, firstRunCard } from "./first-run";
+import { type FirstRunInput, firstRunCard, landingView } from "./first-run";
 
 const newcomer: FirstRunInput = {
   account: "signed-out",
@@ -43,4 +43,9 @@ describe("firstRunCard", () => {
   test("progress from before joining still shows: a story already chosen keeps its quest panel", () => {
     expect(firstRunCard({ ...newcomer, account: "signed-in", storyChoice: "story" })).toBe("quest");
   });
+});
+
+test("a player who finished onboarding lands in the office, a newcomer on the map", () => {
+  expect(landingView(true)).toBe("home");
+  expect(landingView(false)).toBe("map");
 });
