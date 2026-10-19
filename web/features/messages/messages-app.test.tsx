@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import type { AppEventName, AppEventSink } from "@/infrastructure/app-events";
 import type { Start } from "./input";
 import { type Connect, connectOver } from "./live-client";
 import {
@@ -161,6 +162,38 @@ describe("MessagesApp", () => {
     expect(thread().some((t) => t.includes("Hallo Ada"))).toBe(false);
   });
 
+  test("a sent message completes the story's message step; a refused or empty one does not", async () => {
+    const server = fakeServer();
+    let refuse = false;
+    const api: MessagesApi = {
+      ...server.api,
+      post: (id, body) =>
+        refuse ? Promise.resolve({ ok: false, failure: "network" }) : server.api.post(id, body),
+    };
+    const emitted: AppEventName[] = [];
+    const live = fakeLive();
+    await act(async () => {
+      render(
+        <UseMessagesHarness
+          api={api}
+          connect={live.connect}
+          schedule={live.schedule}
+          events={{ emit: (name) => emitted.push(name) }}
+        />,
+      );
+    });
+    await click(/Ada Example/);
+    const send = async (text: string) => {
+      fireEvent.change(screen.getByLabelText("Message"), { target: { value: text } });
+      await click("Send");
+    };
+    await send("See you at the pitch");
+    refuse = true;
+    await send("Lost on the way");
+    await send("   ");
+    expect(emitted).toEqual(["message_sent"]);
+  });
+
   test("a live notice brings the new message into the open thread", async () => {
     const server = fakeServer();
     const live = fakeLive();
@@ -224,12 +257,14 @@ function UseMessagesHarness({
   api,
   connect,
   schedule,
+  events = { emit: () => {} },
 }: {
   api: MessagesApi;
   connect: Connect;
   schedule: Every;
+  events?: AppEventSink;
 }) {
-  return <MessagesApp controller={useMessages(api, connect, schedule)} />;
+  return <MessagesApp controller={useMessages(api, connect, schedule, events)} />;
 }
 
 function Badge({ api, connect }: { api: MessagesApi; connect: Connect }) {

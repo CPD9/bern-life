@@ -11,6 +11,7 @@ import {
   noticeFor,
   recordRun,
   removeLoop,
+  runSummary,
   saveLoop,
 } from "./loops";
 import type { Kind } from "./kinds";
@@ -78,10 +79,14 @@ describe("running loops", () => {
   test("a later run lists new results, then dropped ones", () => {
     const first = recordRun(
       saved("insulin"),
-      responseWith("s1", [
-        ["a", "person"],
-        ["b", "person"],
-      ]),
+      responseWith(
+        "s1",
+        [
+          ["a", "person"],
+          ["b", "person"],
+        ],
+        "mock",
+      ),
     );
     const second = recordRun(
       first,
@@ -102,6 +107,20 @@ describe("running loops", () => {
     expect(second.changes).toEqual([
       { type: "new", entry: entry("c", "unit") },
       { type: "dropped", entry: entry("a") },
+    ]);
+  });
+
+  test("a MOCK run is never compared with a replay or live run, either way round", () => {
+    const replay = responseWith("s1", [["a", "person"]]);
+    const mock = responseWith("fixture", [["b", "person"]], "mock");
+    const live = responseWith("s2", [["c", "person"]], "live");
+    const afterMock = recordRun(recordRun(saved("insulin"), replay), mock);
+    expect([afterMock.last?.mock, afterMock.changes]).toEqual([true, null]);
+    const afterLive = recordRun(afterMock, live);
+    expect([afterLive.last?.mock, afterLive.changes]).toEqual([false, null]);
+    expect(recordRun(afterLive, replay).changes).toEqual([
+      { type: "new", entry: entry("a") },
+      { type: "dropped", entry: entry("c") },
     ]);
   });
 
@@ -155,10 +174,51 @@ describe("notices and snapshots", () => {
     });
   });
 
+  test("a change found between MOCK runs says it is MOCK", () => {
+    const mockLoop: Loop = { ...loop, last: { snapshot: "fixture", mock: true, entries: [] } };
+    expect(noticeFor(mockLoop, { type: "new", entry: entry("c") }).body).toBe(
+      "Name c (person) is a new result on snapshot fixture (MOCK).",
+    );
+  });
+
   test("a loop asks for a new run only when it ran on another known snapshot", () => {
     expect(needsRun(loop, "s3")).toBe(true);
     expect(needsRun(loop, "s2")).toBe(false);
     expect(needsRun(loop, null)).toBe(false);
     expect(needsRun(saved("insulin"), "s3")).toBe(false);
+  });
+});
+
+describe("runSummary", () => {
+  const run = (snapshot: string, ids: string[], mode: "replay" | "mock" = "replay") =>
+    responseWith(
+      snapshot,
+      ids.map((id) => [id, "person"] as const),
+      mode,
+    );
+
+  test("the first run says the next one lists what changed", () => {
+    const first = recordRun(saved("insulin"), run("s1", ["a"]));
+    expect(runSummary(null, first)).toBe("Ran on snapshot s1. The next run lists what changed.");
+  });
+
+  test("a later run counts what is new and what dropped", () => {
+    const first = recordRun(saved("insulin"), run("s1", ["a", "b"]));
+    const second = recordRun(first, run("s2", ["b", "c", "d"]));
+    expect(runSummary(first.last, second)).toBe("Ran on snapshot s2: 2 new, 1 dropped.");
+    const third = recordRun(second, run("s2", ["b", "c", "d"]));
+    expect(runSummary(second.last, third)).toBe("Ran on snapshot s2: nothing new or dropped.");
+  });
+
+  test("a switch to or from MOCK says the two runs were not compared", () => {
+    const real = recordRun(saved("insulin"), run("s1", ["a"]));
+    const mock = recordRun(real, run("fixture", ["b"], "mock"));
+    expect(runSummary(real.last, mock)).toBe(
+      "Ran on snapshot fixture (MOCK). The run before was not MOCK, so the two were not compared; the next run compares with this one.",
+    );
+    const back = recordRun(mock, run("s1", ["a"]));
+    expect(runSummary(mock.last, back)).toBe(
+      "Ran on snapshot s1. The run before was MOCK, so the two were not compared; the next run compares with this one.",
+    );
   });
 });

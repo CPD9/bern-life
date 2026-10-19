@@ -20,7 +20,7 @@ export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
     desktop,
     fixtureMode,
     agentName,
-    snapshot: health?.snapshot ?? null,
+    snapshot: health.status === "ok" ? health.health.snapshot : null,
     notify: notifyLoop,
   });
   const now = useNow();

@@ -95,28 +95,64 @@ export function diffEntries(before: readonly LoopEntry[], after: readonly LoopEn
   ];
 }
 
-/** The first run sets the baseline, so it has nothing to compare against. */
+/**
+ * A MOCK run answers without the model (canned fixtures, or plain search with no expansion), a
+ * replay or live run with it, so their results differ for that reason alone. They are never
+ * compared: a difference between them would be a change nobody made.
+ */
+export function comparable(before: LoopRun, after: LoopRun): boolean {
+  return before.mock === after.mock;
+}
+
+/**
+ * The first run sets the baseline, so it has nothing to compare against. So does the first run
+ * after a switch to or from MOCK.
+ */
 export function recordRun(loop: Loop, response: SearchResponse): Loop {
   const entries = entriesOf(response, loop.kinds);
-  const changes = loop.last === null ? null : diffEntries(loop.last.entries, entries);
   const last = { snapshot: response.versions.snapshot, mock: response.mode === "mock", entries };
+  const changes =
+    loop.last === null || !comparable(loop.last, last)
+      ? null
+      : diffEntries(loop.last.entries, entries);
   return { ...loop, last, changes };
+}
+
+function snapshotText(run: LoopRun | null): string {
+  if (run === null) return "";
+  return run.mock ? `snapshot ${run.snapshot} (MOCK)` : `snapshot ${run.snapshot}`;
 }
 
 export function noticeFor(loop: Loop, change: Change): AgentNotice {
   const { name, kind, href } = change.entry;
-  const snapshot = loop.last?.snapshot ?? "";
+  const snapshot = snapshotText(loop.last);
   return change.type === "new"
     ? {
         title: `New in “${loop.query}”`,
-        body: `${name} (${kindNames[kind]}) is a new result on snapshot ${snapshot}.`,
+        body: `${name} (${kindNames[kind]}) is a new result on ${snapshot}.`,
         href,
       }
     : {
         title: `Dropped from “${loop.query}”`,
-        body: `${name} (${kindNames[kind]}) is no longer a result on snapshot ${snapshot}.`,
+        body: `${name} (${kindNames[kind]}) is no longer a result on ${snapshot}.`,
         href,
       };
+}
+
+/** What a run just did, in one sentence, given the run before it (null for the first run). */
+export function runSummary(before: LoopRun | null, loop: Loop): string {
+  const { last, changes } = loop;
+  if (last === null) return "";
+  const ran = `Ran on ${snapshotText(last)}`;
+  if (before === null) return `${ran}. The next run lists what changed.`;
+  if (!comparable(before, last)) {
+    const was = before.mock ? "was MOCK" : "was not MOCK";
+    return `${ran}. The run before ${was}, so the two were not compared; the next run compares with this one.`;
+  }
+  const added = (changes ?? []).filter((change) => change.type === "new").length;
+  const dropped = (changes ?? []).length - added;
+  if (added + dropped === 0) return `${ran}: nothing new or dropped.`;
+  return `${ran}: ${added} new, ${dropped} dropped.`;
 }
 
 /** True when the loop last ran on another snapshot than the one the engine serves now. */
