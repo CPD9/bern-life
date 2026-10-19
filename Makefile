@@ -118,22 +118,34 @@ run:
 	@$(PYTHON) -m infra.wait_ready --url http://127.0.0.1:$(WEB_PORT)
 
 # make run with the compose profile live, after the same health check as make live (stop make run
-# first: both publish WEB_PORT). The engine calls the model only for requests the web app marks
-# live, within LLM_CALL_BUDGET (unset: none). Compose reads no env file of its own: every value
-# comes from ENV_FILE, sourced by the health check, or from here. A loopback vLLM tunnel is out of
-# the containers' reach, so remote endpoints only.
-# Live calls stay in the volume bernlife_llm_cache. To fold them into the bundle, copy them (not
-# the audit log) into the data folder's llm_cache/, then make pack-cache:
-#   mkdir -p data/llm_cache && docker run --rm -v bernlife_llm_cache:/data:ro --entrypoint tar \
-#     bernlife-engine -C /data/llm_cache --exclude=audit.jsonl -c . | tar -x -C data/llm_cache
+# first: both publish WEB_PORT). Compose reads no env file of its own: every value comes from
+# ENV_FILE, sourced by the health check, or from here. A loopback vLLM tunnel is out of the
+# containers' reach, so remote endpoints only.
+# The engine may call the model only for requests the web app marks live (signed-in users under
+# their limits), within LLM_CALL_BUDGET (unset: none). An engine that does not keep to that would
+# call it for anyone, so the web app starts only once the engine reports its budget on /api/health
+# (contracts/api.md). Until then nothing reaches the engine: it takes loopback requests only, and
+# no web app runs beside it yet.
+# The volume bernlife_llm_cache holds what signed-in users typed or uploaded, inside model prompts
+# and answers, so it never goes into the bundle: make stop, then docker volume rm bernlife_llm_cache
+# deletes it.
 LIVE_COMPOSE = BERNLIFE_BUNDLE_DIR=$(abspath $(BUNDLE)) WEB_PORT=$(WEB_PORT) BERNLIFE_LIVE_BACKEND=live \
 	$(COMPOSE) --env-file /dev/null --profile live
-LIVE_SERVICES = migrate load serve-live web-live
+LIVE_ENGINE = migrate load serve-live
+LIVE_SERVICES = $(LIVE_ENGINE) web-live
+LIVE_BUDGET_CHECK = import json, urllib.request as u; \
+	h = json.load(u.urlopen('http://127.0.0.1:8100/api/health', timeout=5)); \
+	raise SystemExit(0 if h.get('mode') == 'live' and isinstance(h.get('budget'), dict) else 1)
 
+# One shell from the health check on, so every compose call sees the same sourced values.
 live-run:
 	@[ -f $(BUNDLE)/pages.jsonl ] || { echo "No snapshot bundle in $(BUNDLE); run make fetch first." >&2; exit 1; }
-	@$(LIVE_HEALTH) && { $(LIVE_COMPOSE) up -d --build --wait $(LIVE_SERVICES) || { \
-	  $(LIVE_COMPOSE) logs --no-log-prefix load serve-live; exit 1; }; }
+	@$(LIVE_HEALTH) && { $(LIVE_COMPOSE) up -d --build --wait $(LIVE_ENGINE) || { \
+	  $(LIVE_COMPOSE) logs --no-log-prefix load serve-live; exit 1; }; } && \
+	{ $(LIVE_COMPOSE) exec -T serve-live python -c "$(LIVE_BUDGET_CHECK)" || { \
+	  echo "The engine reports no live call budget on /api/health, so nothing would keep its model calls within LLM_CALL_BUDGET; serve-live stopped." >&2; \
+	  $(LIVE_COMPOSE) rm --stop --force serve-live; exit 1; }; } && \
+	$(LIVE_COMPOSE) up -d --build --wait --no-deps web-live
 	@$(PYTHON) -m infra.wait_ready --url http://127.0.0.1:$(WEB_PORT)
 
 # Only the run and live-run services: the database is shared by every worktree's lane.

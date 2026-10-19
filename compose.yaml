@@ -115,10 +115,11 @@ services:
         condition: service_healthy
 
   # make live-run: serve may call the model, for the requests the web app marks live (signed-in
-  # users under their limits) and within LLM_CALL_BUDGET. Its mode comes from BERNLIFE_LIVE_BACKEND,
-  # which only the Makefile sets; the endpoints and keys pass through by name from the shell that
-  # sourced the env file. A vLLM tunnel on the host's loopback is out of reach from a container,
-  # so this takes remote endpoints only.
+  # users under their limits) and within LLM_CALL_BUDGET; make live-run starts web-live only once
+  # this engine reports that budget. Its mode comes from BERNLIFE_LIVE_BACKEND, which only the
+  # Makefile sets; the endpoints and keys pass through by name from the shell that sourced the env
+  # file. A vLLM tunnel on the host's loopback is out of reach from a container, so this takes
+  # remote endpoints only.
   serve-live:
     <<: *serve
     profiles: [live]
@@ -138,7 +139,8 @@ services:
       - ${BERNLIFE_BUNDLE_DIR:-./data/bundle}:/app/data/bundle:ro
       - models:/app/data/models
       # The engine's data folder, which the image gives to its user (a new volume at a path the
-      # image lacks belongs to root). Live calls land in llm_cache/ inside it.
+      # image lacks belongs to root). Live calls land in llm_cache/ inside it, with what users
+      # typed or uploaded, so this volume never goes into the bundle (Makefile, live-run).
       - llm_cache:/app/data
 
   web-live:
