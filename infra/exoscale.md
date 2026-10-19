@@ -4,6 +4,7 @@ One small VM in Geneva runs Bern Life for the three of us: Postgres, the engine 
 snapshot bundle (no GPU, no model key), the web app and Caddy for HTTPS, from
 `infra/exoscale/compose.yaml`. Only port 443 is open to everyone; SSH is open to one IP; the
 database and the engine are reachable on the compose network only. Sign-up stays invite-only.
+Apertus on your own GPUs, or the whole app with no network at all: [`sovereign.md`](sovereign.md).
 
 ## What runs where
 
@@ -14,7 +15,7 @@ database and the engine are reachable on the compose network only. Sign-up stays
 | Code | `/opt/bernlife`, copied from git (tracked files only) |
 | Settings | `/opt/bernlife/infra/exoscale/.env` (mode 600): `SITE_HOST`, `POSTGRES_PASSWORD` (generated on the VM, never printed), `DEMO_FIXTURES=0` |
 | Bundle | `/opt/bernlife/data/bundle`, the version in `bundle.lock`, copied by scp (the VM holds no GitHub token) |
-| Backups | `/var/backups/bernlife`, nightly at 02:15 UTC, 14 days kept, root only |
+| Backups | `/var/backups/bernlife`, one folder per night at 02:15 UTC (database, uploads, Caddy's certificate), 14 days kept, root only; no copy off the VM yet |
 
 ## Cost (CHF per month, Peter's credits)
 
@@ -80,8 +81,9 @@ The VM runs what `make run` runs locally: `migrate`, then `load` puts the bundle
 searches from loopback only). Steps in order; each says where it runs. `ssh` and `scp` take
 `-i ~/.ssh/id_ed25519_bernlife_exoscale`; the tarball is the `asset` named in `bundle.lock`.
 
-1. **VM: back up what runs now.** The database, then the code tree with its `.env` (root only,
-   next to the nightly dumps). Note the two file names it prints, for a full revert.
+1. **VM: back up what runs now.** The database, uploads and certificate, then the code tree with
+   its `.env` (root only, next to the nightly folders). Note the two names it prints, the backup
+   folder and the code file, for a full revert.
 
    ```bash
    cd /opt/bernlife/infra/exoscale
@@ -138,8 +140,10 @@ searches from loopback only). Steps in order; each says where it runs. `ssh` and
    ```
 
 7. **VM: health check.** It asks `https://<site>/api/health`, which travels through Caddy, the web
-   app, the engine and the database, and passes only on replay mode, the version in `bundle.lock`
-   and the page and profile counts in the bundle's manifest. The DEMO fixtures fail it.
+   app, the engine and the database, and passes only on replay or live mode, the version in
+   `bundle.lock` and the page and profile counts in the bundle's manifest. The DEMO fixtures fail
+   it. When the engine reports them, it also prints its status, uptime and failures in the last
+   hour.
 
    ```bash
    cd /opt/bernlife
@@ -170,12 +174,73 @@ the code that ran before step 1: `sudo mv /opt/bernlife /opt/bernlife.search`, t
 | Status and logs | `docker compose ps`, `docker compose logs -f web serve` |
 | Web app unreachable after `serve` restarted on its own | `docker compose up -d --force-recreate web` (it shares `serve`'s network, which a restart replaces). A slow database does not cause this: `serve` waits up to two minutes for it instead of exiting |
 | Backup now | `sudo ./backup.sh` |
-| Restore a backup | `sudo sh -c 'gunzip -c /var/backups/bernlife/<file>.sql.gz' \| docker compose exec -T db psql -U bernlife -d bernlife` (into an empty database) |
+| Restore a backup | "Back up and restore" below |
+| Watch uptime | From your machine, in a clone with `make fetch` done: `python3 -m infra.check_hosted --url https://<site> --watch`. One line per check every 30 s (time, HTTP status, mode, status, ms); it exits 1 after 3 failed checks in a row (`--interval`, `--max-failures`). A `degraded` status is shown, not counted |
 | New SSH IP | Exoscale portal → Security Groups → `bernlife-web` → edit the port 22 rule |
+
+## Back up and restore
+
+`backup.sh` (nightly from cron, or `sudo ./backup.sh`) writes one folder per run,
+`/var/backups/bernlife/bernlife-<UTC time>/`, kept 14 days:
+
+| File | Holds | Taken by |
+|---|---|---|
+| `db.sql.gz` | the whole database: accounts, documents' rows, the loaded bundle | `pg_dump` in `db` |
+| `uploads.tar.gz` | the uploaded documents, one file per sha256 (volume `uploads`, `/data/uploads` in `web`) | `tar` in `web` |
+| `caddy-data.tar.gz` | Caddy's `/data` (volume `caddy-data`): the certificate, its private key, the ACME account | `tar` in `caddy` |
+
+The folder appears only when all three are written; a `bernlife-<time>.part` folder is a run that
+failed. It holds personal data and private keys, so it stays root only. A document's file and its
+row restore together, from the same folder.
+
+**Restore**, on the VM in `/opt/bernlife/infra/exoscale`. The dump goes into an empty database,
+before `migrate` runs: on a new VM (set up as above up to `docker compose up`, the folder copied to
+`/var/backups/bernlife`), or on this one after `sudo ./backup.sh`, `docker compose down` and
+`docker volume rm bernlife-prod_pgdata`.
+
+```bash
+b=/var/backups/bernlife/bernlife-<time>
+docker compose up -d --wait db
+sudo gunzip -c "$b/db.sql.gz" \
+  | docker compose exec -T db psql -q -v ON_ERROR_STOP=1 -U bernlife -d bernlife
+docker compose up -d --build --wait      # migrate applies only what the dump lacks
+sudo cat "$b/uploads.tar.gz" | docker compose exec -T web tar -xzf - -C /data/uploads
+sudo cat "$b/caddy-data.tar.gz" | docker compose exec -T caddy tar -xzf - -C /data
+docker compose restart caddy             # serves the restored certificate
+```
+
+### Off-VM copy to Exoscale SOS (not provisioned)
+
+Today nothing leaves the VM, so losing the VM loses its backups. This is the copy Peter would set
+up; no bucket, key or passphrase exists, and none of it has run. The bucket stays in CH-GVA-2, so
+the data stays in Switzerland, and each folder is encrypted on the VM before it leaves, because it
+holds accounts, documents and Caddy's private key.
+
+Once: a private bucket, and an IAM key whose role may only write objects to it (portal → IAM). On
+the VM, as root, `exo config` stores that key for the `exo` CLI, and a passphrase goes into
+`/root/bernlife-backup.pass` (mode 600). Keep the passphrase off the VM too, in Peter's password
+manager: without it the copy cannot be read once the VM is gone.
+
+```bash
+exo storage mb sos://bernlife-backups --zone ch-gva-2
+```
+
+After `backup.sh`, as root:
+
+```bash
+cd /var/backups/bernlife && run="$(ls -d bernlife-*Z | tail -1)"
+tar -cf - "$run" | openssl enc -aes-256-cbc -pbkdf2 -pass file:/root/bernlife-backup.pass \
+  -out "/root/$run.tar.enc"
+exo storage upload "/root/$run.tar.enc" sos://bernlife-backups/ && rm "/root/$run.tar.enc"
+```
+
+To restore from it: `exo storage download sos://bernlife-backups/<run>.tar.enc`, then
+`openssl enc -d -aes-256-cbc -pbkdf2 -pass file:<passphrase file> -in <run>.tar.enc | sudo tar -xf - -C /var/backups/bernlife`,
+then the restore above.
 
 ## Not done yet
 
-- **Off-VM backup copy:** needs an SOS bucket and a key allowed to write to it (Peter's decision);
-  the nightly file would then be copied there after `backup.sh`.
+- **Off-VM backup copy:** needs an SOS bucket, a key allowed to write to it and a passphrase
+  (Peter's decision); the commands are under "Back up and restore". Not provisioned.
 - **Credentials:** Peter holds the account; a compute-only IAM key for Yaseen replaces the master
   login for day-to-day work.
