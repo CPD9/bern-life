@@ -39,10 +39,21 @@ function stats(numbers: EvalNumbers): Stat[] {
 }
 
 // One tile per number, each with the sentence that says what it counts.
-export function EvalNumbersView({ numbers }: { numbers: EvalNumbers }) {
+export function EvalNumbersView({
+  numbers,
+  fixtureMode,
+}: {
+  numbers: EvalNumbers;
+  /** Fixture numbers are invented, so they are never called measured. */
+  fixtureMode: boolean;
+}) {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-muted text-sm">Measured by the evaluator on {numbers.queries} queries.</p>
+      <p className="text-muted text-sm">
+        {fixtureMode
+          ? `${numbers.queries} invented queries.`
+          : `Measured by the evaluator on ${numbers.queries} queries.`}
+      </p>
       <dl className="grid gap-3 sm:grid-cols-2">
         {stats(numbers).map((stat) => (
           <div key={stat.label} className="bg-chip flex flex-col gap-1 rounded-2xl p-4">

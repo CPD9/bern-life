@@ -25,7 +25,11 @@ describe("parseNumbers", () => {
     ["eval left out", (body) => omit(body, "eval")],
     ["a date that is not a date", (body) => ({ ...body, generated_at: "yesterday" })],
     ["an empty snapshot", (body) => ({ ...body, snapshot: "" })],
-    ["recall as a string", (body) => ({ ...body, eval: { ...body.eval, mrr: "0.31" } })],
+    ["mrr as a string", (body) => ({ ...body, eval: { ...body.eval, mrr: "0.31" } })],
+    [
+      "recall as a bare number",
+      (body) => ({ ...body, eval: { ...body.eval, recall_at_10: 0.4375 } }),
+    ],
     [
       "recall above 1",
       (body) => ({ ...body, eval: { ...body.eval, recall_at_10: { value: 4, low: 0, high: 1 } } }),

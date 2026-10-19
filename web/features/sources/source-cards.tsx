@@ -14,7 +14,7 @@ export function SourceCards({ sources }: { sources: readonly SourceSummary[] }) 
                   href={siteRoot(host)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary font-bold break-all underline"
+                  className="text-ink font-bold break-all underline"
                 >
                   {host}
                 </a>

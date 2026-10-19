@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useRef } from "react";
 import { AddSourceGuide } from "./add-source-guide";
 import { SourceCards } from "./source-cards";
 import { type SourcesApi, httpSourcesApi } from "./sources-api";
@@ -17,6 +17,7 @@ export type SourcesAppProps = {
 // The guide is shown in every state, since it does not depend on the engine.
 export function SourcesApp({ fixtureMode, api = httpSourcesApi }: SourcesAppProps) {
   const { state, retry } = useSources(api);
+  const status = useRef<HTMLDivElement>(null);
   const id = useId();
   return (
     <div className="flex flex-col gap-8">
@@ -31,8 +32,20 @@ export function SourcesApp({ fixtureMode, api = httpSourcesApi }: SourcesAppProp
             demo.
           </p>
         )}
-        <div aria-live="polite" className="flex flex-col items-start gap-3">
-          <StatusLine state={state} onRetry={retry} />
+        {/* Try again unmounts its own button, so focus moves here instead of falling to the page. */}
+        <div
+          ref={status}
+          tabIndex={-1}
+          aria-live="polite"
+          className="flex flex-col items-start gap-3"
+        >
+          <StatusLine
+            state={state}
+            onRetry={() => {
+              status.current?.focus();
+              retry();
+            }}
+          />
         </div>
         {state.status === "ok" && <SourceCards sources={state.list.sources} />}
       </section>
