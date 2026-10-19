@@ -1,8 +1,42 @@
 // Click-to-walk: A* over the walk grid from the walker to the reachable cell nearest the click,
-// then the path pulled straight wherever the grid sees through, so you walk lines, not stairs.
+// then the path pulled straight wherever the walker fits all along the line, so you walk lines, not
+// stairs. A cell is open when its centre is free, so a straight line is checked against the walls
+// themselves, not only against the cells it crosses: a line may not cut a turned wall's corner.
 
 import { type MapPoint } from "./geography";
-import { cellAt, centreOf, eachNeighbour, nearestCell, type WalkGrid } from "./walk-grid";
+import { WALKER_RADIUS } from "./walk";
+import {
+  buildGrid,
+  cellAt,
+  centreOf,
+  eachNeighbour,
+  nearestCell,
+  type WalkGrid,
+} from "./walk-grid";
+import { blocked, type WalkMap } from "./walk-map";
+
+export type Planner = {
+  readonly grid: WalkGrid;
+  /** Whether the walker can stand at a point: the walls, not the cells. */
+  readonly free: (point: MapPoint) => boolean;
+};
+
+/** Fine enough for the Old Town's lanes. */
+const GRID_CELL = 0.5;
+/**
+ * Cells close a little wider than the walker, so the line between two cell centres keeps clear of
+ * a wall's corner. Any wider closes the bridge decks.
+ */
+const GRID_PAD = 0.05;
+/** Points checked along a straight line, per cell of its length. */
+const LINE_SAMPLES = 10;
+
+export function walkPlanner(map: WalkMap): Planner {
+  return {
+    grid: buildGrid((at) => !blocked(map, at, WALKER_RADIUS + GRID_PAD), map.bounds, GRID_CELL),
+    free: (at) => !blocked(map, at, WALKER_RADIUS),
+  };
+}
 
 /** A binary heap of cell indices, cheapest first by `cost`. */
 function heap(cost: Float64Array) {
@@ -78,19 +112,20 @@ function search(grid: WalkGrid, start: number, goal: number): number[] {
   return cells.reverse();
 }
 
-/** True when every grid cell under the line from `a` to `b` is open. */
-export function seesThrough(grid: WalkGrid, a: MapPoint, b: MapPoint): boolean {
-  const samples = Math.ceil((Math.hypot(b[0] - a[0], b[1] - a[1]) / grid.cell) * 3);
+/** True when the walker fits at every point of the line from `a` to `b`, on open cells. */
+export function seesThrough({ grid, free }: Planner, a: MapPoint, b: MapPoint): boolean {
+  const samples = Math.ceil((Math.hypot(b[0] - a[0], b[1] - a[1]) / grid.cell) * LINE_SAMPLES);
   for (let sample = 0; sample <= samples; sample++) {
     const t = samples === 0 ? 0 : sample / samples;
-    const index = cellAt(grid, [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
-    if (index === -1 || grid.open[index] !== 1) return false;
+    const point: MapPoint = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    const index = cellAt(grid, point);
+    if (index === -1 || grid.open[index] !== 1 || !free(point)) return false;
   }
   return true;
 }
 
 /** Keeps a point only where the line from the last kept point to the one after it is blocked. */
-export function pullStraight(grid: WalkGrid, points: readonly MapPoint[]): MapPoint[] {
+export function pullStraight(planner: Planner, points: readonly MapPoint[]): MapPoint[] {
   const first = points[0];
   if (first === undefined) return [];
   const kept: MapPoint[] = [first];
@@ -98,7 +133,7 @@ export function pullStraight(grid: WalkGrid, points: readonly MapPoint[]): MapPo
   while (anchor < points.length - 1) {
     let reach = anchor + 1;
     const from = points[anchor] ?? first;
-    while (reach + 1 < points.length && seesThrough(grid, from, points[reach + 1] ?? from)) {
+    while (reach + 1 < points.length && seesThrough(planner, from, points[reach + 1] ?? from)) {
       reach += 1;
     }
     kept.push(points[reach] ?? from);
@@ -112,12 +147,13 @@ export function pullStraight(grid: WalkGrid, points: readonly MapPoint[]): MapPo
  * clicked spot itself when it can be reached, else the reachable spot nearest it. Null when the
  * walker stands nowhere on the grid's open cells.
  */
-export function findPath(grid: WalkGrid, from: MapPoint, to: MapPoint): MapPoint[] | null {
+export function findPath(planner: Planner, from: MapPoint, to: MapPoint): MapPoint[] | null {
+  const { grid } = planner;
   const start = nearestCell(grid, from, null);
   if (start === -1) return null;
   const goal = nearestCell(grid, to, grid.region[start] ?? null);
   if (goal === -1) return null;
-  const end = cellAt(grid, to) === goal ? to : centreOf(grid, goal);
+  const end = cellAt(grid, to) === goal && planner.free(to) ? to : centreOf(grid, goal);
   const route = [from, ...search(grid, start, goal).map((cell) => centreOf(grid, cell)), end];
-  return pullStraight(grid, route).slice(1);
+  return pullStraight(planner, route).slice(1);
 }

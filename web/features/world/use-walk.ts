@@ -8,15 +8,10 @@ import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } fro
 import { type Door, doorNear } from "./doors";
 import { type MapPoint } from "./geography";
 import { type FollowTarget } from "./map-camera";
-import { WALKER_RADIUS } from "./walk";
-import { buildGrid, type WalkGrid } from "./walk-grid";
 import { type HeldKeys } from "./walk-keys";
-import { blocked, groundHeight, type WalkMap } from "./walk-map";
-import { findPath } from "./walk-path";
+import { groundHeight, type WalkMap } from "./walk-map";
+import { findPath, type Planner, walkPlanner } from "./walk-path";
 import { arrive, type WalkSession, withPath } from "./walk-session";
-
-/** Fine enough for the Old Town's lanes; the grid is built on the first click-to-walk. */
-const GRID_CELL = 0.5;
 
 export type Walk = {
   session: RefObject<WalkSession>;
@@ -55,7 +50,8 @@ export function useWalk({ map, start, inside, doors, framePoints }: WalkOptions)
   const session = useRef<WalkSession>(arrive(map, start));
   const held = useRef(new Set<string>());
   const wake = useRef<() => void>(() => undefined);
-  const grid = useRef<{ map: WalkMap; grid: WalkGrid } | null>(null);
+  // Built on the first click-to-walk, and again only for a new map.
+  const planner = useRef<{ map: WalkMap; planner: Planner } | null>(null);
   const [walking, setWalking] = useState(false);
   const [following, setFollowing] = useState(true);
   // Known before the first frame, so your own door's "Go home" is there as the map appears.
@@ -104,12 +100,9 @@ export function useWalk({ map, start, inside, doors, framePoints }: WalkOptions)
 
   const goTo = useCallback(
     (point: MapPoint) => {
-      if (grid.current?.map !== map) {
-        const open = (at: MapPoint) => !blocked(map, at, WALKER_RADIUS);
-        grid.current = { map, grid: buildGrid(open, map.bounds, GRID_CELL) };
-      }
+      if (planner.current?.map !== map) planner.current = { map, planner: walkPlanner(map) };
       const from = session.current.walker.at;
-      const path = findPath(grid.current.grid, from, point);
+      const path = findPath(planner.current.planner, from, point);
       if (path === null || path.length === 0) return;
       session.current = withPath(session.current, path);
       setPreview([from, ...path]);
