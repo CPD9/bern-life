@@ -20,7 +20,8 @@ type PhoneAppsInput = AgentsInput & {
   /** The same controller as the desk's Navigator, so a search survives closing the phone. */
   navigator: NavigatorController;
   fixtureMode: boolean;
-  onShowOnMap: (response: SearchResponse) => void;
+  /** Shows an answer on the map; absent when the map cannot be drawn. */
+  onShowOnMap?: ((response: SearchResponse) => void) | undefined;
   /** Opens another app inside the phone, as "Try" on a skill does. */
   onOpenApp: (appId: string) => void;
   /** A badge on Messages; none when signed out or unknown. */

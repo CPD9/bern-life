@@ -42,7 +42,7 @@ export function SavedItem({ item, onRemove, removeRef }: SavedItemProps) {
         </a>
         , saved {savedFormat.format(new Date(item.saved_at))}.
       </p>
-      {item.span !== undefined && <CorrectionNote />}
+      {item.span !== undefined && <CorrectionNote quoted="saved" />}
       {item.page_sha256 !== undefined && (
         <p className="text-muted font-mono text-xs break-all">Page sha256 {item.page_sha256}</p>
       )}

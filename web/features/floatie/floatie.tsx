@@ -29,7 +29,8 @@ function Initial({ name }: { name: string }) {
       aria-hidden="true"
       className="bg-panel text-ink shadow-panel m-auto flex size-16 items-center justify-center rounded-full text-2xl font-extrabold"
     >
-      {name.slice(0, 1).toUpperCase()}
+      {/* By code point, so a name that starts with an emoji keeps it whole. */}
+      {(Array.from(name)[0] ?? "").toUpperCase()}
     </span>
   );
 }

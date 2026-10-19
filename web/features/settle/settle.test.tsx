@@ -88,9 +88,11 @@ describe("Settle", () => {
     expect(notes[1]!.textContent).toContain(
       "This address is quoted from the institution's page as it read on 19 Oct 2026.",
     );
-    expect(notes[1]!.querySelector("a")!.getAttribute("href")).toBe(
-      "https://github.com/CPD9/bern-life#corrections-and-removal",
+    // Addresses live in the repository, not the snapshot, so no new snapshot changes them.
+    expect(notes[1]!.textContent).toContain(
+      "Addresses are kept in Bern Life's repository and corrected there by a change to places.json, not by the next snapshot; to ask for a correction or its removal, see Corrections and removal.",
     );
+    expect(notes[1]!.querySelector("a")!.getAttribute("href")).toBe("/corrections");
   });
 
   test("settling reports the plot once, stores it and says where the office is", () => {

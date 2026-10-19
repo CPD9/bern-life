@@ -7,12 +7,12 @@
 
 import { OrthographicCamera } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { type BearConfig } from "@/features/avatar/bear-config";
 import { BearFigure } from "@/features/avatar/bear-figure";
 import { motionFor } from "@/features/avatar/bear-motion";
 import { Button } from "@/infrastructure/ui/button";
-import { ContextLossWatch, SceneGuard } from "@/infrastructure/ui/scene-guard";
+import { ContextLossWatch, SceneGuard, useTakeLostFocus } from "@/infrastructure/ui/scene-guard";
 import { type HotspotId, hotspot } from "./hotspot";
 import { Bookshelf, Chair, Desk, Picture, Plant } from "./office-furniture";
 import { CAMERA_POSITION, LOOK_AT, LUMI_SPOT, PLAYER_SPOT, fitZoom } from "./office-layout";
@@ -93,20 +93,32 @@ function StandIn() {
   );
 }
 
-/** The room's place when the browser cannot draw it; in your own office the buttons stay below. */
-function NoRoom({
+function noRoomText(visiting: string | undefined, stopped: boolean): string {
+  const office = visiting === undefined ? "The office" : `${visiting}'s office`;
+  const why = stopped
+    ? "stopped drawing."
+    : "needs 3D graphics, which this browser does not offer.";
+  const below = visiting === undefined ? " The computer and the door below still work." : "";
+  return `${office} ${why}${below}`;
+}
+
+/**
+ * The room's place when it cannot be drawn; in your own office the buttons stay below. A room that
+ * stops drawing takes the focus it held with it, so its note takes that focus instead.
+ */
+export function NoRoom({
   visiting,
   onRetry,
 }: {
   visiting: string | undefined;
   onRetry: (() => void) | null;
 }) {
+  const note = useRef<HTMLParagraphElement>(null);
+  useTakeLostFocus(note, onRetry !== null);
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-4 text-center">
-      <p className="bg-panel rounded-panel shadow-panel max-w-sm p-4">
-        {visiting === undefined
-          ? "The office needs 3D graphics, which this browser does not offer. The computer and the door below still work."
-          : `${visiting}'s office needs 3D graphics, which this browser does not offer.`}
+      <p ref={note} tabIndex={-1} className="bg-panel rounded-panel shadow-panel max-w-sm p-4">
+        {noRoomText(visiting, onRetry !== null)}
       </p>
       {onRetry !== null && (
         <Button variant="ghost" onClick={onRetry}>
@@ -130,14 +142,18 @@ export function OfficeRoom({
   const point = visiting === undefined ? setPointed : still;
   const quality = officeQuality(lite);
   const motion = motionFor("idle", { reducedMotion, lite });
+  const room = useRef<HTMLDivElement>(null);
 
   return (
     <div className="relative isolate flex size-full flex-col">
       <SceneGuard
         fallback={(retry) => <NoRoom visiting={visiting} onRetry={retry} />}
         pending={<div className="min-h-0 flex-1" />}
+        focusAfterRetry={room}
       >
         <div
+          ref={room}
+          tabIndex={-1}
           role="img"
           aria-label={
             visiting === undefined

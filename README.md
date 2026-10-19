@@ -178,20 +178,27 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
 
 ### Corrections and removal
 
-Under the Swiss Federal Act on Data Protection (nDSG), anyone can ask for a page or a single claim
-to be removed from Bern Life. Every claim is a sentence quoted from an institution's public page on
-the date shown beside it, and every place that shows one has a **Wrong or outdated?** note that
-links here; the note only explains, and nothing is sent from the app.
+Bern Life removes on request; the Swiss Federal Act on Data Protection (nDSG) gives the people
+named the right to ask. Every claim is a sentence quoted from an institution's public page on the
+date shown beside it. Every quote and map address in the app has a **Wrong or outdated?** note
+that links to the app's own [`/corrections`](web/app/corrections/page.tsx) page, which says what
+this section says; the note only explains, and nothing is sent from the app.
 
-- **Wrong or outdated:** the institution corrects its own page, and the change reaches Bern Life
-  with the next snapshot bundle.
+- **Wrong or outdated sentence:** the institution corrects its own page, and the change reaches
+  Bern Life with the next snapshot bundle.
+- **Wrong or outdated address:** the map's addresses are not in the bundle but in git, in
+  [`web/features/world/places.json`](web/features/world/places.json) with page, date and sha256
+  per row. One is corrected or removed by a commit to that file, and git history keeps the
+  earlier value.
 - **Removal:** open an issue on this repository with the page link and the sentence (nothing
   else about you is needed), or contact the team at the address given at the hackathon. Others
   can read an issue, so use the address for a request you would rather not make in the open.
-- **What happens:** the page or claim is left out of the next bundle, the earlier release assets
-  that hold it are withdrawn and the hosted copy is reloaded; its nightly backups age out after 14
-  days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)). Git holds no page, so nothing in
-  its history needs rewriting.
+- **What happens:** the page is left out. Its path goes into `deny_paths` in its source's file in
+  [`sources/`](sources/), and a new bundle is built without it and pinned; the earlier release
+  assets that hold it are withdrawn and the hosted copy is reloaded. Its nightly backups age out
+  after 14 days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)). Git holds no page, so
+  nothing in its history needs rewriting. Sentences someone saved to the Library stay in their
+  browser until they remove them.
 
 ## Limits and roadmap
 
@@ -211,6 +218,8 @@ links here; the note only explains, and nothing is sent from the app.
   network of labs and experts. What you save to the Library and your office plot stay on this
   device. A map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the
   repository but not yet drawn in the world.
+- **A single claim cannot be removed on its own.** Removal works per page (`deny_paths`), so
+  asking for one sentence to go takes its whole page out of the next bundle.
 - **Notifications stay in the app** (the bell). Opt-in e-mail or push notifications are not
   decided yet.
 - **The next bundle is not pinned yet.** Replay and every number above come from

@@ -5,17 +5,38 @@
 
 import { Canvas } from "@react-three/fiber";
 import { type KeyboardEvent, type PointerEvent, type ReactNode, useRef, useState } from "react";
-import { ContextLossWatch, SceneGuard } from "@/infrastructure/ui/scene-guard";
+import { Button } from "@/infrastructure/ui/button";
+import { ContextLossWatch, SceneGuard, useTakeLostFocus } from "@/infrastructure/ui/scene-guard";
 import { RADIANS_PER_PIXEL, angleAfterKey, degreesOf, turnLabel } from "./turntable-turn";
 
 const PLATE_COLOUR = "#d9e2ea";
 export const PLATE_AREA = "bg-chip h-72 w-full max-w-sm rounded-[1.5rem] sm:h-96";
 
-/** The plate's place when the browser cannot draw it; every choice beside it still counts. */
-export function NoTurntable() {
+/**
+ * The plate's place when it cannot be drawn; every choice beside it still counts. `onRetry` is
+ * given when trying again may help; a preview that stops drawing takes the focus it held with it,
+ * so this takes that focus instead.
+ */
+export function NoTurntable({ onRetry }: { onRetry: (() => void) | null }) {
+  const plate = useRef<HTMLDivElement>(null);
+  useTakeLostFocus(plate, onRetry !== null);
   return (
-    <div className={`${PLATE_AREA} text-muted flex items-center justify-center p-6 text-center`}>
-      The preview needs 3D graphics, which this browser does not offer. Every choice still counts.
+    <div
+      ref={plate}
+      tabIndex={-1}
+      className={`${PLATE_AREA} text-muted flex flex-col items-center justify-center gap-3 p-6 text-center`}
+    >
+      <p>
+        {onRetry === null
+          ? "The preview needs 3D graphics, which this browser does not offer."
+          : "The preview stopped drawing."}{" "}
+        Every choice still counts.
+      </p>
+      {onRetry !== null && (
+        <Button variant="ghost" onClick={onRetry}>
+          Try the preview again
+        </Button>
+      )}
     </div>
   );
 }
@@ -31,6 +52,7 @@ type TurntableProps = {
 export function Turntable({ label, lite, focusY, children }: TurntableProps) {
   const [angle, setAngle] = useState(0);
   const dragX = useRef<number | null>(null);
+  const plate = useRef<HTMLDivElement>(null);
   const degrees = degreesOf(angle);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -58,8 +80,13 @@ export function Turntable({ label, lite, focusY, children }: TurntableProps) {
 
   return (
     <figure className="flex min-w-0 flex-col items-center gap-2">
-      <SceneGuard fallback={() => <NoTurntable />} pending={<div className={PLATE_AREA} />}>
+      <SceneGuard
+        fallback={(retry) => <NoTurntable onRetry={retry} />}
+        pending={<div className={PLATE_AREA} />}
+        focusAfterRetry={plate}
+      >
         <div
+          ref={plate}
           role="slider"
           tabIndex={0}
           aria-label={label}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type SearchResponse } from "@/infrastructure/contract-types.generated";
 import { ContextLossWatch, SceneGuard } from "@/infrastructure/ui/scene-guard";
 import { type Building, groupPlacesByBuilding } from "./buildings";
@@ -51,31 +51,48 @@ export type WorldCanvasProps = {
   /** The ways in that need no 3D, offered when the browser cannot draw the map. */
   onOpenAsk: () => void;
   onOpenDesk: () => void;
+  /** True while the office covers the map, so the map's card leaves focus alone. */
+  covered?: boolean;
 };
 
 // Without WebGL, or when the scene throws or loses its context for good, a card stands where the
-// map was and the rest of the app carries on.
-export function WorldCanvas({ onOpenAsk, onOpenDesk, ...map }: WorldCanvasProps) {
+// map was and the rest of the app carries on. The map's region takes focus back after a retry.
+export function WorldCanvas({ onOpenAsk, onOpenDesk, covered, ...map }: WorldCanvasProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   return (
     <SceneGuard
+      focusAfterRetry={containerRef}
       fallback={(retry) => (
-        <NoMapCard onOpenAsk={onOpenAsk} onOpenDesk={onOpenDesk} onRetry={retry} />
+        <NoMapCard
+          onOpenAsk={onOpenAsk}
+          onOpenDesk={onOpenDesk}
+          onRetry={retry}
+          covered={covered === true}
+        />
       )}
     >
-      <WorldMap {...map} />
+      <WorldMap {...map} containerRef={containerRef} />
     </SceneGuard>
   );
 }
 
-type WorldMapProps = Omit<WorldCanvasProps, "onOpenAsk" | "onOpenDesk">;
+type WorldMapProps = Omit<WorldCanvasProps, "onOpenAsk" | "onOpenDesk" | "covered"> & {
+  containerRef: RefObject<HTMLDivElement | null>;
+};
 
 // Transparent so the shell's sky shows through; "demand" renders only when something changes.
-function WorldMap({ agent, onAgentOpen, onSearchHere, onPlacePanel, demoSearch }: WorldMapProps) {
+function WorldMap({
+  agent,
+  onAgentOpen,
+  onSearchHere,
+  onPlacePanel,
+  demoSearch,
+  containerRef,
+}: WorldMapProps) {
   const display = useWorldDisplay();
   const palette = paletteFor(display.night);
   const shadows = !display.lite;
   const cameraRef = useRef<CameraHandle | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const anchorsRef = useRef(new Map<string, HTMLElement>());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const selected = BUILDINGS.find((building) => building.key === selectedKey) ?? null;
@@ -112,7 +129,7 @@ function WorldMap({ agent, onAgentOpen, onSearchHere, onPlacePanel, demoSearch }
     containerRef.current
       ?.querySelector<HTMLButtonElement>(`[data-building="${CSS.escape(selectedKey)}"]`)
       ?.focus();
-  }, [selectedKey]);
+  }, [containerRef, selectedKey]);
   const runCamera = useCallback((command: CameraCommand) => cameraRef.current?.run(command), []);
   const selectBuilding = useCallback((key: string) => {
     setSelectedKey(key);
@@ -125,6 +142,7 @@ function WorldMap({ agent, onAgentOpen, onSearchHere, onPlacePanel, demoSearch }
     <div
       ref={containerRef}
       role="region"
+      tabIndex={-1}
       aria-label="Map of Bern"
       aria-describedby="map-keys"
       className="relative isolate size-full"

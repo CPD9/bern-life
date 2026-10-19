@@ -1,11 +1,11 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, mock, test } from "bun:test";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { assumeWebgl } from "@/infrastructure/webgl";
 
 // three.js has to finish loading as a module before the canvas library requires it, or Bun can
 // refuse the require part of the time; a test file loads both at once unless told otherwise.
 await import("three");
-const { OfficeRoom } = await import("./office-room");
+const { NoRoom, OfficeRoom } = await import("./office-room");
 
 function renderRoom() {
   const calls: string[] = [];
@@ -63,6 +63,24 @@ describe("OfficeRoom", () => {
         ),
       ).toBeTruthy();
       expect(screen.queryAllByRole("button")).toEqual([]);
+    });
+  });
+
+  describe("a room that stopped drawing", () => {
+    test("says so without blaming the browser, offers to try again and takes lost focus", () => {
+      const onRetry = mock(() => undefined);
+      render(<NoRoom visiting={undefined} onRetry={onRetry} />);
+      const note = screen.getByText(
+        "The office stopped drawing. The computer and the door below still work.",
+      );
+      expect(document.activeElement).toBe(note);
+      fireEvent.click(screen.getByRole("button", { name: "Try the room again" }));
+      expect(onRetry).toHaveBeenCalledTimes(1);
+    });
+
+    test("a visited office says whose it is", () => {
+      render(<NoRoom visiting="Lena Beispiel" onRetry={() => undefined} />);
+      expect(screen.getByText("Lena Beispiel's office stopped drawing.")).toBeTruthy();
     });
   });
 });

@@ -43,6 +43,7 @@ export function WorldScene({ view, person, bear, agentName, lite, ...props }: Wo
         onPlacePanel={props.onPlacePanel}
         onOpenAsk={props.onOpenAsk}
         onOpenDesk={props.onUseDesk}
+        covered={view === "home"}
       />
       {view === "home" && (
         <OfficeView

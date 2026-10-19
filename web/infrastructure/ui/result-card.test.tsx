@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { AppEventName } from "@/infrastructure/app-events";
 import { copyOf, resultFixture, viaFixture } from "@/test/fixtures";
-import { CORRECTIONS_URL } from "./claim-evidence";
+import { CORRECTIONS_PATH } from "./claim-evidence";
 import { ResultCard } from "./result-card";
 
 const firstResult = () => copyOf(resultFixture.results[0]!);
@@ -75,9 +75,10 @@ describe("ResultCard: correcting a sentence", () => {
     const link = note().querySelector("a")!;
     expect([link.textContent, link.getAttribute("href")]).toEqual([
       "Corrections and removal",
-      CORRECTIONS_URL,
+      CORRECTIONS_PATH,
     ]);
-    expect(CORRECTIONS_URL).toBe("https://github.com/CPD9/bern-life#corrections-and-removal");
+    // The app's own page, so the link works wherever the app runs.
+    expect(CORRECTIONS_PATH).toBe("/corrections");
     // It explains and links; it collects nothing and sends nothing.
     expect(note().querySelector("form, input, textarea, select, button")).toBeNull();
   });

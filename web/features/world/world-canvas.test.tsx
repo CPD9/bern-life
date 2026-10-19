@@ -12,6 +12,8 @@ const { worldSearch } = await import("./world-search");
 
 const NO_MAP =
   "The map needs 3D graphics, which this browser does not offer. Ask, the office desk and every app still work.";
+// A map that threw or lost its context: the browser is not to blame, and trying again may help.
+const STOPPED = "The map stopped drawing. Ask, the office desk and every app still work.";
 
 // Unmounted first, so putting WebGL back re-renders nothing outside act().
 afterEach(() => {
@@ -20,7 +22,11 @@ afterEach(() => {
   worldSearch.clear();
 });
 
-type WorldProps = { demoSearch?: SearchResponse; onPlacePanel?: (open: boolean) => void };
+type WorldProps = {
+  demoSearch?: SearchResponse;
+  onPlacePanel?: (open: boolean) => void;
+  covered?: boolean;
+};
 
 function renderWorld(props: WorldProps = {}) {
   const onOpenAsk = mock(() => undefined);
@@ -59,6 +65,8 @@ test("without WebGL a card stands where the map was and opens Ask and the office
   expect(document.querySelector("[data-building]")).toBeNull();
   // Trying again cannot help a browser that offers no WebGL at all.
   expect(screen.queryByRole("button", { name: "Try the map again" })).toBeNull();
+  // Nothing was lost at load, so the card leaves focus where the page put it.
+  expect(document.activeElement).toBe(document.body);
   fireEvent.click(screen.getByRole("button", { name: "Open Ask" }));
   expect(onOpenAsk).toHaveBeenCalledTimes(1);
   fireEvent.click(screen.getByRole("button", { name: "Open the office desk" }));
@@ -73,8 +81,11 @@ test("a map that throws gives way to the same card, with a way to try again", ()
     const told: boolean[] = [];
     const onPlacePanel = (open: boolean) => void told.push(open);
     const { onOpenDesk, rerender } = renderWorld({ demoSearch: broken, onPlacePanel });
-    expect(screen.getByText(NO_MAP)).toBeTruthy();
+    expect(screen.getByText(STOPPED)).toBeTruthy();
+    expect(screen.queryByText(NO_MAP)).toBeNull();
     expect(document.querySelector("[data-building]")).toBeNull();
+    // Focus that went with the map lands on its card.
+    expect(document.activeElement).toBe(screen.getByRole("region", { name: "Map of Bern" }));
     // The map's last word to the host is that no panel is open.
     expect(told.at(-1)).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Open the office desk" }));
@@ -83,9 +94,26 @@ test("a map that throws gives way to the same card, with a way to try again", ()
     // Once what broke it is gone, trying again brings the map back.
     rerender({ onPlacePanel });
     act(() => worldSearch.clear());
-    act(() => fireEvent.click(screen.getByRole("button", { name: "Try the map again" })));
-    expect(screen.queryByText(NO_MAP)).toBeNull();
+    const retry = screen.getByRole("button", { name: "Try the map again" });
+    act(() => retry.focus());
+    act(() => fireEvent.click(retry));
+    expect(screen.queryByText(STOPPED)).toBeNull();
     expect(document.querySelector("[data-building]")).not.toBeNull();
+    // The button went with the card; the map's region takes the focus it held.
+    expect(document.activeElement).toBe(screen.getByRole("region", { name: "Map of Bern" }));
+    expect(document.activeElement!.querySelector("canvas")).not.toBeNull();
+  } finally {
+    quiet.mockRestore();
+  }
+});
+
+test("a map that stops drawing behind the office leaves focus alone", () => {
+  const quiet = spyOn(console, "error").mockImplementation(() => undefined);
+  try {
+    const broken = { ...resultFixture, results: null } as unknown as SearchResponse;
+    renderWorld({ demoSearch: broken, covered: true });
+    expect(screen.getByText(STOPPED)).toBeTruthy();
+    expect(document.activeElement).toBe(document.body);
   } finally {
     quiet.mockRestore();
   }

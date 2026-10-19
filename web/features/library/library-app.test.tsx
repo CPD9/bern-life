@@ -78,15 +78,18 @@ describe("LibraryApp", () => {
     expect(screen.getByText("No documents uploaded to your account yet.")).toBeTruthy();
   });
 
-  test("a saved sentence says how it is corrected or removed", async () => {
+  test("a saved sentence says how it is corrected or removed, and that the copy stays", async () => {
     const store = memoryStore();
     store.save(savedItem("demo-a"));
     await renderLibrary({ status: "signed-out" }, store);
     const note = screen.getByText("Wrong or outdated?").closest("details")!;
     expect(note.textContent).toContain("quoted from the institution's page as Bern Life stored it");
-    expect(note.querySelector("a")!.getAttribute("href")).toBe(
-      "https://github.com/CPD9/bern-life#corrections-and-removal",
+    // A removal from Bern Life never reaches what a browser keeps.
+    expect(note.textContent).toContain(
+      "Your saved copy stays as it is in this browser until you remove it;",
     );
+    expect(note.textContent).not.toContain("next snapshot");
+    expect(note.querySelector("a")!.getAttribute("href")).toBe("/corrections");
   });
 
   test("removing moves focus to the next item, then the previous, then the heading", async () => {

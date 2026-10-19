@@ -21,7 +21,8 @@ type WorldLumiInput = {
   fixtureMode: boolean;
   /** The Ask app's Navigator, which shows the answer holding a profile Lumi opens. */
   navigator: Pick<NavigatorController, "show">;
-  onShowOnMap: (response: SearchResponse) => void;
+  /** Shows an answer on the map; absent when the map cannot be drawn, so Lumi does not offer it. */
+  onShowOnMap: ((response: SearchResponse) => void) | undefined;
   onOpenAsk: () => void;
   /** Saves Lumi's answer as a match report for the desk's Reports window; false when it cannot. */
   onMakeReport: (response: SearchResponse) => boolean;
@@ -67,7 +68,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
   }
 
   function showOnMap(response: SearchResponse) {
-    closeThen(() => input.onShowOnMap(response));
+    closeThen(() => input.onShowOnMap?.(response));
   }
 
   // Ask shows the answer that lists the profile, as it came, without asking the engine again.
@@ -111,7 +112,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
         bear={open && <SmallBear config={bear} />}
         engineMode={input.engineMode}
         api={input.api ?? httpLumiApi}
-        onShowOnMap={showOnMap}
+        onShowOnMap={input.onShowOnMap && showOnMap}
         onOpenProfile={openProfile}
         onStartMatchReport={startMatchReport}
       />

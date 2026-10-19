@@ -26,9 +26,10 @@ type HarnessProps = {
   events: AppEvents;
   store: StoryStore;
   onShowMe: (target: ShowMeTarget) => void;
+  canShow?: (target: ShowMeTarget) => boolean;
 };
 
-function Harness({ events, store, onShowMe }: HarnessProps) {
+function Harness({ events, store, onShowMe, canShow }: HarnessProps) {
   const controller = useStory({
     story: storyFixture,
     demo: false,
@@ -38,7 +39,12 @@ function Harness({ events, store, onShowMe }: HarnessProps) {
   });
   return (
     <>
-      <QuestPanel controller={controller} onShowMe={onShowMe} onOpenMenu={() => undefined} />
+      <QuestPanel
+        controller={controller}
+        onShowMe={onShowMe}
+        canShow={canShow}
+        onOpenMenu={() => undefined}
+      />
       <CriteriaChecklist controller={controller} />
     </>
   );
@@ -62,6 +68,21 @@ describe("QuestPanel", () => {
     act(() => events.emit("search_answered"));
     expect(screen.getByText("Open the sentence that proves a result.")).toBeTruthy();
     expect(screen.getAllByRole("img", { name: "1 of 2 steps done" })).toHaveLength(1);
+  });
+
+  test("a place the host cannot take the player to leaves Show me with the hint alone", () => {
+    const targets: ShowMeTarget[] = [];
+    render(
+      <Harness
+        events={createAppEvents()}
+        store={memoryStore()}
+        onShowMe={(target) => targets.push(target)}
+        canShow={(target) => target !== "ask"}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show me" }));
+    expect(targets).toEqual([]);
+    expect(screen.getByText("Try 'glucose sensors' or 'blood sugar monitoring'.")).toBeTruthy();
   });
 
   test("the checklist lights a criterion only when its quest is done", () => {

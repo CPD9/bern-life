@@ -1,4 +1,5 @@
-import { CORRECTIONS_URL } from "@/infrastructure/ui/claim-evidence";
+import { useSyncExternalStore } from "react";
+import { CORRECTIONS_PATH } from "@/infrastructure/ui/claim-evidence";
 
 // Paper has no hover, so the meaning of every number is printed with the report
 // (docs/match-report-design.md, "Hover doesn't exist on paper").
@@ -10,7 +11,21 @@ export const legendRules = [
   "Completeness counts the five profile fields the public pages fill. It describes the pages, not the expert.",
 ] as const;
 
+const noChange = () => () => undefined;
+
+/** Where the app is served from, for an address on paper; empty on the server and off the web. */
+function servedHost(): string {
+  return /^https?:$/.test(window.location.protocol) ? window.location.host : "";
+}
+
+/** The corrections page's address as paper prints it: the path alone until the host is known. */
+function useCorrectionsAddress(): string {
+  const host = useSyncExternalStore(noChange, servedHost, () => "");
+  return `${host}${CORRECTIONS_PATH}`;
+}
+
 export function ReportLegend() {
+  const corrections = useCorrectionsAddress();
   return (
     <section className="flex break-inside-avoid flex-col gap-2 text-sm">
       <h2 className="font-extrabold">How to read this report</h2>
@@ -25,9 +40,9 @@ export function ReportLegend() {
       </p>
       <p className="text-muted">
         A quote that is wrong or outdated is corrected on its page and reaches Bern Life with the
-        next snapshot. To ask for a page or a claim to be removed from Bern Life, see{" "}
-        <a href={CORRECTIONS_URL} target="_blank" rel="noopener noreferrer" className="underline">
-          {CORRECTIONS_URL.replace("https://", "")}
+        next snapshot. To ask for a quote to be removed from Bern Life, see{" "}
+        <a href={CORRECTIONS_PATH} target="_blank" rel="noopener noreferrer" className="underline">
+          {corrections}
         </a>
         .
       </p>

@@ -45,7 +45,7 @@ function floatie() {
   return button;
 }
 
-function setUp(api: LumiApi, { reportSaved = true } = {}) {
+function setUp(api: LumiApi, { reportSaved = true, mapDrawn = true } = {}) {
   const shown: SearchResponse[] = [];
   const focusWhen: Record<string, Element | null> = {};
   const navigator = { show: (response: SearchResponse) => void shown.push(response) };
@@ -66,7 +66,7 @@ function setUp(api: LumiApi, { reportSaved = true } = {}) {
       engineMode: "mock",
       fixtureMode: true,
       navigator,
-      onShowOnMap: calls.shownOnMap,
+      onShowOnMap: mapDrawn ? calls.shownOnMap : undefined,
       onOpenAsk: calls.askOpened,
       onMakeReport: calls.reportMade,
       onOpenReports: calls.reportsOpened,
@@ -101,6 +101,17 @@ test("show on map closes the chat and shows Lumi's answer on the map, once", asy
   // The map hides the floatie only once focus is back on it, so the shell can move focus on.
   expect(focusWhen["map"]).toBe(opener);
   expect(document.activeElement).toBe(opener);
+});
+
+test("without a map to draw, Lumi neither shows the answer there nor offers to", async () => {
+  floatie();
+  const { result, refresh, calls } = setUp(lumiAnswering([{ type: "show_on_map", result: 0 }]), {
+    mapDrawn: false,
+  });
+  await ask(refresh, result.current.open, "glucose sensors");
+  expect(calls.shownOnMap).not.toHaveBeenCalled();
+  expect(document.querySelector("dialog")!.open).toBe(true);
+  expect(screen.queryByRole("button", { name: "Show on the map" })).toBeNull();
 });
 
 test("open profile shows Lumi's answer in Ask once the chat has given focus back", async () => {

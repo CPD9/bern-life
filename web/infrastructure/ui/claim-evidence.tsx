@@ -36,31 +36,54 @@ export function ClaimButton({ claim, open, cited, panelId, onToggle }: ClaimButt
   );
 }
 
-/** The README section on having a page or a claim corrected or removed. */
-export const CORRECTIONS_URL = "https://github.com/CPD9/bern-life#corrections-and-removal";
+/** The app's own page on having a quote corrected or removed (app/corrections), so the notes
+ * that link to it work wherever the app runs. */
+export const CORRECTIONS_PATH = "/corrections";
+
+/** What a quote is, as the note names it, and how a correction on its page reaches Bern Life. */
+const quotes = {
+  sentence: {
+    noun: "sentence",
+    corrected: "A correction made on that page reaches Bern Life with the next snapshot",
+    ask: "to ask for its removal from Bern Life",
+  },
+  address: {
+    noun: "address",
+    corrected:
+      "Addresses are kept in Bern Life's repository and corrected there by a change to places.json, not by the next snapshot",
+    ask: "to ask for a correction or its removal",
+  },
+  saved: {
+    noun: "sentence",
+    corrected: "Your saved copy stays as it is in this browser until you remove it",
+    ask: "to ask for its removal from Bern Life",
+  },
+} as const;
 
 type CorrectionNoteProps = {
   fetchedAt?: string | null | undefined;
-  /** What is quoted, as the note names it: a sentence unless said otherwise. */
-  quoted?: "sentence" | "address";
+  /** What is quoted: a sentence from the snapshot (the default), a map address, or a sentence the
+   * player saved to the Library. */
+  quoted?: keyof typeof quotes;
 };
 
 /**
- * How a quoted sentence gets corrected or removed, folded away under one quiet line. It only
- * explains: nothing here sends anything, and its one link opens the README's section.
+ * How a quote gets corrected or removed, folded away under one quiet line. It only explains:
+ * nothing here sends anything, and its one link opens the app's Corrections and removal page.
  */
 export function CorrectionNote({ fetchedAt, quoted = "sentence" }: CorrectionNoteProps) {
   const when = fetchedAt
     ? `as it read on ${fetchedFormat.format(new Date(fetchedAt))}`
     : "as Bern Life stored it";
+  const quote = quotes[quoted];
   return (
     <details className="text-muted">
       <summary className="w-fit cursor-pointer">Wrong or outdated?</summary>
       <p className="mt-1">
-        This {quoted} is quoted from the institution&apos;s page {when}. A correction made on that
-        page reaches Bern Life with the next snapshot; to ask for its removal from Bern Life, see{" "}
+        This {quote.noun} is quoted from the institution&apos;s page {when}. {quote.corrected};{" "}
+        {quote.ask}, see{" "}
         <a
-          href={CORRECTIONS_URL}
+          href={CORRECTIONS_PATH}
           target="_blank"
           rel="noopener noreferrer"
           className="text-ink underline"

@@ -24,6 +24,7 @@ export function AvatarTurntable({ config, lite }: { config: BearConfig; lite: bo
   const [walking, toggleWalking] = useWalking(reducedMotion);
   const motion = motionFor(walking ? "walk" : "idle", { reducedMotion, lite });
   const dragX = useRef<number | null>(null);
+  const plate = useRef<HTMLDivElement>(null);
   const degrees = degreesOf(angle);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -51,8 +52,13 @@ export function AvatarTurntable({ config, lite }: { config: BearConfig; lite: bo
 
   return (
     <figure className="flex min-w-0 flex-col items-center gap-2">
-      <SceneGuard fallback={() => <NoTurntable />} pending={<div className={PLATE_AREA} />}>
+      <SceneGuard
+        fallback={(retry) => <NoTurntable onRetry={retry} />}
+        pending={<div className={PLATE_AREA} />}
+        focusAfterRetry={plate}
+      >
         <div
+          ref={plate}
           role="slider"
           tabIndex={0}
           aria-label="Turn your avatar"
