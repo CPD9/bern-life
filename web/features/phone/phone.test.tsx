@@ -167,10 +167,16 @@ describe("Phone", () => {
     expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Ask" }));
   });
 
-  test("an overlay renders inside the phone's dialog", () => {
+  test("an overlay renders inside the phone's dialog, below an open app's header", async () => {
     render(<Harness overlay={<p>Toast here</p>} />);
     openPhone();
+    const box = () => document.querySelector("[data-phone-overlay]")!;
     expect(document.querySelector("dialog")!.contains(screen.getByText("Toast here"))).toBe(true);
+    expect(box().classList.contains("top-0")).toBe(true);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
+    expect(box().classList.contains("top-14")).toBe(true);
+    expect(box().classList.contains("top-0")).toBe(false);
+    expect(box().contains(screen.getByRole("button", { name: "Back" }))).toBe(false);
   });
 
   test("Close shuts the phone and gives focus back to what opened it", async () => {
