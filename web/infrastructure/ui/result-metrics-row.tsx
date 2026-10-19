@@ -1,11 +1,20 @@
 import type { SearchResult } from "@/infrastructure/claims";
-import { type MetricBar, metricBars, metricMeanings, noveltyChip } from "./result-metrics";
+import {
+  type MetricBar,
+  metricBars,
+  metricMeanings,
+  missingTopics,
+  noveltyChip,
+} from "./result-metrics";
 
 // The number sits next to its label and the track below, so a card reads in a glance: three short
 // bars, then the topics as chips. The meanings fold away under one closed line.
+// A bar is never narrower than 88 px, which holds "Completeness 5/5" at 12 px, and never wider
+// than 128 px. Three bars at their narrowest with their two 12 px gaps are 288 px, inside the
+// 310 px of card content on the 400 px phone, so the row holds one line down to 390 px.
 function Bar({ label, value, now, max }: MetricBar) {
   return (
-    <li className="flex w-22 flex-col gap-1">
+    <li className="flex min-w-22 max-w-32 flex-1 flex-col gap-1">
       <span className="flex items-baseline justify-between gap-2 text-xs">
         <span className="text-muted">{label}</span>
         <strong className="tabular-nums">{value}</strong>
@@ -34,14 +43,16 @@ function Bar({ label, value, now, max }: MetricBar) {
 
 const chip = "rounded-pill px-2.5 py-0.5 text-xs font-bold";
 
-export function ResultMetricsRow({ metrics }: { metrics: SearchResult["metrics"] }) {
+export function ResultMetricsRow({ result }: { result: SearchResult }) {
+  const { metrics } = result;
   if (!metrics) return null;
-  const bars = metricBars(metrics);
+  const bars = metricBars(result);
+  const missing = missingTopics(result);
   const novelty = noveltyChip(metrics);
-  const topics = metrics.covers.length > 0 || metrics.missing.length > 0 || novelty !== null;
+  const topics = metrics.covers.length > 0 || missing.length > 0 || novelty !== null;
   return (
     <section aria-label="How well this result fits" className="flex flex-col gap-2 text-sm">
-      <ul aria-label="Scores" className="flex flex-wrap gap-x-4 gap-y-2">
+      <ul aria-label="Scores" className="flex flex-wrap gap-x-3 gap-y-2">
         {bars.map((bar) => (
           <Bar key={bar.label} {...bar} />
         ))}
@@ -55,7 +66,7 @@ export function ResultMetricsRow({ metrics }: { metrics: SearchResult["metrics"]
               <span className="sr-only"> (found)</span>
             </li>
           ))}
-          {metrics.missing.map((topic) => (
+          {missing.map((topic) => (
             <li key={`missing-${topic}`} className={`bg-chip text-muted ${chip}`}>
               {topic} missing
             </li>

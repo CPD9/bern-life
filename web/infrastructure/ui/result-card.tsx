@@ -118,7 +118,7 @@ export function ResultCard({ result, events = appEvents }: ResultCardProps) {
         </div>
       </header>
       {nameOpen && <EvidencePanel claim={profile.name} id={`${baseId}-name-evidence`} />}
-      <ResultMetricsRow metrics={result.metrics} />
+      <ResultMetricsRow result={result} />
 
       <dl className="flex flex-col gap-3">
         {presentFields(profile).map(({ field, claims }) => (
