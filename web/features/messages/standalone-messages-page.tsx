@@ -2,8 +2,17 @@
 
 import { connectLive } from "./live-client";
 import { httpMessagesApi } from "./messages-api";
-import { StandaloneMessages } from "./messages-app";
+import { type StartWith, StandaloneMessages } from "./messages-app";
 
-export function StandaloneMessagesPage() {
-  return <StandaloneMessages api={httpMessagesApi} connect={connectLive} />;
+type PageProps = { startWith?: StartWith | undefined; onStarted?: (() => void) | undefined };
+
+export function StandaloneMessagesPage({ startWith, onStarted }: PageProps) {
+  return (
+    <StandaloneMessages
+      api={httpMessagesApi}
+      connect={connectLive}
+      startWith={startWith}
+      onStarted={onStarted}
+    />
+  );
 }

@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { abstainedFixture, resultFixture } from "@/test/fixtures";
 import type { AgentReply } from "./agent-reply";
@@ -15,10 +17,15 @@ import {
   scripted,
 } from "./test-harness";
 
-const demoBrief =
-  "Muster Medtech AG (an invented company) is building a night-time alarm for people with type 1 diabetes who live alone. We need partners in Bern for continuous glucose sensing, for detecting sleep and movement at night, and for testing such a device with older patients.";
-const demoQuestion =
-  "Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?";
+// The first user turn of each conversation recorded for the agent (infra/demo/agent.jsonl).
+const recordedFirstTurns = readFileSync(
+  join(import.meta.dir, "..", "..", "..", "infra", "demo", "agent.jsonl"),
+  "utf8",
+)
+  .split("\n")
+  .filter((line) => line.trim() !== "")
+  .map((line) => (JSON.parse(line) as { turns: [string, ...string[]] }).turns[0]);
+const demoQuestion = "Who works on glucose sensors at DCB?";
 
 describe("LumiChat", () => {
   test("opens with focus in the message box and gives focus back on close", async () => {
@@ -32,8 +39,8 @@ describe("LumiChat", () => {
     expect(document.activeElement).toBe(opener);
   });
 
-  test("the suggestions are docs/demo.md steps 1 and 2, word for word", () => {
-    expect(suggestions.map((suggestion) => suggestion.text)).toEqual([demoBrief, demoQuestion]);
+  test("the suggestions are the recorded first turns, word for word", () => {
+    expect(suggestions.map((suggestion) => suggestion.text)).toEqual(recordedFirstTurns);
   });
 
   test("a suggestion sends its exact words, then focus is in the message box", async () => {

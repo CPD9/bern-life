@@ -9,10 +9,10 @@ import { OrthographicCamera } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { type ReactNode, useState } from "react";
 import { type BearConfig } from "@/features/avatar/bear-config";
-import { Button } from "@/infrastructure/ui/button";
-import { ContextLossWatch, SceneGuard } from "@/infrastructure/ui/scene-guard";
 import { BearFigure } from "@/features/avatar/bear-figure";
 import { motionFor } from "@/features/avatar/bear-motion";
+import { Button } from "@/infrastructure/ui/button";
+import { ContextLossWatch, SceneGuard } from "@/infrastructure/ui/scene-guard";
 import { type HotspotId, hotspot } from "./hotspot";
 import { Bookshelf, Chair, Desk, Picture, Plant } from "./office-furniture";
 import { CAMERA_POSITION, LOOK_AT, LUMI_SPOT, PLAYER_SPOT, fitZoom } from "./office-layout";
@@ -28,16 +28,24 @@ export const LUMI: BearConfig = {
   accessory: "scarf",
 };
 
-export type OfficeRoomProps = {
+type RoomLook = {
   lite: boolean;
   reducedMotion: boolean;
   /** The player's figure, standing on the rug; a plain stand-in when absent. */
   player?: ReactNode;
   /** The player's agent bear; Lumi's default look when absent. */
   agent?: BearConfig;
-  onUseDesk: () => void;
-  onGoOutside: () => void;
 };
+
+/** Your own office: the desk sits you down, the door takes you outside. */
+type OwnRoom = { visiting?: undefined; onUseDesk: () => void; onGoOutside: () => void };
+
+/** Someone else's office, read-only: named for its owner, nothing in it does anything. */
+type VisitedRoom = { visiting: string; onUseDesk?: undefined; onGoOutside?: undefined };
+
+export type OfficeRoomProps = RoomLook & (OwnRoom | VisitedRoom);
+
+const still = () => undefined;
 
 function FitCamera() {
   const size = useThree((state) => state.size);
@@ -85,13 +93,20 @@ function StandIn() {
   );
 }
 
-/** The room's place when the browser cannot draw it; the computer and the door stay below. */
-function NoRoom({ onRetry }: { onRetry: (() => void) | null }) {
+/** The room's place when the browser cannot draw it; in your own office the buttons stay below. */
+function NoRoom({
+  visiting,
+  onRetry,
+}: {
+  visiting: string | undefined;
+  onRetry: (() => void) | null;
+}) {
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-4 text-center">
       <p className="bg-panel rounded-panel shadow-panel max-w-sm p-4">
-        The office needs 3D graphics, which this browser does not offer. The computer and the door
-        below still work.
+        {visiting === undefined
+          ? "The office needs 3D graphics, which this browser does not offer. The computer and the door below still work."
+          : `${visiting}'s office needs 3D graphics, which this browser does not offer.`}
       </p>
       {onRetry !== null && (
         <Button variant="ghost" onClick={onRetry}>
@@ -107,22 +122,28 @@ export function OfficeRoom({
   reducedMotion,
   player,
   agent = LUMI,
-  onUseDesk,
-  onGoOutside,
+  visiting,
+  onUseDesk = still,
+  onGoOutside = still,
 }: OfficeRoomProps) {
   const [pointed, setPointed] = useState<HotspotId | null>(null);
+  const point = visiting === undefined ? setPointed : still;
   const quality = officeQuality(lite);
   const motion = motionFor("idle", { reducedMotion, lite });
 
   return (
     <div className="relative isolate flex size-full flex-col">
       <SceneGuard
-        fallback={(retry) => <NoRoom onRetry={retry} />}
+        fallback={(retry) => <NoRoom visiting={visiting} onRetry={retry} />}
         pending={<div className="min-h-0 flex-1" />}
       >
         <div
           role="img"
-          aria-label="Your office: a desk with a computer and your agent beside it, a bookshelf, a plant, a window and the door"
+          aria-label={
+            visiting === undefined
+              ? "Your office: a desk with a computer and your agent beside it, a bookshelf, a plant, a window and the door"
+              : `${visiting}'s office, as a visitor sees it: a desk with a computer and their agent beside it, a bookshelf, a plant, a window and the door`
+          }
           className={`min-h-0 flex-1 ${pointed === null ? "" : "cursor-pointer"}`}
         >
           {/* Shadows and pixel ratio are fixed when the renderer is created, so lite mode remounts it. */}
@@ -139,9 +160,9 @@ export function OfficeRoom({
             <OfficeQualityProvider value={quality}>
               <OfficeShell
                 doorGlow={pointed === "door"}
-                door={hotspot("door", onGoOutside, setPointed)}
+                door={hotspot("door", onGoOutside, point)}
               />
-              <Desk glow={pointed === "desk"} handlers={hotspot("desk", onUseDesk, setPointed)} />
+              <Desk glow={pointed === "desk"} handlers={hotspot("desk", onUseDesk, point)} />
               <Chair />
               <Bookshelf />
               <Plant />
@@ -156,22 +177,24 @@ export function OfficeRoom({
           </Canvas>
         </div>
       </SceneGuard>
-      <div className="flex flex-wrap justify-center gap-2 p-4">
-        <button
-          type="button"
-          onClick={onUseDesk}
-          className="bg-primary text-primary-ink rounded-pill px-5 py-2.5 font-extrabold"
-        >
-          Use the computer
-        </button>
-        <button
-          type="button"
-          onClick={onGoOutside}
-          className="bg-chip rounded-pill px-5 py-2.5 font-bold"
-        >
-          Go outside
-        </button>
-      </div>
+      {visiting === undefined && (
+        <div className="flex flex-wrap justify-center gap-2 p-4">
+          <button
+            type="button"
+            onClick={onUseDesk}
+            className="bg-primary text-primary-ink rounded-pill px-5 py-2.5 font-extrabold"
+          >
+            Use the computer
+          </button>
+          <button
+            type="button"
+            onClick={onGoOutside}
+            className="bg-chip rounded-pill px-5 py-2.5 font-bold"
+          >
+            Go outside
+          </button>
+        </div>
+      )}
     </div>
   );
 }

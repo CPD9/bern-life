@@ -116,7 +116,7 @@ export function Toasts({
     let seen = new Set(store.list().map((item) => item.id));
     return store.subscribe(() => {
       const items = store.list();
-      const fresh = items.filter((item) => !seen.has(item.id) && !item.read);
+      const fresh = items.filter((item) => !seen.has(item.id) && !item.read && !item.earlier);
       seen = new Set(items.map((item) => item.id));
       if (fresh.length > 0) setShown((current) => [...fresh, ...current].slice(0, MAX_TOASTS));
     });
