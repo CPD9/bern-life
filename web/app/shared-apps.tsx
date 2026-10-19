@@ -17,7 +17,7 @@ import type { SearchResult } from "@/infrastructure/claims";
 // only report what happened (a save, a visit); the app turns that into the story's events.
 
 /** A save completes "keep it in your library", and "save an opportunity" when it is one. */
-export function emitSaved(events: AppEventSink): (item: LibraryItem) => void {
+function emitSaved(events: AppEventSink): (item: LibraryItem) => void {
   return (item) => {
     for (const name of savedEventNames(item)) events.emit(name);
   };
