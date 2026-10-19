@@ -10,6 +10,8 @@ export type PhoneApp = {
   readonly dock?: boolean;
   /** A count on the tile (unread messages, say). No badge for 0 or when unknown. */
   readonly badge?: number | undefined;
+  /** Apps with the same group sit together under this heading, above the ungrouped ones. */
+  readonly group?: string;
 };
 
 /** The engine's state, the same shape the HUD reads from /api/health. */
