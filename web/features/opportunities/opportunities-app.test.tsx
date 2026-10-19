@@ -85,6 +85,20 @@ describe("OpportunitiesApp", () => {
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
+  test("a refusal over the limit says to wait and offers no retry", async () => {
+    render(
+      <OpportunitiesApp
+        fixtureMode={false}
+        api={answering({ ok: false, failure: "rate_limited" })}
+      />,
+    );
+    await ask("seed funding");
+    expect(screen.getByRole("status").textContent).toBe(
+      "Too many requests from here right now; try again in a few minutes.",
+    );
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
   test("an engine error offers a retry that sends the same request again", async () => {
     const sent: OpportunityRequest[] = [];
     render(

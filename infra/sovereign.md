@@ -14,9 +14,9 @@ Peter's go-ahead.
 
 The 70B FP8 build ran on one 96 GB GPU (RTX PRO 6000 Blackwell); an 80 GB card is untested and may
 be too small for the weights plus the cache at `--max-model-len 16384`. The scripts were written
-for a two-GPU pod: `serve_70b.sh` sets `CUDA_VISIBLE_DEVICES=1`, and the optional 8B uses GPU 0. On
-a host with one GPU, change that 1 to 0 in `serve_70b.sh` first; the script sets the variable
-itself, so one from the shell does not override it. The scripts keep the virtualenv and the Hugging
+for a two-GPU pod: `serve_70b.sh` uses GPU 1 and the optional 8B GPU 0, unless
+`CUDA_VISIBLE_DEVICES` is set in the shell. On a host with one GPU, run
+`CUDA_VISIBLE_DEVICES=0 bash serve_70b.sh`. The scripts keep the virtualenv and the Hugging
 Face cache in `/workspace`; on another machine, make that directory on a disk with room for the
 weights (about 70 GB for the 70B FP8).
 

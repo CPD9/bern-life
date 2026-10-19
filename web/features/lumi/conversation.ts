@@ -59,6 +59,17 @@ export function isBusy(turn: Turn | undefined): boolean {
   return turn?.lumi.status === "waiting" || turn?.search?.status === "waiting";
 }
 
+/**
+ * An unanswered turn that has settled may be sent again, unless a request was over the limit: it
+ * would be refused again, and a refused request counts too, so the wait would only grow.
+ */
+export function canRetry(turn: Turn): boolean {
+  const overLimit =
+    (turn.lumi.status === "failed" && turn.lumi.failure === "rate_limited") ||
+    (turn.search?.status === "failed" && turn.search.failure === "rate_limited");
+  return !isAnswered(turn) && !isBusy(turn) && !overLimit;
+}
+
 /** The cards of every search behind a reply, each profile once, in the order they came. */
 export function answerCards(results: readonly SearchResponse[]): SearchResult[] {
   const seen = new Set<string>();

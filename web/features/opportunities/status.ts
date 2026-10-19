@@ -4,6 +4,7 @@ import type { OpportunitiesState } from "./use-opportunities";
 const failureText: Record<OpportunitiesFailure, string> = {
   not_connected: "Opportunity search is not connected yet.",
   bad_request: "The search could not read this request. Try rephrasing it.",
+  rate_limited: "Too many requests from here right now; try again in a few minutes.",
   engine_error: "The search is not answering right now. Try again in a moment.",
   network: "We could not reach the Bern Life server. Check your connection and try again.",
 };

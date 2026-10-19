@@ -8,7 +8,7 @@ import { type AgentReply, parseAgentReply } from "./agent-reply";
 export type ChatMessage = { readonly role: "user" | "assistant"; readonly content: string };
 
 export type LumiFailure =
-  "not_connected" | "bad_request" | "engine_error" | "network" | "malformed";
+  "not_connected" | "bad_request" | "rate_limited" | "engine_error" | "network" | "malformed";
 
 export type Outcome<T> = { ok: true; value: T } | { ok: false; failure: LumiFailure };
 
@@ -23,7 +23,7 @@ async function failureOf(response: Response): Promise<LumiFailure> {
   if (response.status === 404) return "not_connected";
   const body: unknown = await response.json().catch(() => null);
   const marker = typeof body === "object" && body !== null && "error" in body ? body.error : null;
-  return marker === "bad_request" ? "bad_request" : "engine_error";
+  return marker === "bad_request" || marker === "rate_limited" ? marker : "engine_error";
 }
 
 async function post<T>(

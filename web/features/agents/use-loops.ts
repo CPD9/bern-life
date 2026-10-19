@@ -16,9 +16,11 @@ import {
   saveLoop,
 } from "./loops";
 
-export type LoopSearch = (query: string) => Promise<SearchResponse | null>;
+/** The response, "rate_limited" when the server refused the search as over its limit, or null for
+ *  any other failure. */
+export type LoopSearch = (query: string) => Promise<SearchResponse | "rate_limited" | null>;
 
-export type RunStatus = "running" | "failed";
+export type RunStatus = "running" | "failed" | "rate_limited";
 
 export type SaveOutcome = "saved" | "exists" | "invalid";
 
@@ -53,15 +55,19 @@ export function useLoops(
     const loop = store.get().find((saved) => saved.id === id);
     if (loop === undefined) return;
     mark(id, "running");
-    let response: SearchResponse | null;
+    let response: Awaited<ReturnType<LoopSearch>>;
     try {
       response = await search(loop.query);
     } catch {
       response = null;
     }
     const current = store.get().find((saved) => saved.id === id);
-    if (isFailedRun(response) || current === undefined) {
-      mark(id, current === undefined ? null : "failed");
+    if (current === undefined) {
+      mark(id, null);
+      return;
+    }
+    if (response === "rate_limited" || isFailedRun(response)) {
+      mark(id, response === "rate_limited" ? response : "failed");
       return;
     }
     const next = recordRun(current, response);

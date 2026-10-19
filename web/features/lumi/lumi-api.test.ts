@@ -40,6 +40,8 @@ describe("httpLumiApi", () => {
   test("error markers, a failed request and an unreadable body are plain failures", async () => {
     const bad = answering(() => Response.json({ error: "bad_request" }, { status: 400 }));
     expect(await bad.api.ask(hello)).toEqual({ ok: false, failure: "bad_request" });
+    const flood = answering(() => Response.json({ error: "rate_limited" }, { status: 429 }));
+    expect(await flood.api.ask(hello)).toEqual({ ok: false, failure: "rate_limited" });
     const down = answering(() => new Response("upstream timed out at 10.0.0.3", { status: 502 }));
     expect(await down.api.ask(hello)).toEqual({ ok: false, failure: "engine_error" });
     const offline = answering(() => Promise.reject(new TypeError("fetch failed")));

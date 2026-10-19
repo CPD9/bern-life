@@ -6,7 +6,7 @@
 import { useId } from "react";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { AgentAction } from "./agent-reply";
-import { type SearchState, type Turn, isAnswered, isBusy } from "./conversation";
+import { type SearchState, type Turn, canRetry } from "./conversation";
 import { LumiReply, ResultCards } from "./lumi-reply";
 import { lumiFailureMessage, searchFailureMessage, searchSummary } from "./lumi-text";
 import { ModeChip } from "./mode-chip";
@@ -88,7 +88,7 @@ export function TurnView(props: TurnViewProps) {
         />
       )}
       {search && <PlainSearch state={search} name={name} fixtureMode={fixtureMode} />}
-      {latest && !isAnswered(turn) && !isBusy(turn) && (
+      {latest && canRetry(turn) && (
         <button
           type="button"
           onClick={onRetry}
