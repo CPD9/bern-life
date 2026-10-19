@@ -1,3 +1,5 @@
+import { CORRECTIONS_URL } from "@/infrastructure/ui/claim-evidence";
+
 // Paper has no hover, so the meaning of every number is printed with the report
 // (docs/match-report-design.md, "Hover doesn't exist on paper").
 export const legendRules = [
@@ -20,6 +22,14 @@ export function ReportLegend() {
       <p className="text-muted">
         Confidence is not yet calibrated against hand-checked answers, so it is not shown as a
         number. Every quote is word for word from the public page linked beside it.
+      </p>
+      <p className="text-muted">
+        A quote that is wrong or outdated is corrected on its page and reaches Bern Life with the
+        next snapshot. To ask for a page or a claim to be removed from Bern Life, see{" "}
+        <a href={CORRECTIONS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+          {CORRECTIONS_URL.replace("https://", "")}
+        </a>
+        .
       </p>
     </section>
   );

@@ -57,9 +57,10 @@ describe("LibraryApp", () => {
     expect(screen.getByText(/Sign in to see your documents/)).toBeTruthy();
     const saved = screen.getByRole("list", { name: "Saved opportunities" });
     expect(within(saved).getByText("“Demo demo-call leads the sensor lab.”").tagName).toBe("MARK");
-    expect(within(saved).getByRole("link").getAttribute("href")).toBe(
-      "https://www.example-institute.test/demo-call",
-    );
+    const source = within(saved).getByRole("link", {
+      name: "www.example-institute.test/demo-call",
+    });
+    expect(source.getAttribute("href")).toBe("https://www.example-institute.test/demo-call");
     act(() => within(saved).getByRole("button", { name: "Remove Demo demo-call" }).click());
     expect(store.get()).toEqual([]);
     expect(screen.getByText(/No saved opportunities yet/)).toBeTruthy();
@@ -75,6 +76,17 @@ describe("LibraryApp", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByText("No documents uploaded to your account yet.")).toBeTruthy();
+  });
+
+  test("a saved sentence says how it is corrected or removed", async () => {
+    const store = memoryStore();
+    store.save(savedItem("demo-a"));
+    await renderLibrary({ status: "signed-out" }, store);
+    const note = screen.getByText("Wrong or outdated?").closest("details")!;
+    expect(note.textContent).toContain("quoted from the institution's page as Bern Life stored it");
+    expect(note.querySelector("a")!.getAttribute("href")).toBe(
+      "https://github.com/CPD9/bern-life#corrections-and-removal",
+    );
   });
 
   test("removing moves focus to the next item, then the previous, then the heading", async () => {

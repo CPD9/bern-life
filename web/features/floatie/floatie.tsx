@@ -4,8 +4,8 @@
 // and the focus ring is the page's own. Lumi wears the figure passed in (the agent's bear, from
 // app/). A soft radial glow behind the canvas lets the light spill onto whatever Lumi floats over.
 
-import { Canvas } from "@react-three/fiber";
 import { type ReactNode, useState } from "react";
+import { SceneCanvas } from "@/infrastructure/ui/scene-guard";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { FloatieFigure } from "./floatie-figure";
 import { type FloatieState, shownState } from "./floatie-motion";
@@ -22,6 +22,17 @@ type FloatieProps = {
   state?: FloatieState;
   lite?: boolean;
 };
+
+function Initial({ name }: { name: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="bg-panel text-ink shadow-panel m-auto flex size-16 items-center justify-center rounded-full text-2xl font-extrabold"
+    >
+      {name.slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
 
 export function Floatie({ name, figure, onSelect, state = "idle", lite = false }: FloatieProps) {
   const reducedMotion = useReducedMotion();
@@ -40,8 +51,10 @@ export function Floatie({ name, figure, onSelect, state = "idle", lite = false }
       onBlur={() => setFocused(false)}
       className="size-28 shrink-0 cursor-pointer rounded-full bg-[radial-gradient(circle,rgb(255_210_122/0.45)_0%,rgb(255_210_122/0)_65%)]"
     >
-      <Canvas
+      <SceneCanvas
         key={lite ? "lite" : "full"}
+        // Without 3D the button keeps working, with the agent's initial where the bear would be.
+        fallback={() => <Initial name={name} />}
         frameloop="demand"
         dpr={lite ? 1 : [1, 2]}
         gl={{ alpha: true }}
@@ -53,7 +66,7 @@ export function Floatie({ name, figure, onSelect, state = "idle", lite = false }
         <FloatieFigure state={shown} reducedMotion={reducedMotion} lite={lite}>
           {figure(reducedMotion)}
         </FloatieFigure>
-      </Canvas>
+      </SceneCanvas>
     </button>
   );
 }

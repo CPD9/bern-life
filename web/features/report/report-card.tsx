@@ -1,4 +1,5 @@
 import { fragmentUrl } from "@/infrastructure/text-fragment";
+import { CorrectionNote } from "@/infrastructure/ui/claim-evidence";
 import { highlightParts } from "./highlight";
 import type { ReportCard as Card } from "./report-model";
 import { TopicChips } from "./topic-chips";
@@ -96,6 +97,10 @@ export function ReportCard({ card, highlightTerms }: { card: Card; highlightTerm
               <>, fetched {fetchedFormat.format(new Date(card.proof.fetchedAt))}</>
             )}
           </figcaption>
+          {/* Paper cannot open it; the legend says the same in print. */}
+          <div className="print:hidden">
+            <CorrectionNote fetchedAt={card.proof.fetchedAt} />
+          </div>
         </figure>
       ) : (
         <p className="text-muted text-sm">No sentence to quote.</p>

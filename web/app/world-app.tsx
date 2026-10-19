@@ -173,6 +173,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
           onPlacePanel={setPlaceOpen}
           onUseDesk={sitDown}
           onGoOutside={() => setView("map")}
+          onOpenAsk={() => phone.openApp("ask")}
         />
       }
       floatie={lumi.floatie}

@@ -49,4 +49,6 @@ pinned in `bundle.lock` carries them so that the replay demo (`make run`), the h
 grants no licence to reuse them. A page is removed on request by publishing a new bundle without
 it, pinning that bundle, withdrawing the earlier release assets that hold it and reloading the
 hosted copy from the new bundle; the hosted copy's nightly database backups age out after 14 days.
-Git holds no copy of any page, so nothing in its history needs rewriting.
+Git holds no copy of any page, so nothing in its history needs rewriting. A single claim is
+removed the same way; how to ask is in the README
+([Corrections and removal](README.md#corrections-and-removal)).

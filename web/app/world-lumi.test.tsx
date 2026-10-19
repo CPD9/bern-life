@@ -7,8 +7,12 @@ import type { LumiApi } from "@/features/lumi/lumi-api";
 import { Phone } from "@/features/phone/phone";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { resultFixture } from "@/test/fixtures";
-import { useWorldLumi } from "./world-lumi";
 import { useWorldPhone } from "./world-phone";
+
+// three.js has to finish loading as a module before the canvas library requires it, or Bun can
+// refuse the require part of the time; a test file loads both at once unless told otherwise.
+await import("three");
+const { useWorldLumi } = await import("./world-lumi");
 
 const answer = resultFixture;
 const profileId = answer.results[0]!.profile.id;

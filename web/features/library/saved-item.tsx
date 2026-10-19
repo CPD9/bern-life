@@ -1,3 +1,4 @@
+import { CorrectionNote } from "@/infrastructure/ui/claim-evidence";
 import type { LibraryItem } from "./library-items";
 
 const savedFormat = new Intl.DateTimeFormat("en-GB", {
@@ -41,6 +42,7 @@ export function SavedItem({ item, onRemove, removeRef }: SavedItemProps) {
         </a>
         , saved {savedFormat.format(new Date(item.saved_at))}.
       </p>
+      {item.span !== undefined && <CorrectionNote />}
       {item.page_sha256 !== undefined && (
         <p className="text-muted font-mono text-xs break-all">Page sha256 {item.page_sha256}</p>
       )}

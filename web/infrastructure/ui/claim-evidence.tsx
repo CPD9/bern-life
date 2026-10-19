@@ -36,6 +36,43 @@ export function ClaimButton({ claim, open, cited, panelId, onToggle }: ClaimButt
   );
 }
 
+/** The README section on having a page or a claim corrected or removed. */
+export const CORRECTIONS_URL = "https://github.com/CPD9/bern-life#corrections-and-removal";
+
+type CorrectionNoteProps = {
+  fetchedAt?: string | null | undefined;
+  /** What is quoted, as the note names it: a sentence unless said otherwise. */
+  quoted?: "sentence" | "address";
+};
+
+/**
+ * How a quoted sentence gets corrected or removed, folded away under one quiet line. It only
+ * explains: nothing here sends anything, and its one link opens the README's section.
+ */
+export function CorrectionNote({ fetchedAt, quoted = "sentence" }: CorrectionNoteProps) {
+  const when = fetchedAt
+    ? `as it read on ${fetchedFormat.format(new Date(fetchedAt))}`
+    : "as Bern Life stored it";
+  return (
+    <details className="text-muted">
+      <summary className="w-fit cursor-pointer">Wrong or outdated?</summary>
+      <p className="mt-1">
+        This {quoted} is quoted from the institution&apos;s page {when}. A correction made on that
+        page reaches Bern Life with the next snapshot; to ask for its removal from Bern Life, see{" "}
+        <a
+          href={CORRECTIONS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-ink underline"
+        >
+          Corrections and removal
+        </a>
+        .
+      </p>
+    </details>
+  );
+}
+
 function pageLabel(pageUrl: string): string {
   const url = new URL(pageUrl);
   return `${url.host}${url.pathname === "/" ? "" : url.pathname}`;
@@ -78,6 +115,7 @@ export function SpanEvidence({ evidence, note, id }: SpanEvidenceProps) {
       >
         Open the page at this sentence
       </a>
+      <CorrectionNote fetchedAt={evidence.fetched_at} />
     </div>
   );
 }

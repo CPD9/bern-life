@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { OfficeRoom } from "./office-room";
+
+// three.js has to finish loading as a module before the canvas library requires it, or Bun can
+// refuse the require part of the time; a test file loads both at once unless told otherwise.
+await import("three");
+const { OfficeRoom } = await import("./office-room");
 
 function renderRoom() {
   const calls: string[] = [];

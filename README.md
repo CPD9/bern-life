@@ -18,7 +18,8 @@ make run      # Postgres, the engine and the web app, replaying the bundle: no G
 
 Open **http://127.0.0.1:3000**. `make stop` stops it again. The search without the world is at
 http://127.0.0.1:3000/navigator, and the office computer without the 3D room at
-http://127.0.0.1:3000/office.
+http://127.0.0.1:3000/office. In a browser without 3D graphics (WebGL), the map and the office
+room give way to a short note, and Ask, the office desk and every app still work.
 
 **A short tour**
 
@@ -174,6 +175,23 @@ Reading a new brief needs the model, so it works in a live run, not in replay.
   nothing outside the app without a click.
 - Source pages remain their publishers' property; results quote only short evidence sentences
   ([`NOTICE`](NOTICE), [`PROVENANCE.md`](PROVENANCE.md)).
+
+### Corrections and removal
+
+Under the Swiss Federal Act on Data Protection (nDSG), anyone can ask for a page or a single claim
+to be removed from Bern Life. Every claim is a sentence quoted from an institution's public page on
+the date shown beside it, and every place that shows one has a **Wrong or outdated?** note that
+links here; the note only explains, and nothing is sent from the app.
+
+- **Wrong or outdated:** the institution corrects its own page, and the change reaches Bern Life
+  with the next snapshot bundle.
+- **Removal:** open an issue on this repository with the page link and the sentence (nothing
+  else about you is needed), or contact the team at the address given at the hackathon. Others
+  can read an issue, so use the address for a request you would rather not make in the open.
+- **What happens:** the page or claim is left out of the next bundle, the earlier release assets
+  that hold it are withdrawn and the hosted copy is reloaded; its nightly backups age out after 14
+  days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)). Git holds no page, so nothing in
+  its history needs rewriting.
 
 ## Limits and roadmap
 

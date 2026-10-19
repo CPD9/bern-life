@@ -1,6 +1,5 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
 import { type ReactNode, useRef, useState } from "react";
 import { shownAgentName } from "@/features/avatar/agent-name";
 import type { BearConfig } from "@/features/avatar/bear-config";
@@ -11,6 +10,7 @@ import { type LumiApi, httpLumiApi } from "@/features/lumi/lumi-api";
 import { LumiChat } from "@/features/lumi/lumi-chat";
 import type { NavigatorController } from "@/features/navigator/use-navigator";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import { SceneCanvas } from "@/infrastructure/ui/scene-guard";
 
 type WorldLumiInput = {
   agentName: string;
@@ -123,7 +123,9 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
 function SmallBear({ config }: { config: BearConfig }) {
   // The default camera looks at the origin, so the bear moves down instead of the camera up.
   return (
-    <Canvas
+    <SceneCanvas
+      // Without 3D the chat's header shows the name alone.
+      fallback={() => null}
       frameloop="demand"
       dpr={1}
       gl={{ alpha: true }}
@@ -134,6 +136,6 @@ function SmallBear({ config }: { config: BearConfig }) {
       <group position={[0, -0.9, 0]}>
         <BearFigure config={config} lite motion="still" />
       </group>
-    </Canvas>
+    </SceneCanvas>
   );
 }

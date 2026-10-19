@@ -9,6 +9,8 @@ import { OrthographicCamera } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { type ReactNode, useState } from "react";
 import { type BearConfig } from "@/features/avatar/bear-config";
+import { Button } from "@/infrastructure/ui/button";
+import { ContextLossWatch, SceneGuard } from "@/infrastructure/ui/scene-guard";
 import { BearFigure } from "@/features/avatar/bear-figure";
 import { motionFor } from "@/features/avatar/bear-motion";
 import { type HotspotId, hotspot } from "./hotspot";
@@ -83,6 +85,23 @@ function StandIn() {
   );
 }
 
+/** The room's place when the browser cannot draw it; the computer and the door stay below. */
+function NoRoom({ onRetry }: { onRetry: (() => void) | null }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-4 text-center">
+      <p className="bg-panel rounded-panel shadow-panel max-w-sm p-4">
+        The office needs 3D graphics, which this browser does not offer. The computer and the door
+        below still work.
+      </p>
+      {onRetry !== null && (
+        <Button variant="ghost" onClick={onRetry}>
+          Try the room again
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function OfficeRoom({
   lite,
   reducedMotion,
@@ -97,40 +116,46 @@ export function OfficeRoom({
 
   return (
     <div className="relative isolate flex size-full flex-col">
-      <div
-        role="img"
-        aria-label="Your office: a desk with a computer and your agent beside it, a bookshelf, a plant, a window and the door"
-        className={`min-h-0 flex-1 ${pointed === null ? "" : "cursor-pointer"}`}
+      <SceneGuard
+        fallback={(retry) => <NoRoom onRetry={retry} />}
+        pending={<div className="min-h-0 flex-1" />}
       >
-        {/* Shadows and pixel ratio are fixed when the renderer is created, so lite mode remounts it. */}
-        <Canvas
-          key={lite ? "lite" : "full"}
-          frameloop="demand"
-          shadows={quality.shadows}
-          dpr={lite ? 1 : [1, 2]}
-          gl={{ alpha: true }}
+        <div
+          role="img"
+          aria-label="Your office: a desk with a computer and your agent beside it, a bookshelf, a plant, a window and the door"
+          className={`min-h-0 flex-1 ${pointed === null ? "" : "cursor-pointer"}`}
         >
-          <FitCamera />
-          <Lights shadows={quality.shadows} />
-          <OfficeQualityProvider value={quality}>
-            <OfficeShell
-              doorGlow={pointed === "door"}
-              door={hotspot("door", onGoOutside, setPointed)}
-            />
-            <Desk glow={pointed === "desk"} handlers={hotspot("desk", onUseDesk, setPointed)} />
-            <Chair />
-            <Bookshelf />
-            <Plant />
-            <Picture />
-            <group position={[PLAYER_SPOT.x, 0, PLAYER_SPOT.z]} rotation-y={0.5}>
-              {player ?? <StandIn />}
+          {/* Shadows and pixel ratio are fixed when the renderer is created, so lite mode remounts it. */}
+          <Canvas
+            key={lite ? "lite" : "full"}
+            frameloop="demand"
+            shadows={quality.shadows}
+            dpr={lite ? 1 : [1, 2]}
+            gl={{ alpha: true }}
+          >
+            <ContextLossWatch />
+            <FitCamera />
+            <Lights shadows={quality.shadows} />
+            <OfficeQualityProvider value={quality}>
+              <OfficeShell
+                doorGlow={pointed === "door"}
+                door={hotspot("door", onGoOutside, setPointed)}
+              />
+              <Desk glow={pointed === "desk"} handlers={hotspot("desk", onUseDesk, setPointed)} />
+              <Chair />
+              <Bookshelf />
+              <Plant />
+              <Picture />
+              <group position={[PLAYER_SPOT.x, 0, PLAYER_SPOT.z]} rotation-y={0.5}>
+                {player ?? <StandIn />}
+              </group>
+            </OfficeQualityProvider>
+            <group position={[LUMI_SPOT.x, 0, LUMI_SPOT.z]} rotation-y={-0.6}>
+              <BearFigure config={agent} lite={lite} motion={motion} />
             </group>
-          </OfficeQualityProvider>
-          <group position={[LUMI_SPOT.x, 0, LUMI_SPOT.z]} rotation-y={-0.6}>
-            <BearFigure config={agent} lite={lite} motion={motion} />
-          </group>
-        </Canvas>
-      </div>
+          </Canvas>
+        </div>
+      </SceneGuard>
       <div className="flex flex-wrap justify-center gap-2 p-4">
         <button
           type="button"

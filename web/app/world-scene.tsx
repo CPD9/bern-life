@@ -24,6 +24,8 @@ type WorldSceneProps = {
   onPlacePanel: (open: boolean) => void;
   onUseDesk: () => void;
   onGoOutside: () => void;
+  /** Offered on the map's card when the browser cannot draw it. */
+  onOpenAsk: () => void;
 };
 
 // The map always, with the office over it on Home: the player is a person, the agent a bear.
@@ -39,6 +41,8 @@ export function WorldScene({ view, person, bear, agentName, lite, ...props }: Wo
         onAgentOpen={props.onAgentOpen}
         onSearchHere={props.onSearchHere}
         onPlacePanel={props.onPlacePanel}
+        onOpenAsk={props.onOpenAsk}
+        onOpenDesk={props.onUseDesk}
       />
       {view === "home" && (
         <OfficeView

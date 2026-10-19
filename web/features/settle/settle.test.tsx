@@ -77,6 +77,22 @@ describe("Settle", () => {
     expect(screen.getByText(/Distances are approximate/)).toBeTruthy();
   });
 
+  test("each quoted address says, folded away, how it is corrected or removed", () => {
+    open();
+    fireEvent.click(screen.getByRole("radio", { name: "Länggasse" }));
+    const notes = within(screen.getByRole("list"))
+      .getAllByText("Wrong or outdated?")
+      .map((summary) => summary.closest("details")!);
+    expect(notes).toHaveLength(2);
+    expect(notes.every((note) => !note.open)).toBe(true);
+    expect(notes[1]!.textContent).toContain(
+      "This address is quoted from the institution's page as it read on 19 Oct 2026.",
+    );
+    expect(notes[1]!.querySelector("a")!.getAttribute("href")).toBe(
+      "https://github.com/CPD9/bern-life#corrections-and-removal",
+    );
+  });
+
   test("settling reports the plot once, stores it and says where the office is", () => {
     const { onSettled, store } = open();
     fireEvent.click(screen.getByRole("radio", { name: "Länggasse" }));

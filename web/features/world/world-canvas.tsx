@@ -3,6 +3,7 @@
 import { Canvas } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type SearchResponse } from "@/infrastructure/contract-types.generated";
+import { ContextLossWatch, SceneGuard } from "@/infrastructure/ui/scene-guard";
 import { type Building, groupPlacesByBuilding } from "./buildings";
 import { type CameraCommand } from "./camera-moves";
 import { liteTrees, planCity } from "./city-plan";
@@ -12,6 +13,7 @@ import { lightUp } from "./light";
 import { type CameraHandle, MapCamera } from "./map-camera";
 import { AnchorProjector } from "./markers/anchor-projector";
 import { markerAnchors, PlaceMarkers } from "./markers/place-markers";
+import { NoMapCard } from "./no-map-card";
 import { paletteFor } from "./palette";
 import { PlacePanel } from "./place-panel";
 import { PLACES } from "./places";
@@ -46,16 +48,29 @@ export type WorldCanvasProps = {
   onPlacePanel?: (open: boolean) => void;
   /** Shown lit at load: the world fixture, passed only when the app runs with DEMO_FIXTURES=1. */
   demoSearch?: SearchResponse | undefined;
+  /** The ways in that need no 3D, offered when the browser cannot draw the map. */
+  onOpenAsk: () => void;
+  onOpenDesk: () => void;
 };
 
+// Without WebGL, or when the scene throws or loses its context for good, a card stands where the
+// map was and the rest of the app carries on.
+export function WorldCanvas({ onOpenAsk, onOpenDesk, ...map }: WorldCanvasProps) {
+  return (
+    <SceneGuard
+      fallback={(retry) => (
+        <NoMapCard onOpenAsk={onOpenAsk} onOpenDesk={onOpenDesk} onRetry={retry} />
+      )}
+    >
+      <WorldMap {...map} />
+    </SceneGuard>
+  );
+}
+
+type WorldMapProps = Omit<WorldCanvasProps, "onOpenAsk" | "onOpenDesk">;
+
 // Transparent so the shell's sky shows through; "demand" renders only when something changes.
-export function WorldCanvas({
-  agent,
-  onAgentOpen,
-  onSearchHere,
-  onPlacePanel,
-  demoSearch,
-}: WorldCanvasProps) {
+function WorldMap({ agent, onAgentOpen, onSearchHere, onPlacePanel, demoSearch }: WorldMapProps) {
   const display = useWorldDisplay();
   const palette = paletteFor(display.night);
   const shadows = !display.lite;
@@ -78,6 +93,8 @@ export function WorldCanvas({
   }, [demoSearch]);
 
   useEffect(() => onPlacePanel?.(panelOpen), [panelOpen, onPlacePanel]);
+  // A map that gives way to its card takes an open panel with it.
+  useEffect(() => () => onPlacePanel?.(false), [onPlacePanel]);
 
   const framePoints = useMemo(
     () =>
@@ -124,6 +141,7 @@ export function WorldCanvas({
         gl={{ alpha: true }}
         camera={{ fov: 35, near: 1, far: 1200 }}
       >
+        <ContextLossWatch />
         <Lights night={display.night} shadows={shadows} />
         <Ground palette={palette} shadows={shadows} />
         <City

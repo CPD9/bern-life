@@ -55,3 +55,14 @@ test("the footer names the snapshot and the mode", () => {
   expect(document.querySelector("footer")!.textContent).toContain("Snapshot fixture");
   expect(document.querySelector("footer")!.textContent).toContain("MOCK · FIXTURE");
 });
+
+test("each quote says how to correct it on screen, and the legend says so on paper", () => {
+  renderReport();
+  const note = screen.getByText("Wrong or outdated?").closest("details")!;
+  expect(note.parentElement!.className).toContain("print:hidden");
+  expect(note.textContent).toContain("as it read on 18 Oct 2026");
+  const legend = screen.getByRole("heading", { name: "How to read this report" }).parentElement!;
+  expect(legend.textContent).toContain(
+    "To ask for a page or a claim to be removed from Bern Life, see github.com/CPD9/bern-life#corrections-and-removal.",
+  );
+});
