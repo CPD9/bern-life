@@ -93,7 +93,7 @@ export function OfficeRoom({
 }: OfficeRoomProps) {
   const [pointed, setPointed] = useState<HotspotId | null>(null);
   const quality = officeQuality(lite);
-  const motion = motionFor("idle", reducedMotion);
+  const motion = motionFor("idle", { reducedMotion, lite });
 
   return (
     <div className="relative isolate flex size-full flex-col">
