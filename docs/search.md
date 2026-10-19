@@ -115,10 +115,11 @@ reorders a few results below rank 10.
 ## Ranking (one SQL statement plus pure code)
 1. **Full text:** each query word weighs its BM25 inverse document frequency, so common words in
    any language count little without a stopword list. A chunk scores the weighted `ts_rank` of
-   the words it contains. A query word of letters only also matches as a prefix of its light
-   word form (`word_forms.py`) when that form has five letters or more: "Kohlenhydrate" becomes
-   `kohlenhydrat:*` and finds "Kohlenhydraten", "sensor" finds "sensors". Coverage still counts
-   only the exact words, as when the abstention thresholds were set.
+   the words it contains. A query word of letters only also matches the words its light word
+   form (`word_forms.py`) maps to the same form, the comparison rule 5 makes: "Kohlenhydrate"
+   finds "Kohlenhydraten", "sensor" finds "sensors", and "species" finds "specie" but never
+   "special" or "specialist" (no prefix). Coverage still counts only the exact words, as when the
+   abstention thresholds were set.
 2. **Vectors:** HNSW cosine over the same chunks (`hnsw.iterative_scan = strict_order`,
    `ef_search = 100`). Source filters sit inside both scans. Without a filter Postgres walks the
    HNSW index; with a selective filter it may choose an exact filtered scan, which is cheaper at
@@ -281,8 +282,8 @@ p95 177 ms, max 219 ms with rule 5, which reads every candidate's profile (p50 6
 
 ## Limits
 - Word forms are inflections only: "Genetik" does not match "genetics", and "Schätzung" does not
-  match "schätzt". A full-text prefix reaches only words that start with the form: "sensor"
-  finds "sensors", not "biosensors".
+  match "schätzt". Full text matches whole word forms, as rule 5 does: "sensor" finds "sensors",
+  not "biosensors".
 - Cross-language recall stays low (gold de 0.20, fr 0.12 with word forms).
 - Known misses on dev: a German question below both thresholds on its plain signals abstains
   although expansion finds the answer (q918); a person credited through a project ranked 11

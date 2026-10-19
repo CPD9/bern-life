@@ -1,6 +1,6 @@
 import unittest
 
-from bernlife.word_forms import prefix_form, word_form
+from bernlife.word_forms import same_form, word_form
 
 
 class WordFormTest(unittest.TestCase):
@@ -35,12 +35,16 @@ class WordFormTest(unittest.TestCase):
         )
         self.assertEqual([word_form(w) for w in ("proteins", "proteines")], ["protein", "protein"])
 
-    def test_full_text_matches_a_form_of_five_letters_or_more_as_a_prefix(self):
-        self.assertEqual(prefix_form("kohlenhydrate"), "kohlenhydrat")
-        self.assertEqual(prefix_form("sensor"), "sensor")
-        self.assertIsNone(prefix_form("cancer"))
-        self.assertIsNone(prefix_form("skin-worn"))
-        self.assertIsNone(prefix_form("covid19"))
+    def test_full_text_matches_only_the_words_of_the_same_form(self):
+        words = same_form("species")
+        self.assertIn("specie", words)
+        self.assertNotIn("special", words)
+        self.assertIn("kohlenhydraten", same_form("kohlenhydrate"))
+        self.assertNotIn("transformation", same_form("transfer"))
+        self.assertTrue(all(word_form(w) == word_form("cancers") for w in same_form("cancers")))
+        self.assertIn("cancer", same_form("cancers"))
+        self.assertEqual(same_form("skin-worn"), ["skin-worn"])
+        self.assertEqual(same_form("covid19"), ["covid19"])
 
     def test_no_derivation(self):
         self.assertNotEqual(word_form("schatzung"), word_form("schatzt"))

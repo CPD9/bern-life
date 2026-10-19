@@ -22,7 +22,20 @@ from bernlife.server import make_server
 from bernlife.store import PostgresStore
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
-from search_fakes import KRYO_TERM, SOURCES, FakeChat, fake_embedder, truncate_all, write_bundle
+from search_fakes import (
+    DEMO_UNIT,
+    KRYO_TERM,
+    PAGES,
+    PROFILES,
+    SOURCES,
+    FakeChat,
+    claim,
+    fake_embedder,
+    page,
+    profile,
+    truncate_all,
+    write_bundle,
+)
 
 from db import database_url
 
@@ -96,7 +109,26 @@ class SearchDbTest(unittest.TestCase):
         hits = self.store.hits(query, fake_embedder().query(query), None, PEOPLE_KINDS)
         return sorted({(h.profile_id, h.strength) for h in hits if h.signal == "lexical"})
 
-    def test_full_text_finds_another_form_of_a_word_and_coverage_stays_exact(self):
+    def test_full_text_matches_the_words_of_a_form_and_coverage_stays_exact(self):
+        fay_page = page(
+            "https://www.demo-centre.test/people/fay-fiktiv",
+            "demo",
+            DEMO_UNIT,
+            "Fay Fiktiv - Demo Centre",
+            "Fay Fiktiv\nSpecialist in sleep medicine.",
+        )
+        fay = profile(
+            "person-demo-fay-fiktiv",
+            fay_page,
+            "Fay Fiktiv",
+            expertise=[claim(fay_page, "sleep medicine")],
+        )
+        folder = Path(tempfile.mkdtemp())
+        write_bundle(folder, [*PROFILES, fay], pages=[*PAGES, fay_page])
+        self.assertEqual(load(self.conn, folder, SOURCES), [])
+        self.assertEqual(self.lexical("species"), [])
+        self.assertEqual(self.lexical("specialist"), [("person-demo-fay-fiktiv", 1.0)])
+        self.assertEqual(self.lexical("specialists"), [("person-demo-fay-fiktiv", 0.0)])
         self.assertEqual(self.lexical("biosensor"), [("person-example-ada-muster", 0.0)])
         self.assertEqual(self.lexical("biosensors"), [("person-example-ada-muster", 1.0)])
 

@@ -6,16 +6,14 @@ one short list of inflection endings serves all three: German case and plural en
 least four letters stay, so "liver" never meets "live". A double "ss" or a final "us" is no plural
 ("process", "virus"). No derivation: "Genetik" does not meet "genetics", and "Schätzung" does not
 meet "schätzt". Both sides of a comparison go through the same function, so a form is only a key
-for matching; nothing shown is ever a form.
+for matching; nothing shown is ever a form. The claim rule compares forms (matching.py), and full
+text matches a query word through the words of its own form (`same_form`).
 """
 
 ENDINGS = ("ern", "en", "er", "es", "em", "e", "s")  # longest first
 PLURAL = "s"
 NOT_PLURAL = ("ss", "us")
 MIN_STEM = 4
-# Full text matches a form as a prefix ("kohlenhydrat:*"), which also reaches compounds and
-# derived words, so it needs a longer form than the exact comparison of claims.
-MIN_PREFIX = 5
 
 
 def word_form(word: str) -> str:
@@ -27,11 +25,15 @@ def word_form(word: str) -> str:
     return stem
 
 
-def prefix_form(lexeme: str) -> str | None:
-    """The form full text may match as a prefix, or None to match the lexeme exactly: a lexeme
-    with a digit or a hyphen, or whose form is shorter than five letters."""
-    form = word_form(lexeme)
-    return form if lexeme.isalpha() and len(form) >= MIN_PREFIX else None
+def same_form(word: str) -> list[str]:
+    """Every word `word_form` maps to the form of `word`, the word itself included: "species"
+    gives "speci", "specie" and "species", never "special". A word with a digit or a hyphen
+    gives only itself."""
+    if not word.isalpha():
+        return [word]
+    form = word_form(word)
+    candidates = {form, *(form + e for e in ENDINGS), *(form + e + PLURAL for e in ENDINGS[:-1])}
+    return sorted(c for c in candidates if word_form(c) == form)
 
 
 def _strip(word: str, endings: tuple[str, ...]) -> str:

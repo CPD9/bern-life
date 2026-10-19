@@ -2,11 +2,12 @@
 
 Full text uses the `simple` configuration (no stemming, no language guess), weighted per query
 word by BM25's inverse document frequency, so common words in any language weigh little without a
-stopword list. A query word also matches other forms of itself: its light word form
-(word_forms.py) as a prefix, so "Kohlenhydrate" finds "Kohlenhydraten". `coverage` is the share
-of the query's word weight a chunk matches with the exact words, as when the abstention
-thresholds were set; a word found nowhere in the corpus keeps its full weight, so a query about
-something absent covers little.
+stopword list. A query word also matches the words of its own light word form (word_forms.py,
+`same_form`), so "Kohlenhydrate" finds "Kohlenhydraten" and "species" finds "specie", never
+"special"; a chunk scores each query word by the summed rank of the words of that form it holds.
+`coverage` is the share of the query's word weight a chunk matches with the exact
+words, as when the abstention thresholds were set; a word found nowhere in the corpus keeps its
+full weight, so a query about something absent covers little.
 The vector half is an HNSW cosine scan. Source and kind filters sit inside both scans, and the
 word statistics count only the chunks a search over those kinds may read, so adding
 opportunities leaves a people search's numbers as they were.
@@ -24,7 +25,7 @@ import psycopg
 from bernlife.chunks import chunk_prefixes
 from bernlife.extract_records import PEOPLE_KINDS
 from bernlife.load_rows import vector_literal
-from bernlife.word_forms import prefix_form
+from bernlife.word_forms import same_form
 
 POOL = 200
 # A search that includes people reads the vector index unfiltered, as it always did, and drops
@@ -34,21 +35,22 @@ POOL = 200
 OVERFETCH = 3
 
 STATEMENT = """
-WITH query_terms AS (
-    SELECT lexeme, form FROM unnest(%(lexemes)s::text[], %(forms)s::text[]) AS t(lexeme, form)
+WITH query_words AS (
+    SELECT lexeme, word FROM unnest(%(lexemes)s::text[], %(words)s::text[]) AS t(lexeme, word)
 ),
 corpus AS (
     SELECT count(*)::float8 AS n FROM chunk
      WHERE split_part(id, '-', 1) = ANY(%(prefixes)s::text[])
 ),
 weighted AS (
-    SELECT t.lexeme, q.tq, q.fq, ln(1 + (corpus.n - df.n + 0.5) / (df.n + 0.5)) AS idf
-      FROM query_terms t
+    SELECT t.lexeme, t.wqs, q.tq, q.fq, ln(1 + (corpus.n - df.n + 0.5) / (df.n + 0.5)) AS idf
+      FROM (SELECT lexeme, string_agg(quote_literal(word), ' | ' ORDER BY word) AS words,
+                   array_agg(to_tsquery('simple', quote_literal(word)) ORDER BY word) AS wqs
+              FROM query_words GROUP BY lexeme) t
      CROSS JOIN corpus
      CROSS JOIN LATERAL (
            SELECT to_tsquery('simple', quote_literal(t.lexeme)) AS tq,
-                  to_tsquery('simple', coalesce(quote_literal(t.form) || ':*',
-                                                quote_literal(t.lexeme))) AS fq
+                  to_tsquery('simple', t.words) AS fq
      ) q
      CROSS JOIN LATERAL (
            SELECT count(*)::float8 AS n FROM chunk
@@ -57,9 +59,12 @@ weighted AS (
 ),
 total AS (SELECT sum(idf) AS idf FROM weighted),
 lexical AS (
-    SELECT c.id, sum(w.idf * ts_rank(c.tsv, w.fq, 1)) AS score,
+    SELECT c.id, sum(w.idf * r.rank) AS score,
            coalesce(sum(w.idf) FILTER (WHERE c.tsv @@ w.tq), 0) AS matched
       FROM chunk c JOIN weighted w ON c.tsv @@ w.fq
+     CROSS JOIN LATERAL (
+           SELECT sum(ts_rank(c.tsv, wq, 1)) AS rank FROM unnest(w.wqs) AS wq WHERE c.tsv @@ wq
+     ) r
      WHERE split_part(c.id, '-', 1) = ANY(%(prefixes)s::text[])
        AND (%(sources)s::text[] IS NULL OR c.page_url = ANY(ARRAY(
            SELECT url FROM page WHERE source_id = ANY(%(sources)s::text[]))))
@@ -145,9 +150,10 @@ def fetch_hits(
 ) -> list[Hit]:
     people_free = not set(kinds) & set(PEOPLE_KINDS)
     lexemes = [row[0] for row in conn.execute(LEXEMES, {"query": query}).fetchall()]
+    pairs = [(lexeme, word) for lexeme in lexemes for word in same_form(lexeme)]
     params = {
-        "lexemes": lexemes,
-        "forms": [prefix_form(lexeme) for lexeme in lexemes],
+        "lexemes": [lexeme for lexeme, _ in pairs],
+        "words": [word for _, word in pairs],
         "vector": vector_literal(vector),
         "sources": sources,
         "kinds": list(kinds),
