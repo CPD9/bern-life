@@ -76,7 +76,7 @@ off). An inline script applies them before the first paint.
   Settings. `app/phone-apps.tsx` mounts the apps; each is real, none is a placeholder.
 - `features/desktop/` the office computer; `app/office-apps.tsx` mounts its apps.
 - `features/navigator/` Ask: question and project brief, result cards with evidence, aspect matrix.
-- `features/lumi/` the chat with Bärli, your agent; `features/floatie/` Bärli floating beside you.
+- `features/lumi/` the chat with Bärnli, your agent; `features/floatie/` Bärnli floating beside you.
 - `features/connections/` members, requests and office visits; `features/notifications/` the bell,
   toasts and the server's notifications.
 - `features/opportunities/`, `features/library/`, `features/garage/`, `features/sources/` the apps

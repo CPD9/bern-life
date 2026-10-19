@@ -14,7 +14,7 @@ type WorldOverlayProps = {
   /** The You sheet while it is open. */
   you: ComponentProps<typeof YouSheet> | null;
   storyMenu: ComponentProps<typeof StoryMenu>;
-  /** Bärli's chat and the settle dialog, each composed in its own module. */
+  /** Bärnli's chat and the settle dialog, each composed in its own module. */
   lumiChat: ReactNode;
   settleDialog: ReactNode;
   reducedMotion: boolean;

@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import type { Profile } from "@/infrastructure/contract-types.generated";
 import { ClaimButton, EvidencePanel, SpanEvidence } from "./claim-evidence";
+import { ResultMetricsRow } from "./result-metrics-row";
 import {
   type ClaimRef,
   type SearchResult,
@@ -117,6 +118,7 @@ export function ResultCard({ result, events = appEvents }: ResultCardProps) {
         </div>
       </header>
       {nameOpen && <EvidencePanel claim={profile.name} id={`${baseId}-name-evidence`} />}
+      <ResultMetricsRow metrics={result.metrics} />
 
       <dl className="flex flex-col gap-3">
         {presentFields(profile).map(({ field, claims }) => (

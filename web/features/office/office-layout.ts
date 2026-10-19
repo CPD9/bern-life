@@ -24,7 +24,7 @@ export const BOOKSHELF = { id: "bookshelf", x: -1.9, z: -2.75, width: 1.1, depth
 export const BOOKSHELF_HEIGHT = 1.8;
 export const PLANT = { id: "plant", x: 2.45, z: -2.45, width: 0.5, depth: 0.5 } as const;
 export const RUG = { x: -0.3, z: 0.4, width: 2.6, depth: 1.8 } as const;
-/** Bärli stands beside the desk, facing the room. */
+/** Bärnli stands beside the desk, facing the room. */
 export const LUMI_SPOT = { id: "lumi", x: 1.85, z: -1.5, width: 0.6, depth: 0.6 } as const;
 /** The player stands on the rug in the middle of the room. */
 export const PLAYER_SPOT = { id: "player", x: -0.4, z: 0.5, width: 0.6, depth: 0.6 } as const;

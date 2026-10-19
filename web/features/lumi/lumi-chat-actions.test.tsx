@@ -43,7 +43,7 @@ describe("LumiChat actions", () => {
     openPanel();
     await say("Who works on glucose sensors at DCB?");
     rerender(<Harness {...props} />);
-    rerender(<Harness {...props} agentName="Bärli" />);
+    rerender(<Harness {...props} agentName="Bärnli" />);
     expect([shown, opened, reported]).toEqual([[], [], []]);
     expect(screen.queryByText(/while the panel was closed/)).toBeNull();
     const showOnMap = screen.getByRole("button", { name: "Show on the map" });
@@ -79,7 +79,7 @@ describe("LumiChat actions", () => {
     });
     expect(reported).toEqual([reply.results[0]!]);
     expect(screen.queryByRole("button", { name: "Make a match report" })).toBeNull();
-    expect(document.activeElement).toBe(screen.getByLabelText("Message Bärli"));
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Bärnli"));
   });
 
   test("a report the browser does not keep says so and stays offered, and a retry can keep it", async () => {
@@ -110,7 +110,7 @@ describe("LumiChat actions", () => {
     expect(tried).toEqual([reply.results[0]!, reply.results[0]!]);
     expect(screen.queryByRole("button", { name: "Make a match report" })).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(document.activeElement).toBe(screen.getByLabelText("Message Bärli"));
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Bärnli"));
   });
 
   test("a reply's button acts through the latest callbacks", async () => {
@@ -157,7 +157,7 @@ describe("LumiChat actions", () => {
     rerender(<Harness {...props} />);
     expect(shown).toEqual([reply.results[0]!]);
     expect(screen.queryByRole("button", { name: "Show on the map" })).toBeNull();
-    expect(document.activeElement).toBe(screen.getByLabelText("Message Bärli"));
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Bärnli"));
     expect(screen.getByText(heldLine)).toBeTruthy();
     expect(screen.queryByText(/nothing was done/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Open the card" }));
@@ -173,7 +173,7 @@ describe("LumiChat sending", () => {
     render(<Harness api={api} />);
     openPanel();
     await say("Who works on glucose sensors at DCB?");
-    const box = screen.getByLabelText("Message Bärli");
+    const box = screen.getByLabelText("Message Bärnli");
     fireEvent.change(box, { target: { value: "Show them on the map" } });
     await act(async () => {
       api.land({ ok: true, value: reply });
@@ -189,7 +189,7 @@ describe("LumiChat sending", () => {
     const api = scripted([{ ok: true, value: reply }]);
     render(<Harness api={api} />);
     openPanel();
-    const box = screen.getByLabelText("Message Bärli");
+    const box = screen.getByLabelText("Message Bärnli");
     fireEvent.change(box, { target: { value: "glucose sensors" } });
     await act(async () => {
       fireEvent.keyDown(box, { key: "Enter" });

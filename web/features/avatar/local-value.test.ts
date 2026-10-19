@@ -61,10 +61,10 @@ describe("createLocalValue", () => {
 });
 
 describe("agent name", () => {
-  test("it starts as Bärli, and a blank name still reads as Bärli", () => {
-    expect(defaultAgentName).toBe("Bärli");
-    expect(shownAgentName("   ")).toBe("Bärli");
-    expect(shownAgentName("  Bärli ")).toBe("Bärli");
+  test("it starts as Bärnli, and a blank name still reads as Bärnli", () => {
+    expect(defaultAgentName).toBe("Bärnli");
+    expect(shownAgentName("   ")).toBe("Bärnli");
+    expect(shownAgentName("  Bärnli ")).toBe("Bärnli");
   });
 
   test("a stored name is cut to 24 characters, and anything else is not a name", () => {

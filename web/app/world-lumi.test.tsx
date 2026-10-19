@@ -44,7 +44,7 @@ afterEach(() => {
 // The floatie that opens the chat, so the chat has something to give focus back to.
 function floatie() {
   const button = document.createElement("button");
-  button.textContent = "Bärli";
+  button.textContent = "Bärnli";
   document.body.append(button);
   button.focus();
   return button;
@@ -65,7 +65,7 @@ function setUp(api: LumiApi, { reportSaved = true, mapDrawn = true } = {}) {
   };
   const { result } = renderHook(() =>
     useWorldLumi({
-      agentName: "Bärli",
+      agentName: "Bärnli",
       bear: defaultBear,
       lite: true,
       engineMode: "mock",
@@ -86,7 +86,7 @@ function setUp(api: LumiApi, { reportSaved = true, mapDrawn = true } = {}) {
 async function ask(refresh: () => void, open: () => void, text: string) {
   act(() => open());
   refresh();
-  fireEvent.change(screen.getByLabelText("Message Bärli"), { target: { value: text } });
+  fireEvent.change(screen.getByLabelText("Message Bärnli"), { target: { value: text } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
   });
@@ -120,7 +120,7 @@ test("the answer stays in the chat; Show on the map closes it and shows the answ
   expect(document.activeElement).toBe(opener);
 });
 
-test("without a map to draw, Bärli's show on map leaves the chat open", async () => {
+test("without a map to draw, Bärnli's show on map leaves the chat open", async () => {
   floatie();
   const { result, refresh } = setUp(lumiAnswering([{ type: "show_on_map", result: 0 }]), {
     mapDrawn: false,
@@ -138,7 +138,7 @@ for (const mapDrawn of [true, false]) {
     const { result, refresh } = setUp(api, { mapDrawn });
     act(() => result.current.open());
     refresh();
-    fireEvent.change(screen.getByLabelText("Message Bärli"), {
+    fireEvent.change(screen.getByLabelText("Message Bärnli"), {
       target: { value: "glucose sensors" },
     });
     await act(async () => {
@@ -159,7 +159,7 @@ for (const mapDrawn of [true, false]) {
   });
 }
 
-test("Open the card shows Bärli's answer in Ask once the chat has given focus back", async () => {
+test("Open the card shows Bärnli's answer in Ask once the chat has given focus back", async () => {
   const opener = floatie();
   const { result, refresh, shown, calls, focusWhen } = setUp(
     lumiAnswering([{ type: "open_profile", profile_id: profileId }]),
@@ -213,11 +213,11 @@ test("a report the browser cannot keep leaves the chat open, says why and keeps 
   expect(screen.getByRole("button", { name: "Make a match report" })).toBeTruthy();
 });
 
-/** Bärli's floatie, the phone and the chat, wired as the world app wires them. */
+/** Bärnli's floatie, the phone and the chat, wired as the world app wires them. */
 function World({ api, shown }: { api: LumiApi; shown: SearchResponse[] }) {
   const phone = useWorldPhone();
   const lumi = useWorldLumi({
-    agentName: "Bärli",
+    agentName: "Bärnli",
     bear: defaultBear,
     lite: true,
     engineMode: "mock",
@@ -251,10 +251,10 @@ test("Open the card from the floatie: Ask shows in the phone, and closing it foc
   render(
     <World api={lumiAnswering([{ type: "open_profile", profile_id: profileId }])} shown={shown} />,
   );
-  const floatie = screen.getByRole("button", { name: "Bärli, your agent" });
+  const floatie = screen.getByRole("button", { name: "Bärnli, your agent" });
   act(() => floatie.focus());
   act(() => fireEvent.click(floatie));
-  fireEvent.change(screen.getByLabelText("Message Bärli"), { target: { value: "glucose" } });
+  fireEvent.change(screen.getByLabelText("Message Bärnli"), { target: { value: "glucose" } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
   });

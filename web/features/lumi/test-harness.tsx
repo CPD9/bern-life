@@ -59,7 +59,7 @@ export function Harness({ fixtureMode = false, ...props }: HarnessProps) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
-        Bärli
+        Bärnli
       </button>
       <span data-testid="state">{open ? "open" : "closed"}</span>
       <LumiChat open={open} onClose={() => setOpen(false)} fixtureMode={fixtureMode} {...props} />
@@ -68,7 +68,7 @@ export function Harness({ fixtureMode = false, ...props }: HarnessProps) {
 }
 
 export function openPanel() {
-  const opener = screen.getByRole("button", { name: "Bärli" });
+  const opener = screen.getByRole("button", { name: "Bärnli" });
   opener.focus();
   fireEvent.click(opener);
   return opener;
@@ -81,13 +81,13 @@ export async function closePanel() {
 }
 
 export async function say(text: string) {
-  fireEvent.change(screen.getByLabelText("Message Bärli"), { target: { value: text } });
+  fireEvent.change(screen.getByLabelText("Message Bärnli"), { target: { value: text } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
   });
 }
 
 /** Queries inside the conversation, leaving out the status line that repeats its latest words. */
-export function conversation(name = "Bärli") {
+export function conversation(name = "Bärnli") {
   return within(screen.getByRole("list", { name: `Conversation with ${name}` }));
 }

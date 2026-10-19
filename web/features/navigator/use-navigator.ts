@@ -18,7 +18,7 @@ export type NavigatorState =
   | { status: "done"; request: NavigatorRequest; response: SearchResponse }
   | { status: "failed"; request: NavigatorRequest; failure: NavigatorFailure };
 
-/** Which input shows: a question, or a project brief. Bärli's skills switch it too. */
+/** Which input shows: a question, or a project brief. Bärnli's skills switch it too. */
 export type InputMode = "search" | "brief";
 
 export type NavigatorController = {
@@ -29,7 +29,7 @@ export type NavigatorController = {
   setInputMode(mode: InputMode): void;
   search(request: SearchRequest): void;
   /**
-   * Shows an answer already in hand (Bärli's), without asking the engine or telling the story. It is
+   * Shows an answer already in hand (Bärnli's), without asking the engine or telling the story. It is
    * a question's answer, so the question box shows, holding the question it answers.
    */
   show(response: SearchResponse): void;

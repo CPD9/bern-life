@@ -19,12 +19,12 @@ type WorldLumiInput = {
   /** How the engine answers, from health; null while unknown. */
   engineMode: SearchResponse["mode"] | null;
   fixtureMode: boolean;
-  /** The Ask app's Navigator, which shows the answer holding a profile Bärli opens. */
+  /** The Ask app's Navigator, which shows the answer holding a profile Bärnli opens. */
   navigator: Pick<NavigatorController, "show">;
-  /** Shows an answer on the map; absent when the map cannot be drawn, so Bärli does not offer it. */
+  /** Shows an answer on the map; absent when the map cannot be drawn, so Bärnli does not offer it. */
   onShowOnMap: ((response: SearchResponse) => void) | undefined;
   onOpenAsk: () => void;
-  /** Saves Bärli's answer as a match report for the desk's Reports window; false when it cannot. */
+  /** Saves Bärnli's answer as a match report for the desk's Reports window; false when it cannot. */
   onMakeReport: (response: SearchResponse) => boolean;
   /** Opens the desk, where the Reports window shows the report just made. */
   onOpenReports: () => void;
@@ -33,13 +33,13 @@ type WorldLumiInput = {
 
 export type WorldLumi = {
   open: () => void;
-  /** Bärli floating beside the player, in the office and on the map. */
+  /** Bärnli floating beside the player, in the office and on the map. */
   floatie: ReactNode;
   /** The chat, kept mounted so the conversation survives closing it. */
   chat: ReactNode;
 };
 
-// Bärli in the world: the floatie and the bear on the map open one chat. Bärli's actions go where
+// Bärnli in the world: the floatie and the bear on the map open one chat. Bärnli's actions go where
 // the player would go by hand: the map, Ask, or the desk's Reports window. A report waits for the
 // player's click on the reply (features/lumi) and opens in the desk, never in a new tab.
 export function useWorldLumi(input: WorldLumiInput): WorldLumi {
