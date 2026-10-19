@@ -15,6 +15,7 @@ RRF_K = 60
 UNIT_CAP = 4
 TOP = 10
 SIGNALS = ("lexical", "vector")
+AFTER, FUSED = "after", "fused"
 
 
 @dataclass(frozen=True)
@@ -82,11 +83,15 @@ def candidates(plain: Sequence[Hit], expanded: Sequence[Hit] = ()) -> list[Candi
 
 
 def cap_units(
-    ordered: Sequence[Candidate], cap: int = UNIT_CAP, size: int = TOP
+    ordered: Sequence[Candidate],
+    cap: int = UNIT_CAP,
+    size: int = TOP,
+    taken: Sequence[Candidate] = (),
 ) -> list[Candidate]:
+    """`taken` are results already above these in the top ten: they count against the cap."""
     top: list[Candidate] = []
     deferred: list[Candidate] = []
-    per_unit: Counter[str] = Counter()
+    per_unit: Counter[str] = Counter(c.unit for c in taken)
     rest: Sequence[Candidate] = ()
     for index, candidate in enumerate(ordered):
         if len(top) == size:
@@ -102,3 +107,22 @@ def cap_units(
         top += fill
         deferred = deferred[len(fill) :]
     return [*top, *deferred, *rest]
+
+
+def with_passages(
+    claimed: Sequence[Candidate], passages: Sequence[Candidate], order: str = AFTER
+) -> list[Candidate]:
+    """Results with a matching claim, and results shown only through a passage on their own page
+    (own_page.py), both in fused order. AFTER: every passage result comes after every claim
+    result, so the claim results keep the ranks they had without passages, and the passage
+    results fill the top ten's free places under the cap. FUSED: one list by fused score, where
+    a claim result goes first at an equal score, under one cap."""
+    if order == FUSED:
+        through_passage = {c.profile_id for c in passages}
+        merged = sorted(
+            [*claimed, *passages],
+            key=lambda c: (-c.fused, c.profile_id in through_passage, c.profile_id),
+        )
+        return cap_units(merged)
+    first = cap_units(claimed)
+    return [*first, *cap_units(passages, size=max(0, TOP - len(first)), taken=first)]

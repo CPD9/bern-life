@@ -7,6 +7,9 @@ nothing usable, search runs plain and the mode says "mock". Abstention reads the
 the ones its thresholds were set on. Display-only metrics (metrics.py) are added last and never
 reorder results. The body carries no timings: the same query on the same snapshot and cache gives
 the same bytes.
+
+A candidate rule 5 drops may still be shown through a passage on its own page (own_page.py),
+after the results with a matching claim (PASSAGE_ORDER). Abstention never reads those passages.
 """
 
 from collections.abc import Sequence
@@ -25,7 +28,8 @@ from bernlife.llm import Chat
 from bernlife.llm_gate import request_mode
 from bernlife.matching import Asked, asked, can_explain
 from bernlife.metrics import query_topics, with_metrics
-from bernlife.ranking import Candidate, candidates, cap_units
+from bernlife.own_page import Passage, own_page_passages, passage_record
+from bernlife.ranking import AFTER, Candidate, candidates, with_passages
 from bernlife.reason import reason
 from bernlife.store import Relation, Store
 from bernlife.via import relation_reasons, via_record
@@ -33,6 +37,7 @@ from bernlife.via import relation_reasons, via_record
 RESULTS = 20
 NO_MODEL = "mock"
 NO_PROMPTS = "none"
+PASSAGE_ORDER = AFTER
 
 
 @dataclass(frozen=True)
@@ -44,6 +49,7 @@ class Assessment:
     question: Asked
     abstain_reason: str | None
     vias: dict[str, tuple[Relation, list[tuple[str, int]]]]
+    passages: dict[str, Passage]
 
 
 def assess(
@@ -54,7 +60,8 @@ def assess(
     expansion: Expansion | None = None,
     kinds: Sequence[str] = PEOPLE_KINDS,
 ) -> Assessment:
-    """Abstention looks at every candidate; only those that can explain themselves are ranked."""
+    """Abstention looks at every candidate and at the reasons from claims; only candidates
+    that can explain themselves, by a claim or a passage on their own page, are ranked."""
     plain = store.hits(query, embedder.query(query), sources, kinds)
     terms = [term.term for term in expansion.terms()] if expansion else []
     expanded = []
@@ -71,14 +78,21 @@ def assess(
     vias = relation_reasons(question, unexplained, store, profiles, enrichment)
     shown = [c for c in found if c.profile_id in own or c.profile_id in vias]
     reason_to_abstain = abstain_reason(query, found) or (None if shown else NO_SOURCE)
+    passages: dict[str, Passage] = {}
+    if reason_to_abstain is None:
+        rest = [pid for pid in unexplained if pid not in vias]
+        passages = own_page_passages(question, rest, store, profiles)
+    through_passage = [c for c in found if c.profile_id in passages]
+    ranked = with_passages(shown, through_passage, PASSAGE_ORDER)
     return Assessment(
-        found, cap_units(shown), profiles, enrichment, question, reason_to_abstain, vias
+        found, ranked, profiles, enrichment, question, reason_to_abstain, vias, passages
     )
 
 
 def result(rank: int, candidate: Candidate, assessment: Assessment) -> dict[str, Any]:
     """A result shown through a project keeps its plain reason (its own claims are what it can
-    cite) and carries `via`, the relation and the project's matching claims."""
+    cite) and carries `via`, the relation and the project's matching claims. One shown through a
+    passage on its own page keeps its plain reason too and carries `passage`."""
     profile = assessment.profiles[candidate.profile_id]
     item = {
         "rank": rank,
@@ -93,6 +107,8 @@ def result(rank: int, candidate: Candidate, assessment: Assessment) -> dict[str,
     if candidate.profile_id in assessment.vias:
         relation, matched = assessment.vias[candidate.profile_id]
         item["via"] = via_record(relation, assessment.profiles[relation.to_profile_id], matched)
+    if candidate.profile_id in assessment.passages:
+        item["passage"] = passage_record(assessment.passages[candidate.profile_id])
     return item
 
 

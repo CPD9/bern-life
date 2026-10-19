@@ -149,6 +149,23 @@ reorders a few results below rank 10.
    plain one from its own claims, and it is not sent to the explainer. Unit membership
    (`member_of`) does not count: on the dev set it added nothing, and a broad unit would vouch
    for everyone in it.
+   **On their own page (`passage`):** a candidate with neither is still shown when its own page,
+   the page its name claim cites, has a word matching the question (the same word-form test)
+   next to its name: within 300 characters after the name, and as far before it unless another
+   profile's name ends there. The window never holds another profile's name from that page, so
+   on a team list the line under one name is never lent to the next. Words of the name itself
+   do not count. The result then carries `passage`: the verbatim span from the name to the
+   nearest matching word, with the page's url, sha256, offset and fetch date. Code checks that
+   the page text hashes to the name claim's sha256 and that the span is that text at that
+   offset, and the evaluator checks the span like a claim. It is a passage on their page, not a
+   claim of their profile: its `reason` stays the plain one from its own claims, it is not sent
+   to the explainer, and abstention never reads it (the third check below counts only claims
+   and `via`). Such results rank after every result with a matching claim or a `via` (the
+   claim results keep their ranks, and the passage results take the top ten's free places under
+   the unit cap, counting the claim results already there). 300 characters was fixed before the
+   first dev run: on pages naming several profiles half of all gaps between two names are under
+   102 characters, so there the next name ends the window; a page about one profile has a median
+   text of 734 characters.
 6. **Unit cap:** at most 4 profiles of one unit in the top 10, where a profile's unit is the unit
    of its source page (the evaluator's exposure definition). A capped profile waits until after
    the top ten. The cap relaxes only when no other unit has a candidate left. There is no
@@ -165,7 +182,8 @@ reorders a few results below rank 10.
 - **Premise check:** a person named after a title (`Prof.`, `Dr.`, `PD`, `Frau`, `Mme`, and
   since 2026-10-19 `Pr`, `Pre`, `Dre`, `professeure`, `docteure`, `Prof.in`, `Dr.in`, `Dr.med.`
   …) must be among the candidates' person names. `PR` in capitals is not a title. A premise is a hypothesis to check, not a fact.
-- **Nothing can say why:** no candidate passes rule 5 above. The first two checks look at every
+- **Nothing can say why:** no candidate passes rule 5 above through a claim of its own or a
+  project (`via`); a passage on its own page does not count. The first two checks look at every
   candidate, as they did when the thresholds were set; this one comes after them.
 
 ### How the thresholds were set
@@ -289,11 +307,15 @@ p95 177 ms, max 219 ms with rule 5, which reads every candidate's profile (p50 6
   (q919, rank 6 since word forms); a project whose claims share no word with the question
   cannot vouch: the project behind q920 says "Kohlenhydraten" only in its name, which rule 5
   never reads.
-- The evaluator's traceability check reads profile claims, not `via`; the `via` spans are checked
-  here instead (563 of 563).
+- The evaluator's traceability check reads profile claims, the `via` relation and its related
+  claims, and the `passage` span.
 - An invented name without a title, or an invented project, is caught only by weak support.
 - Passages credit profiles only through spans that lie fully inside them, and since rule 5 a
-  credited profile still needs a matching claim of its own to be shown.
+  credited profile still needs a matching claim of its own, a matching project, or a matching
+  word next to its name on its own page to be shown.
+- The own-page window reads the page's layout only through where names are: on a list that puts
+  a label before each name ("Head: …"), the label of the next name falls in the window of the
+  one before. The window reads only the occurrence of the name its claim cites.
 - Rule 5 matches whole word forms: "sensors" does not match "biosensors".
 - The API contract has no unit filter, so only `sources` filters. `lang` is accepted and unused.
 - 10 expertise values have no enrichment terms (no valid term in the reply).

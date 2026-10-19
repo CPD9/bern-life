@@ -22,7 +22,15 @@ from bernlife.server import make_server
 from bernlife.store import PostgresStore
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
-from search_fakes import KRYO_TERM, SOURCES, FakeChat, fake_embedder, truncate_all, write_bundle
+from search_fakes import (
+    KRYO_TERM,
+    PATCH_PAGE,
+    SOURCES,
+    FakeChat,
+    fake_embedder,
+    truncate_all,
+    write_bundle,
+)
 
 from db import database_url
 
@@ -85,12 +93,28 @@ class SearchDbTest(unittest.TestCase):
     def test_the_source_filter_applies_inside_the_scans(self):
         self.assertEqual(self.ids("glucose", ["demo"]), ["person-demo-cleo-beispiel"])
 
-    def test_a_passage_credits_only_profiles_with_a_matching_claim(self):
+    def test_a_passage_credits_only_profiles_with_a_matching_claim_or_own_page_passage(self):
         response = search("skin-worn patch, wearable", None, self.store, fake_embedder())
-        (only,) = response["results"]
-        self.assertEqual(only["profile"]["id"], "person-example-ada-muster")
-        self.assertEqual(only["reason"]["cites"], ["/fields/expertise/1"])
-        self.assertEqual(only["metrics"]["covers"], ["wearable"])
+        ada, patch = response["results"]
+        self.assertEqual(ada["profile"]["id"], "person-example-ada-muster")
+        self.assertEqual(ada["reason"]["cites"], ["/fields/expertise/1"])
+        self.assertEqual(ada["metrics"]["covers"], ["wearable"])
+        self.assertNotIn("passage", ada)
+        # The project's own page says it next to its name; Ben's line on that page does not.
+        self.assertEqual(patch["profile"]["id"], "project-example-glucopatch")
+        self.assertEqual(patch["reason"], {"text": "Name: GlucoPatch", "cites": ["/name"]})
+        self.assertEqual(
+            patch["passage"],
+            {
+                "kind": "own_page",
+                "span": "GlucoPatch\nA skin",
+                "page_url": "https://www.example-institute.test/projects/glucopatch",
+                "page_sha256": PATCH_PAGE["sha256"],
+                "start": 0,
+                "fetched_at": "2026-10-18T12:00:00Z",
+            },
+        )
+        self.assertEqual(list(result_validator().iter_errors(response)), [])
 
     def lexical(self, query: str) -> list[tuple[str, float]]:
         hits = self.store.hits(query, fake_embedder().query(query), None, PEOPLE_KINDS)
@@ -101,9 +125,14 @@ class SearchDbTest(unittest.TestCase):
         self.assertEqual(self.lexical("biosensors"), [("person-example-ada-muster", 1.0)])
 
     def test_a_bare_name_is_shown_only_when_the_query_names_it(self):
-        self.assertEqual(self.ids("Ben Beispiel skin-worn patch"), ["person-example-ben-beispiel"])
+        response = search("Ben Beispiel skin-worn patch", None, self.store, fake_embedder())
+        ben, patch = response["results"]
+        self.assertEqual(
+            (ben["profile"]["id"], "passage" in ben, patch["profile"]["id"], "passage" in patch),
+            ("person-example-ben-beispiel", False, "project-example-glucopatch", True),
+        )
 
-    def test_nothing_that_can_explain_itself_abstains(self):
+    def test_nothing_that_can_explain_itself_abstains_whatever_its_own_page_says(self):
         response = search("skin-worn patch", None, self.store, fake_embedder())
         self.assertEqual((response["abstained"], response["abstain_reason"]), (True, NO_SOURCE))
 
