@@ -1,6 +1,7 @@
 "use client";
 
 import { type CSSProperties, type PointerEvent, useEffect, useId, useRef } from "react";
+import { focusOnOpen } from "@/infrastructure/ui/focus-on-open";
 import type { DesktopApp } from "./desktop-apps";
 import type { FocusRequest } from "./use-desktop";
 import type { DesktopWindow as WindowPlace } from "./window-manager";
@@ -33,11 +34,12 @@ export function DesktopWindow({
 }: DesktopWindowProps) {
   const headingId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
+  const frame = useRef<HTMLElement>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
   const requested = focusRequest?.appId === app.id ? focusRequest.nonce : null;
 
   useEffect(() => {
-    if (requested !== null) heading.current?.focus();
+    if (requested !== null) focusOnOpen(frame.current, heading.current);
   }, [requested]);
 
   function startDrag(event: PointerEvent<HTMLElement>) {
@@ -56,6 +58,7 @@ export function DesktopWindow({
 
   return (
     <section
+      ref={frame}
       aria-labelledby={headingId}
       data-app-window={app.id}
       style={position}

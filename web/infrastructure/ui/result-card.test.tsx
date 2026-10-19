@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { AppEventName } from "@/infrastructure/app-events";
+import type { SearchResult } from "@/infrastructure/claims";
 import { copyOf, passageFixture, resultFixture, viaFixture } from "@/test/fixtures";
 import { CORRECTIONS_PATH } from "./claim-evidence";
 import { ResultCard } from "./result-card";
@@ -39,11 +40,11 @@ describe("ResultCard", () => {
 
   test("three bars carry the engine's numbers exactly; confidence stays off while uncalibrated", () => {
     render(<ResultCard result={firstResult()} />);
-    expect(scores()).toEqual(["Relevance100%", "Evidence100%", "Completeness5 of 5"]);
+    expect(scores()).toEqual(["Relevance100%", "Evidence100%", "Completeness5/5"]);
     expect(meters()).toEqual([
       ["Relevance", "1", "1", "100%"],
       ["Evidence", "1", "1", "100%"],
-      ["Completeness", "5", "5", "5 of 5"],
+      ["Completeness", "5", "5", "5/5"],
     ]);
     expect(fit().queryByText(/calibrated/)).toBeNull();
   });
@@ -81,10 +82,10 @@ describe("ResultCard", () => {
       novelty: { new_unit: false, adds: [] },
     };
     render(<ResultCard result={result} />);
-    expect(scores()).toEqual(["Relevance50%", "Evidence—", "Completeness5 of 5", "Confidence73%"]);
+    expect(scores()).toEqual(["Relevance50%", "Evidence—", "Completeness5/5", "Confidence73%"]);
     expect(meters()).toEqual([
       ["Relevance", "0.5", "1", "50%"],
-      ["Completeness", "5", "5", "5 of 5"],
+      ["Completeness", "5", "5", "5/5"],
       ["Confidence", "0.734", "1", "73%"],
     ]);
     expect(topics()).toEqual(["✓ glucose sensors (found)", "sweat missing"]);
@@ -105,6 +106,75 @@ describe("ResultCard", () => {
   test("a result the engine sent without metrics shows none", () => {
     render(<ResultCard result={leadResult()} />);
     expect(screen.queryByRole("region", { name: "How well this result fits" })).toBeNull();
+  });
+
+  // The engine counts a topic as covered from the result's own claims only (metrics.py), so a
+  // result found through a project or a passage arrives with every topic missing and 0%.
+  const uncounted = (topics: string[]): NonNullable<SearchResult["metrics"]> => ({
+    relevance: 0,
+    covers: [],
+    missing: topics,
+    evidence: null,
+    completeness: { filled: 1, of: 5 },
+    novelty: { new_unit: true, adds: [] },
+    confidence: null,
+  });
+
+  test("a result through a project shows no missing topics and no 0% relevance", () => {
+    const result = teamResult();
+    result.metrics = uncounted(["carbohydrates", "meal photos"]);
+    render(<ResultCard result={result} />);
+    expect(scores()).toEqual(["Relevance—", "Evidence—", "Completeness1/5"]);
+    expect(meters()).toEqual([["Completeness", "1", "5", "1/5"]]);
+    expect(topics()).toEqual(["New unit"]);
+  });
+
+  test("a result through a passage on its own page shows none either", () => {
+    const result = passageResult();
+    result.metrics = uncounted(["sweat patches", "runners"]);
+    render(<ResultCard result={result} />);
+    expect(scores()).toEqual(["Relevance—", "Evidence—", "Completeness1/5"]);
+    expect(topics()).toEqual(["New unit"]);
+  });
+
+  test("a result through a project whose own claims cover a topic keeps its count", () => {
+    const result = teamResult();
+    result.metrics = {
+      ...uncounted(["carbohydrates"]),
+      relevance: 0.5,
+      covers: ["meal photos"],
+      evidence: 1,
+    };
+    render(<ResultCard result={result} />);
+    expect(scores()).toEqual(["Relevance50%", "Evidence100%", "Completeness1/5"]);
+    expect(topics()).toEqual(["✓ meal photos (found)", "carbohydrates missing", "New unit"]);
+  });
+
+  test("a plain result that covers nothing still says so: 0% and every topic missing", () => {
+    const result = firstResult();
+    result.metrics = uncounted(["sweat"]);
+    render(<ResultCard result={result} />);
+    expect(scores()).toEqual(["Relevance0%", "Evidence—", "Completeness1/5"]);
+    expect(meters()[0]).toEqual(["Relevance", "0", "1", "0%"]);
+    expect(topics()).toEqual(["sweat missing", "New unit"]);
+  });
+
+  test("three bars at their narrowest hold one row at 390 px, and no value can break", () => {
+    render(<ResultCard result={firstResult()} />);
+    const bars = fit()
+      .getAllByRole("listitem")
+      .filter((li) => li.closest("ul")?.getAttribute("aria-label") === "Scores");
+    const px = (token: string | undefined) => 4 * Number(token?.split("-").at(-1));
+    const classOf = (element: Element, prefix: string) =>
+      element.className.split(" ").find((name) => name.startsWith(prefix));
+    expect(bars.map((li) => classOf(li, "min-w-"))).toEqual(["min-w-22", "min-w-22", "min-w-22"]);
+    const gap = classOf(bars[0]!.parentElement!, "gap-x-");
+    // The card's content is 310 px wide on the 400 px phone: 8 px of frame, 16 px of app body
+    // and 21 px of card at each side.
+    expect(bars.length * px("min-w-22") + (bars.length - 1) * px(gap)).toBeLessThanOrEqual(310);
+    const values = bars.map((li) => li.querySelector("strong")!.textContent);
+    expect(values).toEqual(["100%", "100%", "5/5"]);
+    for (const value of values) expect(value).not.toMatch(/\s/);
   });
 
   test("a claim opens its span, page, fetch date and a link to the sentence", () => {

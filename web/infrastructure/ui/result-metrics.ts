@@ -40,16 +40,37 @@ function share(label: MetricLabel, value: number | null): MetricBar {
 }
 
 /**
+ * Whether the engine's topic count describes this result. The engine counts a topic as covered
+ * when the result's own verified claims mention it. A result that came in through a related
+ * project or unit (`via`) or through a passage on its own page matched there, not in its own
+ * claims, so for it the count reports every topic as missing and relevance as 0% right beside
+ * the sentence that matches. That is a gap in the count, not in the result: until the engine
+ * counts those paths too, such a result shows missing topics and relevance only when the count
+ * did find a topic in its own claims.
+ */
+export function topicsCounted(result: SearchResult): boolean {
+  const { metrics, via, passage } = result;
+  if (!metrics) return false;
+  return metrics.covers.length > 0 || (!via && !passage);
+}
+
+/** The topics the card may call missing: none while the count does not describe the result. */
+export function missingTopics(result: SearchResult): string[] {
+  return topicsCounted(result) ? (result.metrics?.missing ?? []) : [];
+}
+
+/**
  * The bars of the card, in the report's order. Confidence joins as a fourth bar once the engine
  * has calibrated it; while it is null the card says nothing and the report says so in words.
  */
-export function metricBars(metrics: Metrics | null | undefined): MetricBar[] {
+export function metricBars(result: SearchResult): MetricBar[] {
+  const { metrics } = result;
   if (!metrics) return [];
   const { filled, of } = metrics.completeness;
   const bars = [
-    share("Relevance", metrics.relevance),
+    share("Relevance", topicsCounted(result) ? metrics.relevance : null),
     share("Evidence", metrics.evidence),
-    { label: "Completeness" as const, value: `${filled} of ${of}`, now: filled, max: of },
+    { label: "Completeness" as const, value: `${filled}/${of}`, now: filled, max: of },
   ];
   if (metrics.confidence !== null) bars.push(share("Confidence", metrics.confidence));
   return bars;

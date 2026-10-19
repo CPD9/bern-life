@@ -23,6 +23,11 @@ Topics are the words of your question that say what you are looking for. Questio
 (a synonym, a lay term, a translation, an acronym), so "CGM" counts for "glucose sensors"; it never
 adds a topic you did not ask about.
 
+The count reads the result's own verified claims. A result found through a related project or
+unit, or through a passage on its own page, matched there instead, so the count does not yet
+describe it: the card lists no "Not found" topics and shows no relevance for such a result unless
+a topic was found in its own claims.
+
 ## Confidence, once calibrated
 People mark the top results of the practice questions (`eval/dev.jsonl`, never the frozen gold set)
 right or wrong. Each result's raw score, the mean of relevance and evidence, falls into one of five

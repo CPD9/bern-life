@@ -37,9 +37,11 @@ export function AskInput({ controller }: { controller: NavigatorController }) {
         Ask in your words
       </label>
       <div className="flex gap-2">
+        {/* The phone and the desk put focus here when Ask opens, so a question can be typed at once. */}
         <input
           id={`${id}-query`}
           type="search"
+          data-autofocus=""
           value={controller.draft}
           onChange={(event) => controller.setDraft(event.target.value)}
           maxLength={maxQueryLength}
