@@ -61,7 +61,7 @@ export function phoneApps({
           fixtureMode={fixtureMode}
           onShowOnMap={onShowOnMap}
           onMakeReport={(response) => openReport(response, fixtureMode)}
-          renderSave={saveControl(events)}
+          renderSave={saveControl(events, fixtureMode)}
         />
       ),
     },

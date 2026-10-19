@@ -51,15 +51,20 @@ function typeOf(content: unknown): unknown {
   return isValidElement(content) ? (content as ReactElement).type : null;
 }
 
+/** The save slot a Navigator or Opportunities element was given, if any. */
+function saveSlot(content: unknown): unknown {
+  return (content as ReactElement<{ renderSave?: unknown }>).props.renderSave;
+}
+
 describe("phone apps", () => {
-  function setUp() {
+  function setUp(fixtureMode = false) {
     const opened: string[] = [];
     const { result } = renderHook(() => {
       const navigator = useNavigator(offline);
       const apps = phoneApps({
         ...agents,
         navigator,
-        fixtureMode: true,
+        fixtureMode,
         onShowOnMap: () => undefined,
         onOpenApp: (id) => opened.push(id),
         unreadMessages: 2,
@@ -103,6 +108,16 @@ describe("phone apps", () => {
     expect(heard).toEqual(["library_item_saved"]);
   });
 
+  test("under DEMO_FIXTURES neither Ask nor Opportunities offers a save", () => {
+    const apps = setUp(true).result.current.apps;
+    const content = (id: string) => apps.find((app) => app.id === id)!.content;
+    expect([saveSlot(content("ask")), saveSlot(content("opportunities"))]).toEqual([
+      undefined,
+      undefined,
+    ]);
+    expect(typeof saveSlot(setUp(false).result.current.apps[0]!.content)).toBe("function");
+  });
+
   test("Try on Find opportunities opens the Opportunities app", () => {
     const { result, opened } = setUp();
     const agentsContent = result.current.apps.find((app) => app.id === "agents")!.content;
@@ -122,14 +137,14 @@ describe("phone apps", () => {
 });
 
 describe("office apps", () => {
-  function setUp() {
+  function setUp(fixtureMode = false) {
     return renderHook(() => {
       const desktop = useDesktop();
       const apps = useOfficeApps({
         ...agents,
         navigator: useNavigator(offline),
         desktop,
-        fixtureMode: true,
+        fixtureMode,
         unreadMessages: 4,
         health,
         events,
@@ -166,6 +181,15 @@ describe("office apps", () => {
   test("a person saved from the Navigator is kept in the Library, and counts once", () => {
     saveFrom(setUp().current.apps.find((app) => app.id === "navigator")!.content);
     expect(heard).toEqual(["library_item_saved"]);
+  });
+
+  test("under DEMO_FIXTURES neither the Navigator nor Opportunities offers a save", () => {
+    const apps = setUp(true).current.apps;
+    const content = (id: string) => apps.find((app) => app.id === id)!.content;
+    expect([saveSlot(content("navigator")), saveSlot(content("opportunities"))]).toEqual([
+      undefined,
+      undefined,
+    ]);
   });
 
   test("Try on Find opportunities opens the Opportunities window", () => {

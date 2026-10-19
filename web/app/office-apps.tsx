@@ -110,7 +110,7 @@ export function useOfficeApps({
           controller={navigator}
           fixtureMode={fixtureMode}
           onMakeReport={makeReport}
-          renderSave={saveControl(events)}
+          renderSave={saveControl(events, fixtureMode)}
         />
       ),
       agents: agentsApp(agents, trySkill),

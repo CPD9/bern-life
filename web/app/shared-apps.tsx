@@ -23,8 +23,16 @@ export function emitSaved(events: AppEventSink): (item: LibraryItem) => void {
   };
 }
 
-/** The Library's save button under a result card, in Ask, the Navigator and Opportunities. */
-export function saveControl(events: AppEventSink): (result: SearchResult) => ReactNode {
+/**
+ * The Library's save button under a result card, in Ask, the Navigator and Opportunities. Under
+ * DEMO_FIXTURES every result is invented, so there is no button: the Library would keep made-up
+ * people and calls beside real ones, and a save would count for the story.
+ */
+export function saveControl(
+  events: AppEventSink,
+  fixtureMode: boolean,
+): ((result: SearchResult) => ReactNode) | undefined {
+  if (fixtureMode) return undefined;
   const onSaved = emitSaved(events);
   return function SaveControl(result) {
     return <SaveButton entry={entryFromResult(result)} onSaved={onSaved} />;
@@ -33,7 +41,11 @@ export function saveControl(events: AppEventSink): (result: SearchResult) => Rea
 
 export function opportunitiesApp(fixtureMode: boolean, events: AppEventSink): ReactNode {
   return (
-    <OpportunitiesApp fixtureMode={fixtureMode} events={events} renderSave={saveControl(events)} />
+    <OpportunitiesApp
+      fixtureMode={fixtureMode}
+      events={events}
+      renderSave={saveControl(events, fixtureMode)}
+    />
   );
 }
 
