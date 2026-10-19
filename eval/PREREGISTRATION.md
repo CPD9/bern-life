@@ -255,4 +255,11 @@ number of a lever chosen after the miss table, is labelled "gold-informed, not h
 it appears, README included. The unit cap and passage levers are also named as scored on gold
 before their rule.
 
-Results: pending.
+Results (a fresh database per run; (d) and (e) also compared on one shared load):
+- (c) adopted. Dev against full text on exact words: recall@10 0.864 → 0.909, MRR 0.655 → 0.685,
+  traceable 100%, 0 invented, 5/5 invented abstained, 1/22 false abstentions. Dev2: recall@10
+  0.452 → 0.452, MRR 0.374 → 0.368.
+- (d) adopted. Dev and dev2 predictions byte-identical to (c) on the shared load. Dev 0.909 /
+  0.685, dev2 0.452 / 0.368.
+- (e) adopted. Every dev and dev2 query keeps its results and order on the shared load; only
+  reasons change (22 of 398 dev results, 41 of 567 dev2). Dev 0.909 / 0.685, dev2 0.452 / 0.368.
