@@ -3,11 +3,24 @@ import json
 import struct
 import tempfile
 import unittest
+import urllib.parse
 from pathlib import Path
 
 from infra.geo.addresses import parse_hit, query_for
+from infra.geo.anchors import add_anchors
 from infra.geo.citygml import iter_buildings, outline
-from infra.geo.encode import AnchorItem, FootprintItem, LineItem, encode
+from infra.geo.encode import (
+    HEADER,
+    MAGIC,
+    SECTION,
+    AnchorItem,
+    FootprintItem,
+    GeoFormatError,
+    LineItem,
+    anchor_item,
+    decode,
+    encode,
+)
 from infra.geo.frame import ORIGIN_E, ORIGIN_N, FrameError, quantize, to_map
 from infra.geo.simplify import ring_area, simplify_line, simplify_ring
 from infra.geo.tlm import cells, fetch_all, read_lines
@@ -121,6 +134,219 @@ class EncodeTest(unittest.TestCase):
             + struct.pack("<BII", 3, 1, len(anchor))
             + anchor,
         )
+
+
+class DecodeTest(unittest.TestCase):
+    def tiny(self) -> bytes:
+        return encode(
+            [
+                FootprintItem(ring=((0, 0), (2, 0), (2, 2), (0, 2)), height_m=18, landmark=False),
+                FootprintItem(ring=((5, 5), (6, 5), (6, 6.5)), height_m=40, landmark=True),
+            ],
+            [
+                LineItem(category=1, width_m=7, objektart=8, points=((0, 0), (3.0625, -1))),
+                LineItem(category=3, width_m=4, objektart=0, points=((1, 1), (2, 2), (3, 1))),
+            ],
+            [
+                AnchorItem(place_id="zed", point=(9.5, 9.5), building=-1),
+                AnchorItem(place_id="abc", point=(1.25, -0.5), building=0),
+            ],
+        )
+
+    def test_encode_decode_encode_gives_the_same_bytes(self):
+        data = self.tiny()
+        geo = decode(data)
+        self.assertEqual(geo.encode(list(geo.anchors)), data)
+        self.assertEqual(
+            geo.footprints[1],
+            FootprintItem(ring=((5, 5), (6, 5), (6, 6.5)), height_m=40, landmark=True),
+        )
+        self.assertEqual(
+            geo.anchors,
+            (
+                AnchorItem(place_id="abc", point=(1.25, -0.5), building=0),
+                AnchorItem(place_id="zed", point=(9.5, 9.5), building=-1),
+            ),
+        )
+        self.assertEqual(len(geo.line_items), 2)
+
+    def test_another_format_frame_layout_a_cut_off_file_and_trailing_bytes_are_refused(self):
+        data = self.tiny()
+        buildings = len(MAGIC) + HEADER.size  # the first section's kind, count, byte length
+        (length,) = struct.unpack_from("<I", data, buildings + 5)
+        first_line = buildings + SECTION.size + length + SECTION.size
+        for broken, reason in [
+            (b"XGEO" + data[4:], "not a bern.geo file"),
+            (data[:4] + struct.pack("<H", 2) + data[6:], "bern.geo version 2 is not 1"),
+            (data[:8] + struct.pack("<f", 25.0) + data[12:], "bern.geo is in another map frame"),
+            (
+                data[: buildings - 2] + struct.pack("<H", 4) + data[buildings:],
+                "bern.geo has 4 sections, not 3",
+            ),
+            (
+                data[:buildings] + bytes([2]) + data[buildings + 1 :],
+                "bern.geo section 2 where section 1 belongs",
+            ),
+            (
+                data[: buildings + 5] + struct.pack("<I", length + 1) + data[buildings + 9 :],
+                "bern.geo section 1 length does not match",
+            ),
+            (
+                data[:first_line] + bytes([9]) + data[first_line + 1 :],
+                "bern.geo has a line of unknown category 9",
+            ),
+            (data[:-1], "bern.geo is truncated"),
+            (data + b"\0", "bern.geo has bytes after the last section"),
+        ]:
+            with self.subTest(reason=reason), self.assertRaises(GeoFormatError) as caught:
+                decode(broken)
+            self.assertTrue(str(caught.exception).startswith(reason))
+
+
+def _search_answer(e: float, n: float) -> bytes:
+    attrs = {"origin": "address", "y": e, "x": n, "featureId": "1_0"}
+    return json.dumps({"results": [{"attrs": attrs}]}).encode()
+
+
+class AddAnchorsTest(unittest.TestCase):
+    """Invented map: two 40 m squares, an L whose centre is outside it, a road, and a place
+    already anchored in the first square."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.dir = Path(tmp.name)
+        self.out = self.dir / "bern.geo"
+        self.out.write_bytes(
+            encode(
+                [
+                    FootprintItem(
+                        ring=((0, 0), (2, 0), (2, 2), (0, 2)), height_m=20, landmark=False
+                    ),
+                    FootprintItem(
+                        ring=((10, 0), (12, 0), (12, 2), (10, 2)), height_m=9, landmark=False
+                    ),
+                    FootprintItem(
+                        ring=((20, 0), (24, 0), (24, 1), (21, 1), (21, 4), (20, 4)),
+                        height_m=6,
+                        landmark=False,
+                    ),
+                ],
+                [LineItem(category=1, width_m=7, objektart=8, points=((0, 3), (12, 3)))],
+                [AnchorItem(place_id="kept", point=(0.5, 0.5), building=0)],
+            )
+        )
+        self.places = self.dir / "places.json"
+        self.urls: list[str] = []
+        self.sleeps: list[float] = []
+        # Map units to LV95: x east by 20 m, z south by 20 m. Neustrasse 2 is in the first
+        # square, Wandweg 3 1.25 m east of the second as stored, Eckweg 5 1.25 m east of the L,
+        # Feldweg 9 far from all three; the search finds no Leerweg 1.
+        self.answers = {
+            "Neustrasse 2 Bern": _search_answer(ORIGIN_E + 30, ORIGIN_N - 20),
+            "Wandweg 3 Bern": _search_answer(ORIGIN_E + 241, ORIGIN_N - 20),
+            "Eckweg 5 Bern": _search_answer(ORIGIN_E + 481, ORIGIN_N - 10),
+            "Feldweg 9 Bern": _search_answer(ORIGIN_E + 120, ORIGIN_N - 200),
+            "Leerweg 1 Bern": json.dumps({"results": []}).encode(),
+        }
+
+    def write_places(self, *addresses: tuple[str, str | None]) -> None:
+        self.places.write_text(
+            json.dumps(
+                [
+                    {
+                        "id": place_id,
+                        "position_method": "address" if address else "district",
+                        "address": address,
+                    }
+                    for place_id, address in addresses
+                ]
+            )
+        )
+
+    def get(self, url: str) -> bytes:
+        self.urls.append(url)
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)["searchText"][0]
+        return self.answers[query]
+
+    def add(self):
+        return add_anchors(
+            self.out, self.places, self.dir / "addresses", get=self.get, sleep=self.sleeps.append
+        )
+
+    def test_a_missing_anchor_is_added_and_everything_else_is_kept_byte_for_byte(self):
+        self.write_places(
+            ("kept", "Altstrasse 1"),
+            ("inner", "Neustrasse 2, Bern"),
+            ("wall", "Wandweg 3"),
+            ("district", None),
+        )
+        before = decode(self.out.read_bytes())
+        placed = self.add()
+        after = decode(self.out.read_bytes())
+        self.assertEqual(after.building_items, before.building_items)
+        self.assertEqual(after.line_items, before.line_items)
+        self.assertEqual(
+            after.anchors,
+            (
+                AnchorItem(place_id="inner", point=(1.5, 1.0), building=0),
+                AnchorItem(place_id="kept", point=(0.5, 0.5), building=0),
+                AnchorItem(place_id="wall", point=(11.0, 1.0), building=1),
+            ),
+        )
+        self.assertEqual(
+            [(p.anchor.place_id, p.on_wall_m) for p in placed], [("inner", None), ("wall", 1.25)]
+        )
+        self.assertEqual(len(self.urls), 2)
+        self.assertEqual(self.sleeps, [1.0])
+        data = self.out.read_bytes()
+        self.assertEqual(self.add(), [])
+        self.assertEqual(self.out.read_bytes(), data)
+        self.assertEqual(len(self.urls), 2)
+
+    def test_each_place_that_cannot_be_anchored_is_named_and_the_file_is_unchanged(self):
+        self.write_places(
+            ("inner", "Neustrasse 2"),
+            ("field", "Feldweg 9"),
+            ("corner", "Eckweg 5"),
+            ("nameless", "Inselspital"),
+            ("unknown", "Leerweg 1"),
+        )
+        data = self.out.read_bytes()
+        with self.assertRaises(SystemExit) as caught:
+            self.add()
+        self.assertEqual(
+            str(caught.exception).splitlines(),
+            [
+                "bern.geo unchanged:",
+                "corner: the address point of 'Eckweg 5 Bern' is 1.25 m outside building 2, "
+                "whose centre is outside its footprint",
+                "field: the address point of 'Feldweg 9 Bern' is more than "
+                "2.5 m from every footprint",
+                "nameless: its address has no street and number to look up",
+                "unknown: geo.admin search found no address for 'Leerweg 1 Bern'",
+            ],
+        )
+        self.assertEqual(self.out.read_bytes(), data)
+
+    def test_a_file_that_does_not_encode_back_to_itself_is_refused_before_any_lookup(self):
+        kept = AnchorItem(place_id="kept", point=(0.5, 0.5), building=0)
+        stored = self.out.read_bytes()
+        anchors_at = len(stored) - SECTION.size - len(anchor_item(kept))
+        # Anchors out of order: encode() sorts them, so writing this file again would move them.
+        body = anchor_item(AnchorItem(place_id="zed", point=(11, 1), building=1))
+        body += anchor_item(kept)
+        unsorted = stored[:anchors_at] + SECTION.pack(3, 2, len(body)) + body
+        self.out.write_bytes(unsorted)
+        self.write_places(("inner", "Neustrasse 2"))
+        with self.assertRaises(GeoFormatError) as caught:
+            self.add()
+        self.assertEqual(
+            str(caught.exception),
+            "bern.geo does not encode back to itself; rebuild it with `build`",
+        )
+        self.assertEqual(self.out.read_bytes(), unsorted)
+        self.assertEqual(self.urls, [])
 
 
 class AddressTest(unittest.TestCase):
