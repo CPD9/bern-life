@@ -1,5 +1,6 @@
 // Every sentence the panel says about a state, in one place. No raw error ever reaches the screen.
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import { type LumiState, type SearchState, type Turn, answerCards } from "./conversation";
 import type { LumiFailure } from "./lumi-api";
 
 export function lumiFailureMessage(failure: LumiFailure, name: string): string {
@@ -44,4 +45,33 @@ export function searchSummary(response: SearchResponse): string {
   }
   const count = response.results.length;
   return count === 0 ? "Nothing matched." : `${count} ${count === 1 ? "result" : "results"}`;
+}
+
+function searchStatus(search: SearchState): string {
+  switch (search.status) {
+    case "waiting":
+      return "Searching public pages…";
+    case "failed":
+      return searchFailureMessage(search.failure);
+    case "done":
+      return `Plain search answer: ${searchSummary(search.response)}.`;
+  }
+}
+
+function lumiSaid(lumi: Exclude<LumiState, { status: "waiting" }>, name: string): string {
+  if (lumi.status === "failed") return lumiFailureMessage(lumi.failure, name);
+  const cards = answerCards(lumi.reply.results).length;
+  if (cards === 0) return lumi.reply.reply;
+  return `${lumi.reply.reply} ${cards} ${cards === 1 ? "card" : "cards"}.`;
+}
+
+/**
+ * The one line a screen reader hears about the latest exchange, so it is told what changed
+ * without every card being read aloud.
+ */
+export function statusSentence(turn: Turn | undefined, name: string): string {
+  if (!turn) return "";
+  if (turn.lumi.status === "waiting") return `${name} is answering…`;
+  const said = lumiSaid(turn.lumi, name);
+  return turn.search ? `${said} ${searchStatus(turn.search)}` : said;
 }

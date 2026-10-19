@@ -38,7 +38,7 @@ export function LumiReply({ reply, name }: { reply: AgentReply; name: string }) 
   const cards = answerCards(reply.results);
   const cardId = (index: number) => `${baseId}-card-${index}`;
   const indexOf = new Map(cards.map((result, index) => [result.profile.id, index]));
-  const segments = splitMentions(reply.reply, reply.mentions, new Set(indexOf.keys()));
+  const segments = splitMentions(reply.reply, reply.mentions);
 
   function showCard(profileId: string) {
     const index = indexOf.get(profileId);
