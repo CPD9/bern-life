@@ -1,0 +1,76 @@
+{
+  "query": "sweat patches for runners",
+  "mode": "mock",
+  "abstained": false,
+  "abstain_reason": null,
+  "expanded_terms": [],
+  "results": [
+    {
+      "rank": 1,
+      "profile": {
+        "id": "person-example-ben-beispiel",
+        "kind": "person",
+        "source_id": "example",
+        "name": {
+          "value": "Ben Beispiel",
+          "method": "selector",
+          "evidence": {
+            "page_url": "https://www.example-institute.test/sensor-lab/team",
+            "page_sha256": "b2f04f727a50fbd2fb1d6779a066f9b6358146af6c11179966f493217a341358",
+            "span": "Ben Beispiel",
+            "start": 65,
+            "fetched_at": "2026-10-18T12:00:00Z"
+          }
+        },
+        "source_url": "https://www.example-institute.test/sensor-lab/team",
+        "fields": {
+          "role": [
+            {
+              "value": "PhD student",
+              "method": "selector",
+              "evidence": {
+                "page_url": "https://www.example-institute.test/sensor-lab/team",
+                "page_sha256": "b2f04f727a50fbd2fb1d6779a066f9b6358146af6c11179966f493217a341358",
+                "span": "PhD student",
+                "start": 78,
+                "fetched_at": "2026-10-18T12:00:00Z"
+              }
+            }
+          ],
+          "unit": [],
+          "expertise": [],
+          "projects": [],
+          "infrastructure": [],
+          "services": []
+        }
+      },
+      "reason": {
+        "text": "Role: PhD student",
+        "cites": [
+          "/fields/role/0"
+        ]
+      },
+      "score": {
+        "fused": 0.0161,
+        "lexical_rank": 2,
+        "vector_rank": 4
+      },
+      "passage": {
+        "kind": "own_page",
+        "span": "Ben Beispiel\nPhD student, sweat patches",
+        "page_url": "https://www.example-institute.test/sensor-lab/team",
+        "page_sha256": "b2f04f727a50fbd2fb1d6779a066f9b6358146af6c11179966f493217a341358",
+        "start": 65,
+        "fetched_at": "2026-10-18T12:00:00Z"
+      }
+    }
+  ],
+  "versions": {
+    "engine": "0.0.0",
+    "snapshot": "fixture",
+    "prompts": "fixture",
+    "models": {
+      "expand": "MOCK-no-model"
+    }
+  }
+}

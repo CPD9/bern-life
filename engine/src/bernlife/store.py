@@ -7,6 +7,7 @@ from typing import Any, Protocol
 
 import psycopg
 
+from bernlife.own_page import OwnPage
 from bernlife.profiles_db import read_profiles
 from bernlife.search_sql import Hit, fetch_hits
 
@@ -31,6 +32,7 @@ class Store(Protocol):
     def enrichment(self, values: Sequence[str]) -> dict[str, list[str]]: ...
     def pages(self, urls: Sequence[str]) -> dict[str, dict[str, Any]]: ...
     def relations(self, ids: Sequence[str], kinds: Sequence[str]) -> list[Relation]: ...
+    def own_pages(self, urls: Sequence[str]) -> dict[str, OwnPage]: ...
     def snapshot(self) -> str: ...
 
 
@@ -72,6 +74,29 @@ class PostgresStore:
             (list(ids), list(kinds)),
         ).fetchall()
         return [Relation(*row) for row in rows]
+
+    def own_pages(self, urls: Sequence[str]) -> dict[str, OwnPage]:
+        """Each page with the offsets of every name claim on it (a name with no stored offset is
+        found by its span)."""
+        pages = self.conn.execute(
+            "SELECT url, sha256, text, fetched_at FROM page WHERE url = ANY(%s)", (list(urls),)
+        ).fetchall()
+        names: dict[str, list[tuple[int | None, str]]] = {}
+        for url, start, span in self.conn.execute(
+            "SELECT page_url, start, span FROM claim WHERE field::text = 'name'"
+            " AND page_url = ANY(%s) ORDER BY page_url, start, span",
+            (list(urls),),
+        ).fetchall():
+            names.setdefault(url, []).append((start, span))
+        found = {}
+        for url, sha256, text, fetched_at in pages:
+            spans = [
+                (text.find(span) if start is None else start, span)
+                for start, span in names.get(url, [])
+            ]
+            offsets = tuple(sorted({(at, at + len(span)) for at, span in spans if at >= 0}))
+            found[url] = OwnPage(url, sha256, text, fetched_at, offsets)
+        return found
 
     def snapshot(self) -> str:
         row = self.conn.execute(
