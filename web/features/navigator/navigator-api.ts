@@ -4,9 +4,13 @@ import type { EngineError, SearchRequest } from "@/infrastructure/engine-types";
 
 export type BriefInput = { kind: "text"; text: string } | { kind: "pdf"; file: File };
 
+/** Why the engine read no need from a brief (`brief_unread` in contracts/result.schema.json). */
+export type BriefUnread = NonNullable<SearchResponse["brief_unread"]>;
+
 export type NavigatorFailure =
   | { kind: "engine"; error: EngineError }
   | { kind: "brief"; reason: BriefRejection }
+  | { kind: "unread"; reason: BriefUnread }
   | { kind: "network" };
 
 export type NavigatorOutcome =
@@ -24,6 +28,7 @@ const briefRejections: readonly BriefRejection[] = [
   "too_many_pages",
   "unreadable",
   "no_text",
+  "too_long",
 ];
 const engineErrors: readonly EngineError[] = [
   "bad_request",

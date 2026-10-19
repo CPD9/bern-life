@@ -17,6 +17,8 @@ type EngineClientOptions = {
   readonly fetch: Fetch;
   readonly logError: (message: string, cause?: unknown) => void;
   readonly timeoutMs: number;
+  /** For `brief`, the longest call: the model reads the brief, then every need is searched. */
+  readonly briefTimeoutMs?: number;
 };
 
 type Post = { readonly body: unknown; readonly live: boolean };
@@ -44,9 +46,10 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     path: string,
     parse: (body: unknown) => T | null,
     request?: Post,
+    timeoutMs: number = options.timeoutMs,
   ): Promise<EngineResult<T>> {
     const url = new URL(path, options.baseUrl);
-    const signal = AbortSignal.timeout(options.timeoutMs);
+    const signal = AbortSignal.timeout(timeoutMs);
     const init: RequestInit =
       request === undefined
         ? { method: "GET", signal }
@@ -86,7 +89,12 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     search: (request, callOptions) =>
       call("/api/search", parseSearchResponse, post(request, callOptions)),
     brief: (text, callOptions) =>
-      call("/api/brief", parseSearchResponse, post({ text }, callOptions)),
+      call(
+        "/api/brief",
+        parseSearchResponse,
+        post({ text }, callOptions),
+        options.briefTimeoutMs ?? options.timeoutMs,
+      ),
     agent: (request, callOptions) =>
       call("/api/agent", parseAgentReply, post(request, callOptions)),
     sources: () => call("/api/sources", parseSourcesList),

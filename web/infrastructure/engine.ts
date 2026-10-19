@@ -23,6 +23,8 @@ import { env } from "./env";
 import { createFixtureClient } from "./fixture-client";
 
 const engineTimeoutMs = 60_000;
+// A brief waits for the model to read it, then for each need's expansion and search in turn.
+const briefTimeoutMs = 120_000;
 
 function required<T>(value: T | null, name: string): T {
   if (value === null) throw new Error(`contracts/fixtures/${name} does not match its schema`);
@@ -55,6 +57,7 @@ export function engine(): EngineClient {
         fetch: (url, init) => fetch(url, init),
         logError: (message, cause) => console.error(message, cause ?? ""),
         timeoutMs: engineTimeoutMs,
+        briefTimeoutMs,
       });
   return client;
 }
