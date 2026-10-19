@@ -32,6 +32,7 @@ type PhoneProps = {
   /**
    * Shown inside the phone's dialog (the top layer): toasts, say. It starts below the status bar,
    * and in an app below the app's header too, so it never covers Close, the bell, Back or the title.
+   * With the notification centre open over an app it starts below the status bar only.
    */
   overlay?: ReactNode;
 };
@@ -163,12 +164,13 @@ export function Phone({
             />
           )}
           {overlay !== undefined && (
-            // Below the status bar (this box's parent starts there) and, in an app, below its
-            // header. contain:layout makes it the frame for fixed-position children (toasts).
+            // Below the status bar (this box's parent starts there) and, while an app's header is
+            // showing, below it too; the notification centre covers that header, so not then.
+            // contain:layout makes it the frame for fixed-position children (toasts).
             <div
               data-phone-overlay
               className={`pointer-events-none absolute inset-x-0 bottom-0 z-30 [contain:layout] ${
-                app ? belowWindowHeader : "top-0"
+                app && !centreOpen ? belowWindowHeader : "top-0"
               }`}
             >
               {overlay}
