@@ -35,7 +35,7 @@ make run      # start Postgres, the engine and the web app, replaying the bundle
 
 Open **http://127.0.0.1:3000** and:
 
-1. **Tap Phone, then Ask**, and paste
+1. **Tap Phone, then Ask**, and tap one of the three example questions, or paste
    `Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?`
    The answer lists the extra search terms Apertus added (labelled as search terms, never as
    facts) and the results.
@@ -43,6 +43,10 @@ Open **http://127.0.0.1:3000** and:
    link and the date it was fetched.
 3. **Tap Show on map.** The places that hold results light up. Open one to see its units and the
    matches found there.
+4. **Walk the case.** The phone has one app per case criterion, numbered **1 People** to
+   **7 Honest no**. Each says what the case asks, runs a recorded question with one tap, tells you
+   what to look for, shows the number the evaluator measured for it, and **Next** takes you to
+   the following one.
 
 Then paste `Results of the ALPENHITZE cohort study led by Prof. Beat Zurbriggen at ISPM`. The
 professor and the study are invented, so the app says that no verifiable source exists instead of
@@ -112,7 +116,7 @@ a day (unset: none). Everyone else is answered from the recordings.
   from), **Garage** (the Apertus models and the evaluator's numbers for this snapshot, as the
   engine serves them, and the skills with their evidence), **Sources** (the institutions crawled,
   and how to add one) and **Settings**. The door leads back to the map; the phone carries Ask,
-  Messages, Agents, Opportunities, Library and Settings.
+  Messages, Agents, Opportunities, Library, Sources, Settings and the seven case steps.
 - **Bärnli** floats beside you as the bear you made, and walks beside you on the map; either opens
   its chat. Bärnli searches with the engine's own tools and answers with the same source cards as
   Ask. An answer stays in the chat, with buttons to light its places on the map, open its card in
@@ -273,18 +277,18 @@ this section says. The note only explains, and nothing is sent from the app.
 
 ## Limits and roadmap
 
-- **Recall is below the case's bar** (criterion 1 in the table). A candidate is shown only when a
-  claim it cites shares a word with the question. So someone found only through a passage, or a
-  phrase in another language, stays hidden rather than shown without a reason.
-- **German and French questions find less than English** (criterion 2). There is no stemming
-  (matching word forms), so "Kohlenhydrate" and "Kohlenhydraten" do not match.
-- **Not every invented question abstains:** 8 of 10, where the pre-registered rule asks 9 (the
-  ethics row). The two that still get results ask in French, one about an invented project and one
-  with a title the premise check does not know.
+- **Recall is below the case's bar** (criterion 1 in the table). A result is shown only when a
+  claim it cites, or a passage on its own page, shares a word with the question. So someone found
+  only through a phrase in another language stays hidden rather than shown without a reason.
+- **German and French questions find less than English** (criterion 2). Word endings such as
+  "Kohlenhydrate" and "Kohlenhydraten" are matched, but a claim in one language is found by a
+  question in another only when Apertus's search terms bridge it.
+- **Not every invented question abstains.** The ethics row of the table says how many of the 10
+  do; the ones that still get results ask in French, about an invented project or with a title
+  the premise check does not know.
 - **UniBE is found least often** of the three sources (criterion 5).
 - Explanations are written in English only, and field completeness still needs its human check.
-- **In the game:** you walk the drawn map but not yet inside the office, and on a phone-width screen
-  (390 px) the HUD covers the map's search summary. Two optional quests say why one of their steps
+- **In the game:** you walk the drawn map but not yet inside the office. Two optional quests say why one of their steps
   cannot be done yet: adding a source is a file in `sources/`, not an action in the app, and there
   is no network of labs and experts. What you save to the Library and your office plot stay on this
   device. A map built from swisstopo open data ([`infra/geo/`](infra/geo/README.md)) is in the
@@ -293,8 +297,10 @@ this section says. The note only explains, and nothing is sent from the app.
   asking for one sentence to go takes its whole page out of the next bundle.
 - **Notifications stay in the app** (the bell). Opt-in e-mail or push notifications are not
   decided yet.
-- **The next bundle is not pinned yet.** Replay and every number above come from
-  `bundle-20261019-3`, which holds no recorded answers of Bärnli's own.
+- **Replay knows only recorded questions.** Every number above comes from the snapshot named
+  under the table. Apertus's recorded search terms and explanations exist only for the questions
+  recorded in it (capitals and spacing do not matter); any other question gets plain search, and
+  the chip says so. Only a live run (`make live-run`) asks Apertus about a new question.
 - Next: matching word forms and claims across languages, the human completeness labels, and a
   calibrated confidence per result.
 
