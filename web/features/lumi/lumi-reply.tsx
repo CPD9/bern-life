@@ -61,14 +61,39 @@ function HeldActions({
   );
 }
 
+/** Actions that never run on their own, such as a match report, each one click away. */
+function OfferedActions({
+  offered,
+  onRun,
+}: {
+  offered: readonly AgentAction[];
+  onRun: (action: AgentAction) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {offered.map((action, index) => (
+        <button
+          key={index}
+          type="button"
+          onClick={() => onRun(action)}
+          className="bg-chip-selected text-chip-selected-ink rounded-pill px-4 py-2 text-sm font-bold"
+        >
+          {heldActionLabels[action.type]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 type LumiReplyProps = {
   reply: AgentReply;
   name: string;
   held: readonly AgentAction[];
+  offered: readonly AgentAction[];
   onRunHeld: (action: AgentAction) => void;
 };
 
-export function LumiReply({ reply, name, held, onRunHeld }: LumiReplyProps) {
+export function LumiReply({ reply, name, held, offered, onRunHeld }: LumiReplyProps) {
   const baseId = useId();
   const reducedMotion = useReducedMotion();
   const cards = answerCards(reply.results);
@@ -105,6 +130,7 @@ export function LumiReply({ reply, name, held, onRunHeld }: LumiReplyProps) {
         )}
       </p>
       {held.length > 0 && <HeldActions held={held} onRun={onRunHeld} />}
+      {offered.length > 0 && <OfferedActions offered={offered} onRun={onRunHeld} />}
       {cards.length > 0 && <ResultCards cards={cards} cardId={cardId} />}
     </div>
   );

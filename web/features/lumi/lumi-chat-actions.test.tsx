@@ -44,7 +44,31 @@ describe("LumiChat actions", () => {
     await say("Thanks");
     expect(shown).toEqual([reply.results[0]!]);
     expect(opened).toEqual([["person-example-ada-muster", reply.results[0]!]]);
+    // A report opens a new tab, so it waits for a click (the next test).
+    expect(reported).toEqual([]);
+  });
+
+  test("a match report waits for the player's click with the panel open, then opens once", async () => {
+    const reported: SearchResponse[] = [];
+    const withReport: AgentReply = {
+      ...reply,
+      actions: [{ type: "start_match_report", result: 0 }],
+    };
+    const api = scripted([{ ok: true, value: withReport }]);
+    render(<Harness api={api} onStartMatchReport={(response) => void reported.push(response)} />);
+    openPanel();
+    await say("Make a match report for glucose sensors");
+    expect(reported).toEqual([]);
+    expect(screen.queryByText(/while the panel was closed/)).toBeNull();
+    const make = screen.getByRole("button", { name: "Make a match report" });
+    make.focus();
+    act(() => {
+      fireEvent.click(make);
+      fireEvent.click(make);
+    });
     expect(reported).toEqual([reply.results[0]!]);
+    expect(screen.queryByRole("button", { name: "Make a match report" })).toBeNull();
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
   });
 
   test("a reply acts through the callbacks given when it lands", async () => {

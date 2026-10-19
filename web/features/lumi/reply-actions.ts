@@ -9,12 +9,21 @@ export type LumiActions = {
   onStartMatchReport?: ((response: SearchResponse) => void) | undefined;
 };
 
-/** The words on the button for an action that waited because the panel was closed. */
+/** The words on the button for an action that waits for the player's click. */
 export const heldActionLabels: Record<AgentAction["type"], string> = {
   show_on_map: "Show on the map",
   open_profile: "Open the card",
   start_match_report: "Make a match report",
 };
+
+/**
+ * A match report opens outside the chat, in a new tab, so it waits for the player's own click even
+ * when the reply lands with the panel open: an answer never opens a window by itself, and a browser
+ * would block a window opened without a click anyway.
+ */
+export function waitsForClick(action: AgentAction): boolean {
+  return action.type === "start_match_report";
+}
 
 function answerFor(action: AgentAction, reply: AgentReply): SearchResponse | undefined {
   if (action.type !== "open_profile") return reply.results[action.result];

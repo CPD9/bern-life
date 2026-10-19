@@ -82,6 +82,7 @@ export function TurnView(props: TurnViewProps) {
           reply={lumi.reply}
           name={name}
           held={lumi.held}
+          offered={lumi.offered}
           onRunHeld={(action) => onRunHeld(turn.id, action)}
         />
       )}

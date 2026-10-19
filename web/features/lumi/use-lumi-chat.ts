@@ -2,12 +2,13 @@
 
 // One conversation with Lumi. Actions in a reply are dispatched from the request that received it,
 // not from rendering, so a re-render can never repeat them; a reply that lands while the panel is
-// closed keeps its actions on its turn until the player runs them. One message is in flight.
+// closed keeps its actions on its turn until the player runs them, and a match report always waits
+// for the player's click. One message is in flight.
 import { useEffect, useRef, useState } from "react";
 import type { AgentAction } from "./agent-reply";
 import { type SearchState, type Turn, isBusy, messagesFor } from "./conversation";
 import type { ChatMessage, LumiApi } from "./lumi-api";
-import { type LumiActions, canRun, runAction } from "./reply-actions";
+import { type LumiActions, canRun, runAction, waitsForClick } from "./reply-actions";
 
 export type { LumiActions } from "./reply-actions";
 
@@ -17,7 +18,7 @@ export type LumiChatController = {
   /** False when nothing was sent: an empty message, or one still in flight. */
   send(text: string): boolean;
   retry(): boolean;
-  /** Runs an action that waited while the panel was closed; false if it already ran. */
+  /** Runs an action that waited for the player (held or offered); false if it already ran. */
   runHeld(turnId: number, action: AgentAction): boolean;
 };
 
@@ -55,12 +56,14 @@ export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): 
     if (asked.ok) {
       const reply = asked.value;
       const { open: shown, actions: now } = current.current;
-      const held = shown ? [] : reply.actions.filter((action) => canRun(action, reply, now));
+      const onItsOwn = reply.actions.filter((action) => !waitsForClick(action));
+      const runnable = reply.actions.filter((action) => canRun(action, reply, now));
+      const held = shown ? [] : runnable.filter((action) => !waitsForClick(action));
       update(id, {
-        lumi: { status: "replied", reply, held },
+        lumi: { status: "replied", reply, held, offered: runnable.filter(waitsForClick) },
         search: reply.abstained ? waiting : null,
       });
-      if (shown) for (const action of reply.actions) runAction(action, reply, now);
+      if (shown) for (const action of onItsOwn) runAction(action, reply, now);
       if (!reply.abstained) return;
     } else {
       // Without the server a plain search cannot answer either, so there is nothing to fall back to.
@@ -108,5 +111,7 @@ export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): 
 
 function withoutHeld(turn: Turn, action: AgentAction): Turn {
   if (turn.lumi.status !== "replied") return turn;
-  return { ...turn, lumi: { ...turn.lumi, held: turn.lumi.held.filter((a) => a !== action) } };
+  const { held, offered } = turn.lumi;
+  const without = (actions: readonly AgentAction[]) => actions.filter((a) => a !== action);
+  return { ...turn, lumi: { ...turn.lumi, held: without(held), offered: without(offered) } };
 }

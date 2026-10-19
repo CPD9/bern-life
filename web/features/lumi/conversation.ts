@@ -16,6 +16,8 @@ export type LumiState =
       readonly reply: AgentReply;
       /** Actions that arrived while the panel was closed, left for the player to run. */
       readonly held: readonly AgentAction[];
+      /** Actions that never run on their own (a match report opens a new tab): one click each. */
+      readonly offered: readonly AgentAction[];
     }
   | { readonly status: "failed"; readonly failure: LumiFailure };
 
