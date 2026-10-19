@@ -13,38 +13,40 @@ function freshRoot(): HTMLElement {
 }
 
 function attributes(root: HTMLElement) {
-  return ["data-theme", "data-graphics", "data-saver"].map((name) => root.getAttribute(name));
+  return ["data-theme", "data-graphics"].map((name) => root.getAttribute(name));
 }
 
 describe("parseSettings", () => {
   test("reads valid settings", () => {
-    expect(parseSettings('{"night":"on","lite":true,"dataSaver":true}')).toEqual({
-      night: "on",
+    expect(parseSettings('{"night":"on","lite":true}')).toEqual({ night: "on", lite: true });
+  });
+
+  test("an old stored dataSaver is accepted and dropped", () => {
+    expect(parseSettings('{"night":"off","lite":true,"dataSaver":true}')).toEqual({
+      night: "off",
       lite: true,
-      dataSaver: true,
     });
   });
 
   test("broken JSON, wrong types and missing fields fall back field by field", () => {
     expect(parseSettings("{not json")).toEqual(defaultSettings);
     expect(parseSettings(null)).toEqual(defaultSettings);
-    expect(parseSettings('{"night":"dusk","lite":"yes","dataSaver":true}')).toEqual({
+    expect(parseSettings('{"night":"dusk","lite":"yes"}')).toEqual({
       night: "auto",
       lite: false,
-      dataSaver: true,
     });
   });
 });
 
 describe("applySettings", () => {
-  test("writes theme, graphics and saver attributes, and removes them when off or auto", () => {
+  test("writes theme and graphics attributes, and removes them when off or auto", () => {
     const root = freshRoot();
-    applySettings(root, { night: "on", lite: true, dataSaver: true });
-    expect(attributes(root)).toEqual(["night", "lite", "on"]);
-    applySettings(root, { night: "off", lite: false, dataSaver: false });
-    expect(attributes(root)).toEqual(["day", null, null]);
+    applySettings(root, { night: "on", lite: true });
+    expect(attributes(root)).toEqual(["night", "lite"]);
+    applySettings(root, { night: "off", lite: false });
+    expect(attributes(root)).toEqual(["day", null]);
     applySettings(root, defaultSettings);
-    expect(attributes(root)).toEqual([null, null, null]);
+    expect(attributes(root)).toEqual([null, null]);
   });
 });
 
@@ -59,9 +61,9 @@ describe("createSettingsStore", () => {
     const store = createSettingsStore(() => storage, root);
     let notified = 0;
     store.subscribe(() => notified++);
-    expect(store.get()).toEqual({ night: "on", lite: false, dataSaver: false });
-    store.set({ night: "on", lite: true, dataSaver: false });
-    expect(saved.get(settingsKey)).toBe('{"night":"on","lite":true,"dataSaver":false}');
+    expect(store.get()).toEqual({ night: "on", lite: false });
+    store.set({ night: "on", lite: true });
+    expect(saved.get(settingsKey)).toBe('{"night":"on","lite":true}');
     expect(root.getAttribute("data-graphics")).toBe("lite");
     expect(notified).toBe(1);
   });
@@ -72,18 +74,19 @@ describe("createSettingsStore", () => {
     };
     const store = createSettingsStore(blocked, freshRoot());
     expect(store.get()).toEqual(defaultSettings);
-    store.set({ night: "on", lite: false, dataSaver: false });
+    store.set({ night: "on", lite: false });
     expect(store.get().night).toBe("on");
   });
 });
 
 describe("settingsBootScript", () => {
   test("applies stored settings to the document before any bundle runs", () => {
-    localStorage.setItem(settingsKey, '{"night":"on","lite":true,"dataSaver":false}');
+    localStorage.setItem(settingsKey, '{"night":"on","lite":true,"dataSaver":true}');
     const root = document.documentElement;
     try {
       new Function(settingsBootScript)();
-      expect(attributes(root)).toEqual(["night", "lite", null]);
+      expect(attributes(root)).toEqual(["night", "lite"]);
+      expect(root.getAttribute("data-saver")).toBeNull();
     } finally {
       localStorage.removeItem(settingsKey);
       applySettings(root, defaultSettings);

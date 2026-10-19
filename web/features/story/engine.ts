@@ -3,8 +3,10 @@
 // it; an optional quest's steps count in any order, since its parts live in separate apps. Done
 // steps never go away, so a finished quest stays finished and repeating an event changes nothing.
 // A quest that cannot be finished with the events features emit today is "coming": listed with its
-// reason, never current, so nobody waits on a step no one can complete.
-import type { AppEventName } from "@/infrastructure/app-events";
+// reason, never current, so nobody waits on a step no one can complete. An optional quest with some
+// steps playable is open for those, and says why the rest wait (`reasons`). Events that are off in
+// this mode (`OffEvents`, such as saving under the demo fixtures) count as not emitted.
+import type { AppEventName, OffEvents } from "@/infrastructure/app-events";
 import type { Story } from "@/infrastructure/contract-types.generated";
 
 export type Quest = Story["quests"][number];
@@ -26,6 +28,10 @@ export type QuestProgress = {
   readonly status: QuestStatus;
   readonly stepsDone: number;
   readonly nextStep: QuestStep | null;
+  /** Every step left can be done with today's events; false while one waits on a later feature. */
+  readonly finishable: boolean;
+  /** Why the steps left that cannot be done wait, each reason once; empty when finishable. */
+  readonly reasons: readonly string[];
 };
 
 export type StoryProgress = {
@@ -70,12 +76,14 @@ export function storyProgress(
   story: Story,
   state: StoryState,
   emitted: readonly AppEventName[],
+  off: OffEvents = {},
 ): StoryProgress {
   const done = new Set(state.done);
-  const playable = new Set(emitted);
+  const playable = new Set(emitted.filter((event) => off[event] === undefined));
   const base = story.quests.map((quest) => {
     const remaining = remainingSteps(quest, done);
     const reachable = remaining.filter((step) => playable.has(step.done_when));
+    const waiting = remaining.filter((step) => !playable.has(step.done_when));
     // In order, every remaining step must be playable; in any order, one is enough to go on with.
     const coming = quest.optional ? reachable.length === 0 : reachable.length < remaining.length;
     const next = (quest.optional ? reachable[0] : undefined) ?? remaining[0] ?? null;
@@ -83,6 +91,8 @@ export function storyProgress(
       quest,
       stepsDone: quest.steps.length - remaining.length,
       nextStep: next,
+      finishable: waiting.length === 0,
+      reasons: [...new Set(waiting.map((step) => off[step.done_when] ?? comingReason(quest)))],
       status: (next === null ? "done" : coming ? "coming" : "ready") as QuestStatus,
     };
   });

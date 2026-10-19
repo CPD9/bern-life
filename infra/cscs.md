@@ -3,6 +3,7 @@
 The demo's models run at CSCS (Swiss National Supercomputing Centre). At HackApertus the organisers
 hand out keys for the Keera gateway, which forwards to the CSCS Inference API; the engine talks to it
 like any OpenAI-compatible endpoint. Keys live in `.env` only: never commit, print or paste one.
+Apertus on your own GPUs, or replay with no network: [`sovereign.md`](sovereign.md).
 
 ## Settings in `.env`
 

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sources.schema.json",
+  "title": "SourcesList",
+  "description": "GET /api/sources. Every institution configured under sources/, with what the loaded snapshot holds from it. Counts are read from the stored pages and profiles, never estimated.",
+  "type": "object",
+  "required": [
+    "snapshot",
+    "sources"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "snapshot": {
+      "type": "string"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "hosts",
+          "kinds",
+          "pages",
+          "profiles",
+          "newest_fetched_at"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hosts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9.-]+$"
+            }
+          },
+          "kinds": {
+            "description": "The profile kinds the snapshot holds for this source.",
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "$ref": "profile.schema.json#/properties/kind"
+            }
+          },
+          "pages": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "profiles": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "newest_fetched_at": {
+            "description": "When the most recently fetched page of this source was fetched; null only when it has no pages.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "if": {
+          "properties": {
+            "pages": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "newest_fetched_at": {
+              "type": "null"
+            }
+          }
+        },
+        "else": {
+          "properties": {
+            "newest_fetched_at": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

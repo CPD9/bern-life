@@ -21,5 +21,11 @@ export default defineConfig([
     },
   },
   prettier,
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "infrastructure/contract-validators.generated.js",
+  ]),
 ]);

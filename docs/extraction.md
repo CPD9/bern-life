@@ -11,7 +11,11 @@ by string matching. The model proposes; the verifier decides.
    it is also a whole line of the text. On person pages the line after the name is the role, unless
    it is a contact label; if it starts with Department, Institute and the like, it is a unit
    instead. A `University of Bern, <centre>, <group>` line gives one unit per part. The header line
-   that repeats the title's site suffix names the institute.
+   that repeats the title's site suffix names the institute. A page whose name is exactly a
+   listing heading (`listing_names.py`: "Services", "Dienstleistungen", "Thesis Projects", "Core
+   Facilities", "Group Leaders", ...) has no subject of its own, like a listing page: the URL
+   rules file it as a service or project page, but it lists many. The people it names still come
+   from the model pass.
 2. **Model pass** (`extract_prompt.py`, `extract_model.py`) reads person, unit, project,
    infrastructure, listing and other pages by default (`--kinds` changes this). On listing and other
    pages it is asked only for the people the page names. One call per window of
@@ -111,7 +115,17 @@ sample spreads across hosts.
 address span occurs on its page and that the recorded page hash is the stored one. It changes
 nothing.
 
+## Listing headings (2026-10-19)
+Replaying E2's extraction with the listing headings removed 35 profiles (16 infrastructure, 18
+project, 1 unit: 6 "Services", 4 "Dienstleistungen", 5 "Thesis Projects", ...) and 54 relations
+(28 `works_on`, 16 `operates`, 9 `member_of`, 1 `part_of`), and changed no other profile. Before,
+these profiles took 26 top-10 slots in 20 gold queries. Gold on a fresh database, same bundle
+otherwise: recall@10 0.36 → 0.38, MRR 0.43 → 0.46, invented abstained 8/10 and false abstentions
+0/38 unchanged, 0 invented. Dev (checked first): recall@10 0.86 and MRR 0.66 unchanged.
+
 ## Limits
+- Navigation pages under /services/ ("FAQ", "Links", "Kontakt", "About us", "Pricing") still
+  become infrastructure profiles; only the listing headings in `listing_names.py` are dropped.
 - An opportunity's short span can drop its context: the SNSF IICT page's amount "up to CHF 5000"
   is verbatim, but it belongs to a preparatory grant mentioned in the same sentence.
 - PROGR's room pages load their text in the browser; the server sends the rental overview for

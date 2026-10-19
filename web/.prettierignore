@@ -2,3 +2,5 @@
 bun.lock
 next-env.d.ts
 infrastructure/contract-types.generated.ts
+infrastructure/contract-validators.generated.d.ts
+infrastructure/contract-validators.generated.js

@@ -17,6 +17,7 @@ from bernlife.extract_records import (
     RelationCandidate,
     Subject,
 )
+from bernlife.listing_names import is_listing_name
 from bernlife.names import (
     display_name,
     fold,
@@ -94,10 +95,11 @@ def site_line(page: Page) -> str | None:
 
 
 def page_subject(page: Page, institutes: bool = True) -> Subject | None:
-    """What the page itself is about, or None for listings and pages without a readable name.
+    """What the page itself is about, or None for listings, pages named after a listing heading
+    and pages without a readable name.
     Without `institutes` (an opportunity source), a page is never read as its site's institute."""
     name = page_name(page)
-    if page.kind not in PROFILE_KINDS or name is None:
+    if page.kind not in PROFILE_KINDS or name is None or is_listing_name(name):
         return None
     if page.kind == "person":
         person = display_name(name)

@@ -26,6 +26,20 @@ export function createAppEvents(): AppEvents {
 
 export const appEvents: AppEvents = createAppEvents();
 
+/** Events some feature emits, but not in this mode, each with why its steps wait. */
+export type OffEvents = Partial<Record<AppEventName, string>>;
+
+/**
+ * Events that never fire under DEMO_FIXTURES, where every person, call and number is invented:
+ * nothing can be saved (app/shared-apps.tsx), and the garage's numbers are not the engine's
+ * (features/garage/garage-app.tsx).
+ */
+export const offInFixtures: OffEvents = {
+  opportunity_saved: "Saving is off for the invented demo data.",
+  library_item_saved: "Saving is off for the invented demo data.",
+  numbers_seen: "The Garage shows invented demo numbers here; only the engine's own numbers count.",
+};
+
 /**
  * Events some feature emits today. A quest that needs any other event shows as "coming next".
  * Add an event here in the same PR that emits it:
@@ -35,6 +49,14 @@ export const appEvents: AppEvents = createAppEvents();
  * - report_made: features/report/open-report.ts
  * - lobby_entered: features/world/place-panel.tsx (opening a place on the map)
  * - message_sent: features/messages/use-messages.ts
+ * - office_ready: features/shell/use-office-ready.ts (after onboarding: first office render, or
+ *   sitting at the desk)
+ * - opportunity_saved, library_item_saved: app/shared-apps.tsx (the Library's save button, through
+ *   features/library/library-items.ts savedEventNames)
+ * - garage_visited, numbers_seen: app/shared-apps.tsx (features/garage/garage-app.tsx). numbers_seen
+ *   only once GET /api/numbers has answered with the evaluator's numbers, never for a fixture, and
+ *   never while the route is not there yet (the garage then says the numbers are not connected)
+ * - settled: app/world-settle.tsx (features/settle/settle.tsx, choosing a plot)
  */
 export const emittedToday: readonly AppEventName[] = [
   "search_answered",
@@ -45,4 +67,10 @@ export const emittedToday: readonly AppEventName[] = [
   "abstained_seen",
   "lobby_entered",
   "message_sent",
+  "office_ready",
+  "opportunity_saved",
+  "library_item_saved",
+  "garage_visited",
+  "numbers_seen",
+  "settled",
 ];

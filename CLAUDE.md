@@ -42,7 +42,8 @@ data/        gitignored: snapshot bundle (pages, LLM cache, vectors), fetched by
 |---|---|
 | `make fetch` | download and verify the pinned snapshot bundle into `data/` |
 | `make run` | Docker: Postgres + engine + web, replaying the bundle, no GPU; UI on http://127.0.0.1:3000 |
-| `make live` | same, against the model endpoints in `.env`; stops if none answers |
+| `make live ARGS=<command>` | health check against the model endpoints in `.env` (stops if none answers), then that one engine command |
+| `make live-run` | `make run` after the same health check; remote model calls only for signed-in users under their limits and `LLM_CALL_BUDGET`, and it stops unless the engine reports that budget |
 | `make test` | engine unit tests, contract checks, web typecheck/lint/test |
 | `make eval` | evaluator on the bundle: recall@10, MRR, traceability, abstention, exposure |
 

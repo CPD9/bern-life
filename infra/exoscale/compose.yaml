@@ -94,6 +94,8 @@ services:
       DEMO_FIXTURES: ${DEMO_FIXTURES:-0}
       ENGINE_URL: http://127.0.0.1:8100
       BERNLIFE_DATA_DIR: /data
+      # Caddy is the only way in and writes X-Forwarded-For itself, so limits count real addresses.
+      TRUST_PROXY: "1"
     volumes:
       - uploads:/data/uploads
     healthcheck:

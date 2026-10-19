@@ -2,18 +2,23 @@
 
 Separate code from the search: nothing here imports the engine, so a bug in ranking cannot hide
 in the scoring. Writes metrics.json and the blind labelling sheet to --out and prints the report.
+A run on one bundle's own files also writes its headline numbers to
+--results-dir/<bundle version>/metrics.json, which is kept in git.
 """
 
 import argparse
 import hashlib
 import json
 import sys
+from collections.abc import Callable
 from dataclasses import asdict
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .coverage import completeness, exposure
 from .load import LoadError, load_gold, load_predictions, load_records
 from .report import markdown
+from .results import bundle_version, headline, write_headline
 from .score import QueryResult, score_all
 from .sheet import stratified, write_sheet
 from .summary import by_slice, decisions, variant_agreement
@@ -28,6 +33,12 @@ def arguments(argv: list[str] | None) -> argparse.Namespace:
         "--profiles", type=Path, help="snapshot profiles.jsonl, for invented entities"
     )
     parser.add_argument("--out", type=Path, default=Path("eval/out"))
+    parser.add_argument(
+        "--results-dir",
+        type=Path,
+        default=Path("eval/results"),
+        help="headline numbers per bundle version, for a run on one bundle's own files",
+    )
     return parser.parse_args(argv)
 
 
@@ -61,7 +72,11 @@ def per_query(result: QueryResult) -> dict[str, object]:
     }
 
 
-def main(argv: list[str] | None = None) -> int:
+def utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+def main(argv: list[str] | None = None, clock: Callable[[], datetime] = utc_now) -> int:
     args = arguments(argv)
     try:
         gold = load_gold(args.gold)
@@ -70,6 +85,7 @@ def main(argv: list[str] | None = None) -> int:
         profiles = (
             load_records(args.profiles, "profile.schema.json", "id") if args.profiles else None
         )
+        snapshot = bundle_version(args.predictions, args.pages, args.profiles)
     except LoadError as error:
         print(f"eval: {error}", file=sys.stderr)
         return 2
@@ -93,6 +109,8 @@ def main(argv: list[str] | None = None) -> int:
     write_sheet(
         stratified(results), args.out / "labelling_sheet.csv", args.out / "labelling_key.json"
     )
+    if snapshot is not None:
+        write_headline(args.results_dir, headline(snapshot, clock(), slices))
     print(markdown(metrics), end="")
     return 0
 

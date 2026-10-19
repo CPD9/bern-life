@@ -12,6 +12,7 @@
     "format:check": "prettier --check .",
     "test": "bun test",
     "contract:types": "bun scripts/contract-types.ts",
+    "contract:validators": "bun scripts/contract-validators.ts",
     "invite:create": "bun scripts/invite-create.ts",
     "e2e:smoke": "bun scripts/e2e-smoke.ts"
   },
