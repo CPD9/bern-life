@@ -126,6 +126,16 @@ export function PeoplePanel() {
   );
 }
 
+/** The agent's kind as the sentence names it, from the avatar config's kinds. */
+const agentKinds: Record<Agent["bear"]["kind"], string> = {
+  "brown-bear": "a bear",
+  "polar-bear": "a polar bear",
+  panda: "a panda",
+  "red-panda": "a red panda",
+  marmot: "a marmot",
+  ibex: "an ibex",
+};
+
 export function AgentsPanel({ agent }: { agent: Agent }) {
   const colour = furColour(agent.bear);
   return (
@@ -140,7 +150,7 @@ export function AgentsPanel({ agent }: { agent: Agent }) {
         )}
         <div>
           <p className="text-lg font-extrabold">{agent.name}</p>
-          <p className="text-muted text-sm">Your agent, a bear.</p>
+          <p className="text-muted text-sm">Your agent, {agentKinds[agent.bear.kind]}.</p>
         </div>
       </div>
       <Facts label={`${agent.name}'s look`} facts={bearFacts(agent.bear)} />

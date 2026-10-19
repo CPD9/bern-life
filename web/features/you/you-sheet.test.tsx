@@ -6,7 +6,9 @@ import { defaultBear } from "@/features/avatar/bear-config";
 import { emptyProfile } from "@/features/onboarding/profile";
 import { emptyStoryState, storyProgress } from "@/features/story/engine";
 import { storyFixture } from "@/test/story";
+import { AgentsPanel } from "./you-panels";
 import { YouSheet } from "./you-sheet";
+import { YouTabs } from "./you-tabs";
 import type { PersonLook, YouProfile } from "./you-summary";
 
 const lumi = { name: "Lumi", bear: defaultBear };
@@ -60,11 +62,33 @@ describe("YouSheet", () => {
     expect(document.querySelector("dialog")!.open).toBe(true);
     expect(document.activeElement).toBe(tab("Profile"));
     expect(tab("Profile").getAttribute("aria-selected")).toBe("true");
-    expect(screen.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe("you-tab-profile");
+    const panel = screen.getByRole("tabpanel");
+    expect(panel.getAttribute("aria-labelledby")).toBe(tab("Profile").id);
+    expect(tab("Profile").getAttribute("aria-controls")).toBe(panel.id);
     expect(panelText()).toContain("RoleResearcher");
     expect(panelText()).toContain("GoalFind a test site or data");
     expect(panelText()).toContain("Who sees your profileOnly me");
     expect(panelText()).toContain("HairCurly");
+  });
+
+  test("the dialog is named by its title and the panel is reachable with Tab", () => {
+    openSheet();
+    expect(screen.getByRole("dialog", { name: "You" })).toBeTruthy();
+    expect(screen.getByRole("tabpanel").getAttribute("tabindex")).toBe("0");
+  });
+
+  test("two tab sets on a page never share an id", () => {
+    const tabs = [{ id: "one", label: "One", panel: "First panel" }] as const;
+    const tabSet = () => <YouTabs tabs={tabs} selected="one" onSelect={() => {}} label="Set" />;
+    render(
+      <>
+        {tabSet()}
+        {tabSet()}
+      </>,
+    );
+    const ids = Array.from(document.querySelectorAll("[id]"), (element) => element.id);
+    expect(ids).toHaveLength(4);
+    expect(new Set(ids).size).toBe(4);
   });
 
   test("arrow keys, Home and End move a roving tabindex and select as they go", () => {
@@ -128,6 +152,22 @@ describe("YouSheet", () => {
     expect(panelText()).toContain("KindBern bear");
     expect(panelText()).toContain("FurHoney");
     expect(screen.getByText("Lumi's skills and loops live in the Agents app.")).toBeTruthy();
+    expect(screen.getByText("Your agent, a bear.")).toBeTruthy();
+  });
+
+  test("the agent line names the agent's kind from its look", () => {
+    const kinds = [
+      ["polar-bear", "snow", "Your agent, a polar bear."],
+      ["red-panda", "rust", "Your agent, a red panda."],
+      ["ibex", "fawn", "Your agent, an ibex."],
+    ] as const;
+    for (const [kind, fur, line] of kinds) {
+      const { unmount } = render(
+        <AgentsPanel agent={{ name: "Pip", bear: { ...defaultBear, kind, fur } }} />,
+      );
+      expect(screen.getByText(line)).toBeTruthy();
+      unmount();
+    }
   });
 
   test("Close shuts the sheet and gives focus back to what opened it", async () => {

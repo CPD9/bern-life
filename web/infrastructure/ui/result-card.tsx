@@ -32,6 +32,17 @@ const relationText: Record<Via["kind"], string> = {
   member_of: "Member of",
 };
 
+/**
+ * "Through the project PlateScan". The kind is read from the related id; an id whose prefix is not
+ * a kind the card knows is named without one, rather than guessed.
+ */
+function throughHeading(via: Via): string {
+  const kind = relatedKind(via);
+  return via.related_profile_id.startsWith(`${kind}-`)
+    ? `Through the ${kind} ${via.related_name}`
+    : `Through ${via.related_name}`;
+}
+
 // A claim can appear twice (in its field and under "Why it matches"); the open evidence panel
 // belongs to the group that was clicked, so its key is group plus pointer.
 type OpenClaim = { group: string; pointer: string } | null;
@@ -48,6 +59,9 @@ export function ResultCard({ result, events = appEvents }: ResultCardProps) {
   const cited = new Set(result.reason.cites);
   const { profile, via } = result;
   const nameOpen = open?.group === "name";
+  // A reason that cites only the name adds nothing when the relation explains the result; without
+  // a relation it is the only explanation the card has, so it stays.
+  const whyShown = !via || !citesOnlyName(result);
 
   function claimGroup(
     group: string,
@@ -116,7 +130,7 @@ export function ResultCard({ result, events = appEvents }: ResultCardProps) {
       {via && (
         <section aria-labelledby={`${baseId}-via`} className="flex flex-col gap-2">
           <h4 id={`${baseId}-via`} className="font-extrabold">
-            Through the {relatedKind(via)} {via.related_name}
+            {throughHeading(via)}
           </h4>
           <SpanEvidence
             evidence={via}
@@ -127,7 +141,7 @@ export function ResultCard({ result, events = appEvents }: ResultCardProps) {
         </section>
       )}
 
-      {!citesOnlyName(result) && (
+      {whyShown && (
         <section aria-labelledby={`${baseId}-why`} className="flex flex-col gap-2">
           <h4 id={`${baseId}-why`} className="font-extrabold">
             Why it matches

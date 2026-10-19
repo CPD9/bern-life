@@ -3,7 +3,7 @@
 // The You sheet: what Bern Life knows about the player, in one place. A native modal dialog, so
 // the world behind it is inert and Escape closes it; it opens on mount, puts focus on the selected
 // tab and gives focus back to whatever opened it.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { StoryProgress } from "@/features/story/engine";
 import { AgentsPanel, GoalsPanel, PeoplePanel, ProfilePanel, SkillsPanel } from "./you-panels";
 import type { Agent, PersonLook, YouProfile } from "./you-summary";
@@ -23,6 +23,7 @@ export function YouSheet({ profile, person, agent, story, onClose }: YouSheetPro
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const [selected, setSelected] = useState<YouTabId>("profile");
+  const titleId = useId();
 
   useEffect(() => {
     const element = dialog.current;
@@ -48,14 +49,14 @@ export function YouSheet({ profile, person, agent, story, onClose }: YouSheetPro
   return (
     <dialog
       ref={dialog}
-      aria-labelledby="you-sheet-title"
+      aria-labelledby={titleId}
       onClose={handleClose}
       className="bg-panel text-ink m-auto w-[min(32rem,calc(100vw-2rem))] rounded-3xl p-0 backdrop:bg-black/40"
     >
       <div className="flex max-h-[85dvh] flex-col gap-4 overflow-y-auto p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 id="you-sheet-title" className="text-xl font-extrabold">
+            <h2 id={titleId} className="text-xl font-extrabold">
               You
             </h2>
             <p className="text-muted text-sm">What you told Bern Life, and who works with you.</p>
