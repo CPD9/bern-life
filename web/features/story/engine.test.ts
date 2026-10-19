@@ -94,20 +94,41 @@ describe("optional quests in any order", () => {
 
 describe("comingReason", () => {
   test("uses the story's own line and falls back to a plain one", () => {
-    const visit = story.quests.find((q) => q.id === "visit")!;
-    expect(comingReason(visit)).toBe(
-      "Opening a place on the map does not report to the story yet.",
+    const extend = story.quests.find((q) => q.id === "extend")!;
+    expect(comingReason(extend)).toBe(
+      "The sources admin and the numbers screen are not in the game yet; a new site is one file in sources/.",
     );
-    const withoutReason = { ...visit };
+    const withoutReason = { ...extend };
     delete withoutReason.coming;
     expect(comingReason(withoutReason)).toBe(defaultComingReason);
+  });
+
+  test("a quest whose events are all emitted carries no coming reason", () => {
+    const visit = story.quests.find((q) => q.id === "visit")!;
+    expect(visit.coming).toBeUndefined();
+  });
+
+  test("Arrive waits only on settling once the office is ready, and says so", () => {
+    const arrive = (state: StoryState) =>
+      storyProgress(story, state, emittedToday).quests.find((q) => q.quest.id === "arrive")!;
+    expect(arrive(started).status).toBe("ready");
+    expect(arrive(started).nextStep?.id).toBe("office");
+    const afterOffice = arrive(play(["office_ready"]));
+    expect([afterOffice.status, afterOffice.nextStep?.id, afterOffice.stepsDone]).toEqual([
+      "coming",
+      "settle",
+      1,
+    ]);
+    expect(comingReason(afterOffice.quest)).toBe(
+      "Settling in Bern does not report to the story yet.",
+    );
   });
 });
 
 describe("storyProgress", () => {
   test("quests whose events nothing emits yet are coming next and never current", () => {
     expect(statuses(started)).toEqual({
-      arrive: "coming",
+      arrive: "ready",
       "find-experts": "current",
       "other-words": "ready",
       brief: "ready",
@@ -148,6 +169,7 @@ describe("storyProgress", () => {
       "abstained_seen",
       "lobby_entered",
       "message_sent",
+      "office_ready",
     ]);
     const progress = storyProgress(story, state, emittedToday);
     expect(progress.current).toBeNull();

@@ -43,12 +43,15 @@ describe("StoryMenu", () => {
     render(<Harness />);
     openMenu();
     const row = (title: string) => screen.getByRole("heading", { name: title }).closest("li")!;
-    const arrive = Array.from(row("Arrive and settle").querySelectorAll("p, span"));
-    expect(arrive.map((element) => element.textContent).slice(0, 3)).toEqual([
+    const extend = Array.from(row("Add a new source").querySelectorAll("p, span"));
+    expect(extend.map((element) => element.textContent).slice(0, 3)).toEqual([
       "Coming next · optional",
-      "Join Bern Life and land in your office, where the desk opens your computer.",
-      "Joining and your office do not report to the story yet.",
+      "Add an institution's website with one configuration file.",
+      "The sources admin and the numbers screen are not in the game yet; a new site is one file in sources/.",
     ]);
+    // The office reports office_ready, so Arrive and settle is open without its reason.
+    expect(row("Arrive and settle").textContent).toContain("Open · optional");
+    expect(row("Arrive and settle").textContent).not.toContain("does not report");
     expect(row("Visit an institute").textContent).toContain("Open · optional");
     // Sending a message counts toward Grow in Bern, so it is open, not coming next.
     expect(row("Grow in Bern").textContent).toContain("Open · optional");

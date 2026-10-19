@@ -8,7 +8,7 @@
       "goal": "Join Bern Life and land in your office, where the desk opens your computer.",
       "criterion": "stretch",
       "optional": true,
-      "coming": "Joining and your office do not report to the story yet.",
+      "coming": "Settling in Bern does not report to the story yet.",
       "steps": [
         {
           "id": "settle",
@@ -80,7 +80,6 @@
       "goal": "Walk to a place and see who works there.",
       "criterion": "c4-structured",
       "optional": true,
-      "coming": "Opening a place on the map does not report to the story yet.",
       "steps": [
         {
           "id": "lobby",
@@ -129,7 +128,7 @@
       "goal": "Find opportunities, connections and partners for your business in Bern, in any order.",
       "criterion": "stretch",
       "optional": true,
-      "coming": "Opportunities, Library, Garage and saving to your network are not built yet.",
+      "coming": "Saving opportunities, connections and library items, and visiting the garage, do not report to the story yet.",
       "steps": [
         {
           "id": "opportunity",
