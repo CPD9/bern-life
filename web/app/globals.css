@@ -50,9 +50,12 @@
   --color-warn-ink: var(--warn-ink);
   --color-mark: var(--mark);
   --color-device: #0f1720;
+  /* Count badges and unread dots: white on it is 5.2:1 in both themes. */
+  --color-alert: #c2410c;
   --radius-panel: 1.75rem;
   --radius-pill: 999px;
   --shadow-panel: 0 8px 24px var(--shadow-color);
+  --animate-phone-in: phone-in 180ms ease-out;
   --font-sans: var(--font-rounded), ui-rounded, system-ui, sans-serif;
 }
 
@@ -87,5 +90,13 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* The phone's app and home transition; the phone leaves it off under reduced motion. */
+@keyframes phone-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
   }
 }
