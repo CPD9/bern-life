@@ -51,6 +51,8 @@ class FixtureRunTest(unittest.TestCase):
         )
         self.assertEqual(metrics["decisions"]["criterion_3"]["status"], "not met")
         self.assertIn("| pooled | 48 |", report)
+        self.assertIn("| small | 4 | 4 | 1.00 | 10 | 1.00 | 0 |", report)
+        self.assertIn("| unibe | small | 2 | 2 | 1.00 | 6 | 1.00 | 0 |", report)
 
     def test_records_the_sha256_of_every_file_it_scored(self) -> None:
         _, _, out = self.run_main("--pages", str(FIXTURES / "pages.jsonl"))

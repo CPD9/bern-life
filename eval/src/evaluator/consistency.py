@@ -1,8 +1,9 @@
 """Criterion 2 as a number: does one need, worded differently, find the same results?
 
 eval/consistency.jsonl holds sets of wordings of one need, each copied verbatim from the case, the
-gold set or the dev set. Every wording goes through the engine's own `predict` (replay, the same
-search the app serves) into a predictions file this module reads; nothing here imports the engine.
+gold set, the dev set or the issue that planned the set before any result; each set's notes say
+which. Every wording goes through the engine's own `predict` (replay, the same search the app
+serves) into a predictions file this module reads; nothing here imports the engine.
 Per set: the mean Jaccard overlap of the top-10 profile ids over every pair of wordings, and for
 each wording the share of its top 10 that the set's first wording also finds. A wording that got
 no recorded query expansion was searched plain, and is listed as such, because replay answers a
@@ -58,9 +59,13 @@ def query_rows(sets: Sequence[WordingSet]) -> list[dict[str, str]]:
     ]
 
 
-def load_responses(path: Path, sets: Sequence[WordingSet]) -> dict[str, Record]:
+def load_responses(
+    path: Path, sets: Sequence[WordingSet], snapshot: str | None = None
+) -> dict[str, Record]:
     """One response per wording, each for exactly the wording it is filed under: a predictions
-    file for other sets, or an older version of these, is refused rather than scored."""
+    file for other sets, or an older version of these, is refused rather than scored. With the
+    bundle version of the run, a response searched on another snapshot is refused too, so a file
+    left over from an earlier bundle is never mixed into this one's numbers."""
     expected = {row["id"]: row["query"] for row in query_rows(sets)}
     responses: dict[str, Record] = {}
     for where, row in rows(path):
@@ -74,6 +79,12 @@ def load_responses(path: Path, sets: Sequence[WordingSet]) -> dict[str, Record]:
         check(where, row["response"], "result.schema.json")
         if row["response"]["query"] != expected[qid]:
             raise LoadError(f"{where}: the response for {qid} answers another question")
+        searched = row["response"]["versions"]["snapshot"]
+        if snapshot is not None and searched != snapshot:
+            raise LoadError(
+                f"{where}: {qid} was searched on {searched}, not on {snapshot}:"
+                " run make predict-consistency again"
+            )
         responses[qid] = row["response"]
     missing = sorted(expected.keys() - responses.keys())
     if missing:

@@ -117,7 +117,8 @@ def main(argv: list[str] | None = None, clock: Callable[[], datetime] = utc_now)
         wording = None
         if args.consistency is not None and args.consistency_predictions is not None:
             sets = load_sets(args.consistency)
-            wording = consistency(sets, load_responses(args.consistency_predictions, sets))
+            searched = load_responses(args.consistency_predictions, sets, snapshot)
+            wording = consistency(sets, searched)
         labelled = (
             None
             if args.labels is None

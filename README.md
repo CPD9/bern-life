@@ -102,9 +102,9 @@ Snapshot `bundle-20261019-3`, 48 gold questions. To reproduce: `make fetch && ma
 <!-- numbers:end -->
 
 How the numbers on each result are computed is in [`docs/metrics.md`](docs/metrics.md). It also
-has the evaluator's numbers this table leaves out, with the commands that compute them: the
-case's own wording example for criterion 2, exposure by unit size, and the two-person check of
-criterion 4.
+has exploratory evaluator numbers this table leaves out, with the commands that compute them:
+top-10 overlap across wordings of one need for criterion 2 (built on the case's glucose example),
+exposure by unit size, and the two-person check of criterion 4.
 
 ## How it works
 

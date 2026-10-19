@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "consistency.schema.json",
   "title": "ConsistencySet",
-  "description": "One line of eval/consistency.jsonl: one need in several wordings, for criterion 2 (different wording finds the same experts). The first query is the one the others are compared with. Queries are copied verbatim from the case, eval/gold.jsonl or eval/dev.jsonl, never written to fit results.",
+  "description": "One line of eval/consistency.jsonl: one need in several wordings, for criterion 2 (different wording finds the same experts). The first query is the one the others are compared with. Queries are copied verbatim from the case, eval/gold.jsonl, eval/dev.jsonl or the issue that planned the set before any result, never written to fit results; notes say which.",
   "type": "object",
   "required": ["id", "queries"],
   "additionalProperties": false,

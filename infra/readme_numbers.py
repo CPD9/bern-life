@@ -1,14 +1,18 @@
-"""The README's measured numbers, written from the evaluator's output so that none is typed by hand.
+"""The measured numbers in the README and docs/metrics.md, written from the evaluator's output so
+that none is typed by hand.
 
-    python3 infra/readme_numbers.py [--check] [--metrics <file>] [--readme <file>] [--lock <file>]
+    python3 infra/readme_numbers.py [--check] [--metrics <file>] [--readme <file>] [--doc <file>]
+                                    [--lock <file>]
 
 `make eval` writes eval/out/metrics.json; this replaces the README's block between the numbers
-markers with the "Against the case" table and a line naming the snapshot, read from the bundle
-manifest beside the predictions the metrics were computed from. The sha256 the evaluator recorded
-for its predictions, pages and profiles must be the ones that manifest lists, and its version the
-one bundle.lock pins, so metrics from any other bundle, or left over from one, are refused.
-`--check` writes nothing and exits 1 with a diff when the block differs: the eval job runs it after
-`make eval`. Any other failure exits 2. Standard library only, so that job needs nothing more.
+markers with the "Against the case" table and a line naming the snapshot, and the block between
+the exposure markers in docs/metrics.md with the exposure-by-unit-size tables. The snapshot is read
+from the bundle manifest beside the predictions the metrics were computed from. The sha256 the
+evaluator recorded for its predictions, pages and profiles must be the ones that manifest lists,
+and its version the one bundle.lock pins, so metrics from any other bundle, or left over from one,
+are refused. `--check` writes nothing and exits 1 with a diff when a block differs: the eval job
+runs it after `make eval`. Any other failure exits 2. Standard library only, so that job needs
+nothing more.
 """
 
 import argparse
@@ -16,12 +20,14 @@ import difflib
 import json
 import sys
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from math import ceil, floor
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 START, END = "<!-- numbers:start -->", "<!-- numbers:end -->"
+DOC_START, DOC_END = "<!-- exposure:start -->", "<!-- exposure:end -->"
 METRICS = "eval/out/metrics.json"
 COMMAND = "make fetch && make eval && python3 infra/readme_numbers.py"
 # The pre-registered bars (eval/PREREGISTRATION.md); a test keeps them equal to the evaluator's.
@@ -62,6 +68,10 @@ EXTEND = (
     "Not a measured number. `python -m bernlife crawl --source <id>` crawls a new file, and only"
     " that source's records are replaced."
 )
+# The columns of the exposure-by-unit-size tables in docs/metrics.md, after the group.
+SIZE_COLUMNS = (
+    "Units | Profiles | Profile share | Top-10 slots | Slot share | Units never in a top 10"
+)
 PENDING = "human check pending"
 NOTHING, NOT_COMPUTED = "—", "not computed"
 
@@ -70,6 +80,18 @@ Metrics = Mapping[str, Any]
 
 class NumbersError(Exception):
     pass
+
+
+@dataclass(frozen=True)
+class Block:
+    """One generated block: the file it is in, its markers and what belongs between them."""
+
+    label: str
+    kind: str
+    path: Path
+    start: str
+    end: str
+    text: str
 
 
 def two(value: float | None) -> str:
@@ -223,11 +245,56 @@ def render(metrics: Metrics, snapshot: str) -> str:
     return "\n" + "\n".join(lines) + "\n"
 
 
-def split(readme: str) -> tuple[str, str, str]:
-    if readme.count(START) != 1 or readme.count(END) != 1 or readme.find(START) > readme.find(END):
-        raise NumbersError(f"the README needs exactly one {START} … {END} block")
-    head, rest = readme.split(START)
-    body, tail = rest.split(END)
+def size_cells(group: Metrics) -> str:
+    return (
+        f"{group['units']} | {group['profiles']:,} | {two(group['profile_share'])} |"
+        f" {group['slots']:,} | {two(group['slot_share'])} | {group['units_never_shown']}"
+    )
+
+
+def render_exposure(metrics: Metrics, snapshot: str) -> str:
+    """The block of docs/metrics.md: exposure by unit size over the three sources, then the same
+    groups within each source."""
+    by_size = metrics["exposure_by_size"]
+    lines = [
+        f"<!-- Written by infra/readme_numbers.py from {METRICS}: change the script, not this"
+        " block. -->",
+        "",
+    ]
+    if by_size is None:
+        lines.append(f"{NOT_COMPUTED}: the metrics were computed without the snapshot.")
+    else:
+        middle = f"{by_size['median_profiles']:g}"
+        bound = {"small": f"≤ {middle}", "large": f"> {middle}"}
+        names = dict(SOURCES)
+        lines += [
+            f"| Group | {SIZE_COLUMNS} |",
+            "|---|---|---|---|---|---|---|",
+            *(
+                f"| {g['name']} ({bound[g['name']]} profiles) | {size_cells(g)} |"
+                for g in by_size["groups"]
+            ),
+            "",
+            f"| Source | Group | {SIZE_COLUMNS} |",
+            "|---|---|---|---|---|---|---|---|",
+            *(
+                f"| {names.get(s['source'], s['source'])} | {g['name']} | {size_cells(g)} |"
+                for s in by_size["by_source"]
+                for g in s["groups"]
+            ),
+            "",
+            f"Snapshot `{snapshot}`: median unit {middle} profiles; top-10 slots outside these"
+            f" units {by_size['slots_outside']:,}. To reproduce: `{COMMAND}`. CI fails when this"
+            " block differs from the evaluator's output.",
+        ]
+    return "\n" + "\n".join(lines) + "\n"
+
+
+def split(text: str, start: str, end: str, name: str) -> tuple[str, str, str]:
+    if text.count(start) != 1 or text.count(end) != 1 or text.find(start) > text.find(end):
+        raise NumbersError(f"{name} needs exactly one {start} … {end} block")
+    head, rest = text.split(start)
+    body, tail = rest.split(end)
     return head, body, tail
 
 
@@ -271,6 +338,7 @@ def arguments(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--check", action="store_true", help="exit 1 with a diff, write nothing")
     parser.add_argument("--metrics", type=Path, default=ROOT / METRICS)
     parser.add_argument("--readme", type=Path, default=ROOT / "README.md")
+    parser.add_argument("--doc", type=Path, default=ROOT / "docs/metrics.md")
     parser.add_argument("--lock", type=Path, default=ROOT / "bundle.lock")
     return parser.parse_args(argv)
 
@@ -284,8 +352,21 @@ def main(argv: list[str] | None = None) -> int:
         snapshot, pinned = snapshot_version(metrics), version_in(args.lock)
         if snapshot != pinned:
             raise NumbersError(f"the metrics are from {snapshot}, but bundle.lock pins {pinned}")
-        head, current, tail = split(args.readme.read_text(encoding="utf-8"))
-        block = render(metrics, snapshot)
+        blocks = [
+            Block("README", "numbers", args.readme, START, END, render(metrics, snapshot)),
+            Block(
+                "docs/metrics.md",
+                "exposure",
+                args.doc,
+                DOC_START,
+                DOC_END,
+                render_exposure(metrics, snapshot),
+            ),
+        ]
+        parts = [
+            split(block.path.read_text(encoding="utf-8"), block.start, block.end, block.label)
+            for block in blocks
+        ]
     except KeyError as error:
         print(f"readme_numbers: {args.metrics} has no {error}", file=sys.stderr)
         return 2
@@ -295,22 +376,28 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError, NumbersError) as error:
         print(f"readme_numbers: {error}", file=sys.stderr)
         return 2
-    if current == block:
-        print(f"README numbers match the evaluator on {snapshot}")
-        return 0
-    if args.check:
-        diff = difflib.unified_diff(
-            current.splitlines(keepends=True),
-            block.splitlines(keepends=True),
-            f"{args.readme.name} (numbers block)",
-            "infra/readme_numbers.py",
-        )
-        sys.stdout.writelines(diff)
-        print(f"README numbers differ: run {COMMAND}, commit README.md", file=sys.stderr)
-        return 1
-    args.readme.write_text(head + START + block + END + tail, encoding="utf-8")
-    print(f"README numbers written from {snapshot}")
-    return 0
+    differ = False
+    for block, (head, current, tail) in zip(blocks, parts, strict=True):
+        if current == block.text:
+            print(f"{block.label} numbers match the evaluator on {snapshot}")
+        elif args.check:
+            differ = True
+            diff = difflib.unified_diff(
+                current.splitlines(keepends=True),
+                block.text.splitlines(keepends=True),
+                f"{block.path.name} ({block.kind} block)",
+                "infra/readme_numbers.py",
+            )
+            sys.stdout.writelines(diff)
+            print(
+                f"{block.label} numbers differ: run {COMMAND}, commit {block.path.name}",
+                file=sys.stderr,
+            )
+        else:
+            text = head + block.start + block.text + block.end + tail
+            block.path.write_text(text, encoding="utf-8")
+            print(f"{block.label} numbers written from {snapshot}")
+    return 1 if differ else 0
 
 
 if __name__ == "__main__":

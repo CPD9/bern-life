@@ -1,5 +1,6 @@
 import io
 import json
+import shutil
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -116,8 +117,53 @@ class LoadTest(unittest.TestCase):
             with self.subTest(case=name), self.assertRaises(LoadError):
                 load_responses(self.write(f"{name}.jsonl", lines), sets)
 
+    def test_predictions_searched_on_another_snapshot_are_refused(self) -> None:
+        sets = [WordingSet("need", ("first", "second"))]
+        lines = [
+            {"id": "need:1", "response": shown("a", query="first")},
+            {"id": "need:2", "response": shown("a", query="second")},
+        ]
+        path = self.write("predictions.jsonl", lines)
+        self.assertEqual(len(load_responses(path, sets, "test")), 2)
+        with self.assertRaisesRegex(LoadError, "need:1 was searched on test, not on bundle-new"):
+            load_responses(path, sets, "bundle-new")
+
 
 class CliTest(unittest.TestCase):
+    def test_a_bundle_run_refuses_consistency_predictions_of_another_bundle(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        folder = Path(tmp.name)
+        bundle = folder / "bundle"
+        bundle.mkdir()
+        for name in ("predictions", "pages", "profiles"):
+            shutil.copyfile(FIXTURES / f"{name}.jsonl", bundle / f"{name}.jsonl")
+        manifest = {"version": "bundle-20990101-2", "files": {}}
+        (bundle / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        sets = folder / "sets.jsonl"
+        sets.write_text(json.dumps({"id": "need", "queries": ["one", "two"]}) + "\n")
+        args = ["--gold", str(GOLD), "--out", str(folder / "out")]
+        args += ["--results-dir", str(folder / "results"), "--consistency", str(sets)]
+        for name in ("predictions", "pages", "profiles"):
+            args += [f"--{name}", str(bundle / f"{name}.jsonl")]
+        for searched_on, code in (("bundle-20990101-1", 2), ("bundle-20990101-2", 0)):
+            predictions = folder / f"{searched_on}.jsonl"
+            lines = [
+                {"id": "need:1", "response": shown("a", query="one")},
+                {"id": "need:2", "response": shown("a", query="two")},
+            ]
+            for line in lines:
+                line["response"]["versions"]["snapshot"] = searched_on
+            predictions.write_text("".join(json.dumps(line) + "\n" for line in lines))
+            err = io.StringIO()
+            with self.subTest(searched_on=searched_on), redirect_stdout(io.StringIO()):
+                with redirect_stderr(err):
+                    self.assertEqual(
+                        main([*args, "--consistency-predictions", str(predictions)]), code
+                    )
+                if code:
+                    self.assertIn("run make predict-consistency again", err.getvalue())
+
     def test_consistency_is_added_to_the_metrics_and_the_report(self) -> None:
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)

@@ -55,6 +55,59 @@ class ExposureBySizeTest(unittest.TestCase):
         # U3 was shown only for an invented question, which does not count.
         self.assertEqual((small["units_never_shown"], large["units_never_shown"]), (1, 0))
 
+    def test_slots_outside_the_case_sources_or_on_unstored_pages_are_counted_apart(self) -> None:
+        pages, profiles = snapshot({("unibe", "U1"): 1, ("dcb", "D"): 2, ("snsf", "Calls"): 4})
+        unstored = profile("person-unibe-gone", "person", "P gone", "https://unibe.test/gone")
+        queries = [gold("q100")]
+        responses = {
+            "q100": response(
+                [
+                    result(1, profiles["person-snsf-calls-0"]),
+                    result(2, unstored),
+                    result(3, profiles["person-dcb-d-0"]),
+                ]
+            )
+        }
+        sized = exposure_by_size(score_all(queries, responses, None, None), profiles, pages)
+        self.assertEqual(sized["slots_outside"], 2)
+        small, large = sized["groups"]
+        self.assertEqual((small["units"], small["slots"]), (1, 0))
+        self.assertEqual((large["units"], large["slots"], large["slot_share"]), (1, 1, 1.0))
+
+    def test_the_same_groups_within_each_source(self) -> None:
+        pages, profiles = snapshot(
+            {
+                ("unibe", "U1"): 1,
+                ("unibe", "U2"): 2,
+                ("unibe", "U3"): 6,
+                ("artorg", "A"): 5,
+            }
+        )
+        queries = [gold("q100"), gold("q200")]
+        responses = {
+            "q100": response(
+                [
+                    result(1, profiles["person-artorg-a-0"]),
+                    result(2, profiles["person-artorg-a-1"]),
+                    result(3, profiles["person-unibe-u3-0"]),
+                ]
+            ),
+            "q200": response([result(1, profiles["person-unibe-u1-0"])]),
+        }
+        sized = exposure_by_size(score_all(queries, responses, None, None), profiles, pages)
+        self.assertEqual(sized["median_profiles"], 3.5)
+        by_source = {row["source"]: row["groups"] for row in sized["by_source"]}
+        self.assertEqual(list(by_source), ["unibe", "artorg"])
+        small, large = by_source["unibe"]
+        self.assertEqual((small["units"], small["profiles"], small["slots"]), (2, 3, 1))
+        self.assertEqual((large["units"], large["profiles"], large["slots"]), (1, 6, 1))
+        # Shares of UniBE's own 9 profiles and 2 slots; U2 is never shown.
+        self.assertAlmostEqual(small["profile_share"], 3 / 9)
+        self.assertEqual((small["slot_share"], small["units_never_shown"]), (0.5, 1))
+        # ARTORG has one large unit and no small one, so it has one row.
+        (artorg,) = by_source["artorg"]
+        self.assertEqual((artorg["name"], artorg["units"], artorg["slot_share"]), ("large", 1, 1.0))
+
     def test_a_unit_at_the_median_is_small(self) -> None:
         pages, profiles = snapshot(
             {("unibe", "U1"): 1, ("unibe", "U2"): 2, ("unibe", "U3"): 2, ("dcb", "D"): 3}

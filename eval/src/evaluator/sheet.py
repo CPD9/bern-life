@@ -8,9 +8,9 @@ labellers, so their agreement can be measured; the others alternate between them
 OVERLAP + (SIZE - OVERLAP) / 2 rows, about 20 minutes of work. What the system filled stays in
 key.json, never in a sheet, for scoring once the sheets come back (labels.py).
 
-The sheets name people from public pages, so they and the key are written outside the repository
-by whoever runs the labelling, and never committed. A folder whose sheets already hold answers is
-left as it is.
+The sheets name people from public pages, so they and the key go to eval/out/labelling/ (ignored
+by git) or another folder of the labeller's choice, and are never committed. A folder whose sheets
+already hold answers, or cannot be read, is left as it is.
 """
 
 import csv
@@ -29,6 +29,7 @@ SIZE, OVERLAP, SEED = 30, 8, 1
 LABELLERS = ("peter", "nik")
 DISPLAY = {"peter": "Peter", "nik": "Nik"}
 KEY = "key.json"
+ENCODINGS = ("utf-8-sig", "cp1252")
 HEADER = ["item", "kind", "name", "source link", *PAGE_FIELDS, "notes"]
 DEFINITIONS = {
     "person": "the page names this person, unit, project or infrastructure",
@@ -94,14 +95,26 @@ def instructions(labeller: str, rows: int) -> list[str]:
     return [f"# {line}" for line in lines]
 
 
-def read_sheet(path: Path) -> list[dict[str, str]]:
-    """The rows under the header, by column name. The instructions above the header are skipped,
-    and a sheet saved back by a spreadsheet with a byte-order mark or with semicolons (as Excel
-    does in Switzerland) reads the same."""
+def sheet_text(path: Path) -> str:
+    """The sheet as text: UTF-8 with or without a byte-order mark, else Windows-1252, which Excel's
+    plain "CSV" save writes on Windows (with semicolons in Switzerland)."""
     try:
-        lines = path.read_text(encoding="utf-8-sig").splitlines()
+        data = path.read_bytes()
     except FileNotFoundError:
         raise LoadError(f"{path} does not exist") from None
+    for encoding in ENCODINGS:
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    raise LoadError(f"{path}: neither UTF-8 nor Windows-1252 text; save it as CSV UTF-8")
+
+
+def read_sheet(path: Path) -> list[dict[str, str]]:
+    """The rows under the header, by column name. The instructions above the header are skipped,
+    and a sheet saved back by a spreadsheet with a byte-order mark, in Windows-1252 or with
+    semicolons (as Excel does in Switzerland) reads the same."""
+    lines = sheet_text(path).splitlines()
     for delimiter in (",", ";", "\t"):
         parsed = list(csv.reader(lines, delimiter=delimiter))
         start = next((n for n, row in enumerate(parsed) if row[:1] == ["item"]), None)
@@ -116,7 +129,8 @@ def read_sheet(path: Path) -> list[dict[str, str]]:
 
 
 def answered(path: Path) -> bool:
-    """Whether a sheet already holds any answer, so a rerun never overwrites someone's work."""
+    """Whether a sheet already holds any answer, so a rerun never overwrites someone's work; a
+    sheet that cannot be read counts as answered."""
     if not path.is_file():
         return False
     try:

@@ -181,23 +181,39 @@ def consistency_lines(wording: Metrics | None) -> list[str]:
     return lines
 
 
+def size_row(group: Metrics) -> list[object]:
+    return [
+        group["units"],
+        group["profiles"],
+        number(group["profile_share"]),
+        group["slots"],
+        number(group["slot_share"]),
+        group["units_never_shown"],
+    ]
+
+
 def size_lines(by_size: Metrics | None) -> list[str]:
     if by_size is None:
         return []
     sources = ", ".join(by_size["sources"])
+    columns = ["Units", "Profiles", "Profile share", "Top-10 slots", "Slot share"]
+    columns += ["Units never in a top 10"]
     return [
         "",
         f"Exposure by unit size: the units of {sources}; large = more profiles than the median"
         f" unit ({by_size['median_profiles']:g}), small = the rest. Slots outside these units:"
         f" {by_size['slots_outside']}.",
         "",
+        *table(["Group", *columns], [[g["name"], *size_row(g)] for g in by_size["groups"]]),
+        "",
+        "The same groups within each source (shares of that source's own profiles and slots):",
+        "",
         *table(
-            ["Group", "Units", "Profiles", "Profile share", "Top-10 slots", "Slot share"]
-            + ["Units never in a top 10"],
+            ["Source", "Group", *columns],
             [
-                [g["name"], g["units"], g["profiles"], number(g["profile_share"]), g["slots"]]
-                + [number(g["slot_share"]), g["units_never_shown"]]
-                for g in by_size["groups"]
+                [s["source"], g["name"], *size_row(g)]
+                for s in by_size["by_source"]
+                for g in s["groups"]
             ],
         ),
     ]

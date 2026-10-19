@@ -90,8 +90,9 @@ EVALUATOR = PYTHONPATH=eval/src $(PYTHON) -m evaluator --gold eval/gold.jsonl
 FIXTURE = eval/tests/fixtures
 # Criterion 2's wording sets (eval/consistency.jsonl) are not in the bundle: predict-consistency
 # runs them through the engine's own predict in replay, so no model is called and a wording nobody
-# recorded is searched plain. make eval adds them once that file exists, and scores the filled
-# labelling sheets of criterion 4 when LABELS names their folder (kept outside the repository).
+# recorded is searched plain. make eval adds them once that file exists (refused when it was
+# searched on another bundle), and scores the filled labelling sheets of criterion 4 when LABELS
+# names their folder; the sheets name people, so they are never committed.
 CONSISTENCY_PRED ?= $(or $(BERNLIFE_DATA_DIR),data)/eval/consistency_predictions.jsonl
 CONSISTENCY_QUERIES = $(dir $(CONSISTENCY_PRED))consistency_queries.jsonl
 EVAL_EXTRA = $(if $(wildcard $(CONSISTENCY_PRED)),--consistency eval/consistency.jsonl \
