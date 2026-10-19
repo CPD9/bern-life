@@ -280,6 +280,45 @@ the French premise "la Dre …" abstain. Word forms raise dev MRR from 0.655 to 
 falls from 0.458 to 0.436, inside the interval: three English questions find their first answer
 one rank lower.
 
+## Passages on their own page (dev decision of 2026-10-19)
+Decided on `eval/dev.jsonl` and `eval/dev2.jsonl` pooled (65 queries, 53 answerable, 12 invented)
+under the rule of the 2026-10-19 dev2 entry in `eval/PREREGISTRATION.md`: bundle
+`bundle-20261019-3`, a fresh database per run, replay, no model call, thresholds unchanged. Gold
+was not run. The window (300 characters) was fixed before the first run.
+
+| Run | Order | Words | recall@10 [95% CI] | MRR | traceable | invented | invented abstained | false abstentions | en / de / fr recall |
+|---|---|---|---|---|---|---|---|---|---|
+| base | none | | 0.642 [0.51, 0.77] | 0.482 | 6335/6335 | 0 | 11/12 | 1/53 | 0.731 / 0.500 / 0.615 |
+| v1 | after every claim result | 1 | 0.642 [0.51, 0.77] | 0.485 | 6471/6471 | 0 | 11/12 | 1/53 | 0.731 / 0.500 / 0.615 |
+| v2 | by fused score | 1 | 0.679 [0.55, 0.81] | 0.512 | 4897/4897 | 0 | 11/12 | 1/53 | 0.808 / 0.500 / 0.615 |
+| v3 (adopted) | by fused score | 2 | 0.698 [0.57, 0.83] | 0.518 | 5879/5879 | 0 | 11/12 | 1/53 | 0.846 / 0.500 / 0.615 |
+
+| Run | dev recall@10 | dev MRR | dev2 recall@10 | dev2 MRR |
+|---|---|---|---|---|
+| base | 0.909 | 0.661 | 0.452 | 0.356 |
+| v1 | 0.909 | 0.667 | 0.452 | 0.356 |
+| v2 | 0.909 | 0.627 | 0.516 | 0.430 |
+| v3 | 0.909 | 0.638 | 0.548 | 0.433 |
+
+- **v1** changes no score beyond noise: nearly every question has 20 results with a matching
+  claim, so results placed after them rarely reach the top ten. Its one moved question (q910,
+  rank 5 to 3) moves the same way between two loads of the unchanged base.
+- **v2** finds three dev2 questions at rank 1 that no claim reached (q937, q952, q954) and loses
+  q934 (rank 5 to outside the top ten). Single shared words next to a name ("App", "led",
+  "quantitative") put 209 passage results into the top ten of 46 questions.
+- **v3** keeps the three new hits at rank 1 and q934 in the top ten (rank 10), with 75 passage
+  results in the top ten of 29 questions. How the three match (the evaluator counts a name or
+  the proof page): q954's two people are found by name at ranks 1 and 2; q937's rank 1 is
+  another person whose own page is the answer's proof page, and the answer is at rank 2 by name;
+  q952 is found only through that page (another contact of the study), while v2 had its answer
+  at rank 1 by name, through the single word "Moonwalk". Against the base it lowers the first answer of q909
+  (rank 1 to 2), q933 (1 to 2) and q934 (5 to 10); dev MRR falls from 0.661 to 0.638 while
+  pooled MRR rises. A second load of v3 gave the same numbers for every question.
+- The traceable count falls because a result shown through its page has fewer claims than one
+  with matching claims; every claim and every passage span checked is on its page. All 142
+  passage spans of the v3 run are verbatim at their offset, on a page whose text hashes to the
+  cited sha256, and hold the cited name. No abstention changed in any run.
+
 ## Baseline (no model help), bundle `local-8f34ab8c1fba`
 `make eval` on the gold predictions, before and after rule 5:
 
