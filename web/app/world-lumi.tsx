@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { shownAgentName } from "@/features/avatar/agent-name";
 import type { BearConfig } from "@/features/avatar/bear-config";
 import { BearFigure } from "@/features/avatar/bear-figure";
@@ -40,7 +40,17 @@ export type WorldLumi = {
 export function useWorldLumi(input: WorldLumiInput): WorldLumi {
   const { agentName, bear, lite, fixtureMode, navigator } = input;
   const [open, setOpen] = useState(false);
+  // Opening Ask waits until the chat has closed and given focus back to what opened it, so the
+  // phone gives focus back there too when it closes, not to a control inside the closed chat.
+  const afterClose = useRef<(() => void) | null>(null);
   const name = shownAgentName(agentName);
+
+  function closed() {
+    setOpen(false);
+    const next = afterClose.current;
+    afterClose.current = null;
+    next?.();
+  }
 
   function showOnMap(response: SearchResponse) {
     setOpen(false);
@@ -49,9 +59,11 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
 
   // Ask shows the answer that lists the profile, as it came, without asking the engine again.
   function openProfile(_profileId: string, response: SearchResponse) {
+    afterClose.current = () => {
+      navigator.show(response);
+      input.onOpenAsk();
+    };
     setOpen(false);
-    navigator.show(response);
-    input.onOpenAsk();
   }
 
   return {
@@ -74,7 +86,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
     chat: (
       <LumiChat
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={closed}
         agentName={name}
         fixtureMode={fixtureMode}
         bear={open && <SmallBear config={bear} />}

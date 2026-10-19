@@ -1,12 +1,14 @@
 import { expect, mock, test } from "bun:test";
-import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { defaultBear } from "@/features/avatar/bear-config";
 import type { AgentReply } from "@/features/lumi/agent-reply";
 import type { LumiApi } from "@/features/lumi/lumi-api";
+import { Phone } from "@/features/phone/phone";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { resultFixture } from "@/test/fixtures";
 import { useWorldLumi } from "./world-lumi";
+import { useWorldPhone } from "./world-phone";
 
 const answer = resultFixture;
 const profileId = answer.results[0]!.profile.id;
@@ -76,4 +78,58 @@ test("open profile shows the answer that lists the profile in Ask, without a sec
   expect(shown).toEqual([answer]);
   expect(calls.askOpened).toHaveBeenCalledTimes(1);
   expect(document.querySelector("dialog")!.open).toBe(false);
+});
+
+/** Lumi's floatie, the phone and the chat, wired as the world app wires them. */
+function World({ api, shown }: { api: LumiApi; shown: SearchResponse[] }) {
+  const phone = useWorldPhone();
+  const lumi = useWorldLumi({
+    agentName: "Lumi",
+    bear: defaultBear,
+    lite: true,
+    engineMode: "mock",
+    fixtureMode: true,
+    navigator: { show: (response) => void shown.push(response) },
+    onShowOnMap: () => undefined,
+    onOpenAsk: () => phone.openApp("ask"),
+    api,
+  });
+  const ask = { id: "ask", label: "Ask", icon: null, tile: "#13804a", content: <p>Ask</p> };
+  return (
+    <>
+      {lumi.floatie}
+      <Phone
+        open={phone.open}
+        onClose={() => phone.setOpen(false)}
+        apps={[ask]}
+        appId={phone.appId}
+        onAppChange={phone.setAppId}
+        now={null}
+      />
+      {lumi.chat}
+    </>
+  );
+}
+
+test("open profile from the floatie: Ask shows in the phone, and closing it focuses the floatie", async () => {
+  const shown: SearchResponse[] = [];
+  render(
+    <World api={lumiAnswering([{ type: "open_profile", profile_id: profileId }])} shown={shown} />,
+  );
+  const floatie = screen.getByRole("button", { name: "Lumi, your agent" });
+  act(() => floatie.focus());
+  act(() => fireEvent.click(floatie));
+  fireEvent.change(screen.getByLabelText("Message Lumi"), { target: { value: "glucose" } });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+  });
+  const phone = document.querySelector<HTMLDialogElement>('dialog[aria-label="Phone"]')!;
+  expect(shown).toEqual([answer]);
+  expect(phone.open).toBe(true);
+  expect(document.activeElement).toBe(within(phone).getByRole("heading", { name: "Ask" }));
+  await act(async () => {
+    fireEvent.click(within(phone).getByRole("button", { name: /Close/ }));
+  });
+  expect(phone.open).toBe(false);
+  expect(document.activeElement).toBe(floatie);
 });
