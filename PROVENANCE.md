@@ -32,8 +32,8 @@ No profile field comes from a model's memory. Every field carries a verbatim spa
 
 | Data | Source | Licence / status | In git? |
 |---|---|---|---|
-| Source configs `sources/*.json` | the case's UniBE subdomain inventory, ARTORG and DCB home pages | facts (host names) | yes |
-| Crawled pages, LLM cache, vectors | public pages of the hosts in `sources/` | copyright of the institutions; personal data under nDSG; redistributed only to reproduce the evaluation ([below](#the-snapshot-bundle)) | **no**: SHA-pinned release asset (`make fetch`) |
+| Source configs `sources/*.json` | the case's UniBE subdomain inventory, the ARTORG and DCB home pages, and the public pages of the six opportunity sources (Bern Economic Development Agency, Innosuisse, SNSF, PROGR, Effinger, Switzerland Innovation Park Biel/Bienne) | facts (host names, seed URLs) | yes |
+| Crawled pages, LLM cache, vectors | public pages of the hosts in `sources/` | copyright of their publishers, the nine organisations in `sources/`; personal data under nDSG; carried for the replay demo, the hosted copy and the evaluation, with no licence to reuse ([below](#the-snapshot-bundle)) | **no**: SHA-pinned release asset (`make fetch`) |
 | Gold set `eval/gold.jsonl` | written by the team from public pages, before search existed | names and proof URLs only | yes |
 | Contract fixtures `contracts/fixtures/` | invented, describe no real person | ours | yes |
 | Place addresses `web/features/world/places.json` | one street address per unit, a verbatim span of a stored page of its own host (URL, date, sha256 per row) | facts (institutional addresses); no page copies | yes |
@@ -43,8 +43,10 @@ No profile field comes from a model's memory. Every field carries a verbatim spa
 
 ## The snapshot bundle
 
-The crawled pages stay the institutions' (copyright, and for people the nDSG). The release bundle
-pinned in `bundle.lock` redistributes them only to reproduce the evaluation, and grants no licence
-to reuse them. A page is removed on request by publishing a new bundle without it, pinning that
-bundle and withdrawing the earlier release assets that hold it. Git holds no copy of any page, so
-nothing in its history needs rewriting.
+The crawled pages stay their publishers' (copyright, and for people the nDSG). The release bundle
+pinned in `bundle.lock` carries them so that the replay demo (`make run`), the hosted copy
+([`infra/exoscale.md`](infra/exoscale.md)) and the evaluation all run from the same snapshot, and
+grants no licence to reuse them. A page is removed on request by publishing a new bundle without
+it, pinning that bundle, withdrawing the earlier release assets that hold it and reloading the
+hosted copy from the new bundle; the hosted copy's nightly database backups age out after 14 days.
+Git holds no copy of any page, so nothing in its history needs rewriting.

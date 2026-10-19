@@ -14,12 +14,15 @@ Models used at run time (not distributed in this repository):
 - multilingual-e5-small, Wang et al. (https://huggingface.co/intfloat/multilingual-e5-small),
   MIT License.
 
-Crawled pages belong to their institutions (University of Bern, ARTORG Center,
-Diabetes Center Berne). This repository stores no copies of them; results link
-back to the source page and quote only short evidence spans. The snapshot bundle
-released alongside it (bundle.lock) redistributes the pages only to reproduce
-the evaluation, and a page is removed on request by publishing a new bundle
-without it.
+Crawled pages belong to their publishers, the organisations in sources/: the
+University of Bern, the ARTORG Center, Diabetes Center Berne, the Bern Economic
+Development Agency, Innosuisse, the Swiss National Science Foundation, PROGR,
+Effinger and Switzerland Innovation Park Biel/Bienne. This repository stores no
+copies of them; results link back to the source page and quote only short
+evidence spans. The snapshot bundle released alongside it (bundle.lock) carries
+the pages so that the replay demo, the hosted copy and the evaluation all run
+from the same snapshot; it grants no licence to reuse them. A page is removed on
+request by publishing a new bundle without it and reloading the hosted copy.
 
 Map data (web/public/world/bern.geo): ©swisstopo, Federal Office of Topography
 swisstopo. swissBUILDINGS3D 3.0, swissTLM3D and the building address register,

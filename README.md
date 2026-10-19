@@ -35,7 +35,8 @@ http://127.0.0.1:3000/office.
 3. **Open the evidence.** Tap any role, unit or expertise on a result card. The sentence from the
    page opens with its link and the date it was fetched. "Why it matches" cites only those claims.
    **Show on map** lights the places that hold results; open a place to see its units, each with
-   its address and source page, and the matches found there.
+   its address and source page (or its district, when its pages give no address), and the matches
+   found there.
 4. **Join.** Joining is by invite. Make a code with
    `cd web && bun install && DATABASE_URL=postgresql://bernlife:bernlife@127.0.0.1:5433/bernlife bun run invite:create`
    (needs [Bun](https://bun.sh)), then choose **Join Bern Life**.
@@ -55,8 +56,9 @@ http://127.0.0.1:3000/office.
 
 Replay is the default. Questions recorded in the bundle's model cache get Apertus's search terms
 and explanations; any other question still gets plain search over the stored pages, and the app
-says so. Only a live run (`make live ARGS=serve`, with a model endpoint set in `.env`) calls
-Apertus, and it refuses to start when that endpoint does not answer.
+says so. A new project brief needs the model: replay has only the briefs recorded in the bundle,
+and the app says so for any other. Only a live run (`make live ARGS=serve`, with a model endpoint
+set in `.env`) calls Apertus, and it refuses to start when that endpoint does not answer.
 
 ## Against the case
 
@@ -72,12 +74,12 @@ over base questions, proportions have Wilson intervals. Every number in the tabl
 <!-- numbers:start -->
 <!-- Written by infra/readme_numbers.py from eval/out/metrics.json: change the script, not this block. -->
 
-| Case success criterion | Where it shows | Measured (95% interval) |
+| What the case asks | Where it shows | Measured (95% interval) |
 |---|---|---|
 | 1. Finds the right people: ≥ 80% of expected experts and units in the top 10 | The result list in Ask | recall@10 **0.36** [0.20, 0.53] against the case's **0.80**: **not met**. MRR 0.43 [0.26, 0.59]. |
 | 2. Different wording finds the same experts | "Also searched for" on every answer: synonyms, lay terms, translations, acronyms | recall@10 on the site's own wording 0.39 [0.21, 0.57] (14 questions); synonyms 0.82 [0.67, 1.00] (3); lay terms 0.33 [0.00, 1.00] (3); translations 0.24 [0.08, 0.43] (12). By language: en 0.51 [0.32, 0.70] (22), de 0.18 [0.05, 0.41] (11), fr 0.12 [0.00, 0.25] (5). Top-10 overlap with the site's wording (mean Jaccard): synonyms 0.32, lay terms 0.17, translations 0.27. |
-| 3. Every result traceable, nothing invented | The evidence panel behind every claim: verbatim sentence, source link, fetch date | Claims whose sentence is verbatim on their stored page: 4,819 / 4,819, **100%** [1.00, 1.00]. Results not in the snapshot (invented entities): **0**. Pre-registered rule: **met**. |
-| 3. (ethics) Says so when no source exists | "No verifiable source" instead of results | Invented questions abstained **8 / 10** [0.49, 0.94]; the pre-registered rule asks ≥ 9 / 10 with at most 1 false abstention on the site's wording: **not met**. False abstentions **0 / 38** [0.00, 0.09]. |
+| 3. Every result traceable, nothing invented | The evidence panel behind every claim: verbatim sentence, source link, fetch date | Claims whose sentence is verbatim on their stored page: 4,819 / 4,819, **100%** [99.9%, 100%]. Results not in the snapshot (invented entities): **0**. Pre-registered rule: **met**. |
+| Ethics: says so when no reliable source exists | "No verifiable source" instead of results | Invented questions abstained **8 / 10** [0.49, 0.94]; the pre-registered rule asks ≥ 9 / 10, and at most 1 false abstention on the site's own wording, where there are **0**: **not met**. False abstentions on all answerable questions **0 / 38** [0.00, 0.09]. |
 | 4. Structured results | Result card fields: person, role, unit, expertise, projects, infrastructure and services, why it matches, source link | Mean share of the 8 fields filled: 0.61 over 371 shown results. Filled per field: person 371, role/affiliation 134, unit 190, expertise 278, projects 44, infrastructure/services 53, reason 371, source link 371. No interval: the pre-registered human check of what each page could fill is still to do. |
 | 5. Covers UniBE, ARTORG and Diabetes Center Berne | Places on the map; the source on every card | recall@10 UniBE 0.18 [0.05, 0.31], ARTORG 0.44 [0.17, 0.76], DCB 0.58 [0.32, 0.88]. Share of top-10 slots 0.60 / 0.23 / 0.17 against share of profiles in the snapshot 0.76 / 0.13 / 0.07. |
 | 6. Easy to extend | One JSON file in [`sources/`](sources/) and one command ([playbook](docs/playbooks/add-a-source.md)) | Not a measured number. `python -m bernlife crawl --source <id>` crawls a new file, and only that source's records are replaced. |
@@ -124,6 +126,7 @@ public pages ─► crawl ─► extract with evidence ─► verify in code ─
 
 A company can also upload a project PDF. Each need keeps the sentence of the PDF it came from, and
 each matched expert shows which needs their cited claims cover. The PDF is read once and not kept.
+Reading a new brief needs the model, so it works in a live run, not in replay.
 
 ## Sovereignty
 
@@ -146,13 +149,14 @@ each matched expert shows which needs their cited claims cover. The PDF is read 
 - **No e-mail addresses or phone numbers are stored.** The contact is the source page.
 - **People from public pages are entries with sources, never avatars or characters** in the world.
 - **The snapshot bundle never enters git.** It is a sha256-pinned release asset
-  ([`bundle.lock`](bundle.lock)) that carries the pages only so the evaluation can be reproduced,
-  and a page is removed on request by publishing a new bundle without it
-  ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)).
+  ([`bundle.lock`](bundle.lock)) that carries the pages so that the replay demo, the hosted copy
+  and the evaluation all run from the same snapshot; it grants no licence to reuse them. A page is
+  removed on request by publishing a new bundle without it and reloading the hosted copy, whose
+  nightly backups age out after 14 days ([`PROVENANCE.md`](PROVENANCE.md#the-snapshot-bundle)).
 - **Accounts are invite-only**, and a project PDF is read once and not kept.
 - **Nothing leaves the app on its own.** Notifications are in-app (the bell); the agent sends
   nothing outside the app without a click.
-- Source pages remain the institutions' property; results quote only short evidence sentences
+- Source pages remain their publishers' property; results quote only short evidence sentences
   ([`NOTICE`](NOTICE), [`PROVENANCE.md`](PROVENANCE.md)).
 
 ## Limits and roadmap
@@ -162,8 +166,8 @@ each matched expert shows which needs their cited claims cover. The PDF is read 
   phrase in another language stays hidden rather than shown without a reason.
 - **German and French questions find less than English** (criterion 2). There is no stemming, so
   word forms such as "Kohlenhydrate" and "Kohlenhydraten" do not match.
-- **Not every invented question abstains** (the ethics row): one asks about an invented project,
-  and one uses a French title the premise check does not know.
+- **Not every invented question abstains** (the ethics row). Those that still get results include
+  one about an invented project and one with a French title the premise check does not know.
 - **UniBE is found least often** of the three sources (criterion 5).
 - Explanations are written in English only, and field completeness still needs its human check.
 - **In the game:** on the phone, Messages, Agents and Projects & calls are still marked **Coming
@@ -173,7 +177,8 @@ each matched expert shows which needs their cited claims cover. The PDF is read 
   but not yet drawn in the world.
 - Next: matching word forms and claims across languages, the human completeness labels, a
   calibrated confidence per result, and an Opportunities app for the funding calls, services and
-  spaces the bundle already holds (today an agent's loop can search them).
+  spaces the bundle already holds. The engine's API can search them, but no search in the app
+  asks for them yet, an agent's loops included.
 
 ## Team
 

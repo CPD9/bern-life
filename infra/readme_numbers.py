@@ -4,10 +4,11 @@
 
 `make eval` writes eval/out/metrics.json; this replaces the README's block between the numbers
 markers with the "Against the case" table and a line naming the snapshot, read from the bundle
-manifest beside the predictions the metrics were computed from. Metrics from any bundle other than
-the one bundle.lock pins are refused. `--check` writes nothing and exits 1 with a diff when the
-block differs: the eval job runs it after `make eval`. Standard library only, so that job needs
-nothing more.
+manifest beside the predictions the metrics were computed from. The sha256 the evaluator recorded
+for its predictions, pages and profiles must be the ones that manifest lists, and its version the
+one bundle.lock pins, so metrics from any other bundle, or left over from one, are refused.
+`--check` writes nothing and exits 1 with a diff when the block differs: the eval job runs it after
+`make eval`. Any other failure exits 2. Standard library only, so that job needs nothing more.
 """
 
 import argparse
@@ -27,18 +28,21 @@ COMMAND = "make fetch && make eval && python3 infra/readme_numbers.py"
 RECALL_BAR = 0.80
 INVENTED_BAR = 0.90
 SITE_FALSE_ABSTENTIONS_ALLOWED = 1
+# The bundle files the evaluator scores, each checked against the bundle manifest.
+SCORED = ("predictions", "pages", "profiles")
 SOURCES = (("unibe", "UniBE"), ("artorg", "ARTORG"), ("dcb", "DCB"))
 WORDINGS = (("synonym", "synonyms"), ("lay", "lay terms"), ("translation", "translations"))
 LANGS = ("en", "de", "fr")
 # The case's result fields in its own order; metrics.json stores them sorted.
 FIELDS = ("person", "role/affiliation", "unit", "expertise", "projects")
 FIELDS += ("infrastructure/services", "reason", "source link")
-# The table's fixed text: each success criterion of the case and where the app shows it.
+# The table's fixed text: each success criterion of the case, the ethical guideline on missing
+# sources (docs/case.md), and where the app shows each.
 CRITERIA = (
     f"1. Finds the right people: ≥ {RECALL_BAR:.0%} of expected experts and units in the top 10",
     "2. Different wording finds the same experts",
     "3. Every result traceable, nothing invented",
-    "3. (ethics) Says so when no source exists",
+    "Ethics: says so when no reliable source exists",
     "4. Structured results",
     "5. Covers UniBE, ARTORG and Diabetes Center Berne",
     "6. Easy to extend",
@@ -100,6 +104,19 @@ def percent(k: int, n: int) -> str:
     return "100%" if k == n else f"{floor(1000 * k / n) / 10:.1f}%"
 
 
+def percent_bound(value: float, up: bool) -> str:
+    tenths = (ceil if up else floor)(round(1000 * value, 6))
+    return "100%" if tenths == 1000 else f"{tenths / 10:.1f}%"
+
+
+def percent_interval(ci: Sequence[float] | None) -> str:
+    """Bounds rounded outward, so the interval shown is never narrower than the computed one: a
+    lower bound of 0.9992 shows as 99.9%, not as 1.00."""
+    if ci is None:
+        return ""
+    return f" [{percent_bound(ci[0], up=False)}, {percent_bound(ci[1], up=True)}]"
+
+
 def right_people(pooled: Metrics, rule: Metrics) -> str:
     return (
         f"recall@10 {mean(pooled['recall_at_10'], bold=True)} against the case's"
@@ -125,7 +142,7 @@ def traceable(pooled: Metrics, rule: Metrics) -> str:
     verbatim = NOT_COMPUTED
     if claims is not None and claims["n"]:
         share = percent(claims["k"], claims["n"])
-        verbatim = f"{claims['k']:,} / {claims['n']:,}, **{share}**{interval(claims['ci'])}"
+        verbatim = f"{claims['k']:,} / {claims['n']:,}, **{share}**{percent_interval(claims['ci'])}"
     entities = NOT_COMPUTED if invented is None else f"**{invented}**"
     return (
         f"Claims whose sentence is verbatim on their stored page: {verbatim}. Results not in the"
@@ -134,13 +151,17 @@ def traceable(pooled: Metrics, rule: Metrics) -> str:
 
 
 def abstention(pooled: Metrics, rule: Metrics) -> str:
+    """The rule's second bar counts false abstentions on the site's own wording only, so that
+    count is shown beside it; the pooled one covers every answerable question."""
     invented = pooled["invented_abstained"]
     n = invented["n"]
     bar = f"{ceil(round(INVENTED_BAR * n, 9))} / {n}" if n else NOTHING
+    site = rule.get("site_false_abstentions")
     return (
-        f"Invented questions abstained {count(invented)}; the pre-registered rule asks ≥ {bar}"
-        f" with at most {SITE_FALSE_ABSTENTIONS_ALLOWED} false abstention on the site's wording:"
-        f" **{rule['status']}**. False abstentions {count(pooled['false_abstention'])}."
+        f"Invented questions abstained {count(invented)}; the pre-registered rule asks ≥ {bar},"
+        f" and at most {SITE_FALSE_ABSTENTIONS_ALLOWED} false abstention on the site's own wording,"
+        f" where there are **{NOTHING if site is None else site}**: **{rule['status']}**. False"
+        f" abstentions on all answerable questions {count(pooled['false_abstention'])}."
     )
 
 
@@ -192,7 +213,7 @@ def render(metrics: Metrics, snapshot: str) -> str:
         f"<!-- Written by infra/readme_numbers.py from {METRICS}: change the script, not this"
         " block. -->",
         "",
-        "| Case success criterion | Where it shows | Measured (95% interval) |",
+        "| What the case asks | Where it shows | Measured (95% interval) |",
         "|---|---|---|",
         *(f"| {c} | {w} | {m} |" for c, w, m in zip(CRITERIA, WHERE, measured, strict=True)),
         "",
@@ -213,14 +234,36 @@ def split(readme: str) -> tuple[str, str, str]:
 def version_in(path: Path) -> str:
     try:
         return json.loads(path.read_text(encoding="utf-8"))["version"]
-    except (OSError, ValueError, KeyError) as error:
+    except (OSError, ValueError, KeyError, TypeError) as error:
         raise NumbersError(f"no bundle version in {path}") from error
 
 
-def snapshot_version(metrics: Metrics) -> str:
-    """The version in the manifest of the bundle whose predictions were scored; a relative path
+def manifest_beside(metrics: Metrics) -> tuple[str, Metrics]:
+    """The version and file list of the manifest beside the scored predictions; a relative path
     in the metrics is relative to the repository, where make runs the evaluator."""
-    return version_in((ROOT / metrics["inputs"]["predictions"]).parent / "manifest.json")
+    path = (ROOT / metrics["inputs"]["predictions"]).parent / "manifest.json"
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        return manifest["version"], manifest["files"]
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise NumbersError(f"no bundle manifest at {path}") from error
+
+
+def snapshot_version(metrics: Metrics) -> str:
+    """The bundle the metrics were computed from: every scored file's sha256, as the evaluator
+    recorded it, must be the one the manifest lists."""
+    version, files = manifest_beside(metrics)
+    scored = metrics.get("input_sha256")
+    if scored is None:
+        raise NumbersError("the metrics record no sha256 of their inputs: run make eval again")
+    for name in SCORED:
+        listed = files.get(f"{name}.jsonl", {}).get("sha256")
+        if listed is None or scored.get(name) != listed:
+            raise NumbersError(
+                f"the metrics were not computed from the {name}.jsonl of {version}:"
+                " run make eval again"
+            )
+    return version
 
 
 def arguments(argv: list[str] | None) -> argparse.Namespace:
@@ -245,6 +288,9 @@ def main(argv: list[str] | None = None) -> int:
         block = render(metrics, snapshot)
     except KeyError as error:
         print(f"readme_numbers: {args.metrics} has no {error}", file=sys.stderr)
+        return 2
+    except (TypeError, AttributeError) as error:
+        print(f"readme_numbers: {args.metrics} is malformed ({error})", file=sys.stderr)
         return 2
     except (OSError, ValueError, NumbersError) as error:
         print(f"readme_numbers: {error}", file=sys.stderr)

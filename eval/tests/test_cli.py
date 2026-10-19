@@ -1,4 +1,5 @@
 import csv
+import hashlib
 import io
 import json
 import tempfile
@@ -50,6 +51,16 @@ class FixtureRunTest(unittest.TestCase):
         )
         self.assertEqual(metrics["decisions"]["criterion_3"]["status"], "not met")
         self.assertIn("| pooled | 48 |", report)
+
+    def test_records_the_sha256_of_every_file_it_scored(self) -> None:
+        _, _, out = self.run_main("--pages", str(FIXTURES / "pages.jsonl"))
+        hashes = json.loads((out / "metrics.json").read_text())["input_sha256"]
+        files = {"gold": GOLD, "predictions": FIXTURES / "predictions.jsonl"}
+        files["pages"] = FIXTURES / "pages.jsonl"
+        self.assertEqual(
+            hashes,
+            {key: hashlib.sha256(path.read_bytes()).hexdigest() for key, path in files.items()},
+        )
 
     def test_without_the_snapshot_its_checks_say_not_computed(self) -> None:
         code, report, out = self.run_main()

@@ -9,11 +9,14 @@ Newest first. Each entry: date, decision, why, who.
 - **After onboarding you land in your office** (the Home tab). The desktop is a feature of the
   office: you sit at the desk to use it. The phone stays quick access. Peter.
 - **Agents have skills and loops.** Skills are tools the app really has; loops are saved searches
-  whose changes reach you as notifications. Peter's direction, shaped by the conductor.
-- **Notifications are in-app first:** the bell and toasts in the HUD, for messages, connection
-  requests and loop results. Web push and e-mail would come only as an opt-in and after the
-  hackathon, because they need a stored address or a push subscription; the agent sends nothing
-  outside the app without a click. Conductor's recommendation, pending Peter.
+  whose changes reach you as notifications. Peter's direction, shaped by the conductor. In this
+  build the skill "Find opportunities" still opens the Opportunities sheet marked Coming next,
+  until the Opportunities app lands.
+- **Notifications are in-app first:** the bell and toasts in the HUD, meant for messages,
+  connection requests and loop results; in this build only loop results reach them. Web push and
+  e-mail would come only as an opt-in and after the hackathon, because they need a stored address
+  or a push subscription; the agent sends nothing outside the app without a click. Conductor's
+  recommendation, pending Peter.
 - **The You sheet** (Profile, Goals, Skills, People, Agents) shows real content only: no needs
   meters, money, online counts or invented activity.
 - **Opportunity places:** opportunity-only sources were first left out of the map's places check,
