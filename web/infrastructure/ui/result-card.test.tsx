@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { AppEventName } from "@/infrastructure/app-events";
-import { copyOf, resultFixture, viaFixture } from "@/test/fixtures";
+import { copyOf, passageFixture, resultFixture, viaFixture } from "@/test/fixtures";
 import { ResultCard } from "./result-card";
 
 const firstResult = () => copyOf(resultFixture.results[0]!);
 const leadResult = () => copyOf(viaFixture.results[0]!);
 const teamResult = () => copyOf(viaFixture.results[1]!);
+const passageResult = () => copyOf(passageFixture.results[0]!);
 const headings = () => screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent);
 
 describe("ResultCard", () => {
@@ -126,5 +127,25 @@ describe("ResultCard through a related project", () => {
     result.via!.related_name = "Food Lab";
     render(<ResultCard result={result} />);
     expect(headings()[0]).toBe("Through the unit Food Lab");
+  });
+});
+
+describe("ResultCard through a passage on its own page", () => {
+  test("the passage comes before 'why it matches', labelled as a passage, not a claim", () => {
+    render(<ResultCard result={passageResult()} />);
+    expect(headings()).toEqual(["On their page", "Why it matches"]);
+    expect(screen.getByText("“Ben Beispiel PhD student, sweat patches”")).toBeTruthy();
+    expect(
+      screen.getByText(/A passage next to the name on its own page, not a claim/),
+    ).toBeTruthy();
+    expect(screen.getByText("Role: PhD student")).toBeTruthy();
+  });
+
+  test("a reason that cites only the name is hidden; the passage still explains the result", () => {
+    const result = passageResult();
+    result.reason = { text: "Name: Ben Beispiel", cites: ["/name"] };
+    render(<ResultCard result={result} />);
+    expect(headings()).toEqual(["On their page"]);
+    expect(screen.queryByText("Name: Ben Beispiel")).toBeNull();
   });
 });
