@@ -61,3 +61,27 @@ def read_profiles(conn: psycopg.Connection, ids: Sequence[str]) -> dict[str, dic
         }
         for profile_id, profile in profiles.items()
     }
+
+
+PLACE_PEOPLE_LIMIT = 30
+# A place on the map is one site of a source (its host); a person belongs to it when the page the
+# profile was extracted from is on that host. Names are compared as stored, so the order is stable.
+PLACE_PEOPLE = """
+SELECT p.id, count(*) OVER ()
+  FROM profile p
+ WHERE p.source_id = %s AND p.kind = 'person'
+   AND lower(substring(p.source_url from '^https?://([^/:?#]+)')) = lower(%s)
+ ORDER BY p.name, p.id
+ LIMIT %s
+"""
+
+
+def place_people(
+    conn: psycopg.Connection, source_id: str, host: str, limit: int = PLACE_PEOPLE_LIMIT
+) -> tuple[list[dict[str, object]], int]:
+    """The person profiles of one place, at most `limit`, and how many it holds in all."""
+    rows = conn.execute(PLACE_PEOPLE, (source_id, host, limit)).fetchall()
+    ids = [row[0] for row in rows]
+    profiles = read_profiles(conn, ids)
+    total = rows[0][1] if rows else 0
+    return [profiles[profile_id] for profile_id in ids if profile_id in profiles], total

@@ -75,6 +75,10 @@ class FakeApi:
             raise RuntimeError("model gone: secret detail")
         return {"reply": "From the sources.", "turns": len(messages)}
 
+    def place_people(self, source_id, host):
+        self._record("place_people", (source_id, host))
+        return {"snapshot": "local-abc", "people": [], "total": 0}
+
     def profile(self, profile_id):
         self._record("profile", profile_id)
         return {"id": profile_id} if profile_id == "person-example-ada-muster" else None
@@ -202,9 +206,14 @@ class ParseAgentTest(unittest.TestCase):
         self.assertEqual(
             [
                 route_template(path)
-                for path in ("/api/agent", "/api/profile/person-example-ada-muster", "/x?q=1")
+                for path in (
+                    "/api/agent",
+                    "/api/profile/person-example-ada-muster",
+                    "/api/places/example/www.example-institute.test/people",
+                    "/x?q=1",
+                )
             ],
-            ["/api/agent", "/api/profile/{id}", "unknown"],
+            ["/api/agent", "/api/profile/{id}", "/api/places/{source}/{host}/people", "unknown"],
         )
 
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" width="800" height="380" role="img" aria-labelledby="t d">
   <title id="t">Ask in your words</title>
-  <desc id="d">The question "blood sugar sensor" is typed and widened into search terms (CGM, continuous glucose monitoring, Blutzuckersensor), which are search terms and not facts. Full-text search and meaning search run side by side and flow into one ranking. Result cards rise in, each with a link to its evidence. Example data is invented.</desc>
+  <desc id="d">A question is typed in plain words. Apertus adds three search terms under the label "search terms, not facts". Two result cards slide in, each with a name, a role and a highlighted sentence quoted from the institute's own page. Example data is invented.</desc>
   <style>
     text { font-family: ui-rounded, "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; }
     .bg { fill: #eef4fa; }
@@ -9,12 +9,10 @@
     .chip { fill: #eef1f4; }
     .ink { fill: #14202b; }
     .muted { fill: #5b6773; }
+    .mark { fill: #fff3b0; }
     .green { fill: #13804a; }
-    .green-line { stroke: #13804a; }
-    .flow { stroke: #9aa8b6; }
-    .badge { fill: #14202b; }
-    .on-badge { fill: #ffffff; }
-    .on-green { fill: #ffffff; }
+    .icon { fill: none; stroke: #13804a; }
+    .lens { fill: none; stroke: #5b6773; }
     .shadow { fill: #14202b; opacity: 0.07; }
     @media (prefers-color-scheme: dark) {
       .bg { fill: #0d1b2a; }
@@ -23,61 +21,41 @@
       .chip { fill: #223041; }
       .ink { fill: #eef3f8; }
       .muted { fill: #a3b0bd; }
+      .mark { fill: #4a4120; }
       .green { fill: #2fb36b; }
-      .green-line { stroke: #2fb36b; }
-      .flow { stroke: #4b5d71; }
-      .badge { fill: #eef3f8; }
-      .on-badge { fill: #14202b; }
-      .on-green { fill: #08130d; }
+      .icon { stroke: #2fb36b; }
+      .lens { stroke: #a3b0bd; }
       .shadow { fill: #000000; opacity: 0.3; }
     }
 
     /* Resting styles are the last frame, so with motion reduced the picture is complete. */
+    .cover { transform-box: fill-box; transform-origin: right center; transform: scaleX(0); animation: type 12s steps(41) infinite; }
+    .caret { opacity: 0; animation: caret 12s steps(41) infinite; }
+    .label { animation: label 12s ease-out infinite; }
     .pop { transform-box: fill-box; transform-origin: center; }
-    .cover { transform-box: fill-box; transform-origin: right center; transform: scaleX(0); animation: type 12s steps(18) infinite; }
-    .caret { animation: caret 12s steps(18) infinite; }
-    .blink { animation: blink 0.9s steps(1) infinite; }
-    .draw { stroke-dasharray: 1; }
-    .c1 { animation: c1 12s ease-out infinite; }
-    .c2 { animation: c2 12s ease-out infinite; }
-    .c3 { animation: c3 12s ease-out infinite; }
-    .t1 { animation: t1 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
-    .t2 { animation: t2 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
-    .t3 { animation: t3 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
-    .note { animation: note 12s ease-out infinite; }
-    .feed { animation: feed 12s ease-out infinite; }
-    .lanes { animation: lanes 12s ease-out infinite; }
-    .stream { opacity: 0; animation: stream 12s linear infinite; }
-    .dot { animation: dot 1.1s linear infinite; }
-    .d2 { animation-delay: -0.37s; }
-    .d3 { animation-delay: -0.74s; }
-    .join { animation: join 12s ease-out infinite; }
-    .rank { animation: rank 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
-    .halo { opacity: 0; animation: halo 12s ease-out infinite; }
-    .r1 { animation: r1 12s cubic-bezier(.34, 1.4, .64, 1) infinite; }
-    .r2 { animation: r2 12s cubic-bezier(.34, 1.4, .64, 1) infinite; }
-    .glint { animation: glint 12s ease-out infinite; }
+    .c1 { animation: c1 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
+    .c2 { animation: c2 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
+    .c3 { animation: c3 12s cubic-bezier(.34, 1.56, .64, 1) infinite; }
+    .r1 { animation: r1 12s cubic-bezier(.34, 1.3, .64, 1) infinite; }
+    .r2 { animation: r2 12s cubic-bezier(.34, 1.3, .64, 1) infinite; }
+    .sweep { transform-box: fill-box; transform-origin: left center; }
+    .m1 { animation: m1 12s cubic-bezier(.65, 0, .35, 1) infinite; }
+    .m2 { animation: m2 12s cubic-bezier(.65, 0, .35, 1) infinite; }
+    .s1 { animation: s1 12s ease-out infinite; }
+    .s2 { animation: s2 12s ease-out infinite; }
 
-    @keyframes type { 0%, 1% { transform: scaleX(1); } 13%, 100% { transform: scaleX(0); } }
-    @keyframes caret { 0%, 1% { transform: translateX(-150px); } 13%, 100% { transform: translateX(0); } }
-    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } }
-    @keyframes c1 { 0%, 15% { stroke-dashoffset: 1; } 19%, 100% { stroke-dashoffset: 0; } }
-    @keyframes c2 { 0%, 18% { stroke-dashoffset: 1; } 22%, 100% { stroke-dashoffset: 0; } }
-    @keyframes c3 { 0%, 21% { stroke-dashoffset: 1; } 25%, 100% { stroke-dashoffset: 0; } }
-    @keyframes t1 { 0%, 18% { opacity: 0; transform: scale(0.6); } 22%, 100% { opacity: 1; transform: scale(1); } }
-    @keyframes t2 { 0%, 21% { opacity: 0; transform: scale(0.6); } 25%, 100% { opacity: 1; transform: scale(1); } }
-    @keyframes t3 { 0%, 24% { opacity: 0; transform: scale(0.6); } 28%, 100% { opacity: 1; transform: scale(1); } }
-    @keyframes note { 0%, 28% { opacity: 0; } 32%, 100% { opacity: 1; } }
-    @keyframes feed { 0%, 32% { stroke-dashoffset: 1; } 37%, 100% { stroke-dashoffset: 0; } }
-    @keyframes lanes { 0%, 34% { opacity: 0; transform: translateX(-12px); } 39%, 100% { opacity: 1; transform: none; } }
-    @keyframes stream { 0%, 38% { opacity: 0; } 40%, 58% { opacity: 1; } 61%, 100% { opacity: 0; } }
-    @keyframes dot { 0% { transform: translateX(0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(130px); opacity: 0; } }
-    @keyframes join { 0%, 50% { stroke-dashoffset: 1; } 55%, 100% { stroke-dashoffset: 0; } }
-    @keyframes rank { 0%, 53% { opacity: 0; transform: scale(0.7); } 57%, 100% { opacity: 1; transform: scale(1); } }
-    @keyframes halo { 0%, 57% { opacity: 0; transform: scale(1); } 58% { opacity: 0.5; transform: scale(1); } 66%, 100% { opacity: 0; transform: scale(1.35); } }
-    @keyframes r1 { 0%, 61% { opacity: 0; transform: translateY(28px); } 66%, 100% { opacity: 1; transform: none; } }
-    @keyframes r2 { 0%, 65% { opacity: 0; transform: translateY(28px); } 70%, 100% { opacity: 1; transform: none; } }
-    @keyframes glint { 0%, 72% { stroke-dashoffset: 1; } 77%, 100% { stroke-dashoffset: 0; } }
+    @keyframes type { 0%, 2% { transform: scaleX(1); } 18%, 100% { transform: scaleX(0); } }
+    @keyframes caret { 0%, 2% { opacity: 1; transform: translateX(0); } 18% { opacity: 1; transform: translateX(360px); } 20%, 100% { opacity: 0; transform: translateX(360px); } }
+    @keyframes label { 0%, 20% { opacity: 0; } 24%, 100% { opacity: 1; } }
+    @keyframes c1 { 0%, 24% { opacity: 0; transform: scale(0.6); } 28%, 100% { opacity: 1; transform: scale(1); } }
+    @keyframes c2 { 0%, 27% { opacity: 0; transform: scale(0.6); } 31%, 100% { opacity: 1; transform: scale(1); } }
+    @keyframes c3 { 0%, 30% { opacity: 0; transform: scale(0.6); } 34%, 100% { opacity: 1; transform: scale(1); } }
+    @keyframes r1 { 0%, 38% { opacity: 0; transform: translateY(28px); } 44%, 100% { opacity: 1; transform: none; } }
+    @keyframes r2 { 0%, 43% { opacity: 0; transform: translateY(28px); } 49%, 100% { opacity: 1; transform: none; } }
+    @keyframes m1 { 0%, 52% { transform: scaleX(0); } 58%, 100% { transform: scaleX(1); } }
+    @keyframes m2 { 0%, 58% { transform: scaleX(0); } 64%, 100% { transform: scaleX(1); } }
+    @keyframes s1 { 0%, 56% { opacity: 0; } 60%, 100% { opacity: 1; } }
+    @keyframes s2 { 0%, 62% { opacity: 0; } 66%, 100% { opacity: 1; } }
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; }
     }
@@ -85,87 +63,59 @@
 
   <rect class="bg" width="800" height="380" rx="24"/>
   <text class="ink" x="32" y="42" font-size="20" font-weight="800">Ask in your words</text>
-  <text class="muted" x="32" y="64" font-size="13">Your words become search terms; words and meaning are searched together; every result keeps its evidence.</text>
+  <text class="muted" x="32" y="64" font-size="13">Apertus only widens the search. Every result shows the sentence it rests on.</text>
 
-  <!-- The question, typed -->
-  <rect class="shadow" x="34" y="102" width="250" height="48" rx="24"/>
-  <rect class="card" x="32" y="96" width="250" height="48" rx="24"/>
-  <circle cx="58" cy="118" r="7" fill="none" class="flow" stroke-width="2.4"/>
-  <path d="M63 123l6 6" class="flow" stroke-width="2.4" stroke-linecap="round"/>
-  <text class="ink" x="80" y="125" font-size="15" font-weight="700">blood sugar sensor</text>
-  <rect class="card-fill cover" x="78" y="106" width="156" height="26"/>
-  <g class="caret"><rect class="green blink" x="231" y="109" width="2" height="21" rx="1"/></g>
-  <text class="muted" x="32" y="176" font-size="12">German, English or French.</text>
-  <text class="muted" x="32" y="194" font-size="12">Apertus 70B suggests the extra terms;</text>
-  <text class="muted" x="32" y="212" font-size="12">every answer is cached, so a rerun</text>
-  <text class="muted" x="32" y="230" font-size="12">needs no GPU.</text>
+  <!-- The question -->
+  <rect class="shadow" x="34" y="90" width="736" height="46" rx="23"/>
+  <rect class="card" x="32" y="84" width="736" height="46" rx="23"/>
+  <circle class="lens" cx="54" cy="105" r="6" stroke-width="2"/>
+  <path class="lens" d="M58.5 109.5 64 115" stroke-width="2" stroke-linecap="round"/>
+  <text class="ink" x="76" y="113" font-size="17" font-weight="700">Who in Bern works on blood sugar sensors?</text>
+  <rect class="card-fill cover" x="76" y="92" width="360" height="30"/>
+  <rect class="ink caret" x="77" y="95" width="2" height="22"/>
 
-  <!-- Expanded terms, each drawn out of the question -->
-  <path class="flow draw c1" d="M282 120C296 120 296 103 310 103" pathLength="1" stroke-width="2" fill="none"/>
-  <path class="flow draw c2" d="M282 120C296 120 296 139 310 139" pathLength="1" stroke-width="2" fill="none"/>
-  <path class="flow draw c3" d="M282 120C296 120 296 175 310 175" pathLength="1" stroke-width="2" fill="none"/>
-  <g class="pop t1">
-    <rect class="chip" x="310" y="88" width="230" height="30" rx="15"/>
-    <text class="ink" x="326" y="108" font-size="13" font-weight="700">CGM</text>
-    <text class="muted" x="526" y="108" font-size="11" text-anchor="end">acronym</text>
+  <!-- Search terms, not facts -->
+  <text class="muted label" x="32" y="160" font-size="12" font-weight="700">Apertus added these search terms, not facts</text>
+  <g class="pop c1">
+    <rect class="chip" x="32" y="170" width="60" height="30" rx="15"/>
+    <text class="ink" x="62" y="190" font-size="13" font-weight="700" text-anchor="middle">CGM</text>
   </g>
-  <g class="pop t2">
-    <rect class="chip" x="310" y="124" width="230" height="30" rx="15"/>
-    <text class="ink" x="326" y="144" font-size="13" font-weight="700">continuous glucose monitoring</text>
+  <g class="pop c2">
+    <rect class="chip" x="100" y="170" width="130" height="30" rx="15"/>
+    <text class="ink" x="165" y="190" font-size="13" font-weight="700" text-anchor="middle">Glukosesensor</text>
   </g>
-  <g class="pop t3">
-    <rect class="chip" x="310" y="160" width="230" height="30" rx="15"/>
-    <text class="ink" x="326" y="180" font-size="13" font-weight="700">Blutzuckersensor</text>
-    <text class="muted" x="526" y="180" font-size="11" text-anchor="end">German</text>
-  </g>
-  <text class="muted note" x="310" y="210" font-size="11">Search terms only, never facts about anyone.</text>
-
-  <!-- Two searches side by side, streaming into one ranking -->
-  <path class="flow draw feed" d="M540 103C564 103 564 109 588 109M540 175C564 175 564 169 588 169" pathLength="1" stroke-width="2" fill="none"/>
-  <g class="lanes">
-    <rect class="card" x="588" y="94" width="180" height="30" rx="15"/>
-    <text class="ink" x="604" y="114" font-size="12" font-weight="700">Words · full-text</text>
-    <rect class="card" x="588" y="154" width="180" height="30" rx="15"/>
-    <text class="ink" x="604" y="174" font-size="12" font-weight="700">Meaning · vectors</text>
-  </g>
-  <g class="stream">
-    <circle class="green dot" cx="612" cy="130" r="3"/>
-    <circle class="green dot d2" cx="612" cy="130" r="3"/>
-    <circle class="green dot d3" cx="612" cy="130" r="3"/>
-    <circle class="green dot" cx="612" cy="190" r="3"/>
-    <circle class="green dot d2" cx="612" cy="190" r="3"/>
-    <circle class="green dot d3" cx="612" cy="190" r="3"/>
-  </g>
-  <path class="flow draw join" d="M768 109C792 109 792 223 768 223M768 169C782 169 782 223 768 223" pathLength="1" stroke-width="2" fill="none"/>
-  <rect class="green pop halo" x="588" y="208" width="180" height="30" rx="15"/>
-  <g class="pop rank">
-    <rect class="green" x="588" y="208" width="180" height="30" rx="15"/>
-    <text class="on-green" x="678" y="228" font-size="12" font-weight="800" text-anchor="middle">One ranking</text>
+  <g class="pop c3">
+    <rect class="chip" x="238" y="170" width="250" height="30" rx="15"/>
+    <text class="ink" x="363" y="190" font-size="13" font-weight="700" text-anchor="middle">continuous glucose monitoring</text>
   </g>
 
-  <!-- Results with evidence -->
+  <!-- Result 1 -->
   <g class="r1">
-    <rect class="shadow" x="34" y="264" width="360" height="86" rx="16"/>
-    <rect class="card" x="32" y="258" width="360" height="86" rx="16"/>
-    <circle class="badge" cx="58" cy="284" r="12"/>
-    <text class="on-badge" x="58" y="289" font-size="12" font-weight="800" text-anchor="middle">1</text>
-    <text class="ink" x="78" y="289" font-size="15" font-weight="800">Ada Muster · Sensor Lab</text>
-    <rect class="chip" x="48" y="304" width="210" height="26" rx="13"/>
-    <text class="ink" x="60" y="322" font-size="12" font-weight="700">continuous glucose monitoring</text>
-    <text class="green" x="376" y="322" font-size="12" font-weight="800" text-anchor="end">evidence ↗</text>
-    <path class="green-line draw glint" d="M306 327h70" pathLength="1" stroke-width="2" stroke-linecap="round"/>
-  </g>
-  <g class="r2">
-    <rect class="shadow" x="410" y="264" width="360" height="86" rx="16"/>
-    <rect class="card" x="408" y="258" width="360" height="86" rx="16"/>
-    <circle class="badge" cx="434" cy="284" r="12"/>
-    <text class="on-badge" x="434" y="289" font-size="12" font-weight="800" text-anchor="middle">2</text>
-    <text class="ink" x="454" y="289" font-size="15" font-weight="800">Example Diabetes Lab</text>
-    <rect class="chip" x="424" y="304" width="160" height="26" rx="13"/>
-    <text class="ink" x="436" y="322" font-size="12" font-weight="700">wearable biosensors</text>
-    <text class="green" x="752" y="322" font-size="12" font-weight="800" text-anchor="end">evidence ↗</text>
-    <path class="green-line draw glint" d="M682 327h70" pathLength="1" stroke-width="2" stroke-linecap="round"/>
+    <rect class="shadow" x="34" y="220" width="736" height="66" rx="14"/>
+    <rect class="card" x="32" y="214" width="736" height="66" rx="14"/>
+    <text class="ink" x="48" y="238" font-size="15" font-weight="800">Dr. Example Person</text>
+    <text class="muted" x="752" y="238" font-size="12" text-anchor="end">Group Leader, Sensor Lab</text>
+    <rect class="mark sweep m1" x="46" y="250" width="440" height="22" rx="5"/>
+    <text class="ink" x="52" y="266" font-size="13" font-weight="600">“develops wearable sensors for continuous glucose monitoring”</text>
+    <g class="s1">
+      <path class="icon" transform="translate(562 254)" d="M8 1.5H3a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 11.5h7a1.5 1.5 0 0 0 1.5-1.5V5M8 1.5h3.5V5M11.5 1.5 6 7" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="green" x="752" y="266" font-size="11" font-weight="700" text-anchor="end">from the institute's own page</text>
+    </g>
   </g>
 
-  <text class="muted" x="768" y="366" font-size="10" text-anchor="end">Example data is invented.</text>
+  <!-- Result 2 -->
+  <g class="r2">
+    <rect class="shadow" x="34" y="296" width="736" height="66" rx="14"/>
+    <rect class="card" x="32" y="290" width="736" height="66" rx="14"/>
+    <text class="ink" x="48" y="314" font-size="15" font-weight="800">Dr. Sample Expert</text>
+    <text class="muted" x="752" y="314" font-size="12" text-anchor="end">Senior Researcher, Diabetes Technology</text>
+    <rect class="mark sweep m2" x="46" y="326" width="372" height="22" rx="5"/>
+    <text class="ink" x="52" y="342" font-size="13" font-weight="600">“tests glucose sensors with older patients at home”</text>
+    <g class="s2">
+      <path class="icon" transform="translate(562 330)" d="M8 1.5H3a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 11.5h7a1.5 1.5 0 0 0 1.5-1.5V5M8 1.5h3.5V5M11.5 1.5 6 7" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="green" x="752" y="342" font-size="11" font-weight="700" text-anchor="end">from the institute's own page</text>
+    </g>
+  </g>
+
+  <text class="muted" x="768" y="372" font-size="10" text-anchor="end">Example data is invented.</text>
 </svg>

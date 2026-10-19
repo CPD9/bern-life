@@ -5,7 +5,12 @@ import { answerSourceFor } from "@/infrastructure/answer-source";
 import { type ClaimRef, type SearchResult, citedClaims } from "@/infrastructure/claims";
 import type { Profile, SearchResponse } from "@/infrastructure/contract-types.generated";
 import { foldText } from "@/infrastructure/text-match";
-import { noveltyTags, notComputed, percent } from "@/infrastructure/ui/result-metrics";
+import {
+  confidenceText,
+  noveltyTags,
+  notComputed,
+  percent,
+} from "@/infrastructure/ui/result-metrics";
 
 export { notComputed } from "@/infrastructure/ui/result-metrics";
 
@@ -88,11 +93,7 @@ function card(result: SearchResult, terms: readonly string[]): ReportCard {
     completeness: metrics
       ? `${metrics.completeness.filled} of ${metrics.completeness.of}`
       : notComputed,
-    confidence: !metrics
-      ? notComputed
-      : metrics.confidence === null
-        ? "not yet calibrated"
-        : percent(metrics.confidence),
+    confidence: metrics ? confidenceText(metrics.confidence) : notComputed,
     details: [
       { label: "Projects", value: joined(profile, "projects") },
       { label: "Infrastructure", value: joined(profile, "infrastructure") },

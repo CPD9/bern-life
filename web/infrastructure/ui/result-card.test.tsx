@@ -1,13 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { AppEventName } from "@/infrastructure/app-events";
-import { copyOf, resultFixture, viaFixture } from "@/test/fixtures";
+import { copyOf, passageFixture, resultFixture, viaFixture } from "@/test/fixtures";
 import { CORRECTIONS_PATH } from "./claim-evidence";
 import { ResultCard } from "./result-card";
 
 const firstResult = () => copyOf(resultFixture.results[0]!);
 const leadResult = () => copyOf(viaFixture.results[0]!);
 const teamResult = () => copyOf(viaFixture.results[1]!);
+const passageResult = () => copyOf(passageFixture.results[0]!);
 const headings = () => screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent);
 
 describe("ResultCard", () => {
@@ -17,25 +18,58 @@ describe("ResultCard", () => {
     expect(labels).toEqual(["Role", "Unit", "Expertise", "Projects", "Infrastructure"]);
   });
 
-  test("shows the engine's metrics exactly, each with its meaning, and what the result adds", () => {
+  const fit = () => within(screen.getByRole("region", { name: "How well this result fits" }));
+  const scores = () =>
+    fit()
+      .getAllByRole("listitem")
+      .filter((li) => li.closest("ul")?.getAttribute("aria-label") === "Scores")
+      .map((li) => li.textContent);
+  const topics = () =>
+    within(fit().getByRole("list", { name: "Topics" }))
+      .getAllByRole("listitem")
+      .map((li) => li.textContent);
+  const meters = () =>
+    fit()
+      .getAllByRole("meter")
+      .map((meter) =>
+        ["aria-label", "aria-valuenow", "aria-valuemax", "aria-valuetext"].map((name) =>
+          meter.getAttribute(name),
+        ),
+      );
+
+  test("three bars carry the engine's numbers exactly; confidence stays off while uncalibrated", () => {
     render(<ResultCard result={firstResult()} />);
-    const row = within(screen.getByRole("region", { name: "How well this result fits" }));
-    const items = row.getAllByRole("listitem");
-    expect(items.map((li) => li.textContent)).toEqual([
-      "Relevance 100%",
-      "Evidence 100%",
-      "Completeness 5 of 5",
-      "Confidence not yet calibrated",
-      "New unit",
-      "Adds: glucose sensors",
+    expect(scores()).toEqual(["Relevance100%", "Evidence100%", "Completeness5 of 5"]);
+    expect(meters()).toEqual([
+      ["Relevance", "1", "1", "100%"],
+      ["Evidence", "1", "1", "100%"],
+      ["Completeness", "5", "5", "5 of 5"],
     ]);
-    expect(items[0]!.getAttribute("title")).toBe(
-      "Share of your topics found in this result's verified claims",
-    );
-    expect(row.getByText("Covers: glucose sensors")).toBeTruthy();
+    expect(fit().queryByText(/calibrated/)).toBeNull();
   });
 
-  test("a value the engine could not compute is a dash, never 0; a missing topic is named", () => {
+  test("covered topics are green check chips; what the result adds is one muted chip", () => {
+    render(<ResultCard result={firstResult()} />);
+    expect(topics()).toEqual(["✓ glucose sensors (found)", "New unit · Adds: glucose sensors"]);
+    const [covered, novelty] = within(fit().getByRole("list", { name: "Topics" })).getAllByRole(
+      "listitem",
+    );
+    expect(covered!.className).toContain("bg-primary");
+    expect(novelty!.className).toContain("bg-chip");
+  });
+
+  test("the meanings fold away under one closed line, worded from the metrics module", () => {
+    render(<ResultCard result={firstResult()} />);
+    const details = fit().getByText("What do these mean?").closest("details")!;
+    expect(details.open).toBe(false);
+    expect(Array.from(details.querySelectorAll("li"), (li) => li.textContent)).toEqual([
+      "Relevance: Share of your topics found in this result's verified claims",
+      "Evidence: How directly the public pages tie this result to the topics",
+      "Completeness: Profile fields the public pages fill, out of five",
+    ]);
+  });
+
+  test("a value the engine could not compute is a dash with an empty track, never 0", () => {
     const result = firstResult();
     result.metrics = {
       ...result.metrics!,
@@ -47,15 +81,25 @@ describe("ResultCard", () => {
       novelty: { new_unit: false, adds: [] },
     };
     render(<ResultCard result={result} />);
-    const row = within(screen.getByRole("region", { name: "How well this result fits" }));
-    expect(row.getAllByRole("listitem").map((li) => li.textContent)).toEqual([
-      "Relevance 50%",
-      "Evidence —",
-      "Completeness 5 of 5",
-      "Confidence 73%",
-      "Unit already above",
+    expect(scores()).toEqual(["Relevance50%", "Evidence—", "Completeness5 of 5", "Confidence73%"]);
+    expect(meters()).toEqual([
+      ["Relevance", "0.5", "1", "50%"],
+      ["Completeness", "5", "5", "5 of 5"],
+      ["Confidence", "0.734", "1", "73%"],
     ]);
-    expect(row.getByText("Covers: glucose sensors · Missing: sweat")).toBeTruthy();
+    expect(topics()).toEqual(["✓ glucose sensors (found)", "sweat missing"]);
+  });
+
+  test("no topic chips at all when the result covers, misses and adds nothing", () => {
+    const result = firstResult();
+    result.metrics = {
+      ...result.metrics!,
+      covers: [],
+      missing: [],
+      novelty: { new_unit: false, adds: [] },
+    };
+    render(<ResultCard result={result} />);
+    expect(fit().queryByRole("list", { name: "Topics" })).toBeNull();
   });
 
   test("a result the engine sent without metrics shows none", () => {
@@ -216,5 +260,25 @@ describe("ResultCard through a related project", () => {
     result.via!.related_name = "Food Lab";
     render(<ResultCard result={result} />);
     expect(headings()[0]).toBe("Through the unit Food Lab");
+  });
+});
+
+describe("ResultCard through a passage on its own page", () => {
+  test("the passage comes before 'why it matches', labelled as a passage, not a claim", () => {
+    render(<ResultCard result={passageResult()} />);
+    expect(headings()).toEqual(["On their page", "Why it matches"]);
+    expect(screen.getByText("“Ben Beispiel PhD student, sweat patches”")).toBeTruthy();
+    expect(
+      screen.getByText(/A passage next to the name on its own page, not a claim/),
+    ).toBeTruthy();
+    expect(screen.getByText("Role: PhD student")).toBeTruthy();
+  });
+
+  test("a reason that cites only the name is hidden; the passage still explains the result", () => {
+    const result = passageResult();
+    result.reason = { text: "Name: Ben Beispiel", cites: ["/name"] };
+    render(<ResultCard result={result} />);
+    expect(headings()).toEqual(["On their page"]);
+    expect(screen.queryByText("Name: Ben Beispiel")).toBeNull();
   });
 });

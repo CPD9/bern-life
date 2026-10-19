@@ -119,6 +119,30 @@ class ServeDbTest(unittest.TestCase):
             ("mock", "person-example-ada-muster"),
         )
 
+    def test_a_place_lists_the_people_whose_page_is_on_its_host(self):
+        body = self.get("/api/places/example/www.example-institute.test/people")
+        self.assertEqual(list(validator("place-people.schema.json").iter_errors(body)), [])
+        names = [person["name"]["value"] for person in body["people"]]
+        self.assertIn("Ada Muster", names)
+        self.assertEqual(names, sorted(names))
+        self.assertEqual(
+            {(person["kind"], person["source_id"]) for person in body["people"]},
+            {("person", "example")},
+        )
+        self.assertTrue(
+            all(
+                p["source_url"].startswith("https://www.example-institute.test/")
+                for p in body["people"]
+            )
+        )
+        self.assertEqual((body["snapshot"], body["total"]), (self.snapshot, len(names)))
+
+    def test_a_place_without_profiles_lists_nobody(self):
+        self.assertEqual(
+            self.get("/api/places/demo/www.example-institute.test/people"),
+            {"snapshot": self.snapshot, "people": [], "total": 0},
+        )
+
     def test_the_bodies_validate_against_their_contracts(self):
         for path, contract, requires in (
             ("/api/health", "health.schema.json", "status"),

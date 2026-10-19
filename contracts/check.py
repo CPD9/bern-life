@@ -1,5 +1,5 @@
-"""Validate every contract fixture, every source config, the gold set and the committed evaluation
-metrics against contracts/.
+"""Validate every contract fixture, every source config, the gold set, dev2 and the committed
+evaluation metrics against contracts/.
 
 Run by CI and `make test`. The schemas refer to each other by file name (result → profile), so
 they are loaded into one registry rather than checked one file at a time.
@@ -23,10 +23,11 @@ CHECKS = [
     ("health.schema.json", ["contracts/fixtures/health.json"]),
     ("agent.schema.json", ["contracts/fixtures/agent.json"]),
     ("sources.schema.json", ["contracts/fixtures/sources.json"]),
+    ("place-people.schema.json", ["contracts/fixtures/place-people.json"]),
     ("numbers.schema.json", ["contracts/fixtures/numbers.json"]),
     ("metrics.schema.json", ["eval/results/*/metrics.json"]),
     ("quest.schema.json", ["contracts/fixtures/story.json"]),
-    ("gold.schema.json", ["contracts/fixtures/gold.jsonl", "eval/gold.jsonl"]),
+    ("gold.schema.json", ["contracts/fixtures/gold.jsonl", "eval/gold.jsonl", "eval/dev2.jsonl"]),
     ("consistency.schema.json", ["eval/consistency.jsonl"]),
 ]
 

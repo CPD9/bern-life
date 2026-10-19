@@ -32,6 +32,7 @@ from bernlife.llm import MockLLM, Router
 from bernlife.llm import connect as connect_model
 from bernlife.llm_gate import request_scope
 from bernlife.numbers import numbers_report, results_dir
+from bernlife.profiles_db import place_people
 from bernlife.request_log import Tally
 from bernlife.search import search
 from bernlife.server import make_server
@@ -115,6 +116,12 @@ class EngineApi:
     def profile(self, profile_id: str) -> dict[str, Any] | None:
         with self._lock:
             return self._store.profiles([profile_id]).get(profile_id)
+
+    def place_people(self, source_id: str, host: str) -> dict[str, Any]:
+        with self._lock:
+            snapshot = self._store.snapshot()
+            people, total = place_people(self._conn, source_id, host)
+        return {"snapshot": snapshot, "people": people, "total": total}
 
     def sources(self) -> dict[str, Any]:
         with self._lock:
