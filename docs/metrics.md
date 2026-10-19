@@ -122,17 +122,17 @@ here:
 
 | Group | Units | Profiles | Profile share | Top-10 slots | Slot share | Units never in a top 10 |
 |---|---|---|---|---|---|---|
-| small (≤ 125.5 profiles) | 11 | 757 | 0.23 | 62 | 0.17 | 4 |
-| large (> 125.5 profiles) | 11 | 2,579 | 0.77 | 309 | 0.83 | 0 |
+| small (≤ 125.5 profiles) | 11 | 757 | 0.23 | 66 | 0.18 | 3 |
+| large (> 125.5 profiles) | 11 | 2,579 | 0.77 | 306 | 0.82 | 1 |
 
 | Source | Group | Units | Profiles | Profile share | Top-10 slots | Slot share | Units never in a top 10 |
 |---|---|---|---|---|---|---|---|
-| UniBE | small | 11 | 757 | 0.29 | 62 | 0.28 | 4 |
-| UniBE | large | 9 | 1,896 | 0.71 | 158 | 0.72 | 0 |
-| ARTORG | large | 1 | 443 | 1.00 | 89 | 1.00 | 0 |
-| DCB | large | 1 | 240 | 1.00 | 62 | 1.00 | 0 |
+| UniBE | small | 11 | 757 | 0.29 | 66 | 0.31 | 3 |
+| UniBE | large | 9 | 1,896 | 0.71 | 149 | 0.69 | 1 |
+| ARTORG | large | 1 | 443 | 1.00 | 90 | 1.00 | 0 |
+| DCB | large | 1 | 240 | 1.00 | 67 | 1.00 | 0 |
 
-Snapshot `bundle-20261019-3`: median unit 125.5 profiles; top-10 slots outside these units 0. To reproduce: `make fetch && make eval && python3 infra/readme_numbers.py`. CI fails when this block differs from the evaluator's output.
+Snapshot `bundle-20261019-4`: median unit 125.5 profiles; top-10 slots outside these units 0. To reproduce: `make fetch && make eval && python3 infra/readme_numbers.py`. CI fails when this block differs from the evaluator's output.
 <!-- exposure:end -->
 
 On `bundle-20261019-3`, small units get fewer top-10 slots than their share of profiles over the
