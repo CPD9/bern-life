@@ -57,6 +57,8 @@ export const offInFixtures: OffEvents = {
  *   only once GET /api/numbers has answered with the evaluator's numbers, never for a fixture, and
  *   never while the route is not there yet (the garage then says the numbers are not connected)
  * - settled: app/world-settle.tsx (features/settle/settle.tsx, choosing a plot)
+ * - connection_saved: app/world-connections.tsx (features/connections/use-connections.ts), when
+ *   you accept a request, or a request you sent is found accepted; never on the first read
  */
 export const emittedToday: readonly AppEventName[] = [
   "search_answered",
@@ -73,4 +75,5 @@ export const emittedToday: readonly AppEventName[] = [
   "garage_visited",
   "numbers_seen",
   "settled",
+  "connection_saved",
 ];

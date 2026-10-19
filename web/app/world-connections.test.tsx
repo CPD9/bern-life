@@ -1,0 +1,82 @@
+import { describe, expect, test } from "bun:test";
+import { act, renderHook } from "@testing-library/react";
+import type { ReactElement } from "react";
+import type { ConnectionsApi } from "@/features/connections/connections-api";
+import type { ConnectionView } from "@/features/connections/types";
+import { OfficeRoom } from "@/features/office/office-room";
+import type { AppEventName } from "@/infrastructure/app-events";
+import { useMessageWith, useWorldConnections } from "./world-connections";
+
+function asked(status: ConnectionView["status"]): ConnectionView {
+  return {
+    id: "r1",
+    person: { handle: "bea", displayName: "Bea Example" },
+    status,
+    direction: "outgoing",
+    note: null,
+    createdAt: "2026-10-19T08:00:00.000Z",
+    respondedAt: null,
+  };
+}
+
+function fakeApi(signedIn: boolean) {
+  let requests = [asked("pending")];
+  const api: ConnectionsApi = {
+    people: async () => ({ ok: true, value: [] }),
+    requests: async () =>
+      signedIn ? { ok: true, value: requests } : { ok: false, failure: "unauthenticated" },
+    ask: async () => ({ ok: true, value: "r2" }),
+    answer: async () => ({ ok: true, value: null }),
+    office: async () => ({ ok: true, value: null }),
+  };
+  return { api, accept: () => (requests = [asked("accepted")]) };
+}
+
+describe("useWorldConnections", () => {
+  test("a request found accepted after the first read completes connection_saved, once", async () => {
+    const heard: AppEventName[] = [];
+    const server = fakeApi(true);
+    const { result } = renderHook(() =>
+      useWorldConnections({
+        signedIn: true,
+        lite: true,
+        reducedMotion: true,
+        api: server.api,
+        events: { emit: (name) => void heard.push(name) },
+      }),
+    );
+    await act(async () => {});
+    expect([heard, result.current.people]).toEqual([[], []]);
+    server.accept();
+    await act(async () => result.current.wiring.controller.refresh());
+    await act(async () => result.current.wiring.controller.refresh());
+    expect(heard).toEqual(["connection_saved"]);
+    expect(result.current.people).toEqual([{ handle: "bea", displayName: "Bea Example" }]);
+  });
+
+  test("signed out there are no people, and a visited office is drawn read-only", async () => {
+    const { api } = fakeApi(false);
+    const { result } = renderHook(() =>
+      useWorldConnections({ signedIn: false, lite: true, reducedMotion: true, api }),
+    );
+    await act(async () => {});
+    expect(result.current.people).toBeNull();
+    const room = result.current.wiring.renderRoom("Lena Beispiel") as ReactElement<{
+      visiting: string;
+    }>;
+    const { type, props } = room;
+    expect([type === OfficeRoom, props.visiting]).toEqual([true, "Lena Beispiel"]);
+  });
+});
+
+describe("useMessageWith", () => {
+  test("each ask gets its own key, and Messages opening it clears the ask", () => {
+    const { result } = renderHook(() => useMessageWith());
+    act(() => result.current.ask("bea"));
+    expect(result.current.messageWith).toEqual({ handle: "bea", key: 1 });
+    act(() => result.current.started());
+    expect(result.current.messageWith).toBeUndefined();
+    act(() => result.current.ask("bea"));
+    expect(result.current.messageWith).toEqual({ handle: "bea", key: 2 });
+  });
+});
