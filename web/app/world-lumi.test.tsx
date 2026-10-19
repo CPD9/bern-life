@@ -90,17 +90,29 @@ async function ask(refresh: () => void, open: () => void, text: string) {
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
   });
-  // The chat closes on the next render; what comes after waits for that.
+  // The reply renders; nothing it offers runs until the player clicks it.
   refresh();
   await act(async () => undefined);
 }
 
-test("show on map closes the chat and shows Bärli's answer on the map, once", async () => {
+/** Clicks one of the reply's buttons; the chat then closes and the action follows. */
+async function choose(refresh: () => void, name: string) {
+  expect(document.querySelector("dialog")!.open).toBe(true);
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name }));
+  });
+  refresh();
+  await act(async () => undefined);
+}
+
+test("the answer stays in the chat; Show on the map closes it and shows the answer on the map, once", async () => {
   const opener = floatie();
   const { result, refresh, calls, focusWhen } = setUp(
     lumiAnswering([{ type: "show_on_map", result: 0 }]),
   );
   await ask(refresh, result.current.open, "glucose sensors");
+  expect(calls.shownOnMap.mock.calls).toEqual([]);
+  await choose(refresh, "Show on the map");
   expect(calls.shownOnMap.mock.calls).toEqual([[answer]]);
   expect(document.querySelector("dialog")!.open).toBe(false);
   // The map hides the floatie only once focus is back on it, so the shell can move focus on.
@@ -114,7 +126,7 @@ test("without a map to draw, Bärli's show on map leaves the chat open", async (
     mapDrawn: false,
   });
   await ask(refresh, result.current.open, "glucose sensors");
-  // With a map, the chat closes to show the answer there (the test above).
+  // With a map, its button closes the chat to show the answer there (the test above).
   expect(document.querySelector("dialog")!.open).toBe(true);
   expect(screen.getAllByText("Demo reply.").length).toBeGreaterThan(0);
 });
@@ -147,12 +159,14 @@ for (const mapDrawn of [true, false]) {
   });
 }
 
-test("open profile shows Bärli's answer in Ask once the chat has given focus back", async () => {
+test("Open the card shows Bärli's answer in Ask once the chat has given focus back", async () => {
   const opener = floatie();
   const { result, refresh, shown, calls, focusWhen } = setUp(
     lumiAnswering([{ type: "open_profile", profile_id: profileId }]),
   );
   await ask(refresh, result.current.open, "glucose sensors");
+  expect(shown).toEqual([]);
+  await choose(refresh, "Open the card");
   expect(shown).toEqual([answer]);
   expect(calls.askOpened).toHaveBeenCalledTimes(1);
   expect(document.querySelector("dialog")!.open).toBe(false);
@@ -232,7 +246,7 @@ function World({ api, shown }: { api: LumiApi; shown: SearchResponse[] }) {
   );
 }
 
-test("open profile from the floatie: Ask shows in the phone, and closing it focuses the floatie", async () => {
+test("Open the card from the floatie: Ask shows in the phone, and closing it focuses the floatie", async () => {
   const shown: SearchResponse[] = [];
   render(
     <World api={lumiAnswering([{ type: "open_profile", profile_id: profileId }])} shown={shown} />,
@@ -243,6 +257,10 @@ test("open profile from the floatie: Ask shows in the phone, and closing it focu
   fireEvent.change(screen.getByLabelText("Message Bärli"), { target: { value: "glucose" } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
+  });
+  expect(shown).toEqual([]);
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Open the card" }));
   });
   const phone = document.querySelector<HTMLDialogElement>('dialog[aria-label="Phone"]')!;
   expect(shown).toEqual([answer]);
