@@ -75,9 +75,7 @@ export function LumiChat({
   }
 
   function send(text: string) {
-    if (chat.busy || text.trim() === "") return;
-    chat.send(text);
-    setDraft("");
+    if (chat.send(text)) setDraft("");
   }
 
   function submit(event: FormEvent) {

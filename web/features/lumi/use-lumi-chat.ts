@@ -30,7 +30,8 @@ export function dispatchActions(reply: AgentReply, actions: LumiActions): void {
 export type LumiChatController = {
   readonly turns: readonly Turn[];
   readonly busy: boolean;
-  send(text: string): void;
+  /** False when nothing was sent: an empty message, or one still in flight. */
+  send(text: string): boolean;
   retry(): void;
 };
 
@@ -39,6 +40,8 @@ const waiting = { status: "waiting" } as const;
 export function useLumiChat(api: LumiApi, actions: LumiActions): LumiChatController {
   const [turns, setTurns] = useState<readonly Turn[]>([]);
   const nextId = useRef(0);
+  // State lags a render behind, so a quick second tap is stopped by this instead.
+  const inFlight = useRef(false);
   const last = turns.at(-1);
 
   function update(id: number, change: Partial<Pick<Turn, "lumi" | "search">>) {
@@ -46,6 +49,15 @@ export function useLumiChat(api: LumiApi, actions: LumiActions): LumiChatControl
   }
 
   async function answer(id: number, text: string, messages: ChatMessage[]) {
+    inFlight.current = true;
+    try {
+      await exchange(id, text, messages);
+    } finally {
+      inFlight.current = false;
+    }
+  }
+
+  async function exchange(id: number, text: string, messages: ChatMessage[]) {
     const asked = await api.ask(messages);
     if (asked.ok) {
       const { abstained } = asked.value;
@@ -76,13 +88,14 @@ export function useLumiChat(api: LumiApi, actions: LumiActions): LumiChatControl
     busy: isBusy(last),
     send: (message) => {
       const text = message.trim();
-      if (text === "" || isBusy(last)) return;
+      if (text === "" || inFlight.current) return false;
       const id = nextId.current++;
       setTurns([...turns, { id, text, lumi: waiting, search: null }]);
       void answer(id, text, messagesFor(turns, text));
+      return true;
     },
     retry: () => {
-      if (!last || isBusy(last)) return;
+      if (!last || inFlight.current) return;
       update(last.id, { lumi: waiting, search: null });
       void answer(last.id, last.text, messagesFor(turns.slice(0, -1), last.text));
     },
