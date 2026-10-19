@@ -15,12 +15,13 @@ export function Screensaver({ scene, now, still }: ScreensaverProps) {
     <div
       data-screensaver
       aria-hidden="true"
-      className={`from-sky-top to-sky-bottom absolute inset-0 isolate z-10 flex flex-col items-center justify-center bg-linear-to-b ${
+      className={`from-sky-top to-sky-bottom absolute inset-0 isolate z-10 bg-linear-to-b ${
         still ? "" : "animate-fade-in"
       }`}
     >
       <Wallpaper scene={scene} now={now} still={still} />
-      <div className="bg-panel/80 rounded-panel shadow-panel flex flex-col items-center px-10 py-6 backdrop-blur">
+      {/* High in the sky, so the skyline and the tower's clock stay in view. */}
+      <div className="bg-panel/80 rounded-panel shadow-panel absolute top-[14%] left-1/2 flex -translate-x-1/2 flex-col items-center px-10 py-6 backdrop-blur">
         {now && (
           <p className="text-ink text-7xl font-extrabold tabular-nums">{formatBernTime(now)}</p>
         )}
