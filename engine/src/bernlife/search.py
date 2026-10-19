@@ -29,7 +29,7 @@ from bernlife.llm_gate import request_mode
 from bernlife.matching import Asked, asked, can_explain
 from bernlife.metrics import query_topics, with_metrics
 from bernlife.own_page import Passage, own_page_passages, passage_record
-from bernlife.ranking import AFTER, Candidate, candidates, with_passages
+from bernlife.ranking import FUSED, Candidate, candidates, with_passages
 from bernlife.reason import reason
 from bernlife.store import Relation, Store
 from bernlife.via import relation_reasons, via_record
@@ -37,7 +37,7 @@ from bernlife.via import relation_reasons, via_record
 RESULTS = 20
 NO_MODEL = "mock"
 NO_PROMPTS = "none"
-PASSAGE_ORDER = AFTER
+PASSAGE_ORDER = FUSED
 
 
 @dataclass(frozen=True)
