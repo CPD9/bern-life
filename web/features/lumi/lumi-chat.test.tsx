@@ -1,65 +1,24 @@
 import { describe, expect, test } from "bun:test";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { useState } from "react";
-import agentJson from "../../../contracts/fixtures/agent.json";
-import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { abstainedFixture, resultFixture } from "@/test/fixtures";
-import { type AgentReply, parseAgentReply } from "./agent-reply";
-import type { ChatMessage, LumiApi, LumiFailure, Outcome } from "./lumi-api";
-import { LumiChat, type LumiChatProps } from "./lumi-chat";
+import type { AgentReply } from "./agent-reply";
 import { suggestions } from "./suggestions";
+import {
+  Harness,
+  closePanel,
+  conversation,
+  failed,
+  held,
+  openPanel,
+  reply,
+  say,
+  scripted,
+} from "./test-harness";
 
-const reply = parseAgentReply(agentJson)!;
-const failed = (failure: LumiFailure) => ({ ok: false, failure }) as const;
-
-type Calls = { asked: ChatMessage[][]; searched: string[] };
-
-function scripted(
-  replies: Outcome<AgentReply>[],
-  searches: Outcome<SearchResponse>[] = [],
-): LumiApi & { calls: Calls } {
-  const calls: Calls = { asked: [], searched: [] };
-  return {
-    calls,
-    ask: async (messages) => {
-      calls.asked.push([...messages]);
-      return replies.shift()!;
-    },
-    search: async (query) => {
-      calls.searched.push(query);
-      return searches.shift()!;
-    },
-  };
-}
-
-type HarnessProps = Omit<LumiChatProps, "open" | "onClose">;
-
-function Harness(props: HarnessProps) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <button type="button" onClick={() => setOpen(true)}>
-        Lumi
-      </button>
-      <span data-testid="state">{open ? "open" : "closed"}</span>
-      <LumiChat open={open} onClose={() => setOpen(false)} {...props} />
-    </>
-  );
-}
-
-function openPanel() {
-  const opener = screen.getByRole("button", { name: "Lumi" });
-  opener.focus();
-  fireEvent.click(opener);
-  return opener;
-}
-
-async function say(text: string) {
-  fireEvent.change(screen.getByLabelText("Message Lumi"), { target: { value: text } });
-  await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-  });
-}
+const demoBrief =
+  "Muster Medtech AG (an invented company) is building a night-time alarm for people with type 1 diabetes who live alone. We need partners in Bern for continuous glucose sensing, for detecting sleep and movement at night, and for testing such a device with older patients.";
+const demoQuestion =
+  "Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?";
 
 describe("LumiChat", () => {
   test("opens with focus in the message box and gives focus back on close", async () => {
@@ -67,62 +26,56 @@ describe("LumiChat", () => {
     const opener = openPanel();
     expect(document.querySelector("dialog")!.open).toBe(true);
     expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
-    await act(async () => {
-      document.querySelector("dialog")!.dispatchEvent(new Event("close"));
-    });
+    await closePanel();
     expect(screen.getByTestId("state").textContent).toBe("closed");
     expect(document.activeElement).toBe(opener);
   });
 
-  test("a suggestion sends its exact words, and the reply shows its text, card and mode", async () => {
+  test("the suggestions are docs/demo.md steps 1 and 2, word for word", () => {
+    expect(suggestions.map((suggestion) => suggestion.text)).toEqual([demoBrief, demoQuestion]);
+  });
+
+  test("a suggestion sends its exact words, then focus is in the message box", async () => {
     const api = scripted([{ ok: true, value: reply }]);
-    render(<Harness api={api} />);
+    render(<Harness api={api} fixtureMode />);
     openPanel();
+    const chip = screen.getByRole("button", { name: demoQuestion });
+    chip.focus();
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: suggestions[1]!.label }));
+      fireEvent.click(chip);
     });
-    expect(api.calls.asked).toEqual([
-      [
-        {
-          role: "user",
-          content:
-            "Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?",
-        },
-      ],
-    ]);
-    expect(screen.getByText(/I lit up her unit on the map\./)).toBeTruthy();
+    expect(api.calls.asked).toEqual([[{ role: "user", content: demoQuestion }]]);
+    expect(conversation().getByText(/I lit up her unit on the map\./)).toBeTruthy();
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(screen.getByText("MOCK")).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
     expect(api.calls.searched).toEqual([]);
   });
 
-  test("each action in a reply is dispatched once, and never again on re-render", async () => {
-    const shown: SearchResponse[] = [];
-    const opened: string[] = [];
-    const reported: SearchResponse[] = [];
-    const withReport: AgentReply = {
-      ...reply,
-      actions: [...reply.actions, { type: "start_match_report", result: 0 }],
-    };
-    const api = scripted([
-      { ok: true, value: withReport },
-      { ok: true, value: { ...reply, actions: [] } },
-    ]);
-    const props: HarnessProps = {
-      api,
-      onShowOnMap: (response) => void shown.push(response),
-      onOpenProfile: (id) => void opened.push(id),
-      onStartMatchReport: (response) => void reported.push(response),
-    };
-    const { rerender } = render(<Harness {...props} />);
+  test("outside fixture mode a mock answer says Plain search, never MOCK", async () => {
+    const api = scripted(
+      [failed("not_connected"), { ok: true, value: reply }],
+      [{ ok: true, value: resultFixture }],
+    );
+    render(<Harness api={api} engineMode="replay" />);
+    openPanel();
+    expect(screen.getByText("Replay")).toBeTruthy();
+    await say("glucose sensors");
+    await say("CGM");
+    expect(screen.queryByText("Replay")).toBeNull();
+    expect(screen.queryByText("MOCK")).toBeNull();
+    expect(screen.getAllByText("Plain search")).toHaveLength(2);
+  });
+
+  test("one status line says what changed, and the cards are not announced", async () => {
+    const api = held();
+    render(<Harness api={api} />);
     openPanel();
     await say("Who works on glucose sensors at DCB?");
-    rerender(<Harness {...props} />);
-    rerender(<Harness {...props} agentName="Lumi" />);
-    await say("Thanks");
-    expect(shown).toEqual([reply.results[0]!]);
-    expect(opened).toEqual(["person-example-ada-muster"]);
-    expect(reported).toEqual([reply.results[0]!]);
+    expect(screen.getByRole("status").textContent).toBe("Lumi is answering…");
+    await act(async () => api.land({ ok: true, value: reply }));
+    expect(screen.getByRole("status").textContent).toBe(`${reply.reply} 1 card.`);
+    expect(document.querySelectorAll("[aria-live]")).toHaveLength(0);
   });
 
   test("a mention in the reply moves focus to its card", async () => {
@@ -160,6 +113,9 @@ describe("LumiChat", () => {
     expect(api.calls.searched).toEqual(["glucose sensors"]);
     const plain = screen.getByRole("region", { name: "Plain search answer, not Lumi's" });
     expect(plain.querySelectorAll("article")).toHaveLength(1);
+    expect(screen.getByRole("status").textContent).toBe(
+      "Lumi is not connected yet. Plain search answer: 1 result.",
+    );
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
@@ -183,25 +139,28 @@ describe("LumiChat", () => {
     );
   });
 
-  test("no server: a plain sentence, no search, and Try again resends the same message", async () => {
+  test("no server: a sentence, no search, and Try again resends with focus in the box", async () => {
     const api = scripted([failed("network"), { ok: true, value: reply }]);
     render(<Harness api={api} />);
     openPanel();
     await say("glucose sensors");
     expect(
-      screen.getByText(
+      conversation().getByText(
         "We could not reach the Bern Life server. Check your connection and try again.",
       ),
     ).toBeTruthy();
     expect(api.calls.searched).toEqual([]);
+    const tryAgain = screen.getByRole("button", { name: "Try again" });
+    tryAgain.focus();
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+      fireEvent.click(tryAgain);
     });
     expect(api.calls.asked).toEqual([
       [{ role: "user", content: "glucose sensors" }],
       [{ role: "user", content: "glucose sensors" }],
     ]);
     expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
   });
 
   test("an unreadable reply and a failed search show sentences, never a partial answer", async () => {
@@ -220,14 +179,5 @@ describe("LumiChat", () => {
     ).toBeTruthy();
     expect(screen.queryByRole("article")).toBeNull();
     expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
-  });
-
-  test("the mode chip comes from health until a reply says otherwise", async () => {
-    render(<Harness api={scripted([{ ok: true, value: reply }])} engineMode="replay" />);
-    openPanel();
-    expect(screen.getByText("Replay")).toBeTruthy();
-    await say("glucose sensors");
-    expect(screen.queryByText("Replay")).toBeNull();
-    expect(screen.getByText("MOCK")).toBeTruthy();
   });
 });

@@ -15,14 +15,17 @@ import {
 import { maxQueryLength } from "@/infrastructure/search-request";
 import type { AnswerMode } from "./agent-reply";
 import { type LumiApi, httpLumiApi } from "./lumi-api";
+import { LumiIntro } from "./lumi-intro";
+import { statusSentence } from "./lumi-text";
 import { TurnView } from "./lumi-turn";
 import { ModeChip } from "./mode-chip";
-import { suggestions } from "./suggestions";
 import { type LumiActions, useLumiChat } from "./use-lumi-chat";
 
 export type LumiChatProps = LumiActions & {
   open: boolean;
   onClose: () => void;
+  /** True under DEMO_FIXTURES, where a "mock" answer is canned test data and says MOCK. */
+  fixtureMode: boolean;
   /** The name the player gave their agent. */
   agentName?: string;
   /** The agent's bear, drawn small beside its name. */
@@ -35,6 +38,7 @@ export type LumiChatProps = LumiActions & {
 export function LumiChat({
   open,
   onClose,
+  fixtureMode,
   agentName = "Lumi",
   bear,
   engineMode = null,
@@ -48,7 +52,7 @@ export function LumiChat({
   const titleId = useId();
   const inputId = useId();
   const [draft, setDraft] = useState("");
-  const chat = useLumiChat(api, actions);
+  const chat = useLumiChat(api, actions, open);
   const replyMode = chat.turns.findLast((turn) => turn.lumi.status === "replied")?.lumi;
   const mode = replyMode?.status === "replied" ? replyMode.reply.mode : engineMode;
 
@@ -74,8 +78,15 @@ export function LumiChat({
     opener.current?.focus();
   }
 
+  // A chip or Try again disappears once used, so focus goes to the message box, not the page.
   function send(text: string) {
-    if (chat.send(text)) setDraft("");
+    if (!chat.send(text)) return;
+    setDraft("");
+    input.current?.focus();
+  }
+
+  function retry() {
+    if (chat.retry()) input.current?.focus();
   }
 
   function submit(event: FormEvent) {
@@ -109,7 +120,7 @@ export function LumiChat({
             </h2>
             <p className="text-muted text-sm">Your Navigator</p>
           </div>
-          {mode && <ModeChip mode={mode} />}
+          {mode && <ModeChip mode={mode} fixtureMode={fixtureMode} />}
           <button
             type="button"
             onClick={() => dialog.current?.close()}
@@ -123,43 +134,22 @@ export function LumiChat({
           ref={conversation}
           className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-4"
         >
-          {chat.turns.length === 0 && (
-            <div className="flex flex-col gap-3">
-              <p>
-                Ask about research and expertise in Bern. Every person I name comes with a card that
-                shows the sentence and the page it is from.
-              </p>
-              <p className="text-muted text-sm">Try one of these:</p>
-              <ul className="flex flex-col items-start gap-2">
-                {suggestions.map((suggestion) => (
-                  <li key={suggestion.text}>
-                    <button
-                      type="button"
-                      onClick={() => send(suggestion.text)}
-                      className="bg-chip rounded-2xl px-4 py-2 text-left text-sm font-bold"
-                    >
-                      {suggestion.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <ol
-            aria-live="polite"
-            aria-label={`Conversation with ${agentName}`}
-            className="flex flex-col gap-6"
-          >
+          {chat.turns.length === 0 && <LumiIntro onSend={send} />}
+          <ol aria-label={`Conversation with ${agentName}`} className="flex flex-col gap-6">
             {chat.turns.map((turn, index) => (
               <TurnView
                 key={turn.id}
                 turn={turn}
                 name={agentName}
+                fixtureMode={fixtureMode}
                 latest={index === chat.turns.length - 1}
-                onRetry={chat.retry}
+                onRetry={retry}
               />
             ))}
           </ol>
+          <p role="status" className="sr-only">
+            {statusSentence(chat.turns.at(-1), agentName)}
+          </p>
         </div>
 
         <form

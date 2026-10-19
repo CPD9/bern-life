@@ -10,13 +10,19 @@ import { LumiReply, ResultCards } from "./lumi-reply";
 import { lumiFailureMessage, searchFailureMessage, searchSummary } from "./lumi-text";
 import { ModeChip } from "./mode-chip";
 
-function PlainAnswer({ response }: { response: SearchResponse }) {
+function PlainAnswer({
+  response,
+  fixtureMode,
+}: {
+  response: SearchResponse;
+  fixtureMode: boolean;
+}) {
   const baseId = useId();
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
         <p className="font-bold">{searchSummary(response)}</p>
-        <ModeChip mode={response.mode} />
+        <ModeChip mode={response.mode} fixtureMode={fixtureMode} />
       </div>
       {response.results.length > 0 && (
         <ResultCards cards={response.results} cardId={(index) => `${baseId}-card-${index}`} />
@@ -25,7 +31,9 @@ function PlainAnswer({ response }: { response: SearchResponse }) {
   );
 }
 
-function PlainSearch({ state, name }: { state: SearchState; name: string }) {
+type PlainSearchProps = { state: SearchState; name: string; fixtureMode: boolean };
+
+function PlainSearch({ state, name, fixtureMode }: PlainSearchProps) {
   const headingId = useId();
   return (
     <section
@@ -41,14 +49,22 @@ function PlainSearch({ state, name }: { state: SearchState; name: string }) {
       </p>
       {state.status === "waiting" && <p className="text-muted">Searching public pages…</p>}
       {state.status === "failed" && <p>{searchFailureMessage(state.failure)}</p>}
-      {state.status === "done" && <PlainAnswer response={state.response} />}
+      {state.status === "done" && (
+        <PlainAnswer response={state.response} fixtureMode={fixtureMode} />
+      )}
     </section>
   );
 }
 
-type TurnViewProps = { turn: Turn; name: string; latest: boolean; onRetry: () => void };
+type TurnViewProps = {
+  turn: Turn;
+  name: string;
+  fixtureMode: boolean;
+  latest: boolean;
+  onRetry: () => void;
+};
 
-export function TurnView({ turn, name, latest, onRetry }: TurnViewProps) {
+export function TurnView({ turn, name, fixtureMode, latest, onRetry }: TurnViewProps) {
   const { lumi, search } = turn;
   return (
     <li className="flex flex-col gap-3">
@@ -59,7 +75,7 @@ export function TurnView({ turn, name, latest, onRetry }: TurnViewProps) {
       {lumi.status === "waiting" && <p className="text-muted">{name} is answering…</p>}
       {lumi.status === "failed" && <p>{lumiFailureMessage(lumi.failure, name)}</p>}
       {lumi.status === "replied" && <LumiReply reply={lumi.reply} name={name} />}
-      {search && <PlainSearch state={search} name={name} />}
+      {search && <PlainSearch state={search} name={name} fixtureMode={fixtureMode} />}
       {latest && !isAnswered(turn) && !isBusy(turn) && (
         <button
           type="button"

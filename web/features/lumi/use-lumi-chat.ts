@@ -2,7 +2,7 @@
 
 // One conversation with Lumi. Actions in a reply are dispatched from the request that received it,
 // not from rendering, so a re-render can never repeat them. One message is in flight at a time.
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { AgentReply } from "./agent-reply";
 import { type SearchState, type Turn, isBusy, messagesFor } from "./conversation";
@@ -32,20 +32,26 @@ export type LumiChatController = {
   readonly busy: boolean;
   /** False when nothing was sent: an empty message, or one still in flight. */
   send(text: string): boolean;
-  retry(): void;
+  retry(): boolean;
 };
 
 const waiting = { status: "waiting" } as const;
 
-export function useLumiChat(api: LumiApi, actions: LumiActions): LumiChatController {
+export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): LumiChatController {
   const [turns, setTurns] = useState<readonly Turn[]>([]);
   const nextId = useRef(0);
-  // State lags a render behind, so a quick second tap is stopped by this instead.
+  // State lags a render behind, so a quick second tap is stopped by this as well.
   const inFlight = useRef(false);
+  // A reply acts through the callbacks of the moment it lands, and not at all once the panel is
+  // closed: a late answer must not move the map or open anything behind the player's back.
+  const current = useRef({ actions, open });
+  useEffect(() => {
+    current.current = { actions, open };
+  });
   const last = turns.at(-1);
 
   function update(id: number, change: Partial<Pick<Turn, "lumi" | "search">>) {
-    setTurns((current) => current.map((turn) => (turn.id === id ? { ...turn, ...change } : turn)));
+    setTurns((shown) => shown.map((turn) => (turn.id === id ? { ...turn, ...change } : turn)));
   }
 
   async function answer(id: number, text: string, messages: ChatMessage[]) {
@@ -65,7 +71,7 @@ export function useLumiChat(api: LumiApi, actions: LumiActions): LumiChatControl
         lumi: { status: "replied", reply: asked.value },
         search: abstained ? waiting : null,
       });
-      dispatchActions(asked.value, actions);
+      if (current.current.open) dispatchActions(asked.value, current.current.actions);
       if (!abstained) return;
     } else {
       // Without the server a plain search cannot answer either, so there is nothing to fall back to.
@@ -88,16 +94,17 @@ export function useLumiChat(api: LumiApi, actions: LumiActions): LumiChatControl
     busy: isBusy(last),
     send: (message) => {
       const text = message.trim();
-      if (text === "" || inFlight.current) return false;
+      if (text === "" || inFlight.current || isBusy(last)) return false;
       const id = nextId.current++;
-      setTurns([...turns, { id, text, lumi: waiting, search: null }]);
+      setTurns((shown) => [...shown, { id, text, lumi: waiting, search: null }]);
       void answer(id, text, messagesFor(turns, text));
       return true;
     },
     retry: () => {
-      if (!last || inFlight.current) return;
+      if (!last || inFlight.current || isBusy(last)) return false;
       update(last.id, { lumi: waiting, search: null });
       void answer(last.id, last.text, messagesFor(turns.slice(0, -1), last.text));
+      return true;
     },
   };
 }
