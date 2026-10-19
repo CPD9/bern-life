@@ -168,15 +168,29 @@ describe("Phone", () => {
   });
 
   test("an overlay renders inside the phone's dialog, below an open app's header", async () => {
-    render(<Harness overlay={<p>Toast here</p>} />);
+    render(<Harness overlay={<p>Toast here</p>} notifications={[]} />);
     openPhone();
-    const box = () => document.querySelector("[data-phone-overlay]")!;
+    const box = () => document.querySelector<HTMLElement>("[data-phone-overlay]")!;
     expect(document.querySelector("dialog")!.contains(screen.getByText("Toast here"))).toBe(true);
     expect(box().classList.contains("top-0")).toBe(true);
+
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
+    const header = screen.getByRole("button", { name: "Back" }).closest("header")!;
     expect(box().classList.contains("top-14")).toBe(true);
     expect(box().classList.contains("top-0")).toBe(false);
-    expect(box().contains(screen.getByRole("button", { name: "Back" }))).toBe(false);
+    // The box is layered after the app's header, not around it, so the offset is what keeps
+    // toasts off Back and the title.
+    expect(box().contains(header)).toBe(false);
+    expect(header.compareDocumentPosition(box()) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(box().parentElement!.contains(header)).toBe(true);
+
+    // The notification centre covers the app's header; toasts then start under the status bar.
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Notifications" })));
+    expect(screen.getByRole("dialog", { name: "Notifications" })).toBeTruthy();
+    expect(box().classList.contains("top-0")).toBe(true);
+    expect(box().classList.contains("top-14")).toBe(false);
   });
 
   test("Close shuts the phone and gives focus back to what opened it", async () => {

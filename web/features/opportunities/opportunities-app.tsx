@@ -17,7 +17,7 @@ import { useOpportunities } from "./use-opportunities";
 export type OpportunitiesAppProps = {
   fixtureMode: boolean;
   /** The save control under each card, such as the Library's save button. */
-  renderSave?: ((result: SearchResult) => ReactNode) | undefined;
+  renderSave?: (result: SearchResult) => ReactNode;
   api?: OpportunitiesApi;
   events?: AppEventSink;
 };

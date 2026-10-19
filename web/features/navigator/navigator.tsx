@@ -16,7 +16,7 @@ type NavigatorProps = {
   /** Saves the answer as a match report; false when the browser blocks storage. */
   onMakeReport?: (response: SearchResponse) => boolean;
   /** A control under each result card, such as the Library's save button. */
-  renderSave?: ((result: SearchResult) => ReactNode) | undefined;
+  renderSave?: (result: SearchResult) => ReactNode;
 };
 
 const inputModes: { mode: InputMode; label: string }[] = [

@@ -12,13 +12,14 @@ import { Navigator } from "@/features/navigator/navigator";
 import type { NavigatorApi } from "@/features/navigator/navigator-api";
 import type { NavigatorController } from "@/features/navigator/use-navigator";
 import type { PhoneHealth } from "@/features/phone/phone";
+import type { LibraryStore } from "@/features/library/library-store";
 import { SettingsApp } from "@/features/phone/settings-app";
 import { browserReportDeps, openReport } from "@/features/report/open-report";
 import { ReportsApp } from "@/features/report/reports-app";
 import { SourcesApp } from "@/features/sources/sources-app";
 import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
-import { garageApp, libraryApp, opportunitiesApp, saveControl } from "./shared-apps";
+import { garageApp, libraryApp, opportunitiesApp, saveSlot } from "./shared-apps";
 
 /** A loop's news goes to the same store as the bell and the toasts. */
 export function notifyLoop(notice: AgentNotice): void {
@@ -66,6 +67,13 @@ type OfficeAppsInput = AgentsInput & {
   health?: PhoneHealth | undefined;
   /** Where saves and garage visits report to the story. */
   events?: AppEventSink;
+  library?: LibraryStore;
+};
+
+export type OfficeApps = {
+  apps: DesktopApp[];
+  /** Saves an answer as a match report and shows it in the Reports window. */
+  makeReport: (response: SearchResponse) => boolean;
 };
 
 // Composes the office computer from the features. Only real apps are passed in, so the dock lists
@@ -77,8 +85,10 @@ export function useOfficeApps({
   unreadMessages = null,
   health,
   events = appEvents,
+  library,
   ...agents
-}: OfficeAppsInput): DesktopApp[] {
+}: OfficeAppsInput): OfficeApps {
+  const save = { fixtureMode, events, library };
   const [reportId, setReportId] = useState<string | null>(null);
 
   function openNavigator(mode: "search" | "brief") {
@@ -103,14 +113,14 @@ export function useOfficeApps({
     else openNavigator("search");
   }
 
-  return desktopApps(
+  const apps = desktopApps(
     {
       navigator: (
         <Navigator
           controller={navigator}
           fixtureMode={fixtureMode}
           onMakeReport={makeReport}
-          renderSave={saveControl(events, fixtureMode)}
+          {...saveSlot(save)}
         />
       ),
       agents: agentsApp(agents, trySkill),
@@ -122,12 +132,13 @@ export function useOfficeApps({
         />
       ),
       messages: <StandaloneMessagesPage />,
-      library: libraryApp(),
-      opportunities: opportunitiesApp(fixtureMode, events),
+      library: libraryApp(library),
+      opportunities: opportunitiesApp(save),
       garage: garageApp(fixtureMode, events),
       sources: <SourcesApp fixtureMode={fixtureMode} />,
       settings: <SettingsApp health={health} />,
     },
     { messages: unreadMessages },
   );
+  return { apps, makeReport };
 }

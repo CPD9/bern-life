@@ -10,7 +10,6 @@ import { LumiFloatie } from "@/features/floatie/lumi-floatie";
 import { type LumiApi, httpLumiApi } from "@/features/lumi/lumi-api";
 import { LumiChat } from "@/features/lumi/lumi-chat";
 import type { NavigatorController } from "@/features/navigator/use-navigator";
-import { openReport } from "@/features/report/open-report";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 
 type WorldLumiInput = {
@@ -24,6 +23,10 @@ type WorldLumiInput = {
   navigator: Pick<NavigatorController, "show">;
   onShowOnMap: (response: SearchResponse) => void;
   onOpenAsk: () => void;
+  /** Saves Lumi's answer as a match report for the desk's Reports window; false when it cannot. */
+  onMakeReport: (response: SearchResponse) => boolean;
+  /** Opens the desk, where the Reports window shows the report just made. */
+  onOpenReports: () => void;
   api?: LumiApi;
 };
 
@@ -36,20 +39,30 @@ export type WorldLumi = {
 };
 
 // Lumi in the world: the floatie and the bear on the map open one chat. Lumi's actions go where
-// the player would go by hand: the map, Ask, or a new match report.
+// the player would go by hand: the map, Ask, or the desk's Reports window. A report waits for the
+// player's click on the reply (features/lumi) and never opens a new tab.
 export function useWorldLumi(input: WorldLumiInput): WorldLumi {
   const { agentName, bear, lite, fixtureMode, navigator } = input;
   const [open, setOpen] = useState(false);
-  // Opening Ask waits until the chat has closed and given focus back to what opened it, so the
-  // phone gives focus back there too when it closes, not to a control inside the closed chat.
   const afterClose = useRef<(() => void) | null>(null);
   const name = shownAgentName(agentName);
+
+  // The phone or the desk opens only once the chat has closed and given focus back to what opened
+  // it, so that dialog records a live element to return focus to.
+  function closeThen(next: () => void) {
+    if (!open) {
+      next();
+      return;
+    }
+    afterClose.current = next;
+    setOpen(false);
+  }
 
   function closed() {
     setOpen(false);
     const next = afterClose.current;
     afterClose.current = null;
-    next?.();
+    if (next) queueMicrotask(next);
   }
 
   function showOnMap(response: SearchResponse) {
@@ -59,11 +72,14 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
 
   // Ask shows the answer that lists the profile, as it came, without asking the engine again.
   function openProfile(_profileId: string, response: SearchResponse) {
-    afterClose.current = () => {
+    closeThen(() => {
       navigator.show(response);
       input.onOpenAsk();
-    };
-    setOpen(false);
+    });
+  }
+
+  function startMatchReport(response: SearchResponse) {
+    if (input.onMakeReport(response)) closeThen(input.onOpenReports);
   }
 
   return {
@@ -94,7 +110,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
         api={input.api ?? httpLumiApi}
         onShowOnMap={showOnMap}
         onOpenProfile={openProfile}
-        onStartMatchReport={(response) => void openReport(response, fixtureMode)}
+        onStartMatchReport={startMatchReport}
       />
     ),
   };

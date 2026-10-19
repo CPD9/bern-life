@@ -8,6 +8,7 @@ import {
   entryFromResult,
   savedEventNames,
 } from "@/features/library/library-items";
+import type { LibraryStore } from "@/features/library/library-store";
 import { SaveButton } from "@/features/library/save-button";
 import { OpportunitiesApp } from "@/features/opportunities/opportunities-app";
 import type { AppEventSink } from "@/infrastructure/app-events";
@@ -23,34 +24,36 @@ function emitSaved(events: AppEventSink): (item: LibraryItem) => void {
   };
 }
 
-/**
- * The Library's save button under a result card, in Ask, the Navigator and Opportunities. Under
- * DEMO_FIXTURES every result is invented, so there is no button: the Library would keep made-up
- * people and calls beside real ones, and a save would count for the story.
- */
-export function saveControl(
-  events: AppEventSink,
-  fixtureMode: boolean,
-): ((result: SearchResult) => ReactNode) | undefined {
-  if (fixtureMode) return undefined;
+export type SaveInput = {
+  fixtureMode: boolean;
+  events: AppEventSink;
+  /** The Library's store; the browser's own when absent. */
+  library?: LibraryStore | undefined;
+};
+
+type SaveSlot = { renderSave?: (result: SearchResult) => ReactNode };
+
+/** The Library's save button under a result card, in Ask, the Navigator and Opportunities. None in
+ *  fixture mode: every person and call there is invented and has no place in a real library. */
+export function saveSlot({ fixtureMode, events, library }: SaveInput): SaveSlot {
+  if (fixtureMode) return {};
   const onSaved = emitSaved(events);
-  return function SaveControl(result) {
-    return <SaveButton entry={entryFromResult(result)} onSaved={onSaved} />;
+  const store = library ? { store: library } : {};
+  return {
+    renderSave: function SaveControl(result) {
+      return <SaveButton entry={entryFromResult(result)} onSaved={onSaved} {...store} />;
+    },
   };
 }
 
-export function opportunitiesApp(fixtureMode: boolean, events: AppEventSink): ReactNode {
+export function opportunitiesApp(save: SaveInput): ReactNode {
   return (
-    <OpportunitiesApp
-      fixtureMode={fixtureMode}
-      events={events}
-      renderSave={saveControl(events, fixtureMode)}
-    />
+    <OpportunitiesApp fixtureMode={save.fixtureMode} events={save.events} {...saveSlot(save)} />
   );
 }
 
-export function libraryApp(): ReactNode {
-  return <LibraryApp />;
+export function libraryApp(library?: LibraryStore): ReactNode {
+  return library ? <LibraryApp store={library} /> : <LibraryApp />;
 }
 
 /** The garage reports a visit once it opens, and numbers only when the engine measured them. */

@@ -25,7 +25,7 @@ export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
     account.state.status === "signed-in",
     unreadRefresh(false, true, desktop.windows),
   );
-  const apps = useOfficeApps({
+  const { apps } = useOfficeApps({
     navigator,
     navigatorApi: httpNavigatorApi,
     desktop,

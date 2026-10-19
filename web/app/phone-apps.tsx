@@ -4,6 +4,7 @@ import type { Skill } from "@/features/agents/skills";
 import { StandaloneMessagesPage } from "@/features/messages/standalone-messages-page";
 import { Navigator } from "@/features/navigator/navigator";
 import type { NavigatorController } from "@/features/navigator/use-navigator";
+import type { LibraryStore } from "@/features/library/library-store";
 import type { PhoneApp, PhoneHealth } from "@/features/phone/phone";
 import { SettingsApp } from "@/features/phone/settings-app";
 import { openReport } from "@/features/report/open-report";
@@ -11,7 +12,7 @@ import { type AppEventSink, appEvents } from "@/infrastructure/app-events";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { AppIcon } from "@/infrastructure/ui/app-icons";
 import { type AgentsInput, agentsApp } from "./office-apps";
-import { libraryApp, opportunitiesApp, saveControl } from "./shared-apps";
+import { libraryApp, opportunitiesApp, saveSlot } from "./shared-apps";
 
 type PhoneAppsInput = AgentsInput & {
   /** The same controller as the desk's Navigator, so a search survives closing the phone. */
@@ -26,6 +27,7 @@ type PhoneAppsInput = AgentsInput & {
   health?: PhoneHealth | undefined;
   /** Where saves report to the story. */
   events?: AppEventSink;
+  library?: LibraryStore;
 };
 
 // The phone's apps: the same apps as the desk, fewer of them, each real; nothing is a placeholder.
@@ -37,8 +39,10 @@ export function phoneApps({
   unreadMessages = null,
   health,
   events = appEvents,
+  library,
   ...agents
 }: PhoneAppsInput): PhoneApp[] {
+  const save = { fixtureMode, events, library };
   // Opportunities has its own app; every other skill starts from Ask, where a report is made too.
   function trySkill(skill: Skill) {
     if (skill.id === "opportunities") {
@@ -61,7 +65,7 @@ export function phoneApps({
           fixtureMode={fixtureMode}
           onShowOnMap={onShowOnMap}
           onMakeReport={(response) => openReport(response, fixtureMode)}
-          renderSave={saveControl(events, fixtureMode)}
+          {...saveSlot(save)}
         />
       ),
     },
@@ -85,14 +89,14 @@ export function phoneApps({
       label: "Opportunities",
       icon: <AppIcon app="opportunities" />,
       tile: "#b45309",
-      content: opportunitiesApp(fixtureMode, events),
+      content: opportunitiesApp(save),
     },
     {
       id: "library",
       label: "Library",
       icon: <AppIcon app="library" />,
       tile: "#9a3412",
-      content: libraryApp(),
+      content: libraryApp(library),
     },
     {
       id: "settings",

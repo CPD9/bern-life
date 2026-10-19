@@ -37,11 +37,10 @@ function Side({ story: storyStore, settle: settleStore, events }: SideProps) {
     events,
     store: storyStore,
   });
-  const settle = useWorldSettle(
-    events,
-    () => settleStore,
-    () => focusBeside(side.current),
-  );
+  const settle = useWorldSettle(events, {
+    store: () => settleStore,
+    landing: () => focusBeside(side.current),
+  });
   return (
     <>
       <WorldSide
@@ -89,6 +88,18 @@ describe("settling from the side card", () => {
     act(() => fireEvent.click(screen.getByRole("button", { name: "Settle in Altstadt" })));
     await close();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Home" }));
+  });
+
+  test("Not now removes the card, and focus goes to the card in its place", async () => {
+    render(<Side {...stores(null)} />);
+    const notNow = screen.getByRole("button", { name: "Not now" });
+    act(() => notNow.focus());
+    await act(async () => {
+      fireEvent.click(notNow);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    });
+    expect(notNow.isConnected).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Start the story" }));
   });
 
   test("closing without settling gives focus back to Choose a plot", async () => {

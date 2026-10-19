@@ -43,7 +43,7 @@ function HeldActions({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-muted text-sm">
-        This answer came while the panel was closed, so nothing was done yet.
+        This answer came while the panel was closed. Choose what to do:
       </p>
       <div className="flex flex-wrap gap-2">
         {held.map((action, index) => (

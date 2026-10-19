@@ -102,10 +102,10 @@ describe("LumiChat actions", () => {
     expect(opened).toEqual([]);
 
     openPanel();
-    expect(
-      screen.getByText("This answer came while the panel was closed, so nothing was done yet."),
-    ).toBeTruthy();
+    const heldLine = "This answer came while the panel was closed. Choose what to do:";
+    expect(screen.getByText(heldLine)).toBeTruthy();
     const showOnMap = screen.getByRole("button", { name: "Show on the map" });
+    showOnMap.focus();
     act(() => {
       fireEvent.click(showOnMap);
       fireEvent.click(showOnMap);
@@ -114,6 +114,8 @@ describe("LumiChat actions", () => {
     expect(shown).toEqual([reply.results[0]!]);
     expect(screen.queryByRole("button", { name: "Show on the map" })).toBeNull();
     expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
+    expect(screen.getByText(heldLine)).toBeTruthy();
+    expect(screen.queryByText(/nothing was done/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Open the card" }));
     expect(opened).toEqual([["person-example-ada-muster", reply.results[0]!]]);
     expect(shown).toHaveLength(1);

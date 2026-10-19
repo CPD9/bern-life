@@ -9,7 +9,6 @@ import { useDesktop } from "@/features/desktop/use-desktop";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
 import { useNavigator } from "@/features/navigator/use-navigator";
 import { useOnboarding } from "@/features/onboarding/use-onboarding";
-import { browserSettleStore } from "@/features/settle/settle-store";
 import { landingView } from "@/features/shell/first-run";
 import { GameShell, type WorldView } from "@/features/shell/game-shell";
 import { useHealth } from "@/features/shell/use-health";
@@ -25,6 +24,7 @@ import { useSettings } from "@/infrastructure/use-settings";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
 import { useWorldPhone } from "./world-phone";
 import { unreadRefresh, useUnreadMessages } from "./use-unread-messages";
+import { showMeRoute } from "./show-me-route";
 import { useWorldApps } from "./use-world-apps";
 import { WorldHud, WorldSide, focusBeside } from "./world-hud";
 import { useWorldLumi } from "./world-lumi";
@@ -108,14 +108,17 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     navigator,
     onShowOnMap: showOnMap,
     onOpenAsk: () => phone.openApp("ask"),
+    onMakeReport: apps.makeDeskReport,
+    onOpenReports: () => setDesktopOpen(true),
   });
   const side = useRef<HTMLDivElement>(null);
-  const settle = useWorldSettle(appEvents, browserSettleStore, () => focusBeside(side.current));
+  const settle = useWorldSettle(appEvents, { landing: () => focusBeside(side.current) });
 
   function showMe(target: ShowMeTarget) {
-    if (target === "map") setView("map");
-    else if (target === "settle") settle.open();
-    else phone.openApp(target);
+    const route = showMeRoute(target);
+    if (route.kind === "view") setView(route.view);
+    else if (route.kind === "settle") settle.open();
+    else phone.openApp(route.appId);
   }
 
   function sitDown() {
