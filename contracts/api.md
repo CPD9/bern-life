@@ -12,6 +12,7 @@ against a schema in this folder. POST is accepted from loopback only.
 | `GET /api/profile/{id}` | — | `profile.schema.json` |
 | `POST /api/agent` | `{ "messages": [{ "role": "user" \| "assistant", "content": string }] }` (1 to 12, newest last, the last from the user; body at most 16 KB) | `agent.schema.json` |
 | `GET /api/sources` | — | `sources.schema.json` (each source with its hosts, profile kinds, page and profile counts, newest fetch) |
+| `GET /api/places/{source}/{host}/people` | — | `place-people.schema.json` (the person profiles whose page is on that host of that source, at most 30 by name, and the total) |
 | `GET /api/numbers` | — | `numbers.schema.json` (the snapshot's committed evaluation, `metrics.schema.json`'s `eval`, or null; model calls per role from the cache pack) |
 
 Errors: HTTP 4xx/5xx with `{ "error": "<marker>" }`, where the marker is one of `bad_request`,

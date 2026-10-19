@@ -2,6 +2,7 @@ import type {
   AgentReply,
   Health,
   Numbers,
+  PlacePeople,
   Profile,
   SearchResponse,
   SourcesList,
@@ -40,6 +41,8 @@ export type EngineClient = {
   brief(text: string, options?: EngineCallOptions): Promise<EngineResult<SearchResponse>>;
   agent(request: AgentRequest, options?: EngineCallOptions): Promise<EngineResult<AgentReply>>;
   sources(): Promise<EngineResult<SourcesList>>;
+  /** The person profiles of one place: a host of a source, as in places.json. */
+  placePeople(sourceId: string, host: string): Promise<EngineResult<PlacePeople>>;
   numbers(): Promise<EngineResult<Numbers>>;
   health(): Promise<EngineResult<Health>>;
 };

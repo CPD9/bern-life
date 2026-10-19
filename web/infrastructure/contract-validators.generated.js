@@ -5090,3 +5090,117 @@ validate46.errors = vErrors;
 return errors === 0;
 }
 validate46.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
+
+export const isPlacePeople = validate49;
+const schema53 = {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"place-people.schema.json","title":"PlacePeople","description":"GET /api/places/{source}/{host}/people. The person profiles of one place on the map (one host of a source), read from the loaded snapshot without a search: at most 30, ordered by name, with how many the place holds in all. Each profile carries its claims with evidence, like a search result.","type":"object","required":["snapshot","people","total"],"additionalProperties":false,"properties":{"snapshot":{"type":"string"},"people":{"type":"array","maxItems":30,"items":{"$ref":"profile.schema.json"}},"total":{"type":"integer","minimum":0}}};
+
+function validate49(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
+/*# sourceURL="place-people.schema.json" */;
+let vErrors = null;
+let errors = 0;
+const evaluated0 = validate49.evaluated;
+if(evaluated0.dynamicProps){
+evaluated0.props = undefined;
+}
+if(evaluated0.dynamicItems){
+evaluated0.items = undefined;
+}
+if(errors === 0){
+if(data && typeof data == "object" && !Array.isArray(data)){
+let missing0;
+if((((data.snapshot === undefined) && (missing0 = "snapshot")) || ((data.people === undefined) && (missing0 = "people"))) || ((data.total === undefined) && (missing0 = "total"))){
+validate49.errors = [{instancePath,schemaPath:"#/required",keyword:"required",params:{missingProperty: missing0},message:"must have required property '"+missing0+"'"}];
+return false;
+}
+else {
+const _errs1 = errors;
+for(const key0 in data){
+if(!(((key0 === "snapshot") || (key0 === "people")) || (key0 === "total"))){
+validate49.errors = [{instancePath,schemaPath:"#/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key0},message:"must NOT have additional properties"}];
+return false;
+break;
+}
+}
+if(_errs1 === errors){
+if(data.snapshot !== undefined){
+const _errs2 = errors;
+if(typeof data.snapshot !== "string"){
+validate49.errors = [{instancePath:instancePath+"/snapshot",schemaPath:"#/properties/snapshot/type",keyword:"type",params:{type: "string"},message:"must be string"}];
+return false;
+}
+var valid0 = _errs2 === errors;
+}
+else {
+var valid0 = true;
+}
+if(valid0){
+if(data.people !== undefined){
+let data1 = data.people;
+const _errs4 = errors;
+if(errors === _errs4){
+if(Array.isArray(data1)){
+if(data1.length > 30){
+validate49.errors = [{instancePath:instancePath+"/people",schemaPath:"#/properties/people/maxItems",keyword:"maxItems",params:{limit: 30},message:"must NOT have more than 30 items"}];
+return false;
+}
+else {
+var valid1 = true;
+const len0 = data1.length;
+for(let i0=0; i0<len0; i0++){
+const _errs6 = errors;
+if(!(validate21(data1[i0], {instancePath:instancePath+"/people/" + i0,parentData:data1,parentDataProperty:i0,rootData,dynamicAnchors}))){
+vErrors = vErrors === null ? validate21.errors : vErrors.concat(validate21.errors);
+errors = vErrors.length;
+}
+var valid1 = _errs6 === errors;
+if(!valid1){
+break;
+}
+}
+}
+}
+else {
+validate49.errors = [{instancePath:instancePath+"/people",schemaPath:"#/properties/people/type",keyword:"type",params:{type: "array"},message:"must be array"}];
+return false;
+}
+}
+var valid0 = _errs4 === errors;
+}
+else {
+var valid0 = true;
+}
+if(valid0){
+if(data.total !== undefined){
+let data3 = data.total;
+const _errs7 = errors;
+if(!(((typeof data3 == "number") && (!(data3 % 1) && !isNaN(data3))) && (isFinite(data3)))){
+validate49.errors = [{instancePath:instancePath+"/total",schemaPath:"#/properties/total/type",keyword:"type",params:{type: "integer"},message:"must be integer"}];
+return false;
+}
+if(errors === _errs7){
+if((typeof data3 == "number") && (isFinite(data3))){
+if(data3 < 0 || isNaN(data3)){
+validate49.errors = [{instancePath:instancePath+"/total",schemaPath:"#/properties/total/minimum",keyword:"minimum",params:{comparison: ">=", limit: 0},message:"must be >= 0"}];
+return false;
+}
+}
+}
+var valid0 = _errs7 === errors;
+}
+else {
+var valid0 = true;
+}
+}
+}
+}
+}
+}
+else {
+validate49.errors = [{instancePath,schemaPath:"#/type",keyword:"type",params:{type: "object"},message:"must be object"}];
+return false;
+}
+}
+validate49.errors = vErrors;
+return errors === 0;
+}
+validate49.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
