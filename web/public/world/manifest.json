@@ -2,7 +2,7 @@
   "files": [
     {
       "path": "bern.geo",
-      "sha256": "8d93abcd2c24f307ce6d790b15a2c60d29f43384064c093201ef8a869a9d17e5",
+      "sha256": "fb6a54f5c744dc844ea164f14bde8038d563bc2b599c919efc69f33dfcca58a0",
       "licence": "swisstopo-OGD",
       "source": "https://data.geo.admin.ch"
     }
