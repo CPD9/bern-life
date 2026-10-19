@@ -1,7 +1,8 @@
 """Builds web/public/world/bern.geo from the raw downloads (which stay outside git).
 
-    python3 -m infra.geo.build fetch   # swissTLM3D lines and address lookups, cached
-    python3 -m infra.geo.build build   # tiles + cache -> web/public/world/bern.geo
+    python3 -m infra.geo.build fetch     # swissTLM3D lines and address lookups, cached
+    python3 -m infra.geo.build build     # tiles + cache -> web/public/world/bern.geo
+    python3 -m infra.geo.build anchors   # shipped bern.geo + cache -> anchors for new places
 
 Raw data lives in $BERNLIFE_DATA_DIR/geo/raw (default ~/Developer/bern-life-data/geo/raw):
 the swissBUILDINGS3D 3.0 CityGML tiles (*.citygml.zip), tlm/ and addresses/.
@@ -9,17 +10,17 @@ the swissBUILDINGS3D 3.0 CityGML tiles (*.citygml.zip), tlm/ and addresses/.
 
 import argparse
 import hashlib
-import json
 import os
 import sys
 import zipfile
 from pathlib import Path
 
-from infra.geo.addresses import LANDMARK_ADDRESSES, AddressPoint, look_up, query_for
+from infra.geo.addresses import LANDMARK_ADDRESSES, AddressPoint, look_up
+from infra.geo.anchors import add_anchors, addressed_places
 from infra.geo.citygml import iter_buildings
 from infra.geo.encode import RAIL, ROAD, WATER, AnchorItem, FootprintItem, LineItem, encode
 from infra.geo.frame import BOX, in_box, to_map
-from infra.geo.simplify import ring_area, simplify_line, simplify_ring
+from infra.geo.simplify import inside, ring_area, simplify_line, simplify_ring
 from infra.geo.tlm import fetch_all, read_lines
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,15 +49,6 @@ def raw_dir() -> Path:
 
 def _centre(ring: tuple[Point, ...]) -> Point:
     return (sum(p[0] for p in ring) / len(ring), sum(p[1] for p in ring) / len(ring))
-
-
-def _inside(point: Point, ring: list[Point]) -> bool:
-    x, y = point
-    inside = False
-    for (xi, yi), (xj, yj) in zip(ring, [ring[-1], *ring[:-1]], strict=True):
-        if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
-            inside = not inside
-    return inside
 
 
 def load_footprints(
@@ -113,14 +105,7 @@ def load_lines(raw: Path) -> list[LineItem]:
 
 
 def place_queries() -> dict[str, str]:
-    places = json.loads(PLACES.read_text())
-    queries = {}
-    for place in places:
-        if place.get("position_method") == "address":
-            query = query_for(place["address"])
-            if query is not None:
-                queries[place["id"]] = query
-    return queries
+    return {p: q for p, q in addressed_places(PLACES).items() if q is not None}
 
 
 def anchors_for(
@@ -137,9 +122,9 @@ def anchors_for(
         same_building = [
             i for i, f in enumerate(footprints) if hit.egid is not None and f[0] == hit.egid
         ]
-        containing = [i for i in same_building if _inside(point, footprints[i][1])]
+        containing = [i for i in same_building if inside(point, footprints[i][1])]
         if not containing:
-            containing = [i for i, f in enumerate(footprints) if _inside(point, f[1])]
+            containing = [i for i, f in enumerate(footprints) if inside(point, f[1])]
         if containing:
             index = containing[0]
         elif same_building:
@@ -148,7 +133,7 @@ def anchors_for(
             index = -1
         anchor_point = (
             point
-            if index < 0 or _inside(point, footprints[index][1])
+            if index < 0 or inside(point, footprints[index][1])
             else _centre(tuple(footprints[index][1]))
         )
         anchors.append(AnchorItem(place_id=place_id, point=to_map(*anchor_point), building=index))
@@ -183,14 +168,35 @@ def build() -> None:
     )
 
 
+def anchor_new_places() -> None:
+    try:
+        added = add_anchors(OUT, PLACES, raw_dir() / "addresses")
+    except OSError as error:
+        raise SystemExit(f"address lookup failed, {OUT.name} unchanged: {error}") from error
+    data = OUT.read_bytes()
+    for placed in added:
+        anchor = placed.anchor
+        where = (
+            "at its address point"
+            if placed.on_wall_m is None
+            else f"at its centre, the address point {placed.on_wall_m:.2f} m outside"
+        )
+        print(f"{anchor.place_id} ({placed.query}): building {anchor.building}, {where}")
+    print(
+        f"{OUT.relative_to(ROOT)}: {len(data)} bytes, sha256 {hashlib.sha256(data).hexdigest()}, "
+        f"anchors added {len(added)}"
+    )
+
+
 def _cached_only(url: str) -> bytes:
     raise SystemExit(f"not cached, run fetch first: {url}")
 
 
 def main(argv: list[str]) -> None:
     parser = argparse.ArgumentParser(prog="python3 -m infra.geo.build")
-    parser.add_argument("command", choices=["fetch", "build"])
-    {"fetch": fetch, "build": build}[parser.parse_args(argv).command]()
+    commands = {"fetch": fetch, "build": build, "anchors": anchor_new_places}
+    parser.add_argument("command", choices=list(commands))
+    commands[parser.parse_args(argv).command]()
 
 
 if __name__ == "__main__":
