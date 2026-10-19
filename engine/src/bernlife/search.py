@@ -33,6 +33,7 @@ from bernlife.ranking import FUSED, Candidate, candidates, with_passages
 from bernlife.reason import reason
 from bernlife.store import Relation, Store
 from bernlife.via import relation_reasons, via_record
+from bernlife.wording import Recorded, for_model, from_repository
 
 RESULTS = 20
 NO_MODEL = "mock"
@@ -119,9 +120,16 @@ def search(
     embedder: Embedder,
     llm: Chat | None = None,
     kinds: Sequence[str] = PEOPLE_KINDS,
+    recorded: Recorded | None = None,
 ) -> dict[str, Any]:
-    """Without `kinds`, people, units, projects and infrastructure, as before opportunities."""
-    expansion = expand(llm, query) if llm is not None else None
+    """Without `kinds`, people, units, projects and infrastructure, as before opportunities. The
+    prompts carry the question in its recorded wording when the call cannot go live (wording.py);
+    the response echoes it as typed."""
+    asked_as, expansion = query, None
+    if llm is not None:
+        recorded = from_repository() if recorded is None else recorded
+        asked_as = for_model(query, llm.backend, recorded)
+        expansion = expand(llm, asked_as)
     assessment = assess(query, sources, store, embedder, expansion, kinds)
     results = []
     if assessment.abstain_reason is None:
@@ -129,7 +137,7 @@ def search(
         results = [result(rank, c, assessment) for rank, c in enumerate(shown, 1)]
     outcomes: list[str] = []
     if llm is not None:
-        results, outcomes = explain_top(llm, results, [query] * len(results))
+        results, outcomes = explain_top(llm, results, [asked_as] * len(results))
     used = {"expand": bool(expansion), "explain": "kept" in outcomes}
     response = {
         "query": query,
