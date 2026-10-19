@@ -47,8 +47,7 @@ describe("messagesFor", () => {
 
 describe("splitMentions", () => {
   test("a mentioned name becomes a link to its card", () => {
-    const ids = new Set(["person-example-ada-muster"]);
-    expect(splitMentions(reply.reply, reply.mentions, ids)).toEqual([
+    expect(splitMentions(reply.reply, reply.mentions)).toEqual([
       { kind: "mention", text: "Ada Muster", profileId: "person-example-ada-muster" },
       {
         kind: "text",
@@ -57,14 +56,12 @@ describe("splitMentions", () => {
     ]);
   });
 
-  test("a mention without a card stays plain text, and the longer name wins", () => {
+  test("where two names start at the same place, the longer one wins", () => {
     const mentions = [
       { profile_id: "person-a", name: "Ada" },
       { profile_id: "person-b", name: "Ada Muster" },
-      { profile_id: "person-c", name: "Lena Beispiel" },
     ];
-    const ids = new Set(["person-a", "person-b"]);
-    expect(splitMentions("Ask Ada Muster or Ada, not Lena Beispiel.", mentions, ids)).toEqual([
+    expect(splitMentions("Ask Ada Muster or Ada, not Lena Beispiel.", mentions)).toEqual([
       { kind: "text", text: "Ask " },
       { kind: "mention", text: "Ada Muster", profileId: "person-b" },
       { kind: "text", text: " or " },

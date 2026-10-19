@@ -52,8 +52,29 @@ describe("parseAgentReply", () => {
     mention.mentions.push({ profile_id: "person-example-ada-muster" } as never);
     expect(parseAgentReply(mention)).toBeNull();
 
+    const tooMany = copyOf(agentJson);
+    tooMany.actions = Array.from({ length: 7 }, () => ({ type: "show_on_map", result: 0 }));
+    expect(parseAgentReply(tooMany)).toBeNull();
+
     const result = copyOf(agentJson);
     delete (result.results[0]!.results[0]!.profile as Record<string, unknown>).name;
     expect(parseAgentReply(result)).toBeNull();
+  });
+
+  test("a reply the schema rejects is no reply, even where the panel would not look", () => {
+    const noVersions: Record<string, unknown> = copyOf(agentJson);
+    delete noVersions.versions;
+    expect(parseAgentReply(noVersions)).toBeNull();
+    expect(parseAgentReply({ ...copyOf(agentJson), note: "extra" })).toBeNull();
+    expect(parseAgentReply({ ...copyOf(agentJson), reply: "a".repeat(801) })).toBeNull();
+  });
+
+  test("a reply naming someone who has no card is no reply", () => {
+    const unsourced = copyOf(agentJson);
+    unsourced.mentions.push({
+      profile_id: "person-example-lukas-thalmann",
+      name: "Lukas Thalmann",
+    });
+    expect(parseAgentReply(unsourced)).toBeNull();
   });
 });

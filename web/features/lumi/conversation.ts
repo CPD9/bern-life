@@ -67,16 +67,12 @@ export type Segment =
   | { readonly kind: "mention"; readonly text: string; readonly profileId: string };
 
 /**
- * The reply cut into plain text and the names it mentions. Only a mention with a card becomes a
- * link; where two names start at the same place, the longer one wins.
+ * The reply cut into plain text and the names it mentions; every mention has a card (the parser
+ * rejects a reply where one does not). Where two names start at the same place, the longer wins.
  */
-export function splitMentions(
-  text: string,
-  mentions: readonly AgentMention[],
-  cardIds: ReadonlySet<string>,
-): Segment[] {
+export function splitMentions(text: string, mentions: readonly AgentMention[]): Segment[] {
   const linked = mentions
-    .filter((mention) => mention.name !== "" && cardIds.has(mention.profile_id))
+    .filter((mention) => mention.name !== "")
     .sort((a, b) => b.name.length - a.name.length);
   const segments: Segment[] = [];
   let from = 0;
