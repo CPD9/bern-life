@@ -1,5 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { type MapPlace } from "./nearby";
 import { type Plot, PLOTS } from "./plots";
 import { Settle } from "./settle";
@@ -70,6 +71,9 @@ describe("Settle", () => {
     ).toBe("https://www.demo-centre.example.test/");
     expect(items[1]?.querySelector("time")?.textContent).toBe("19 Oct 2026");
     expect(within(items[1] as HTMLElement).getByText("about 400 m")).toBeTruthy();
+    expect(
+      screen.getByText(/^Only places with an address on their own page are listed\./),
+    ).toBeTruthy();
     expect(screen.getByText(/Distances are approximate/)).toBeTruthy();
   });
 
@@ -98,6 +102,21 @@ describe("Settle", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Insel" }));
     fireEvent.click(screen.getByRole("button", { name: "Settle in Insel" }));
     expect(onSettled.mock.calls.map(([plot]) => plot.id)).toEqual(["insel"]);
+  });
+
+  test("the server renders it as if nothing were stored, so the first browser render matches", () => {
+    const store = memoryStore();
+    store.set(PLOTS[1] as Plot);
+    const html = renderToString(
+      <Settle
+        places={PLACES}
+        onSettled={() => undefined}
+        onClose={() => undefined}
+        store={store}
+      />,
+    );
+    expect(html).toContain("Settle in Altstadt");
+    expect(html).not.toContain("Your office is");
   });
 
   test("Close calls back once", () => {
