@@ -62,3 +62,29 @@ invented person answered with results; exposure concentrated in the largest unit
 
 ## Amendments
 None yet.
+
+### 2026-10-19: pages named after a listing heading (#162), measured for bundle-3
+Not a change to the questions, data, metrics or rules above; `eval/gold.jsonl` is unchanged. It is
+recorded because the snapshot gold is scored on changes. The rule was fixed before the runs:
+adopt only if, on `eval/dev.jsonl`, recall@10 and MRR are not lower, traceability stays 100%,
+invented entities stay 0 and abstention is not lower. Gold is reported as measurement, whatever
+the outcome.
+
+Setup: bundle-20261019-2 against the same bundle with #162's extraction replayed from its own
+cache (0 misses; 35 profiles and 54 relations removed, no other profile changed), each loaded into
+a fresh database, predictions in replay, no model calls.
+
+| Set | Run | recall@10 | MRR | traceable | invented | invented abstained | false abstentions |
+|---|---|---|---|---|---|---|---|
+| dev | before | 0.86 [0.73, 1.00] | 0.66 [0.49, 0.83] | 2934/2934 | 0 | 5/5 | 1/22 |
+| dev | after | 0.86 [0.73, 1.00] | 0.66 [0.49, 0.83] | 2848/2848 | 0 | 5/5 | 1/22 |
+| gold | before | 0.36 [0.20, 0.53] | 0.43 [0.26, 0.59] | 4819/4819 | 0 | 8/10 | 0/38 |
+| gold | after | 0.38 [0.22, 0.56] | 0.46 [0.28, 0.63] | 4666/4666 | 0 | 8/10 | 0/38 |
+
+Dev is unchanged query by query, so the rule adopts #162. On gold one query moves (q009: recall@10
+0 → 0.8, first hit at rank 1): en 0.51 → 0.55, unibe 0.18 → 0.23, site 0.39 → 0.44; de, fr,
+artorg and dcb are unchanged. The gain is inside the interval. Two loads of the same bundle reorder
+the top 10 of 3 gold queries without changing any metric.
+
+Built as `bundle-20261019-3` (with tonight's recorded demo, agent and brief calls added to the cache
+pack, nothing else changed); `make eval` on it reproduces the "after" gold row above to the digit.

@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { InvalidEnvError, MissingEnvError, parseDataDir, parseEnv, parseTrustProxy } from "./env";
+import {
+  InvalidEnvError,
+  MissingEnvError,
+  parseDataDir,
+  parseEnv,
+  parseHasDatabase,
+  parseTrustProxy,
+} from "./env";
 
 describe("parseEnv", () => {
   test("fixtures mode needs no engine URL", () => {
@@ -33,6 +40,16 @@ describe("parseEnv", () => {
 
   test("DEMO_FIXTURES accepts only 1 or 0", () => {
     expect(() => parseEnv({ DEMO_FIXTURES: "true" })).toThrow(new InvalidEnvError("DEMO_FIXTURES"));
+  });
+});
+
+describe("parseHasDatabase", () => {
+  test("a database is there when DATABASE_URL is set, whatever its value", () => {
+    expect([
+      parseHasDatabase({}),
+      parseHasDatabase({ DATABASE_URL: "" }),
+      parseHasDatabase({ DATABASE_URL: "postgresql://127.0.0.1:5433/bernlife" }),
+    ]).toEqual([false, false, true]);
   });
 });
 

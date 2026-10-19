@@ -5,7 +5,14 @@
 // tab and gives focus back to whatever opened it.
 import { useEffect, useId, useRef, useState } from "react";
 import type { StoryProgress } from "@/features/story/engine";
-import { AgentsPanel, GoalsPanel, PeoplePanel, ProfilePanel, SkillsPanel } from "./you-panels";
+import {
+  AgentsPanel,
+  GoalsPanel,
+  PeoplePanel,
+  ProfilePanel,
+  SkillsPanel,
+  type YouPerson,
+} from "./you-panels";
 import type { Agent, PersonLook, YouProfile } from "./you-summary";
 import { type YouTab, YouTabs } from "./you-tabs";
 
@@ -16,10 +23,12 @@ type YouSheetProps = {
   person?: PersonLook | undefined;
   agent: Agent;
   story: StoryProgress;
+  /** Accepted connections; null when signed out. */
+  people?: readonly YouPerson[] | null;
   onClose: () => void;
 };
 
-export function YouSheet({ profile, person, agent, story, onClose }: YouSheetProps) {
+export function YouSheet({ profile, person, agent, story, people = null, onClose }: YouSheetProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const [selected, setSelected] = useState<YouTabId>("profile");
@@ -42,7 +51,7 @@ export function YouSheet({ profile, person, agent, story, onClose }: YouSheetPro
     { id: "profile", label: "Profile", panel: <ProfilePanel profile={profile} person={person} /> },
     { id: "goals", label: "Goals", panel: <GoalsPanel profile={profile} story={story} /> },
     { id: "skills", label: "Skills", panel: <SkillsPanel profile={profile} /> },
-    { id: "people", label: "People", panel: <PeoplePanel /> },
+    { id: "people", label: "People", panel: <PeoplePanel people={people} /> },
     { id: "agents", label: "Agents", panel: <AgentsPanel agent={agent} /> },
   ];
 

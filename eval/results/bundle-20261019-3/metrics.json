@@ -1,0 +1,72 @@
+{
+  "snapshot": "bundle-20261019-3",
+  "generated_at": "2026-10-19T06:06:41Z",
+  "eval": {
+    "queries": 48,
+    "recall_at_10": {
+      "value": 0.3842,
+      "low": 0.2185,
+      "high": 0.5647
+    },
+    "mrr": 0.4583,
+    "invented_abstained": {
+      "n": 8,
+      "of": 10
+    },
+    "false_abstention": {
+      "n": 0,
+      "of": 38
+    },
+    "traceable": {
+      "n": 4666,
+      "of": 4666
+    },
+    "invented_entities": 0,
+    "slices": [
+      {
+        "name": "unibe",
+        "recall_at_10": 0.2302
+      },
+      {
+        "name": "artorg",
+        "recall_at_10": 0.4359
+      },
+      {
+        "name": "dcb",
+        "recall_at_10": 0.5764
+      },
+      {
+        "name": "de",
+        "recall_at_10": 0.1818
+      },
+      {
+        "name": "en",
+        "recall_at_10": 0.5462
+      },
+      {
+        "name": "fr",
+        "recall_at_10": 0.1167
+      },
+      {
+        "name": "site",
+        "recall_at_10": 0.444
+      },
+      {
+        "name": "synonym",
+        "recall_at_10": 0.8222
+      },
+      {
+        "name": "lay",
+        "recall_at_10": 0.3333
+      },
+      {
+        "name": "translation",
+        "recall_at_10": 0.2431
+      },
+      {
+        "name": "control",
+        "recall_at_10": 0.3333
+      }
+    ]
+  }
+}

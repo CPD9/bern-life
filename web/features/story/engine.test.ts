@@ -143,7 +143,7 @@ describe("storyProgress", () => {
       visit: true,
       honest: true,
       extend: false,
-      grow: false,
+      grow: true,
     });
     const done = play(["abstained_seen"]);
     expect(
@@ -159,9 +159,7 @@ describe("storyProgress", () => {
     expect(reasons["extend"]).toEqual([
       "Adding a source does not report to the story yet; a new site is one file in sources/.",
     ]);
-    expect(reasons["grow"]).toEqual([
-      "A network of labs and experts is not built yet, so its step cannot be done.",
-    ]);
+    expect(reasons["grow"]).toEqual([]);
   });
 
   test("under the demo fixtures saving and the numbers wait with their reason, never offered", () => {
@@ -169,11 +167,12 @@ describe("storyProgress", () => {
       storyProgress(story, started, emittedToday, off).quests.find((q) => q.quest.id === id)!;
     expect(quest({}, "grow").nextStep?.id).toBe("opportunity");
     const grow = quest(offInFixtures, "grow");
-    expect([grow.status, grow.nextStep?.id, grow.finishable]).toEqual(["ready", "message", false]);
-    expect(grow.reasons).toEqual([
-      "Saving is off for the invented demo data.",
-      "A network of labs and experts is not built yet, so its step cannot be done.",
+    expect([grow.status, grow.nextStep?.id, grow.finishable]).toEqual([
+      "ready",
+      "connection",
+      false,
     ]);
+    expect(grow.reasons).toEqual(["Saving is off for the invented demo data."]);
     const extend = quest(offInFixtures, "extend");
     expect(extend.status).toBe("coming");
     expect(extend.reasons).toEqual([
@@ -233,6 +232,7 @@ describe("storyProgress", () => {
       "library_item_saved",
       "garage_visited",
       "numbers_seen",
+      "connection_saved",
     ]);
     const progress = storyProgress(story, state, emittedToday);
     expect(progress.current).toBeNull();

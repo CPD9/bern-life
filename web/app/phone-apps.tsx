@@ -1,6 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { Skill } from "@/features/agents/skills";
+import type { StartWith } from "@/features/messages/messages-app";
 import { StandaloneMessagesPage } from "@/features/messages/standalone-messages-page";
 import { Navigator } from "@/features/navigator/navigator";
 import type { NavigatorController } from "@/features/navigator/use-navigator";
@@ -28,6 +30,11 @@ type PhoneAppsInput = AgentsInput & {
   /** Where saves report to the story. */
   events?: AppEventSink;
   library?: LibraryStore;
+  /** The Connections app, composed for the phone; left out, it is not on the phone. */
+  connections?: ReactNode;
+  /** A thread to open in Messages, as "Message" on a member asks, and when it was opened. */
+  messageWith?: StartWith | undefined;
+  onMessageStarted?: () => void;
 };
 
 // The phone's apps: the same apps as the desk, fewer of them, each real; nothing is a placeholder.
@@ -40,6 +47,9 @@ export function phoneApps({
   health,
   events = appEvents,
   library,
+  connections,
+  messageWith,
+  onMessageStarted,
   ...agents
 }: PhoneAppsInput): PhoneApp[] {
   const save = { fixtureMode, events, library };
@@ -75,9 +85,20 @@ export function phoneApps({
       label: "Messages",
       icon: <AppIcon app="messages" />,
       tile: "#1d6fd6",
-      content: <StandaloneMessagesPage />,
+      content: <StandaloneMessagesPage startWith={messageWith} onStarted={onMessageStarted} />,
       ...(unreadMessages ? { badge: unreadMessages } : {}),
     },
+    ...(connections
+      ? [
+          {
+            id: "connections",
+            label: "Connections",
+            icon: <AppIcon app="connections" />,
+            tile: "#be185d",
+            content: connections,
+          },
+        ]
+      : []),
     {
       id: "agents",
       label: "Agents",

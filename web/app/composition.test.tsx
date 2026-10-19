@@ -137,6 +137,33 @@ describe("phone apps", () => {
     }
   });
 
+  test("Connections sits after Messages when composed, and Messages opens the asked thread", () => {
+    const messageWith = { handle: "bea", key: 3 };
+    const started = () => undefined;
+    const { result } = renderHook(() =>
+      phoneApps({
+        ...agents,
+        navigator: useNavigator(offline),
+        fixtureMode: false,
+        onShowOnMap: () => undefined,
+        onOpenApp: () => undefined,
+        connections: <p>members</p>,
+        messageWith,
+        onMessageStarted: started,
+      }),
+    );
+    expect(result.current.map((app) => app.id).slice(0, 3)).toEqual([
+      "ask",
+      "messages",
+      "connections",
+    ]);
+    const messages = result.current[1]!.content as ReactElement<{
+      startWith: unknown;
+      onStarted: unknown;
+    }>;
+    expect([messages.props.startWith, messages.props.onStarted]).toEqual([messageWith, started]);
+  });
+
   test("Try on Find opportunities opens the Opportunities app", () => {
     const { result, opened } = setUp();
     const agentsContent = result.current.apps.find((app) => app.id === "agents")!.content;

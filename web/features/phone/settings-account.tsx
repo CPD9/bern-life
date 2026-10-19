@@ -102,7 +102,7 @@ export function AccountSettings({ api, signInHref }: AccountSettingsProps) {
       </p>
       <ChoiceRow
         title="Who sees your profile"
-        description="Only me keeps it to you. Members are people who joined Bern Life."
+        description="Only me keeps it to you. Members, people who joined Bern Life, can find you in Connections."
         choices={choices}
         value={visibility}
         onChange={(next) => void change(next)}
