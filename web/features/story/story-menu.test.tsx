@@ -50,9 +50,8 @@ describe("StoryMenu", () => {
       "Joining and your office do not report to the story yet.",
     ]);
     expect(row("Visit an institute").textContent).toContain("Open · optional");
-    expect(row("Grow in Bern").textContent).toContain(
-      "Opportunities, Library, Garage and saving to your network are not built yet.",
-    );
+    // Sending a message counts toward Grow in Bern, so it is open, not coming next.
+    expect(row("Grow in Bern").textContent).toContain("Open · optional");
     expect(row("Find the right people").querySelectorAll("p")).toHaveLength(1);
   });
 

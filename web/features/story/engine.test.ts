@@ -114,7 +114,7 @@ describe("storyProgress", () => {
       visit: "ready",
       honest: "ready",
       extend: "coming",
-      grow: "coming",
+      grow: "ready",
     });
   });
 
@@ -147,6 +147,7 @@ describe("storyProgress", () => {
       "report_made",
       "abstained_seen",
       "lobby_entered",
+      "message_sent",
     ]);
     const progress = storyProgress(story, state, emittedToday);
     expect(progress.current).toBeNull();

@@ -34,6 +34,7 @@ export const appEvents: AppEvents = createAppEvents();
  * - evidence_opened: infrastructure/ui/result-card.tsx
  * - report_made: features/report/open-report.ts
  * - lobby_entered: features/world/place-panel.tsx (opening a place on the map)
+ * - message_sent: features/messages/use-messages.ts
  */
 export const emittedToday: readonly AppEventName[] = [
   "search_answered",
@@ -43,4 +44,5 @@ export const emittedToday: readonly AppEventName[] = [
   "report_made",
   "abstained_seen",
   "lobby_entered",
+  "message_sent",
 ];
