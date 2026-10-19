@@ -168,7 +168,7 @@ describe.skipIf(testDb === null)("labs against a throwaway database", () => {
     expect([await labFor(sql, cem, id), await labsOf(sql, cem)]).toEqual([null, []]);
   });
 
-  test("the directory and offices follow each person's visit visibility", async () => {
+  test("the directory follows profile visibility and never lists you; visits follow visit visibility", async () => {
     const office = (visitVisibility: "private" | "members" | "public") => ({
       plot: { district: "Länggasse" },
       layout: [{ item: "desk", x: 1, z: 2, turn: 0 }],
@@ -177,11 +177,13 @@ describe.skipIf(testDb === null)("labs against a throwaway database", () => {
     await saveOffice(sql, ada, office("private"), NOW);
     await saveOffice(sql, bea, office("members"), NOW);
     await saveOffice(sql, cem, office("public"), NOW);
+    await sql`update user_profile set visibility = 'members' where user_id = ${ada}`;
+    await sql`update user_profile set visibility = 'public' where user_id = ${bea}`;
     const listed = async (viewer: string | null) =>
-      (await directory(sql, viewer)).map((p) => p.handle);
-    expect(await listed(ada)).toEqual(["ada", "bea", "cem"]);
-    expect(await listed(bea)).toEqual(["bea", "cem"]);
-    expect(await listed(null)).toEqual(["cem"]);
+      (await directory(sql, viewer)).map((p) => `${p.handle}:${p.canVisit}`);
+    expect(await listed(ada)).toEqual(["bea:true"]);
+    expect(await listed(cem)).toEqual(["ada:false", "bea:true"]);
+    expect(await listed(null)).toEqual(["bea:false"]);
 
     const visits = async (viewer: string | null) => {
       const seen = [];

@@ -1,9 +1,8 @@
-import { requestUser } from "@/features/accounts/http";
-import { directory } from "@/features/people/store";
-import { db } from "@/infrastructure/db";
+import { env } from "@/infrastructure/env";
+import { appMemberDeps } from "../member-route";
+import { listPeople } from "./handlers";
 
-/** Members who allow visits: `public` for anyone, `members` for signed-in viewers, and you. */
+/** Members whose profile you may see: `public` for anyone, `members` for signed-in viewers. */
 export async function GET(request: Request): Promise<Response> {
-  const user = await requestUser(request);
-  return Response.json({ people: await directory(db(), user?.id ?? null) });
+  return listPeople(request, { ...appMemberDeps(), demoFixtures: env().demoFixtures });
 }
