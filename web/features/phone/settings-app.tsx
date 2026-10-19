@@ -1,6 +1,6 @@
 "use client";
 
-import type { NightMode } from "@/infrastructure/settings";
+import type { NightMode, Wallpaper } from "@/infrastructure/settings";
 import { Toggle } from "@/infrastructure/ui/toggle";
 import { useSettings } from "@/infrastructure/use-settings";
 import { type Choice, ChoiceRow } from "./choice-row";
@@ -16,6 +16,13 @@ const nightChoices: readonly Choice<NightMode>[] = [
   { value: "off", label: "Off" },
   { value: "on", label: "On" },
   { value: "auto", label: "Auto" },
+];
+
+const wallpaperChoices: readonly Choice<Wallpaper>[] = [
+  { value: "bern", label: "Bern" },
+  { value: "aare", label: "Aare" },
+  { value: "night", label: "Night sky" },
+  { value: "plain", label: "Plain" },
 ];
 
 type SettingsAppProps = {
@@ -78,6 +85,19 @@ export function SettingsApp({
           description="The map drops shadows and effects, for older laptops and phones."
           checked={settings.lite}
           onChange={(lite) => setSettings({ ...settings, lite })}
+        />
+        <ChoiceRow
+          title="Desktop background"
+          description="The scene behind the windows on your office computer."
+          choices={wallpaperChoices}
+          value={settings.wallpaper}
+          onChange={(wallpaper) => setSettings({ ...settings, wallpaper })}
+        />
+        <Toggle
+          label="Screensaver after 90 seconds on the desk"
+          description="The scene and the time, until you move the mouse or press a key."
+          checked={settings.screensaver}
+          onChange={(screensaver) => setSettings({ ...settings, screensaver })}
         />
         <p className="text-muted text-sm">Saved on this device only.</p>
       </SettingsSection>
