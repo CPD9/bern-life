@@ -7,6 +7,7 @@ A run on one bundle's own files also writes its headline numbers to
 """
 
 import argparse
+import hashlib
 import json
 import sys
 from collections.abc import Callable
@@ -39,6 +40,21 @@ def arguments(argv: list[str] | None) -> argparse.Namespace:
         help="headline numbers per bundle version, for a run on one bundle's own files",
     )
     return parser.parse_args(argv)
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def input_hashes(args: argparse.Namespace) -> dict[str, str]:
+    """The sha256 of every file scored, so the numbers can be tied to one bundle's files."""
+    files = {"gold": args.gold, "predictions": args.predictions}
+    files |= {"pages": args.pages, "profiles": args.profiles}
+    return {key: file_sha256(path) for key, path in files.items() if path is not None}
 
 
 def per_query(result: QueryResult) -> dict[str, object]:
@@ -77,6 +93,7 @@ def main(argv: list[str] | None = None, clock: Callable[[], datetime] = utc_now)
     slices = by_slice(results)
     metrics = {
         "inputs": {key: str(value) for key, value in vars(args).items() if value is not None},
+        "input_sha256": input_hashes(args),
         "slices": slices,
         "variant_agreement": variant_agreement(results),
         "exposure": exposure(results, profiles, pages),

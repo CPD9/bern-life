@@ -19,7 +19,7 @@ cache. Open http://127.0.0.1:3000. The HUD says how the engine answers (Live, Re
 Engine offline) and shows only the counts the engine reports. `?story=demo` starts the jury run
 with the criteria checklist beside it.
 
-## 1. A company describes its project (live mode, after E3b PR 2)
+## 1. A company describes its project (needs a live model)
 
 Phone → Ask → **Project brief**, paste the invented brief below, send.
 
@@ -28,8 +28,10 @@ Phone → Ask → **Project brief**, paste the invented brief below, send.
 > sleep and movement at night, and for testing such a device with older patients.
 
 Apertus reads each need from a sentence of the brief; the results show which needs each expert
-covers and which stay open. This step needs the brief endpoint and a live model; once E3b's second
-PR lands, the brief is recorded once live so replay plays it.
+covers and which stay open. Reading a new brief needs the model, so run this step signed in
+against `make live-run`, with a model endpoint and `LLM_CALL_BUDGET` set in `.env`. Replay has only
+the briefs recorded in the bundle, and this one is not among them: there the app says that reading
+a new brief needs the model.
 
 ## 2. Ask in your own words
 
@@ -46,7 +48,8 @@ facts.
 Press **Show on map**. The phone closes and the map frames the places that hold results: each glows
 by its best rank and carries that rank as a badge; places without a result step back. Tap a lit
 place: its panel lists the matches as the same cards as Ask, and the units with their verbatim
-address and source page. **Search here** starts a new question about that place.
+address and source page, or, where their pages give no address, the district they are placed in
+and their website. **Search here** starts a new question about that place.
 
 ## 4. Another wording, another language
 
@@ -73,7 +76,18 @@ Back in any result card, open a claim (a role, an expertise, a project). The evi
 verbatim sentence, the page, and the date it was fetched; **Open the page at this sentence** opens
 the institution's page scrolled to that sentence.
 
-## 7. The Navigator
+## 7. Lumi, your agent
 
-On the map, the three agents stand in front of the city hall. **Navigator** opens Ask; Scout and
-Matchmaker open the Agents app, which says what they will do.
+After onboarding you land in your office (the **Home** tab). Lumi, the bear you made in the last
+onboarding step, floats beside you in the office and on the map, and stands in front of the city
+hall; tap either to open Lumi's chat, then ask in your own words or tap a suggestion. Lumi
+searches with the engine's own tools and answers with the same cards as Ask: a person it names must
+be among those results, and a reply with nothing behind it says that no verifiable source was
+found. The answer goes where you would go by hand: it lights its places on the map and may open a
+card in Ask, and a match report waits for your click on **Make a match report**, then opens in the
+desk's Reports window. In replay Lumi searches your message and summarises the cited claims; its
+own recorded answers ship with the next bundle.
+
+At the desk, **Agents** lists Lumi's skills, such as search, project brief and match report, each
+with a **Try** that opens it (Find opportunities opens Opportunities), and loops: saved searches
+you run again by hand, whose new and dropped results reach the bell.

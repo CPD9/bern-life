@@ -32,11 +32,21 @@ No profile field comes from a model's memory. Every field carries a verbatim spa
 
 | Data | Source | Licence / status | In git? |
 |---|---|---|---|
-| Source configs `sources/*.json` | the case's UniBE subdomain inventory, ARTORG and DCB home pages | facts (host names) | yes |
-| Crawled pages, LLM cache, vectors | public pages of the hosts in `sources/` | copyright of the institutions; personal data under nDSG | **no**: SHA-pinned release asset (`make fetch`) |
+| Source configs `sources/*.json` | the case's UniBE subdomain inventory, the ARTORG and DCB home pages, and the public pages of the six opportunity sources (Bern Economic Development Agency, Innosuisse, SNSF, PROGR, Effinger, Switzerland Innovation Park Biel/Bienne) | facts (host names, seed URLs) | yes |
+| Crawled pages, LLM cache, vectors | public pages of the hosts in `sources/` | copyright of their publishers, the nine organisations in `sources/`; personal data under nDSG; carried for the replay demo, the hosted copy and the evaluation, with no licence to reuse ([below](#the-snapshot-bundle)) | **no**: SHA-pinned release asset (`make fetch`) |
 | Gold set `eval/gold.jsonl` | written by the team from public pages, before search existed | names and proof URLs only | yes |
 | Contract fixtures `contracts/fixtures/` | invented, describe no real person | ours | yes |
 | Place addresses `web/features/world/places.json` | one street address per unit, a verbatim span of a stored page of its own host (URL, date, sha256 per row) | facts (institutional addresses); no page copies | yes |
 | Opportunity place positions in `places.json` | the address's LV95 point in the federal building address register (geo.admin.ch, open data), mapped into the frame of `geography.ts`; coordinates not stored | facts | yes |
 | Map geography `web/features/world/geography.ts` | drawn by hand from public maps (Aare, bridges, districts, landmarks), approximate | ours | yes |
 | Map geodata `web/public/world/bern.geo` | swisstopo: swissBUILDINGS3D 3.0 (2021 CityGML tiles 1166-24, 1166-41, 1166-42), swissTLM3D roads, water network and railways (geo.admin identify API), building address register (geo.admin search); built by `infra/geo/build.py` | swisstopo free geodata (OGD), use and redistribution allowed with attribution "©swisstopo" | the derived file only (sha256 in `web/public/world/manifest.json`); raw downloads stay in `$BERNLIFE_DATA_DIR/geo/raw` |
+
+## The snapshot bundle
+
+The crawled pages stay their publishers' (copyright, and for people the nDSG). The release bundle
+pinned in `bundle.lock` carries them so that the replay demo (`make run`), the hosted copy
+([`infra/exoscale.md`](infra/exoscale.md)) and the evaluation all run from the same snapshot, and
+grants no licence to reuse them. A page is removed on request by publishing a new bundle without
+it, pinning that bundle, withdrawing the earlier release assets that hold it and reloading the
+hosted copy from the new bundle; the hosted copy's nightly database backups age out after 14 days.
+Git holds no copy of any page, so nothing in its history needs rewriting.

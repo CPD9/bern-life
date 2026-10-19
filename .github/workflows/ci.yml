@@ -147,3 +147,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: make fetch && make eval
+      - name: README numbers match the evaluator
+        if: hashFiles('bundle.lock') != ''
+        run: python infra/readme_numbers.py --check
