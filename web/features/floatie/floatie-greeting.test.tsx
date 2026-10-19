@@ -21,10 +21,10 @@ function greet(name: string) {
 }
 
 describe("FloatieGreeting", () => {
-  test("Lumi greets first, and each tap moves to the next line and back round", () => {
-    const { said, tap } = greet("Lumi");
+  test("Bärli greets first, and each tap moves to the next line and back round", () => {
+    const { said, tap } = greet("Bärli");
     expect(said()).toBe(
-      "Hi, I'm Lumi! I find the right people in Bern for you, each with the sentence that proves it.",
+      "Hi, I'm Bärli! I find the right people in Bern for you, each with the sentence that proves it.",
     );
     tap();
     expect(said()).toBe(
@@ -33,7 +33,7 @@ describe("FloatieGreeting", () => {
     tap();
     expect(said()).toBe("Once you're in, open Ask on your phone and I'll search for you.");
     tap();
-    expect(said()).toBe(greetingLines("Lumi")[0]);
+    expect(said()).toBe(greetingLines("Bärli")[0]);
   });
 
   test("a renamed agent greets in its own name", () => {

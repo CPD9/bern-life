@@ -30,7 +30,7 @@ const offline: NavigatorApi = {
 const pending: NumbersApi = { numbers: () => new Promise(() => undefined) };
 const agents = {
   navigatorApi: offline,
-  agentName: "Lumi",
+  agentName: "Bärli",
   snapshot: null,
   notify: () => undefined,
 };

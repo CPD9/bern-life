@@ -13,9 +13,9 @@ function show(name: string, onOpen: () => void) {
 }
 
 describe("LumiFloatie", () => {
-  test("a tap opens Lumi once", () => {
+  test("a tap opens Bärli once", () => {
     const onOpen = mock(() => undefined);
-    fireEvent.click(show("Lumi", onOpen));
+    fireEvent.click(show("Bärli", onOpen));
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
@@ -40,7 +40,7 @@ describe("LumiFloatie", () => {
       assumeWebgl(true);
     });
 
-    test("the button stays and still opens Lumi, with the initial where the bear would be", () => {
+    test("the button stays and still opens Bärli, with the initial where the bear would be", () => {
       assumeWebgl(false);
       const onOpen = mock(() => undefined);
       const floatie = show("Bärli", onOpen);

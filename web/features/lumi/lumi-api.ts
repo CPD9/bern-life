@@ -1,6 +1,6 @@
-// The two requests the panel makes, both to this app's own routes: /api/agent for Lumi, and
-// /api/search for the plain answer when Lumi cannot give one. A 404 (the route's `not_found`
-// marker, or Next's own page while the route does not exist yet) means Lumi is not connected.
+// The two requests the panel makes, both to this app's own routes: /api/agent for Bärli, and
+// /api/search for the plain answer when Bärli cannot give one. A 404 (the route's `not_found`
+// marker, or Next's own page while the route does not exist yet) means Bärli is not connected.
 import { parseSearchResponse } from "@/infrastructure/contract";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import { type AgentReply, parseAgentReply } from "./agent-reply";

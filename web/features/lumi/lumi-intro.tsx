@@ -1,6 +1,6 @@
 import { suggestions } from "./suggestions";
 
-/** What the panel shows before the first message: what Lumi does, and the recorded questions. */
+/** What the panel shows before the first message: what Bärli does, and the recorded questions. */
 export function LumiIntro({ onSend }: { onSend: (text: string) => void }) {
   return (
     <div className="flex flex-col gap-3">
