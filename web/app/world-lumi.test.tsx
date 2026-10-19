@@ -127,7 +127,7 @@ test("a match report is kept and opens in the desk's Reports window, not a new t
   expect(focusWhen["reports"]).toBe(opener);
 });
 
-test("a report the browser cannot keep leaves the chat open and the desk closed", async () => {
+test("a report the browser cannot keep leaves the chat open, says why and keeps its button", async () => {
   floatie();
   const { result, refresh, calls } = setUp(
     lumiAnswering([{ type: "start_match_report", result: 0 }]),
@@ -138,6 +138,10 @@ test("a report the browser cannot keep leaves the chat open and the desk closed"
   expect(calls.reportMade).toHaveBeenCalledTimes(1);
   expect(calls.reportsOpened).not.toHaveBeenCalled();
   expect(document.querySelector("dialog")!.open).toBe(true);
+  expect(screen.getByRole("alert").textContent).toBe(
+    "This browser blocks storage, so the report could not be kept. Allow site storage and try again.",
+  );
+  expect(screen.getByRole("button", { name: "Make a match report" })).toBeTruthy();
 });
 
 /** Lumi's floatie, the phone and the chat, wired as the world app wires them. */

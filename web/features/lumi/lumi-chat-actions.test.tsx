@@ -17,6 +17,12 @@ import {
 /** Lets every pending promise settle, the way a reply lands between two renders. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+/** A host that keeps every report it is asked for, noting each. */
+const keepsInto = (reported: SearchResponse[]) => (response: SearchResponse) => {
+  reported.push(response);
+  return true;
+};
+
 describe("LumiChat actions", () => {
   test("each action in a reply is dispatched once, and never again on re-render", async () => {
     const shown: SearchResponse[] = [];
@@ -34,7 +40,7 @@ describe("LumiChat actions", () => {
       api,
       onShowOnMap: (response) => void shown.push(response),
       onOpenProfile: (id, response) => void opened.push([id, response]),
-      onStartMatchReport: (response) => void reported.push(response),
+      onStartMatchReport: keepsInto(reported),
     };
     const { rerender } = render(<Harness {...props} />);
     openPanel();
@@ -44,18 +50,19 @@ describe("LumiChat actions", () => {
     await say("Thanks");
     expect(shown).toEqual([reply.results[0]!]);
     expect(opened).toEqual([["person-example-ada-muster", reply.results[0]!]]);
-    // A report opens a new tab, so it waits for a click (the next test).
+    // A report keeps a record, so it waits for a click (the next test).
     expect(reported).toEqual([]);
   });
 
+  const withReport: AgentReply = {
+    ...reply,
+    actions: [{ type: "start_match_report", result: 0 }],
+  };
+
   test("a match report waits for the player's click with the panel open, then opens once", async () => {
     const reported: SearchResponse[] = [];
-    const withReport: AgentReply = {
-      ...reply,
-      actions: [{ type: "start_match_report", result: 0 }],
-    };
     const api = scripted([{ ok: true, value: withReport }]);
-    render(<Harness api={api} onStartMatchReport={(response) => void reported.push(response)} />);
+    render(<Harness api={api} onStartMatchReport={keepsInto(reported)} />);
     openPanel();
     await say("Make a match report for glucose sensors");
     expect(reported).toEqual([]);
@@ -68,6 +75,37 @@ describe("LumiChat actions", () => {
     });
     expect(reported).toEqual([reply.results[0]!]);
     expect(screen.queryByRole("button", { name: "Make a match report" })).toBeNull();
+    expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
+  });
+
+  test("a report the browser does not keep says so and stays offered, and a retry can keep it", async () => {
+    const kept = [false, true];
+    const tried: SearchResponse[] = [];
+    const api = scripted([{ ok: true, value: withReport }]);
+    render(
+      <Harness
+        api={api}
+        onStartMatchReport={(response) => {
+          tried.push(response);
+          return kept.shift()!;
+        }}
+      />,
+    );
+    openPanel();
+    await say("Make a match report for glucose sensors");
+    const make = screen.getByRole("button", { name: "Make a match report" });
+    make.focus();
+    act(() => fireEvent.click(make));
+    expect(tried).toEqual([reply.results[0]!]);
+    expect(screen.getByRole("alert").textContent).toBe(
+      "This browser blocks storage, so the report could not be kept. Allow site storage and try again.",
+    );
+    expect(document.activeElement).toBe(make);
+
+    act(() => fireEvent.click(make));
+    expect(tried).toEqual([reply.results[0]!, reply.results[0]!]);
+    expect(screen.queryByRole("button", { name: "Make a match report" })).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
     expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
   });
 

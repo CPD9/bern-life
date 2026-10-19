@@ -40,7 +40,7 @@ export type WorldLumi = {
 
 // Lumi in the world: the floatie and the bear on the map open one chat. Lumi's actions go where
 // the player would go by hand: the map, Ask, or the desk's Reports window. A report waits for the
-// player's click on the reply (features/lumi) and never opens a new tab.
+// player's click on the reply (features/lumi) and opens in the desk, never in a new tab.
 export function useWorldLumi(input: WorldLumiInput): WorldLumi {
   const { agentName, bear, lite, fixtureMode, navigator } = input;
   const [open, setOpen] = useState(false);
@@ -78,8 +78,11 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
     });
   }
 
-  function startMatchReport(response: SearchResponse) {
-    if (input.onMakeReport(response)) closeThen(input.onOpenReports);
+  // A report the browser cannot keep leaves the chat open, where the reply says so (features/lumi).
+  function startMatchReport(response: SearchResponse): boolean {
+    const made = input.onMakeReport(response);
+    if (made) closeThen(input.onOpenReports);
+    return made;
   }
 
   return {

@@ -59,8 +59,9 @@ export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): 
       const onItsOwn = reply.actions.filter((action) => !waitsForClick(action));
       const runnable = reply.actions.filter((action) => canRun(action, reply, now));
       const held = shown ? [] : runnable.filter((action) => !waitsForClick(action));
+      const offered = runnable.filter(waitsForClick);
       update(id, {
-        lumi: { status: "replied", reply, held, offered: runnable.filter(waitsForClick) },
+        lumi: { status: "replied", reply, held, offered, notDone: [] },
         search: reply.abstained ? waiting : null,
       });
       if (shown) for (const action of onItsOwn) runAction(action, reply, now);
@@ -102,16 +103,21 @@ export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): 
       const turn = turns.find((candidate) => candidate.id === turnId);
       if (turn?.lumi.status !== "replied" || ran.current.has(action)) return false;
       ran.current.add(action);
-      setTurns((shown) => shown.map((t) => (t.id === turnId ? withoutHeld(t, action) : t)));
-      runAction(action, turn.lumi.reply, current.current.actions);
-      return true;
+      const done = runAction(action, turn.lumi.reply, current.current.actions);
+      // Not done (a report the browser would not keep): its button stays, with the reason, to retry.
+      if (!done) ran.current.delete(action);
+      setTurns((shown) => shown.map((t) => (t.id === turnId ? afterRun(t, action, done) : t)));
+      return done;
     },
   };
 }
 
-function withoutHeld(turn: Turn, action: AgentAction): Turn {
+function afterRun(turn: Turn, action: AgentAction, done: boolean): Turn {
   if (turn.lumi.status !== "replied") return turn;
-  const { held, offered } = turn.lumi;
+  const { held, offered, notDone } = turn.lumi;
   const without = (actions: readonly AgentAction[]) => actions.filter((a) => a !== action);
-  return { ...turn, lumi: { ...turn.lumi, held: without(held), offered: without(offered) } };
+  const lumi = done
+    ? { ...turn.lumi, held: without(held), offered: without(offered), notDone: without(notDone) }
+    : { ...turn.lumi, notDone: [...without(notDone), action] };
+  return { ...turn, lumi };
 }

@@ -6,7 +6,8 @@ import type { AgentAction, AgentReply } from "./agent-reply";
 export type LumiActions = {
   onShowOnMap?: ((response: SearchResponse) => void) | undefined;
   onOpenProfile?: ((profileId: string, response: SearchResponse) => void) | undefined;
-  onStartMatchReport?: ((response: SearchResponse) => void) | undefined;
+  /** Makes and keeps the report; false when it could not be kept, as when storage is blocked. */
+  onStartMatchReport?: ((response: SearchResponse) => boolean) | undefined;
 };
 
 /** The words on the button for an action that waits for the player's click. */
@@ -16,10 +17,14 @@ export const heldActionLabels: Record<AgentAction["type"], string> = {
   start_match_report: "Make a match report",
 };
 
+/** Said under the button when the report could not be kept; the button stays, to try again. */
+export const reportNotKept =
+  "This browser blocks storage, so the report could not be kept. Allow site storage and try again.";
+
 /**
- * A match report opens outside the chat, in a new tab, so it waits for the player's own click even
- * when the reply lands with the panel open: an answer never opens a window by itself, and a browser
- * would block a window opened without a click anyway.
+ * A match report keeps a new record and takes the player out of the chat, to wherever the host
+ * shows it, so it waits for the player's own click even when the reply lands with the panel open:
+ * an answer never makes one by itself.
  */
 export function waitsForClick(action: AgentAction): boolean {
   return action.type === "start_match_report";
@@ -48,18 +53,18 @@ export function canRun(action: AgentAction, reply: AgentReply, actions: LumiActi
   return answerFor(action, reply) !== undefined && callbackFor(action, actions) !== undefined;
 }
 
-export function runAction(action: AgentAction, reply: AgentReply, actions: LumiActions): void {
+/** False when the action was not done: no answer to act on, or a report that was not kept. */
+export function runAction(action: AgentAction, reply: AgentReply, actions: LumiActions): boolean {
   const response = answerFor(action, reply);
-  if (!response) return;
+  if (!response) return false;
   switch (action.type) {
     case "show_on_map":
       actions.onShowOnMap?.(response);
-      return;
+      return true;
     case "open_profile":
       actions.onOpenProfile?.(action.profile_id, response);
-      return;
+      return true;
     case "start_match_report":
-      actions.onStartMatchReport?.(response);
-      return;
+      return actions.onStartMatchReport?.(response) ?? false;
   }
 }

@@ -11,7 +11,13 @@ function turn(id: number, answered: boolean): Turn {
     id,
     text: `question ${id}`,
     lumi: answered
-      ? { status: "replied", reply: { ...reply, reply: `answer ${id}` }, held: [], offered: [] }
+      ? {
+          status: "replied",
+          reply: { ...reply, reply: `answer ${id}` },
+          held: [],
+          offered: [],
+          notDone: [],
+        }
       : { status: "failed", failure: "engine_error" },
     search: null,
   };
