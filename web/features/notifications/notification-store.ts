@@ -1,6 +1,6 @@
-// In-app notifications: a message arrived, someone connected, a loop found a change, or the app
-// has something to say. They live in localStorage, newest first and capped, so an old visit cannot
-// grow the list forever. Storage can be missing or throw (private windows, blocked site data), so
+// In-app notifications this browser raises itself: a loop found a change, or the app has something
+// to say. Messages and connections come from the server and join these in inbox.ts. These live in
+// localStorage, newest first and capped, so an old visit cannot grow the list forever. Storage can be missing or throw (private windows, blocked site data), so
 // every access is guarded and memory is the fallback. Nothing leaves the browser: no email, no
 // web push, no service worker.
 
@@ -18,6 +18,8 @@ export type AppNotification = {
   readonly read: boolean;
   /** One of the app's own pages, never another site. */
   readonly href?: string;
+  /** Already waiting when this visit began: listed in the bell, never popped up as a toast. */
+  readonly earlier?: boolean;
 };
 
 export type NewNotification = Pick<AppNotification, "kind" | "title" | "body" | "href">;

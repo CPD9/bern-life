@@ -6,7 +6,11 @@ import { notificationStore, useNotifications } from "@/features/notifications/us
 import type { PhoneNotification } from "@/features/phone/phone";
 
 /** Where following a notification goes in the phone; others only mark it read. */
-const appFor: Readonly<Record<string, string>> = { message: "messages", loop: "agents" };
+const appFor: Readonly<Record<string, string>> = {
+  message: "messages",
+  connection: "connections",
+  loop: "agents",
+};
 
 // The phone's notification centre reads the same store as the bell and the toasts.
 export function usePhoneNotifications(
