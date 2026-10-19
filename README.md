@@ -59,8 +59,9 @@ room give way to a short note, and Ask, the office desk and every app still work
    either opens its chat. Lumi searches with the engine's own tools and answers
    with the same source cards as Ask. A person it names must be among those results, a reply it
    cannot support is replaced by a summary of the cited claims, and with nothing behind it Lumi
-   says it found no verifiable source. An answer lights its places on the map and may open a card
-   in Ask; a match report waits for your click and opens in the desk's Reports window.
+   says it found no verifiable source. An answer stays in the chat, with buttons to light its places
+   on the map, open its card in Ask or make a match report (it opens in the desk's Reports window);
+   nothing happens until you click.
 8. **The story.** A card offers **Start the story**, quests about moving a business to Bern that
    each walk through one part of the case and complete only when you actually do the step in the
    app, or **Explore freely**. Your badge opens the **You** sheet: profile, goals, skills, people

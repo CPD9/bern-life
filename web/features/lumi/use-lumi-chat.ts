@@ -1,9 +1,9 @@
 "use client";
 
-// One conversation with Lumi. Actions in a reply are dispatched from the request that received it,
-// not from rendering, so a re-render can never repeat them; a reply that lands while the panel is
-// closed keeps its actions on its turn until the player runs them, and a match report always waits
-// for the player's click. One message is in flight.
+// One conversation with Lumi. No action in a reply runs by itself: with the panel open each one is
+// a button under the reply, so the answer stays on screen; a reply that lands while the panel is
+// closed keeps its actions on its turn until the player runs them. An action runs only from its
+// click, never from rendering, so a re-render cannot repeat it. One message is in flight.
 import { useEffect, useRef, useState } from "react";
 import type { AgentAction } from "./agent-reply";
 import { type SearchState, type Turn, canRetry, isBusy, messagesFor } from "./conversation";
@@ -56,15 +56,15 @@ export function useLumiChat(api: LumiApi, actions: LumiActions, open: boolean): 
     if (asked.ok) {
       const reply = asked.value;
       const { open: shown, actions: now } = current.current;
-      const onItsOwn = reply.actions.filter((action) => !waitsForClick(action));
       const runnable = reply.actions.filter((action) => canRun(action, reply, now));
+      // With the panel open every action is a button under the reply: the answer stays readable
+      // and the player chooses when to leave the chat for the map or Ask.
       const held = shown ? [] : runnable.filter((action) => !waitsForClick(action));
-      const offered = runnable.filter(waitsForClick);
+      const offered = shown ? runnable : runnable.filter(waitsForClick);
       update(id, {
         lumi: { status: "replied", reply, held, offered, notDone: [] },
         search: reply.abstained ? waiting : null,
       });
-      if (shown) for (const action of onItsOwn) runAction(action, reply, now);
       if (!reply.abstained) return;
     } else {
       // Without the server a plain search cannot answer either, so there is nothing to fall back to.
