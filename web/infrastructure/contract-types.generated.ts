@@ -82,6 +82,17 @@ export interface SearchResponse {
        */
       related_claims: [Claim, ...Claim[]];
     };
+    /**
+     * When neither the result's own claims nor a related project's match the question, but its own page (the page its name claim cites) does next to its name: the verbatim span from the name to the nearest words matching two distinct word forms of the question, within 300 characters and never across the name of another profile cited on that page. A passage on their page, not a claim of their profile; the reason stays the plain one from the profile's own claims.
+     */
+    passage?: {
+      kind: "own_page";
+      span: string;
+      page_url: string;
+      page_sha256: string;
+      start: number;
+      fetched_at: string;
+    };
   }[];
   timings_ms?: {
     [k: string]: number;

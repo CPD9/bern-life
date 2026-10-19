@@ -3,7 +3,7 @@ import { fullFormats } from "ajv-formats/dist/formats";
 import runtime_equal from "ajv/dist/runtime/equal";
 import runtime_ucs2length from "ajv/dist/runtime/ucs2length";
 export const isSearchResponse = validate20;
-const schema31 = {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"result.schema.json","title":"SearchResponse","description":"What the engine returns for a query or a project brief (POST /api/search, POST /api/brief). The UI renders only this.","type":"object","required":["query","mode","abstained","results","expanded_terms","versions"],"additionalProperties":false,"properties":{"query":{"type":"string"},"brief_terms":{"description":"For a brief: the needs Apertus read from it, each with the brief sentence it came from. Absent for a plain query.","type":"array","items":{"type":"object","required":["term","span"],"additionalProperties":false,"properties":{"term":{"type":"string"},"span":{"type":"string"}}}},"mode":{"description":"live: a model answered now; replay: from the cache; mock: no model, canned text, the UI shows a MOCK banner.","enum":["live","replay","mock"]},"abstained":{"type":"boolean"},"abstain_reason":{"enum":["no_verifiable_source","query_out_of_scope","engine_error",null]},"expanded_terms":{"description":"Retrieval terms added by enrichment and query expansion. Used for search only, never shown as a fact about a person.","type":"array","items":{"type":"object","required":["term","kind"],"additionalProperties":false,"properties":{"term":{"type":"string"},"kind":{"enum":["synonym","lay","translation","acronym"]},"lang":{"enum":["de","en","fr","it"]}}}},"results":{"type":"array","maxItems":50,"items":{"type":"object","required":["rank","profile","reason","score"],"additionalProperties":false,"properties":{"rank":{"type":"integer","minimum":1},"profile":{"$ref":"profile.schema.json"},"reason":{"description":"Why it matches, written only from the cited claims. `cites` are JSON pointers into `profile`, e.g. /fields/expertise/0.","type":"object","required":["text","cites"],"additionalProperties":false,"properties":{"text":{"type":"string","minLength":1,"maxLength":400},"cites":{"type":"array","minItems":1,"items":{"type":"string","pattern":"^/(name|fields/[a-z]+/[0-9]+)$"}}}},"score":{"type":"object","required":["fused"],"additionalProperties":false,"properties":{"fused":{"type":"number"},"lexical_rank":{"type":["integer","null"]},"vector_rank":{"type":["integer","null"]}}},"metrics":{"description":"Display only: describes a result, never reorders it. null means it could not be computed (shown as a dash, never 0). Computed from verified claims and pages, never from a model's opinion.","type":"object","additionalProperties":false,"required":["relevance","covers","missing","evidence","completeness","novelty","confidence"],"properties":{"relevance":{"type":["number","null"],"minimum":0,"maximum":1},"evidence":{"type":["number","null"],"minimum":0,"maximum":1},"confidence":{"type":["number","null"],"minimum":0,"maximum":1},"covers":{"type":"array","items":{"type":"string"}},"missing":{"type":"array","items":{"type":"string"}},"completeness":{"type":"object","required":["filled","of"],"additionalProperties":false,"properties":{"filled":{"type":"integer","minimum":0},"of":{"const":5}}},"novelty":{"type":"object","required":["new_unit","adds"],"additionalProperties":false,"properties":{"new_unit":{"type":"boolean"},"adds":{"type":"array","items":{"type":"string"}}}}}},"via":{"description":"When the result's own claims do not match the question but a related project or unit does: the relation (its verbatim span on its page) and the related profile's matching claims, inline, so both sentences are shown and checked.","type":"object","additionalProperties":false,"required":["kind","span","page_url","page_sha256","related_profile_id","related_name","related_claims"],"properties":{"kind":{"enum":["leads","works_on","member_of"]},"span":{"type":"string","minLength":1,"maxLength":300},"page_url":{"type":"string","format":"uri"},"page_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},"start":{"type":"integer","minimum":0},"fetched_at":{"type":"string","format":"date-time"},"related_profile_id":{"type":"string","pattern":"^(person|unit|project|infrastructure)-[a-z0-9-]+$"},"related_name":{"type":"string","minLength":1},"related_claims":{"type":"array","minItems":1,"items":{"$ref":"profile.schema.json#/$defs/claim"}}}}}}},"timings_ms":{"type":"object","additionalProperties":{"type":"number"}},"versions":{"type":"object","required":["engine","snapshot","prompts"],"additionalProperties":false,"properties":{"engine":{"type":"string"},"snapshot":{"type":"string"},"prompts":{"type":"string"},"models":{"type":"object","additionalProperties":{"type":"string"}}}}}};
+const schema31 = {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"result.schema.json","title":"SearchResponse","description":"What the engine returns for a query or a project brief (POST /api/search, POST /api/brief). The UI renders only this.","type":"object","required":["query","mode","abstained","results","expanded_terms","versions"],"additionalProperties":false,"properties":{"query":{"type":"string"},"brief_terms":{"description":"For a brief: the needs Apertus read from it, each with the brief sentence it came from. Absent for a plain query.","type":"array","items":{"type":"object","required":["term","span"],"additionalProperties":false,"properties":{"term":{"type":"string"},"span":{"type":"string"}}}},"mode":{"description":"live: a model answered now; replay: from the cache; mock: no model, canned text, the UI shows a MOCK banner.","enum":["live","replay","mock"]},"abstained":{"type":"boolean"},"abstain_reason":{"enum":["no_verifiable_source","query_out_of_scope","engine_error",null]},"expanded_terms":{"description":"Retrieval terms added by enrichment and query expansion. Used for search only, never shown as a fact about a person.","type":"array","items":{"type":"object","required":["term","kind"],"additionalProperties":false,"properties":{"term":{"type":"string"},"kind":{"enum":["synonym","lay","translation","acronym"]},"lang":{"enum":["de","en","fr","it"]}}}},"results":{"type":"array","maxItems":50,"items":{"type":"object","required":["rank","profile","reason","score"],"additionalProperties":false,"properties":{"rank":{"type":"integer","minimum":1},"profile":{"$ref":"profile.schema.json"},"reason":{"description":"Why it matches, written only from the cited claims. `cites` are JSON pointers into `profile`, e.g. /fields/expertise/0.","type":"object","required":["text","cites"],"additionalProperties":false,"properties":{"text":{"type":"string","minLength":1,"maxLength":400},"cites":{"type":"array","minItems":1,"items":{"type":"string","pattern":"^/(name|fields/[a-z]+/[0-9]+)$"}}}},"score":{"type":"object","required":["fused"],"additionalProperties":false,"properties":{"fused":{"type":"number"},"lexical_rank":{"type":["integer","null"]},"vector_rank":{"type":["integer","null"]}}},"metrics":{"description":"Display only: describes a result, never reorders it. null means it could not be computed (shown as a dash, never 0). Computed from verified claims and pages, never from a model's opinion.","type":"object","additionalProperties":false,"required":["relevance","covers","missing","evidence","completeness","novelty","confidence"],"properties":{"relevance":{"type":["number","null"],"minimum":0,"maximum":1},"evidence":{"type":["number","null"],"minimum":0,"maximum":1},"confidence":{"type":["number","null"],"minimum":0,"maximum":1},"covers":{"type":"array","items":{"type":"string"}},"missing":{"type":"array","items":{"type":"string"}},"completeness":{"type":"object","required":["filled","of"],"additionalProperties":false,"properties":{"filled":{"type":"integer","minimum":0},"of":{"const":5}}},"novelty":{"type":"object","required":["new_unit","adds"],"additionalProperties":false,"properties":{"new_unit":{"type":"boolean"},"adds":{"type":"array","items":{"type":"string"}}}}}},"via":{"description":"When the result's own claims do not match the question but a related project or unit does: the relation (its verbatim span on its page) and the related profile's matching claims, inline, so both sentences are shown and checked.","type":"object","additionalProperties":false,"required":["kind","span","page_url","page_sha256","related_profile_id","related_name","related_claims"],"properties":{"kind":{"enum":["leads","works_on","member_of"]},"span":{"type":"string","minLength":1,"maxLength":300},"page_url":{"type":"string","format":"uri"},"page_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},"start":{"type":"integer","minimum":0},"fetched_at":{"type":"string","format":"date-time"},"related_profile_id":{"type":"string","pattern":"^(person|unit|project|infrastructure)-[a-z0-9-]+$"},"related_name":{"type":"string","minLength":1},"related_claims":{"type":"array","minItems":1,"items":{"$ref":"profile.schema.json#/$defs/claim"}}}},"passage":{"description":"When neither the result's own claims nor a related project's match the question, but its own page (the page its name claim cites) does next to its name: the verbatim span from the name to the nearest words matching two distinct word forms of the question, within 300 characters and never across the name of another profile cited on that page. A passage on their page, not a claim of their profile; the reason stays the plain one from the profile's own claims.","type":"object","additionalProperties":false,"required":["kind","span","page_url","page_sha256","start","fetched_at"],"properties":{"kind":{"const":"own_page"},"span":{"type":"string","minLength":1,"maxLength":600},"page_url":{"type":"string","format":"uri"},"page_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},"start":{"type":"integer","minimum":0},"fetched_at":{"type":"string","format":"date-time"}}}}}},"timings_ms":{"type":"object","additionalProperties":{"type":"number"}},"versions":{"type":"object","required":["engine","snapshot","prompts"],"additionalProperties":false,"properties":{"engine":{"type":"string"},"snapshot":{"type":"string"},"prompts":{"type":"string"},"models":{"type":"object","additionalProperties":{"type":"string"}}}}}};
 const func1 = Object.prototype.hasOwnProperty;
 const func2 = runtime_ucs2length;
 const schema32 = {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"profile.schema.json","title":"Profile","description":"A person, unit, project or infrastructure built from stored pages. Every value is a claim with a verbatim span from a stored page; a field the pages do not support is an empty list, never a guess. No email or phone is stored: contact goes through the source page link. Calls, services and spaces (opportunities) use the optional fields funder, deadline, amount, eligibility, location and size; dates and amounts are verbatim text from the page, never parsed or computed.","type":"object","required":["id","kind","source_id","name","fields","source_url"],"additionalProperties":false,"properties":{"id":{"type":"string","pattern":"^(person|unit|project|infrastructure|call|service|space)-[a-z0-9-]+$"},"kind":{"enum":["person","unit","project","infrastructure","call","service","space"]},"source_id":{"type":"string","pattern":"^[a-z0-9-]+$"},"name":{"$ref":"#/$defs/claim"},"source_url":{"description":"The main page for this profile, shown as the result link.","type":"string","format":"uri"},"fields":{"type":"object","required":["role","unit","expertise","projects","infrastructure","services"],"additionalProperties":false,"properties":{"role":{"$ref":"#/$defs/claims"},"unit":{"$ref":"#/$defs/claims"},"expertise":{"$ref":"#/$defs/claims"},"projects":{"$ref":"#/$defs/claims"},"infrastructure":{"$ref":"#/$defs/claims"},"services":{"$ref":"#/$defs/claims"},"funder":{"$ref":"#/$defs/claims"},"deadline":{"$ref":"#/$defs/claims"},"amount":{"$ref":"#/$defs/claims"},"eligibility":{"$ref":"#/$defs/claims"},"location":{"$ref":"#/$defs/claims"},"size":{"$ref":"#/$defs/claims"}}}},"$defs":{"claims":{"type":"array","items":{"$ref":"#/$defs/claim"}},"claim":{"type":"object","required":["value","evidence","method"],"additionalProperties":false,"properties":{"value":{"type":"string","minLength":1,"maxLength":200},"method":{"description":"selector: read by a per-source rule; model: proposed by Apertus and kept only because the verifier found the span.","enum":["selector","model"]},"evidence":{"$ref":"#/$defs/evidence"}}},"evidence":{"type":"object","required":["page_url","page_sha256","span"],"additionalProperties":false,"properties":{"page_url":{"type":"string","format":"uri"},"page_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},"span":{"description":"Verbatim substring of the page's stored text.","type":"string","minLength":1,"maxLength":300},"start":{"description":"Character offset of span in the page text.","type":"integer","minimum":0},"fetched_at":{"description":"When the page holding the span was fetched (copied from the page record).","type":"string","format":"date-time"}}}}};
@@ -1119,7 +1119,7 @@ return false;
 else {
 const _errs30 = errors;
 for(const key3 in data14){
-if(!((((((key3 === "rank") || (key3 === "profile")) || (key3 === "reason")) || (key3 === "score")) || (key3 === "metrics")) || (key3 === "via"))){
+if(!(((((((key3 === "rank") || (key3 === "profile")) || (key3 === "reason")) || (key3 === "score")) || (key3 === "metrics")) || (key3 === "via")) || (key3 === "passage"))){
 validate20.errors = [{instancePath:instancePath+"/results/" + i2,schemaPath:"#/properties/results/items/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key3},message:"must NOT have additional properties"}];
 return false;
 break;
@@ -1908,6 +1908,172 @@ var valid6 = _errs84 === errors;
 else {
 var valid6 = true;
 }
+if(valid6){
+if(data14.passage !== undefined){
+let data51 = data14.passage;
+const _errs105 = errors;
+if(errors === _errs105){
+if(data51 && typeof data51 == "object" && !Array.isArray(data51)){
+let missing10;
+if(((((((data51.kind === undefined) && (missing10 = "kind")) || ((data51.span === undefined) && (missing10 = "span"))) || ((data51.page_url === undefined) && (missing10 = "page_url"))) || ((data51.page_sha256 === undefined) && (missing10 = "page_sha256"))) || ((data51.start === undefined) && (missing10 = "start"))) || ((data51.fetched_at === undefined) && (missing10 = "fetched_at"))){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage",schemaPath:"#/properties/results/items/properties/passage/required",keyword:"required",params:{missingProperty: missing10},message:"must have required property '"+missing10+"'"}];
+return false;
+}
+else {
+const _errs107 = errors;
+for(const key10 in data51){
+if(!((((((key10 === "kind") || (key10 === "span")) || (key10 === "page_url")) || (key10 === "page_sha256")) || (key10 === "start")) || (key10 === "fetched_at"))){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage",schemaPath:"#/properties/results/items/properties/passage/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key10},message:"must NOT have additional properties"}];
+return false;
+break;
+}
+}
+if(_errs107 === errors){
+if(data51.kind !== undefined){
+const _errs108 = errors;
+if("own_page" !== data51.kind){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/kind",schemaPath:"#/properties/results/items/properties/passage/properties/kind/const",keyword:"const",params:{allowedValue: "own_page"},message:"must be equal to constant"}];
+return false;
+}
+var valid18 = _errs108 === errors;
+}
+else {
+var valid18 = true;
+}
+if(valid18){
+if(data51.span !== undefined){
+let data53 = data51.span;
+const _errs109 = errors;
+if(errors === _errs109){
+if(typeof data53 === "string"){
+if(func2(data53) > 600){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/span",schemaPath:"#/properties/results/items/properties/passage/properties/span/maxLength",keyword:"maxLength",params:{limit: 600},message:"must NOT have more than 600 characters"}];
+return false;
+}
+else {
+if(func2(data53) < 1){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/span",schemaPath:"#/properties/results/items/properties/passage/properties/span/minLength",keyword:"minLength",params:{limit: 1},message:"must NOT have fewer than 1 characters"}];
+return false;
+}
+}
+}
+else {
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/span",schemaPath:"#/properties/results/items/properties/passage/properties/span/type",keyword:"type",params:{type: "string"},message:"must be string"}];
+return false;
+}
+}
+var valid18 = _errs109 === errors;
+}
+else {
+var valid18 = true;
+}
+if(valid18){
+if(data51.page_url !== undefined){
+let data54 = data51.page_url;
+const _errs111 = errors;
+if(errors === _errs111){
+if(errors === _errs111){
+if(typeof data54 === "string"){
+if(!(formats0(data54))){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/page_url",schemaPath:"#/properties/results/items/properties/passage/properties/page_url/format",keyword:"format",params:{format: "uri"},message:"must match format \""+"uri"+"\""}];
+return false;
+}
+}
+else {
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/page_url",schemaPath:"#/properties/results/items/properties/passage/properties/page_url/type",keyword:"type",params:{type: "string"},message:"must be string"}];
+return false;
+}
+}
+}
+var valid18 = _errs111 === errors;
+}
+else {
+var valid18 = true;
+}
+if(valid18){
+if(data51.page_sha256 !== undefined){
+let data55 = data51.page_sha256;
+const _errs113 = errors;
+if(errors === _errs113){
+if(typeof data55 === "string"){
+if(!pattern6.test(data55)){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/page_sha256",schemaPath:"#/properties/results/items/properties/passage/properties/page_sha256/pattern",keyword:"pattern",params:{pattern: "^[0-9a-f]{64}$"},message:"must match pattern \""+"^[0-9a-f]{64}$"+"\""}];
+return false;
+}
+}
+else {
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/page_sha256",schemaPath:"#/properties/results/items/properties/passage/properties/page_sha256/type",keyword:"type",params:{type: "string"},message:"must be string"}];
+return false;
+}
+}
+var valid18 = _errs113 === errors;
+}
+else {
+var valid18 = true;
+}
+if(valid18){
+if(data51.start !== undefined){
+let data56 = data51.start;
+const _errs115 = errors;
+if(!(((typeof data56 == "number") && (!(data56 % 1) && !isNaN(data56))) && (isFinite(data56)))){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/start",schemaPath:"#/properties/results/items/properties/passage/properties/start/type",keyword:"type",params:{type: "integer"},message:"must be integer"}];
+return false;
+}
+if(errors === _errs115){
+if((typeof data56 == "number") && (isFinite(data56))){
+if(data56 < 0 || isNaN(data56)){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/start",schemaPath:"#/properties/results/items/properties/passage/properties/start/minimum",keyword:"minimum",params:{comparison: ">=", limit: 0},message:"must be >= 0"}];
+return false;
+}
+}
+}
+var valid18 = _errs115 === errors;
+}
+else {
+var valid18 = true;
+}
+if(valid18){
+if(data51.fetched_at !== undefined){
+let data57 = data51.fetched_at;
+const _errs117 = errors;
+if(errors === _errs117){
+if(errors === _errs117){
+if(typeof data57 === "string"){
+if(!(formats2.validate(data57))){
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/fetched_at",schemaPath:"#/properties/results/items/properties/passage/properties/fetched_at/format",keyword:"format",params:{format: "date-time"},message:"must match format \""+"date-time"+"\""}];
+return false;
+}
+}
+else {
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage/fetched_at",schemaPath:"#/properties/results/items/properties/passage/properties/fetched_at/type",keyword:"type",params:{type: "string"},message:"must be string"}];
+return false;
+}
+}
+}
+var valid18 = _errs117 === errors;
+}
+else {
+var valid18 = true;
+}
+}
+}
+}
+}
+}
+}
+}
+}
+else {
+validate20.errors = [{instancePath:instancePath+"/results/" + i2+"/passage",schemaPath:"#/properties/results/items/properties/passage/type",keyword:"type",params:{type: "object"},message:"must be object"}];
+return false;
+}
+}
+var valid6 = _errs105 === errors;
+}
+else {
+var valid6 = true;
+}
+}
 }
 }
 }
@@ -1940,19 +2106,19 @@ var valid0 = true;
 }
 if(valid0){
 if(data.timings_ms !== undefined){
-let data51 = data.timings_ms;
-const _errs105 = errors;
-if(errors === _errs105){
-if(data51 && typeof data51 == "object" && !Array.isArray(data51)){
-for(const key10 in data51){
-let data52 = data51[key10];
-const _errs108 = errors;
-if(!((typeof data52 == "number") && (isFinite(data52)))){
-validate20.errors = [{instancePath:instancePath+"/timings_ms/" + key10.replace(/~/g, "~0").replace(/\//g, "~1"),schemaPath:"#/properties/timings_ms/additionalProperties/type",keyword:"type",params:{type: "number"},message:"must be number"}];
+let data58 = data.timings_ms;
+const _errs119 = errors;
+if(errors === _errs119){
+if(data58 && typeof data58 == "object" && !Array.isArray(data58)){
+for(const key11 in data58){
+let data59 = data58[key11];
+const _errs122 = errors;
+if(!((typeof data59 == "number") && (isFinite(data59)))){
+validate20.errors = [{instancePath:instancePath+"/timings_ms/" + key11.replace(/~/g, "~0").replace(/\//g, "~1"),schemaPath:"#/properties/timings_ms/additionalProperties/type",keyword:"type",params:{type: "number"},message:"must be number"}];
 return false;
 }
-var valid18 = _errs108 === errors;
-if(!valid18){
+var valid19 = _errs122 === errors;
+if(!valid19){
 break;
 }
 }
@@ -1962,81 +2128,81 @@ validate20.errors = [{instancePath:instancePath+"/timings_ms",schemaPath:"#/prop
 return false;
 }
 }
-var valid0 = _errs105 === errors;
+var valid0 = _errs119 === errors;
 }
 else {
 var valid0 = true;
 }
 if(valid0){
 if(data.versions !== undefined){
-let data53 = data.versions;
-const _errs110 = errors;
-if(errors === _errs110){
-if(data53 && typeof data53 == "object" && !Array.isArray(data53)){
-let missing10;
-if((((data53.engine === undefined) && (missing10 = "engine")) || ((data53.snapshot === undefined) && (missing10 = "snapshot"))) || ((data53.prompts === undefined) && (missing10 = "prompts"))){
-validate20.errors = [{instancePath:instancePath+"/versions",schemaPath:"#/properties/versions/required",keyword:"required",params:{missingProperty: missing10},message:"must have required property '"+missing10+"'"}];
+let data60 = data.versions;
+const _errs124 = errors;
+if(errors === _errs124){
+if(data60 && typeof data60 == "object" && !Array.isArray(data60)){
+let missing11;
+if((((data60.engine === undefined) && (missing11 = "engine")) || ((data60.snapshot === undefined) && (missing11 = "snapshot"))) || ((data60.prompts === undefined) && (missing11 = "prompts"))){
+validate20.errors = [{instancePath:instancePath+"/versions",schemaPath:"#/properties/versions/required",keyword:"required",params:{missingProperty: missing11},message:"must have required property '"+missing11+"'"}];
 return false;
 }
 else {
-const _errs112 = errors;
-for(const key11 in data53){
-if(!((((key11 === "engine") || (key11 === "snapshot")) || (key11 === "prompts")) || (key11 === "models"))){
-validate20.errors = [{instancePath:instancePath+"/versions",schemaPath:"#/properties/versions/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key11},message:"must NOT have additional properties"}];
+const _errs126 = errors;
+for(const key12 in data60){
+if(!((((key12 === "engine") || (key12 === "snapshot")) || (key12 === "prompts")) || (key12 === "models"))){
+validate20.errors = [{instancePath:instancePath+"/versions",schemaPath:"#/properties/versions/additionalProperties",keyword:"additionalProperties",params:{additionalProperty: key12},message:"must NOT have additional properties"}];
 return false;
 break;
 }
 }
-if(_errs112 === errors){
-if(data53.engine !== undefined){
-const _errs113 = errors;
-if(typeof data53.engine !== "string"){
+if(_errs126 === errors){
+if(data60.engine !== undefined){
+const _errs127 = errors;
+if(typeof data60.engine !== "string"){
 validate20.errors = [{instancePath:instancePath+"/versions/engine",schemaPath:"#/properties/versions/properties/engine/type",keyword:"type",params:{type: "string"},message:"must be string"}];
 return false;
 }
-var valid19 = _errs113 === errors;
+var valid20 = _errs127 === errors;
 }
 else {
-var valid19 = true;
+var valid20 = true;
 }
-if(valid19){
-if(data53.snapshot !== undefined){
-const _errs115 = errors;
-if(typeof data53.snapshot !== "string"){
+if(valid20){
+if(data60.snapshot !== undefined){
+const _errs129 = errors;
+if(typeof data60.snapshot !== "string"){
 validate20.errors = [{instancePath:instancePath+"/versions/snapshot",schemaPath:"#/properties/versions/properties/snapshot/type",keyword:"type",params:{type: "string"},message:"must be string"}];
 return false;
 }
-var valid19 = _errs115 === errors;
+var valid20 = _errs129 === errors;
 }
 else {
-var valid19 = true;
+var valid20 = true;
 }
-if(valid19){
-if(data53.prompts !== undefined){
-const _errs117 = errors;
-if(typeof data53.prompts !== "string"){
+if(valid20){
+if(data60.prompts !== undefined){
+const _errs131 = errors;
+if(typeof data60.prompts !== "string"){
 validate20.errors = [{instancePath:instancePath+"/versions/prompts",schemaPath:"#/properties/versions/properties/prompts/type",keyword:"type",params:{type: "string"},message:"must be string"}];
 return false;
 }
-var valid19 = _errs117 === errors;
+var valid20 = _errs131 === errors;
 }
 else {
-var valid19 = true;
+var valid20 = true;
 }
-if(valid19){
-if(data53.models !== undefined){
-let data57 = data53.models;
-const _errs119 = errors;
-if(errors === _errs119){
-if(data57 && typeof data57 == "object" && !Array.isArray(data57)){
-for(const key12 in data57){
-const _errs122 = errors;
-if(typeof data57[key12] !== "string"){
-validate20.errors = [{instancePath:instancePath+"/versions/models/" + key12.replace(/~/g, "~0").replace(/\//g, "~1"),schemaPath:"#/properties/versions/properties/models/additionalProperties/type",keyword:"type",params:{type: "string"},message:"must be string"}];
+if(valid20){
+if(data60.models !== undefined){
+let data64 = data60.models;
+const _errs133 = errors;
+if(errors === _errs133){
+if(data64 && typeof data64 == "object" && !Array.isArray(data64)){
+for(const key13 in data64){
+const _errs136 = errors;
+if(typeof data64[key13] !== "string"){
+validate20.errors = [{instancePath:instancePath+"/versions/models/" + key13.replace(/~/g, "~0").replace(/\//g, "~1"),schemaPath:"#/properties/versions/properties/models/additionalProperties/type",keyword:"type",params:{type: "string"},message:"must be string"}];
 return false;
 }
-var valid20 = _errs122 === errors;
-if(!valid20){
+var valid21 = _errs136 === errors;
+if(!valid21){
 break;
 }
 }
@@ -2046,10 +2212,10 @@ validate20.errors = [{instancePath:instancePath+"/versions/models",schemaPath:"#
 return false;
 }
 }
-var valid19 = _errs119 === errors;
+var valid20 = _errs133 === errors;
 }
 else {
-var valid19 = true;
+var valid20 = true;
 }
 }
 }
@@ -2062,7 +2228,7 @@ validate20.errors = [{instancePath:instancePath+"/versions",schemaPath:"#/proper
 return false;
 }
 }
-var valid0 = _errs110 === errors;
+var valid0 = _errs124 === errors;
 }
 else {
 var valid0 = true;
@@ -2090,8 +2256,8 @@ validate20.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 
 export const isHealth = validate41;
 const schema38 = {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"health.schema.json","title":"Health","description":"GET /api/health. The HUD shows only counts present here; a missing count is not shown, never guessed.","type":"object","required":["mode","snapshot","counts"],"additionalProperties":false,"properties":{"mode":{"enum":["live","replay","mock"]},"models":{"type":"object","additionalProperties":{"type":"string"}},"snapshot":{"type":"string"},"counts":{"type":"object","additionalProperties":false,"properties":{"pages":{"type":"integer","minimum":0},"profiles":{"type":"integer","minimum":0},"sources":{"type":"integer","minimum":0}}},"status":{"description":"degraded when a model call failed in the last hour, or when the mode is live and today's call budget is used up.","enum":["ok","degraded"]},"uptime_s":{"type":"integer","minimum":0},"failures_last_hour":{"description":"Failed model calls in the last hour, counted per role and failure marker. Roles and markers only, never error text.","type":"object","propertyNames":{"pattern":"^[a-z_]+$","maxLength":32},"additionalProperties":{"type":"object","propertyNames":{"pattern":"^[a-z0-9_]+$","maxLength":32},"additionalProperties":{"type":"integer","minimum":1}}},"budget":{"description":"Live model calls allowed and used today (UTC day). Absent when the mode is not live.","type":"object","required":["limit","used"],"additionalProperties":false,"properties":{"limit":{"type":"integer","minimum":0},"used":{"type":"integer","minimum":0}}}}};
-const pattern11 = new RegExp("^[a-z_]+$", "u");
-const pattern12 = new RegExp("^[a-z0-9_]+$", "u");
+const pattern12 = new RegExp("^[a-z_]+$", "u");
+const pattern13 = new RegExp("^[a-z0-9_]+$", "u");
 
 function validate41(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 /*# sourceURL="health.schema.json" */;
@@ -2318,7 +2484,7 @@ vErrors.push(err0);
 errors++;
 }
 else {
-if(!pattern11.test(key3)){
+if(!pattern12.test(key3)){
 const err1 = {instancePath:instancePath+"/failures_last_hour",schemaPath:"#/properties/failures_last_hour/propertyNames/pattern",keyword:"pattern",params:{pattern: "^[a-z_]+$"},message:"must match pattern \""+"^[a-z_]+$"+"\"",propertyName:key3};
 if(vErrors === null){
 vErrors = [err1];
@@ -2365,7 +2531,7 @@ vErrors.push(err3);
 errors++;
 }
 else {
-if(!pattern12.test(key5)){
+if(!pattern13.test(key5)){
 const err4 = {instancePath:instancePath+"/failures_last_hour/" + key4.replace(/~/g, "~0").replace(/\//g, "~1"),schemaPath:"#/properties/failures_last_hour/additionalProperties/propertyNames/pattern",keyword:"pattern",params:{pattern: "^[a-z0-9_]+$"},message:"must match pattern \""+"^[a-z0-9_]+$"+"\"",propertyName:key5};
 if(vErrors === null){
 vErrors = [err4];
@@ -3670,7 +3836,7 @@ validate43.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
 export const isSourcesList = validate45;
 const schema41 = {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"sources.schema.json","title":"SourcesList","description":"GET /api/sources. Every institution configured under sources/, with what the loaded snapshot holds from it. Counts are read from the stored pages and profiles, never estimated.","type":"object","required":["snapshot","sources"],"additionalProperties":false,"properties":{"snapshot":{"type":"string"},"sources":{"type":"array","items":{"type":"object","required":["id","name","hosts","kinds","pages","profiles","newest_fetched_at"],"additionalProperties":false,"properties":{"id":{"type":"string","pattern":"^[a-z0-9-]+$"},"name":{"type":"string","minLength":1},"hosts":{"type":"array","items":{"type":"string","pattern":"^[a-z0-9.-]+$"}},"kinds":{"description":"The profile kinds the snapshot holds for this source.","type":"array","uniqueItems":true,"items":{"$ref":"profile.schema.json#/properties/kind"}},"pages":{"type":"integer","minimum":0},"profiles":{"type":"integer","minimum":0},"newest_fetched_at":{"description":"When the most recently fetched page of this source was fetched; null only when it has no pages.","type":["string","null"],"format":"date-time"}},"if":{"properties":{"pages":{"const":0}}},"then":{"properties":{"newest_fetched_at":{"type":"null"}}},"else":{"properties":{"newest_fetched_at":{"type":"string"}}}}}}};
 const schema42 = {"enum":["person","unit","project","infrastructure","call","service","space"]};
-const pattern17 = new RegExp("^[a-z0-9.-]+$", "u");
+const pattern18 = new RegExp("^[a-z0-9.-]+$", "u");
 const func0 = runtime_equal;
 
 function validate45(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
@@ -3873,7 +4039,7 @@ let data9 = data8[i1];
 const _errs24 = errors;
 if(errors === _errs24){
 if(typeof data9 === "string"){
-if(!pattern17.test(data9)){
+if(!pattern18.test(data9)){
 validate45.errors = [{instancePath:instancePath+"/sources/" + i0+"/hosts/" + i1,schemaPath:"#/properties/sources/items/properties/hosts/items/pattern",keyword:"pattern",params:{pattern: "^[a-z0-9.-]+$"},message:"must match pattern \""+"^[a-z0-9.-]+$"+"\""}];
 return false;
 }
