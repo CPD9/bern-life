@@ -13,7 +13,7 @@ describe("buildReport", () => {
       "CGM",
       "Blutzuckersensor",
     ]);
-    expect(report.modeLabels).toEqual(["MOCK", "FIXTURE"]);
+    expect(report.modeLabels).toEqual(["Sample data"]);
     expect(report.snapshot).toBe("fixture");
     expect(report.cards).toHaveLength(1);
     expect(report.cards[0]).toMatchObject({
@@ -36,10 +36,10 @@ describe("buildReport", () => {
     });
   });
 
-  test("an engine answer without a model is labelled Plain search, never MOCK", () => {
-    expect(buildReport(resultFixture, madeAt, false)!.modeLabels).toEqual(["Plain search"]);
+  test("an engine answer without a model is labelled Your words only, never Sample data", () => {
+    expect(buildReport(resultFixture, madeAt, false)!.modeLabels).toEqual(["Your words only"]);
     const replayed = { ...copyOf(resultFixture), mode: "replay" as const };
-    expect(buildReport(replayed, madeAt, false)!.modeLabels).toEqual(["Replay"]);
+    expect(buildReport(replayed, madeAt, false)!.modeLabels).toEqual(["Recorded"]);
   });
 
   test("chips are exactly the metrics' covers and missing", () => {

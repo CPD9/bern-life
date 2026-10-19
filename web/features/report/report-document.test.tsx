@@ -53,7 +53,7 @@ test("the proof sentence marks the topic words and links to the sentence on the 
 test("the footer names the snapshot and the mode", () => {
   renderReport();
   expect(document.querySelector("footer")!.textContent).toContain("Snapshot fixture");
-  expect(document.querySelector("footer")!.textContent).toContain("MOCK · FIXTURE");
+  expect(document.querySelector("footer")!.textContent).toContain("Sample data");
 });
 
 test("each quote says how to correct it on screen, and the legend says so on paper", () => {

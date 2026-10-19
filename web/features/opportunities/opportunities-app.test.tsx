@@ -44,7 +44,9 @@ describe("OpportunitiesApp", () => {
       { query: "Lab or office space for a small team", kinds: ["call", "service", "space"] },
     ]);
     expect(screen.getByRole("status").textContent).toBe("1 opportunity");
-    expect(screen.getByText("MOCK")).toBeTruthy();
+    expect(screen.getByText("Sample data.").parentElement?.textContent).toBe(
+      "Sample data. These results are invented for testing, not from any page.",
+    );
     expect(screen.getByText("slot call-example-demo-seed-grant")).toBeTruthy();
     expect(screen.queryByText("Ada Muster")).toBeNull();
   });
@@ -60,7 +62,7 @@ describe("OpportunitiesApp", () => {
     expect(screen.getByRole("status").textContent).toBe(
       "No funding calls, services or spaces matched.",
     );
-    expect(screen.queryByText("MOCK")).toBeNull();
+    expect(screen.queryByText("Sample data.")).toBeNull();
   });
 
   test("an abstention is said plainly", async () => {

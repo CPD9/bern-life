@@ -43,8 +43,8 @@ export function GarageApp({
       <p>The models behind the Navigator, and the numbers for this snapshot.</p>
       {fixtureMode && state.status === "ok" && (
         <p className="bg-warn-bg text-warn-ink rounded-2xl px-4 py-3 text-sm">
-          <span className="font-extrabold">FIXTURE</span> Invented numbers for the demo, not from
-          the evaluator or the engine.
+          <span className="font-extrabold">Sample data.</span> Invented numbers for the demo, not
+          from the evaluator or the search service.
         </p>
       )}
       {/* Try again unmounts its own button, so focus moves here instead of falling to the page. */}

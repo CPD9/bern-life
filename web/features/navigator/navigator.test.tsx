@@ -74,33 +74,47 @@ describe("Navigator", () => {
     expect(screen.queryByRole("list", { name: "Example questions" })).toBeNull();
   });
 
-  test("a mock answer in fixture mode shows the MOCK banner and the expanded terms", async () => {
+  test("a mock answer in fixture mode shows the sample data banner and the expanded terms", async () => {
     render(<Harness api={answering(resultFixture)} fixtureMode />);
     await ask("glucose sensors");
     expect(screen.getByRole("status").textContent).toBe("1 result");
-    expect(screen.getByText("MOCK")).toBeTruthy();
-    expect(screen.queryByText(/Plain search: your words only/)).toBeNull();
+    expect(screen.getByText("Sample data.").parentElement?.textContent).toBe(
+      "Sample data. These results are invented for testing, not from any page.",
+    );
+    expect(screen.queryByText(/your words alone/)).toBeNull();
     expect(screen.getByText(/They are not facts about anyone/)).toBeTruthy();
     expect(screen.getByText("CGM")).toBeTruthy();
   });
 
-  test("a mock answer from the engine says plain search, with no MOCK banner", async () => {
+  test("a mock answer from the engine says your words only, with Why? closed until tapped", async () => {
     render(<Harness api={answering(resultFixture)} />);
     await ask("glucose sensors");
-    expect(screen.queryByText("MOCK")).toBeNull();
-    expect(screen.queryByText(/canned test data/)).toBeNull();
+    expect(screen.queryByText("Sample data.")).toBeNull();
+    expect(screen.queryByText(/invented for testing/)).toBeNull();
     expect(
       screen.getByText(
-        "Plain search: your words only. Apertus adds search terms for the recorded questions, or in a live run.",
+        "No recorded Apertus terms exist for this wording, so the search used your words alone. Every result still comes from a stored page.",
       ),
     ).toBeTruthy();
+    const why = screen.getByRole("button", { name: "Why?" });
+    const explanation = document.getElementById(why.getAttribute("aria-controls")!)!;
+    expect(explanation.hidden).toBe(true);
+    fireEvent.click(why);
+    expect(explanation.hidden).toBe(false);
+    expect(explanation.textContent).toBe(
+      "Apertus adds search terms only for questions recorded in advance, or when it is connected live. For this wording there are none, so the search matched your words as written against the stored public pages; results can be narrower than with added terms. Every fact shown is a quoted span on a stored public page, with a link to the page it came from.",
+    );
   });
 
-  test("a replay answer shows the Replay chip and no MOCK banner", async () => {
+  test("a replay answer says the terms were recorded, with no banner", async () => {
     render(<Harness api={answering({ ...copyOf(resultFixture), mode: "replay" })} />);
     await ask("glucose sensors");
-    expect(screen.queryByText("MOCK")).toBeNull();
-    expect(screen.getByText("Replay · answered from recorded model calls")).toBeTruthy();
+    expect(screen.queryByText("Sample data.")).toBeNull();
+    expect(
+      screen.getByText(
+        "Apertus's search terms for this question were recorded earlier; the search itself ran just now over the stored pages.",
+      ),
+    ).toBeTruthy();
   });
 
   test("an abstained answer says there is no verifiable source, in plain words", async () => {
@@ -193,17 +207,17 @@ describe("Navigator", () => {
     render(<Harness api={answering(unread)} />);
     await submitBrief("We are developing a wearable glucose sensor.");
     expect(screen.getByRole("status").textContent).toBe(
-      "Reading a new brief needs the model; this replay has the recorded briefs only.",
+      "Reading a new brief needs Apertus connected live; only briefs recorded earlier can be read here.",
     );
-    expect(screen.queryByText(/Plain search: your words only/)).toBeNull();
+    expect(screen.queryByText(/your words alone/)).toBeNull();
   });
 
-  test("the FIXTURE label shows only in fixture mode", () => {
+  test("the Sample data label shows only in fixture mode", () => {
     const { unmount } = render(<Harness api={answering(resultFixture)} fixtureMode />);
-    expect(screen.getByText("FIXTURE data")).toBeTruthy();
+    expect(screen.getByText("Sample data")).toBeTruthy();
     unmount();
     render(<Harness api={answering(resultFixture)} />);
-    expect(screen.queryByText("FIXTURE data")).toBeNull();
+    expect(screen.queryByText("Sample data")).toBeNull();
   });
 
   test("Make a report hands over the answer on screen, and says so when storage is blocked", async () => {

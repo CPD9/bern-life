@@ -9,7 +9,8 @@ import type { AgentAction } from "./agent-reply";
 import { type SearchState, type Turn, canRetry } from "./conversation";
 import { LumiReply, ResultCards } from "./lumi-reply";
 import { lumiFailureMessage, searchFailureMessage, searchSummary } from "./lumi-text";
-import { ModeChip } from "./mode-chip";
+import { answerSourceFor } from "@/infrastructure/answer-source";
+import { AnswerSourceLine, SampleDataBanner } from "@/infrastructure/ui/answer-source";
 
 function PlainAnswer({
   response,
@@ -21,10 +22,12 @@ function PlainAnswer({
   const baseId = useId();
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="font-bold">{searchSummary(response)}</p>
-        <ModeChip source="answer" mode={response.mode} fixtureMode={fixtureMode} />
-      </div>
+      <p className="font-bold">{searchSummary(response)}</p>
+      {fixtureMode ? (
+        <SampleDataBanner />
+      ) : (
+        <AnswerSourceLine source={answerSourceFor(response.mode, false)} />
+      )}
       {response.results.length > 0 && (
         <ResultCards cards={response.results} cardId={(index) => `${baseId}-card-${index}`} />
       )}

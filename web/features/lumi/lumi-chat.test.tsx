@@ -55,34 +55,39 @@ describe("LumiChat", () => {
     expect(api.calls.asked).toEqual([[{ role: "user", content: demoQuestion }]]);
     expect(conversation().getByText(/I lit up her unit on the map\./)).toBeTruthy();
     expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(screen.getByText("MOCK")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sample data" })).toBeTruthy();
     expect(document.activeElement).toBe(screen.getByLabelText("Message Bärnli"));
     expect(api.calls.searched).toEqual([]);
   });
 
-  test("outside fixture mode a mock answer says Plain search, never MOCK", async () => {
+  test("outside fixture mode a mock answer says Your words only, never Sample data", async () => {
     const api = scripted(
       [failed("not_connected"), { ok: true, value: reply }],
       [{ ok: true, value: resultFixture }],
     );
     render(<Harness api={api} engineMode="replay" />);
     openPanel();
-    expect(screen.getByText("Replay")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Recorded" })).toBeTruthy();
     await say("glucose sensors");
     await say("CGM");
-    expect(screen.queryByText("Replay")).toBeNull();
-    expect(screen.queryByText("MOCK")).toBeNull();
-    expect(screen.getAllByText("Plain search")).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: "Recorded" })).toBeNull();
+    expect(screen.queryByText("Sample data.")).toBeNull();
+    expect(screen.getByRole("button", { name: "Your words only" })).toBeTruthy();
+    expect(
+      screen.getAllByText(
+        "No recorded Apertus terms exist for this wording, so the search used your words alone. Every result still comes from a stored page.",
+      ),
+    ).toHaveLength(2);
   });
 
   test("before a reply the chip says what the HUD says; an answer follows the answer rule", async () => {
     const api = scripted([{ ok: true, value: reply }]);
-    render(<Harness api={api} engineMode="mock" />);
+    render(<Harness api={api} engineMode="replay" />);
     openPanel();
-    expect(screen.getByText("MOCK")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Recorded" })).toBeTruthy();
     await say("glucose sensors");
-    expect(screen.queryByText("MOCK")).toBeNull();
-    expect(screen.getByText("Plain search")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Recorded" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Your words only" })).toBeTruthy();
   });
 
   test("one status line says what changed, and the cards are not announced", async () => {

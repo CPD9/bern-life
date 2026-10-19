@@ -53,7 +53,7 @@ export function briefUnread(response: SearchResponse): boolean {
 
 export function abstainMessage(response: SearchResponse, asked: "search" | "brief"): string {
   if (asked === "brief" && briefUnread(response)) {
-    return "Reading a new brief needs the model; this replay has the recorded briefs only.";
+    return "Reading a new brief needs Apertus connected live; only briefs recorded earlier can be read here.";
   }
   switch (response.abstain_reason) {
     case "no_verifiable_source":

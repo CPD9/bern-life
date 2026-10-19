@@ -25,10 +25,10 @@ export function SourcesApp({ fixtureMode, api = httpSourcesApi }: SourcesAppProp
         <h3 id={`${id}-list`} className="text-lg font-extrabold">
           Institutions crawled
         </h3>
-        <p>Each source is an institution whose public pages the engine crawls.</p>
+        <p>Each source is an institution whose public pages Bern Life reads.</p>
         {fixtureMode && state.status === "ok" && (
           <p className="bg-warn-bg text-warn-ink rounded-2xl px-4 py-3 text-sm">
-            <span className="font-extrabold">FIXTURE</span> Invented sources and counts for the
+            <span className="font-extrabold">Sample data.</span> Invented sources and counts for the
             demo.
           </p>
         )}
