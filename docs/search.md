@@ -165,7 +165,10 @@ reorders a few results below rank 10.
   similarity 0.824.
 - **Premise check:** a person named after a title (`Prof.`, `Dr.`, `PD`, `Frau`, `Mme`, and
   since 2026-10-19 `Pr`, `Pre`, `Dre`, `professeure`, `docteure`, `Prof.in`, `Dr.in`, `Dr.med.`
-  …) must be among the candidates' person names. `PR` in capitals is not a title. A premise is a hypothesis to check, not a fact.
+  …) must be among the candidates' person names. `PR` in capitals is not a title. `Pr`, `Pre`
+  and `Dre` open a name only with their period or after a French article or preposition ("la
+  Pre", "du Pr", "chez la Dre"), so "Pre Clinical Models" in English Title Case names nobody. A
+  premise is a hypothesis to check, not a fact.
 - **Nothing can say why:** no candidate passes rule 5 above. The first two checks look at every
   candidate, as they did when the thresholds were set; this one comes after them.
 

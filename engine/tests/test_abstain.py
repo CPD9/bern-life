@@ -47,6 +47,20 @@ class NamedPeopleTest(unittest.TestCase):
     def test_pr_in_capitals_is_no_title(self):
         self.assertEqual(named_people("PR Campaigns for Bern hospitals"), [])
 
+    def test_short_french_titles_need_their_period_or_a_french_word_before(self):
+        for query in (
+            "Who works with Pre Clinical Models of Sepsis?",
+            "Pre Clinical Imaging of Tumours",
+            "Pr Gene Therapy for Retinal Disease",
+            "Is there a Pre Clinical Imaging lab?",
+        ):
+            self.assertEqual(named_people(query), [], query)
+        self.assertEqual(named_people("la Pre Ada Muster"), [("ada", "muster")])
+        self.assertEqual(named_people("Pre. Ada Muster"), [("ada", "muster")])
+        self.assertEqual(named_people("Projets du Pr Ben Beispiel"), [("ben", "beispiel")])
+        self.assertEqual(named_people("à la Dre Dora Demo"), [("dora", "demo")])
+        self.assertEqual(named_people("Travaux chez Dre Dora Demo"), [("dora", "demo")])
+
     def test_no_title_no_name(self):
         self.assertEqual(named_people("Ada Muster glucose sensors"), [])
         self.assertEqual(named_people("Dr. who studies sleep"), [])
@@ -69,6 +83,10 @@ class AbstainTest(unittest.TestCase):
         ):
             self.assertEqual(abstain_reason(query, found), "no_verifiable_source", query)
         self.assertIsNone(abstain_reason("Projets de la Pre Ada Muster", found))
+
+    def test_an_english_title_case_question_with_pre_does_not_abstain(self):
+        found = [candidate("Ada Muster")]
+        self.assertIsNone(abstain_reason("Who works with Pre Clinical Models of Sepsis?", found))
 
     def test_a_named_person_found_among_candidates_passes(self):
         found = [candidate("Prof. Dr. Ada Muster")]

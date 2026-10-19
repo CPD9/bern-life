@@ -2,9 +2,9 @@
 
 Two checks. Weak support: no candidate matches enough of the query's word weight and none is
 close enough in meaning; both thresholds were set on eval/dev.jsonl only (docs/search.md). And a
-premise check: a person the query names after a title ("Prof. X", "Dr. X", "Pre X", "Prof.in X")
-is a hypothesis, not a fact, and must be found among the candidates' names; otherwise the answer
-would be about somebody else. A name with no title is not detected.
+premise check: a person the query names after a title ("Prof. X", "Dr. X", "la Pre X",
+"Prof.in X") is a hypothesis, not a fact, and must be found among the candidates' names;
+otherwise the answer would be about somebody else. A name with no title is not detected.
 """
 
 import re
@@ -24,6 +24,11 @@ OPENING_TITLES = frozenset(
 )
 # "PR" in capitals is public relations, not the French "Pr" (professeur).
 ACRONYMS = frozenset({"PR"})
+# The short French titles are English words too ("Pre Clinical Models"), so they open a name
+# only with their period ("Pr.") or after a French article or preposition ("la Pre", "du Pr").
+SHORT_FRENCH = frozenset({"pr", "pre", "dre"})
+FRENCH_BEFORE = frozenset({"le", "la", "du", "de", "au", "à", "par", "avec", "chez"})
+WITH_PERIOD = re.compile(r"^\W*[^\W\d_]+\.")
 NAME_WORD = re.compile(r"^[^\W\d_][^\W\d_'’-]*(?:[-'’][^\W\d_]+)*$")
 POSSESSIVE = re.compile(r"(?:'s|’s|')$")
 MAX_NAME_WORDS = 3
@@ -35,7 +40,7 @@ def named_people(query: str) -> list[tuple[str, ...]]:
     people = []
     index = 0
     while index < len(words):
-        if not opens_name(words[index]):
+        if not opens_name(words[index], words[index - 1] if index else ""):
             index += 1
             continue
         index += 1
@@ -47,10 +52,15 @@ def named_people(query: str) -> list[tuple[str, ...]]:
     return people
 
 
-def opens_name(word: str) -> bool:
-    """A title a name follows: "Prof.", "Dre", "Prof.in", "Dr.med." (more titles may follow)."""
+def opens_name(word: str, before: str = "") -> bool:
+    """A title a name follows: "Prof.", "la Dre", "Pr.", "Prof.in", "Dr.med." (more titles may
+    follow). `before` is the word in front of it."""
     parts = fold(word).split()
     if not parts or parts[0] not in OPENING_TITLES or word.strip(".,;:") in ACRONYMS:
+        return False
+    if parts[0] in SHORT_FRENCH and not (
+        WITH_PERIOD.match(word) or before.lower().strip('("«“') in FRENCH_BEFORE
+    ):
         return False
     return all(part in TITLES | {GENDER_SUFFIX} for part in parts[1:])
 
