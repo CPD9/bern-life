@@ -72,6 +72,26 @@ describe("two tabs on one storage", () => {
   });
 });
 
+describe("storage that reads but cannot write", () => {
+  test("memory stays the truth: saves are kept, a removed item stays removed", () => {
+    const readable = memoryStorage();
+    const full = {
+      getItem: readable.getItem,
+      setItem: () => {
+        throw new Error("quota exceeded");
+      },
+    };
+    const store = createLibraryStore(() => full);
+    expect(store.save(older)).toBe(true);
+    expect(store.save(newer)).toBe(true);
+    expect(store.save(older)).toBe(false);
+    expect(store.get()).toEqual([newer, older]);
+    store.remove(older);
+    expect(store.save(newer)).toBe(false);
+    expect(store.get()).toEqual([newer]);
+  });
+});
+
 describe("parseItems", () => {
   test("drops what does not parse and duplicates, keeping the first copy", () => {
     const raw = JSON.parse(JSON.stringify([older, newer])) as Record<string, unknown>[];

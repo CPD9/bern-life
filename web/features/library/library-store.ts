@@ -1,7 +1,10 @@
 // The Library lives in localStorage for now, per device, under one key. Storage can be missing or
 // throw (private windows, blocked site data), so every access is guarded and memory is the
 // fallback; a stored value that does not parse starts the Library empty rather than breaking it.
-// Another tab may have saved since this one last read, so every change starts from storage.
+// Another tab may have saved since this one last read, so every change starts from storage,
+// unless the last write failed: then storage is stale and memory is the truth until a write works.
+// Saved items hold public-page names and verbatim spans in this browser only. The Library does not
+// drop an item when the engine later deletes its page or profile; that clean-up is a follow-up.
 import { type LibraryItem, addItem, parseItems, removeItem } from "./library-items";
 
 export const libraryKey = "bernlife.library.items";
@@ -36,6 +39,7 @@ function read(storage: () => LibraryStorage): LibraryItem[] | null {
 
 export function createLibraryStore(storage: () => LibraryStorage): LibraryStore {
   let current: readonly LibraryItem[] = read(storage) ?? [];
+  let memoryOnly = false;
   const listeners = new Set<() => void>();
 
   function notify() {
@@ -43,15 +47,17 @@ export function createLibraryStore(storage: () => LibraryStorage): LibraryStore 
   }
 
   function latest(): readonly LibraryItem[] {
-    return read(storage) ?? current;
+    return memoryOnly ? current : (read(storage) ?? current);
   }
 
   function set(next: readonly LibraryItem[]) {
     current = next;
     try {
       storage().setItem(libraryKey, JSON.stringify(next));
+      memoryOnly = false;
     } catch {
       // Kept in memory for this visit only.
+      memoryOnly = true;
     }
     notify();
   }
