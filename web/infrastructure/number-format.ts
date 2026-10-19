@@ -3,8 +3,12 @@
 // output.
 import type { Interval, Measure, Tally } from "./numbers";
 
-export function formatInterval({ value, low, high }: Interval): string {
-  return `${value} [${low}, ${high}]`;
+export function formatBounds({ low, high }: Interval): string {
+  return `[${low}, ${high}]`;
+}
+
+export function formatInterval(interval: Interval): string {
+  return `${interval.value} ${formatBounds(interval)}`;
 }
 
 export function formatTally({ n, of }: Tally): string {

@@ -26,24 +26,43 @@ async function mount(outcomes: NumbersOutcome[], fixtureMode = false) {
   return { api, events, rerender };
 }
 
-function stat(label: string): string | null | undefined {
+/** Every cell of the row named by its plain-words label: value, then the case's bar and chip. */
+function row(label: string): string[] {
   const term = screen.getByText(label, { selector: "dt" });
-  return term.parentElement?.querySelector("dd")?.textContent;
+  return Array.from(term.parentElement!.querySelectorAll("dd"), (dd) => dd.textContent ?? "");
 }
+
+const stat = (label: string) => row(label)[0];
 
 describe("GarageApp numbers", () => {
   test("shows each measured number exactly, with its interval and n of total", async () => {
     await mount([measured()]);
-    expect(stat("Recall@10")).toBe("0.4375 [0.29, 0.58]");
-    expect(stat("MRR")).toBe("0.31");
-    expect(stat("Traceable claims")).toBe("812 / 812");
-    expect(stat("Invented questions abstained")).toBe("7 / 10");
-    expect(stat("False abstentions")).toBe("2 / 38");
-    expect(stat("Invented entities")).toBe("0");
+    expect(stat("Finds the right people")).toBe("0.4375 [0.29, 0.58]");
+    expect(stat("First right answer near the top")).toBe("0.31");
+    expect(stat("Every claim traceable to its page")).toBe("812 / 812");
+    expect(stat("Invented questions refused")).toBe("7 / 10");
+    expect(stat("Real questions wrongly refused")).toBe("2 / 38");
+    expect(stat("Invented people or projects")).toBe("0");
     expect(stat("en")).toBe("0.5");
     expect(stat("de")).toBe("0.25 [0.05, 0.5]");
     expect(screen.getByText("Measured by the evaluator on 48 queries.")).toBeTruthy();
     expect(screen.getByText("Mon 19 Oct 00:30")).toBeTruthy();
+  });
+
+  test("a criterion with a bar in the case says what it asks and whether the number meets it", async () => {
+    await mount([measured()]);
+    expect(row("Finds the right people")).toEqual([
+      "0.4375 [0.29, 0.58]",
+      "Case asks at least 0.8",
+      "not met",
+    ]);
+    expect(row("Every claim traceable to its page")).toEqual([
+      "812 / 812",
+      "Case asks all of them",
+      "met",
+    ]);
+    expect(row("Invented people or projects")).toEqual(["0", "Case asks none", "met"]);
+    expect(row("First right answer near the top")).toEqual(["0.31"]);
   });
 
   test("lists every model with calls, ok and latency in milliseconds", async () => {
@@ -77,7 +96,7 @@ describe("GarageApp numbers", () => {
       fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     });
     expect(api.calls()).toBe(2);
-    expect(stat("Recall@10")).toBe("0.4375 [0.29, 0.58]");
+    expect(stat("Finds the right people")).toBe("0.4375 [0.29, 0.58]");
   });
 
   test("one query is written in the singular, measured or made up", async () => {
