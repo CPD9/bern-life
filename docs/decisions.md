@@ -2,6 +2,24 @@
 
 Newest first. Each entry: date, decision, why, who.
 
+## 2026-10-19 01:10 — Players are people, agents are bears, the office after onboarding (Peter, conductor)
+- **Players are people; agents are bears.** Lumi is your first agent. This supersedes "players are
+  Bern bears" (18 Oct 21:00) and "Agents (Navigator, Scout, Matchmaker) are the characters in the
+  world" (18 Oct afternoon). Peter.
+- **After onboarding you land in your office** (the Home tab). The desktop is a feature of the
+  office: you sit at the desk to use it. The phone stays quick access. Peter.
+- **Agents have skills and loops.** Skills are tools the app really has; loops are saved searches
+  whose changes reach you as notifications. Peter's direction, shaped by the conductor.
+- **Notifications are in-app first:** the bell and toasts in the HUD, for messages, connection
+  requests and loop results. Web push and e-mail would come only as an opt-in and after the
+  hackathon, because they need a stored address or a push subscription; the agent sends nothing
+  outside the app without a click. Conductor's recommendation, pending Peter.
+- **The You sheet** (Profile, Goals, Skills, People, Agents) shows real content only: no needs
+  meters, money, online counts or invented activity.
+- **Opportunity places:** opportunity-only sources were first left out of the map's places check,
+  with their places as a follow-up for the world. They now stand at a street address quoted from
+  their own pages; a source without such an address in Bern is listed off the map.
+
 ## 2026-10-18 21:00 — Story mode, the office as hub, bears (Peter)
 - **Story mode** ("Moving your business to Bern") meets the case inside the game: each quest names a
   case criterion and completes only on an app event (`contracts/quest.schema.json`).
@@ -11,6 +29,7 @@ Newest first. Each entry: date, decision, why, who.
   Reports, Messages and Garage; the phone is quick access. The Buy tab becomes the Market of
   connections and knowledge.
 - **Bear theme:** players are Bern bears; the Navigator agent is a floatie companion.
+  (Superseded on 19 Oct: players are people, agents are bears.)
 - **Garage: Apertus only tonight**, with measured numbers; other models (Qwen, TwinLLM arena) are
   roadmap.
 
@@ -41,8 +60,8 @@ Newest first. Each entry: date, decision, why, who.
   night. The engine still stands alone for the jury (`/navigator`, `make run`).
 - **People from public pages are never avatars.** They appear as entries with sources in a place's
   panel; an avatar is for a person who joins and claims a profile. Agents (Navigator, Scout,
-  Matchmaker) are the characters in the world. (Raised in Yaseen's plan; adopted by the conductor;
-  Peter may overrule.)
+  Matchmaker) are the characters in the world (superseded on 19 Oct: agents are bears, and Lumi
+  is the first). (Raised in Yaseen's plan; adopted by the conductor; Peter may overrule.)
 - **Honest HUD:** real counts only; no money, no "online" numbers, no invented activity.
 - **Map without tiles:** a hand-simplified Bern (Aare loop, districts) in three.js, no map service,
   so it runs air-gapped. Institution positions come from addresses on their own pages, with the span.

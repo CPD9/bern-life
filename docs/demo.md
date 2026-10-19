@@ -73,7 +73,12 @@ Back in any result card, open a claim (a role, an expertise, a project). The evi
 verbatim sentence, the page, and the date it was fetched; **Open the page at this sentence** opens
 the institution's page scrolled to that sentence.
 
-## 7. The Navigator
+## 7. Your agent and your office
 
-On the map, the three agents stand in front of the city hall. **Navigator** opens Ask; Scout and
-Matchmaker open the Agents app, which says what they will do.
+After onboarding you land in your office (the **Home** tab) with your agent, Lumi, the bear you
+made in the last onboarding step. Sit at the desk to use the computer: **Agents** lists Lumi's
+skills, such as search, project brief and match report, each with a **Try** that opens it, and
+loops: saved searches you run again by hand, whose new and dropped results reach the bell. On the
+map, three placeholder figures named Navigator, Scout and Matchmaker still stand in front of the
+city hall: **Navigator** opens Ask; Scout and Matchmaker open the phone's Agents app, marked
+Coming next.
