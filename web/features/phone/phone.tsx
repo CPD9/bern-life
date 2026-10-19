@@ -3,7 +3,7 @@
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useEscapeLayer } from "@/infrastructure/ui/escape-layers";
-import { WindowChrome, belowWindowHeader } from "@/infrastructure/ui/window-chrome";
+import { WindowChrome, belowPhoneHeader } from "@/infrastructure/ui/window-chrome";
 import { NotificationCentre } from "./notification-centre";
 import { PhoneHome } from "./phone-home";
 import { PhoneStatusBar } from "./phone-status-bar";
@@ -83,7 +83,7 @@ export function Phone({
     const element = dialog.current;
     if (left === appId || !element?.open) return;
     if (appId !== null) {
-      heading.current?.focus();
+      heading.current?.focus({ preventScroll: true });
       return;
     }
     const tile =
@@ -91,7 +91,7 @@ export function Phone({
         ? null
         : element.querySelector<HTMLElement>(`[data-app-tile="${CSS.escape(left)}"]`)) ??
       element.querySelector<HTMLElement>("[data-app-tile]");
-    tile?.focus();
+    tile?.focus({ preventScroll: true });
   }, [appId]);
 
   // Escape inside an app goes back instead of closing the phone, wherever focus is. A sheet
@@ -115,16 +115,24 @@ export function Phone({
         onOpenNotification(notification);
       }
     : undefined;
-  const transition = reducedMotion ? "" : "motion-safe:animate-phone-in";
+  const push = reducedMotion ? "" : "motion-safe:animate-phone-push";
+  const fade = reducedMotion ? "" : "motion-safe:animate-phone-in";
+  const backTitle =
+    history.previous === null
+      ? "Home"
+      : (apps.find((candidate) => candidate.id === history.previous)?.label ?? "Back");
 
   return (
     <dialog
       ref={dialog}
       aria-label="Phone"
       onClose={handleClose}
-      className="text-ink m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 backdrop:bg-black/40 backdrop:backdrop-blur-sm sm:m-auto sm:h-[min(860px,94dvh)] sm:w-[400px]"
+      className="text-ink m-0 h-dvh max-h-none w-screen max-w-none overflow-clip bg-transparent p-0 backdrop:bg-black/40 backdrop:backdrop-blur-sm sm:m-auto sm:h-[min(860px,94dvh)] sm:w-[400px]"
     >
-      <div className="bg-panel sm:border-device relative flex h-full flex-col overflow-hidden sm:rounded-[2.75rem] sm:border-8">
+      {/* Clipped, not hidden: a hidden-overflow box can still be scrolled by focus() or by the
+          browser's own dialog scrolling, which carried the status bar and title bar out of view
+          until Escape re-rendered the phone. A clipped box cannot scroll. */}
+      <div className="bg-panel sm:border-device relative flex h-full flex-col overflow-clip sm:rounded-[2.75rem] sm:border-8">
         <PhoneStatusBar
           now={now}
           health={health}
@@ -138,19 +146,21 @@ export function Phone({
             <section
               key={app.id}
               aria-labelledby={headingId}
-              className={`flex min-h-0 flex-1 flex-col ${transition}`}
+              className={`flex min-h-0 flex-1 flex-col ${push}`}
             >
               <WindowChrome
                 title={app.label}
                 headingId={headingId}
                 headingRef={heading}
                 onBack={history.back}
+                backLabel={backTitle}
+                variant="phone"
               >
                 {app.content}
               </WindowChrome>
             </section>
           ) : (
-            <div key="home" className={`flex min-h-0 flex-1 flex-col ${transition}`}>
+            <div key="home" className={`flex min-h-0 flex-1 flex-col ${fade}`}>
               <PhoneHome now={now} apps={apps} onOpen={onAppChange} />
             </div>
           )}
@@ -170,7 +180,7 @@ export function Phone({
             <div
               data-phone-overlay
               className={`pointer-events-none absolute inset-x-0 bottom-0 z-30 [contain:layout] ${
-                app && !centreOpen ? belowWindowHeader : "top-0"
+                app && !centreOpen ? belowPhoneHeader : "top-0"
               }`}
             >
               {overlay}

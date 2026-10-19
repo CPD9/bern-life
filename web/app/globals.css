@@ -66,6 +66,7 @@
   --radius-pill: 999px;
   --shadow-panel: 0 8px 24px var(--shadow-color);
   --animate-phone-in: phone-in 180ms ease-out;
+  --animate-phone-push: phone-push 250ms ease-out;
   --animate-cloud-drift: cloud-drift 150s linear infinite;
   --animate-wave-sway: wave-sway 8s ease-in-out infinite alternate;
   --animate-star-twinkle: star-twinkle 2.5s ease-in-out infinite alternate;
@@ -112,6 +113,13 @@ body {
   from {
     opacity: 0;
     transform: translateY(0.75rem) scale(0.98);
+  }
+}
+
+/* An app pushed onto the phone slides in from the right, as an iOS push does. */
+@keyframes phone-push {
+  from {
+    transform: translateX(100%);
   }
 }
 

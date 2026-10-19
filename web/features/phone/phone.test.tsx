@@ -95,6 +95,15 @@ describe("Phone", () => {
     ).toHaveLength(3);
   });
 
+  test("neither the dialog nor the frame can scroll, so the status bar never drifts away", () => {
+    render(<Harness />);
+    openPhone();
+    const dialog = document.querySelector("dialog")!;
+    expect(dialog.className).toContain("overflow-clip");
+    expect(dialog.firstElementChild!.className).toContain("overflow-clip");
+    expect(dialog.className).not.toContain("overflow-hidden");
+  });
+
   test("the status chip says what health says in plain words, and nothing while unknown", () => {
     const { rerender } = render(<Harness health={health("live")} />);
     openPhone();
@@ -137,7 +146,7 @@ describe("Phone", () => {
       fireEvent.click(screen.getByRole("button", { name: "Open settings from outside" })),
     );
     expect(screen.getByRole("heading", { name: "Settings" })).toBeTruthy();
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Back" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Back to Ask" })));
     expect(screen.getByText("Ask content")).toBeTruthy();
     await act(async () => fireEvent.keyDown(document.activeElement!, { key: "Escape" }));
     expect(screen.queryByText("Ask content")).toBeNull();
@@ -163,7 +172,7 @@ describe("Phone", () => {
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Try settings" })));
     expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Settings" }));
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Back" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Back to Ask" })));
     expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Ask" }));
   });
 
@@ -175,8 +184,8 @@ describe("Phone", () => {
     expect(box().classList.contains("top-0")).toBe(true);
 
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
-    const header = screen.getByRole("button", { name: "Back" }).closest("header")!;
-    expect(box().classList.contains("top-14")).toBe(true);
+    const header = screen.getByRole("button", { name: "Back to Home" }).closest("header")!;
+    expect(box().classList.contains("top-11")).toBe(true);
     expect(box().classList.contains("top-0")).toBe(false);
     // The box is layered after the app's header, not around it, so the offset is what keeps
     // toasts off Back and the title.
@@ -190,7 +199,23 @@ describe("Phone", () => {
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Notifications" })));
     expect(screen.getByRole("dialog", { name: "Notifications" })).toBeTruthy();
     expect(box().classList.contains("top-0")).toBe(true);
-    expect(box().classList.contains("top-14")).toBe(false);
+    expect(box().classList.contains("top-11")).toBe(false);
+  });
+
+  test("the back button is named for where it leads: Home, then the app before", async () => {
+    render(<Harness />);
+    openPhone();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Ask" })));
+    const back = () => screen.getByRole("button", { name: /^Back to / });
+    expect([back().getAttribute("aria-label"), back().textContent]).toEqual([
+      "Back to Home",
+      "Home",
+    ]);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Try settings" })));
+    expect([back().getAttribute("aria-label"), back().textContent]).toEqual(["Back to Ask", "Ask"]);
+    const bar = screen.getByRole("heading", { name: "Settings" }).closest("header")!;
+    expect(bar.classList.contains("h-11")).toBe(true);
+    expect(screen.getByRole("button", { name: "Close" }).classList.contains("size-11")).toBe(true);
   });
 
   test("Close shuts the phone and gives focus back to what opened it", async () => {
