@@ -19,7 +19,7 @@ from bernlife.cache import (
 from bernlife.config import ConfigError, call_budget
 from bernlife.explain import explain_top
 from bernlife.llm import ROLES, Router, connect
-from bernlife.llm_gate import CallTally, answered_mode, request_mode, request_scope
+from bernlife.llm_gate import BudgetUsed, CallTally, answered_mode, request_mode, request_scope
 from bernlife.llm_http import ModelUnavailable
 from fake_llm import FakeTransport, models_body
 from search_fakes import PROFILES
@@ -195,6 +195,8 @@ class GateTest(unittest.TestCase):
             str(raised.exception),
             f"expand call not in cache and today's budget is used ({key[:12]})",
         )
+        # A caller tells a spent budget from a brief nobody recorded, both plain misses otherwise.
+        self.assertIsInstance(raised.exception, BudgetUsed)
         self.assertEqual((client.calls, self.outcomes()), (2, ["live", "live", "budget"]))
         self.assertEqual(router.budget_status(), {"limit": 2, "used": 2})
         self.at = NOON + timedelta(hours=12)

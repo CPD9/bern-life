@@ -317,6 +317,7 @@ class SearchDbTest(unittest.TestCase):
         second = brief_search(brief, None, self.store, fake_embedder(), llm)
         self.assertEqual(json.dumps(first), json.dumps(second))
         self.assertEqual(list(result_validator().iter_errors(first)), [])
+        self.assertNotIn("brief_unread", first)
         self.assertEqual(first["query"], "wearable glucose sensors; cryo electron microscopy")
         self.assertEqual(
             [t["span"] for t in first["brief_terms"]],
@@ -341,9 +342,11 @@ class SearchDbTest(unittest.TestCase):
                 response["abstain_reason"],
                 response["mode"],
                 response["brief_terms"],
+                response["brief_unread"],
             ),
-            (True, "no_verifiable_source", "mock", []),
+            (True, "no_verifiable_source", "mock", [], "no_model"),
         )
+        self.assertEqual(list(result_validator().iter_errors(response)), [])
 
     def test_a_team_member_named_only_on_a_matching_project_page_is_shown_through_it(self):
         response = search("carbohydrate estimation", None, self.store, fake_embedder())

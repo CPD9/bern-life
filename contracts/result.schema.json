@@ -37,6 +37,16 @@
         }
       }
     },
+    "brief_unread": {
+      "description": "For a brief Apertus read no need from, why: no_model (no model is connected), not_recorded (a new brief, and the call could not go live), budget_used (today's live calls are spent), model_failed (the model did not answer), no_need_found (the model answered, but no need it named is in the brief word for word). Absent when needs were read, and for a plain query.",
+      "enum": [
+        "no_model",
+        "not_recorded",
+        "budget_used",
+        "model_failed",
+        "no_need_found"
+      ]
+    },
     "mode": {
       "description": "live: a model answered now; replay: from the cache; mock: no model, canned text, the UI shows a MOCK banner.",
       "enum": [
