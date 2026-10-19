@@ -80,7 +80,7 @@ export function BearOutfit({ outfit }: { outfit: OutfitId }) {
       ))}
       {look.collar && (
         <mesh position-y={NECK_Y - 0.03} rotation-x={Math.PI / 2}>
-          <torusGeometry args={[0.16, 0.03, 8, segments]} />
+          <torusGeometry args={[0.2, 0.03, 8, segments]} />
           <Plush colour={look.collar} cloth />
         </mesh>
       )}
