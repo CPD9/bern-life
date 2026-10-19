@@ -1,3 +1,6 @@
+"use client";
+
+import { useRef } from "react";
 import type { LibraryDocument } from "./library-documents";
 import type { DocumentsState } from "./use-documents";
 
@@ -49,45 +52,62 @@ function DocumentTrace({ document }: { document: LibraryDocument }) {
   );
 }
 
-type DocumentListProps = { state: DocumentsState; onRetry: () => void };
-
-export function DocumentList({ state, onRetry }: DocumentListProps) {
+function statusText(state: DocumentsState): string {
   switch (state.status) {
     case "loading":
-      return <p className="text-muted">Loading your documents…</p>;
+      return "Loading your documents…";
     case "signed-out":
-      return (
-        <p>
-          Sign in to see your documents.{" "}
-          <a href="/account" className="font-bold underline">
-            Sign in or join
-          </a>
-        </p>
-      );
+      return "Sign in to see your documents.";
     case "not-connected":
-      return <p>Documents are not connected yet.</p>;
+      return "Documents are not connected yet.";
     case "failed":
-      return (
-        <div className="flex flex-col gap-2">
-          <p>We could not load your documents.</p>
-          <button
-            type="button"
-            onClick={onRetry}
-            className="bg-chip-selected text-chip-selected-ink rounded-pill self-start px-5 py-2 font-bold"
-          >
-            Try again
-          </button>
-        </div>
-      );
-    case "ok":
-      return state.documents.length === 0 ? (
-        <p className="text-muted">No documents uploaded to your account yet.</p>
-      ) : (
+      return "We could not load your documents.";
+    case "ok": {
+      const count = state.documents.length;
+      if (count === 0) return "No documents uploaded to your account yet.";
+      return count === 1 ? "1 document" : `${count} documents`;
+    }
+  }
+}
+
+type DocumentListProps = { state: DocumentsState; onRetry: () => void };
+
+/** A short status line is what screen readers hear; the list itself is read only on request. */
+export function DocumentList({ state, onRetry }: DocumentListProps) {
+  const statusRef = useRef<HTMLParagraphElement>(null);
+
+  function retry() {
+    // The button goes away while loading, so focus waits on the status line.
+    statusRef.current?.focus();
+    onRetry();
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p ref={statusRef} role="status" tabIndex={-1} className="text-muted">
+        {statusText(state)}
+      </p>
+      {state.status === "signed-out" && (
+        <a href="/account" className="self-start font-bold underline">
+          Sign in or join
+        </a>
+      )}
+      {state.status === "failed" && (
+        <button
+          type="button"
+          onClick={retry}
+          className="bg-chip-selected text-chip-selected-ink rounded-pill self-start px-5 py-2 font-bold"
+        >
+          Try again
+        </button>
+      )}
+      {state.status === "ok" && state.documents.length > 0 && (
         <ul aria-label="Your documents" className="flex flex-col gap-3">
           {state.documents.map((document) => (
             <DocumentTrace key={document.id} document={document} />
           ))}
         </ul>
-      );
-  }
+      )}
+    </div>
+  );
 }

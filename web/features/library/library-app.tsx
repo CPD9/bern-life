@@ -37,9 +37,7 @@ export function LibraryApp({
         <h3 id={`${id}-documents`} className="text-lg font-extrabold">
           Documents
         </h3>
-        <div aria-live="polite">
-          <DocumentList state={state} onRetry={retry} />
-        </div>
+        <DocumentList state={state} onRetry={retry} />
       </section>
     </div>
   );

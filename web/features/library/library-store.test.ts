@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { copyOf, resultFixture } from "@/test/fixtures";
 import { entryFromEvidence, entryFromResult, parseItems, savedEventNames } from "./library-items";
 import { createLibraryStore, libraryKey } from "./library-store";
-import { memoryStorage, savedItem } from "./testing";
+import { memoryStorage, memoryStore, savedItem } from "./testing";
 
 const older = savedItem("demo-b", "profile", "2026-10-19T01:00:00.000Z");
 const newer = savedItem("demo-a", "page", "2026-10-19T03:00:00.000Z");
@@ -20,14 +20,14 @@ describe("createLibraryStore", () => {
   });
 
   test("saving the same kind and ref again keeps the first save", () => {
-    const store = createLibraryStore(() => memoryStorage());
+    const store = memoryStore();
     expect(store.save(older)).toBe(true);
     expect(store.save({ ...older, saved_at: "2026-10-19T04:00:00.000Z" })).toBe(false);
     expect(store.get()).toEqual([older]);
   });
 
   test("remove drops only that item and tells listeners", () => {
-    const store = createLibraryStore(() => memoryStorage());
+    const store = memoryStore();
     store.save(older);
     store.save(newer);
     let heard = 0;
@@ -52,6 +52,23 @@ describe("createLibraryStore", () => {
     const store = createLibraryStore(() => blocked);
     expect(store.save(older)).toBe(true);
     expect(store.get()).toEqual([older]);
+  });
+});
+
+describe("two tabs on one storage", () => {
+  test("each change starts from storage, so neither tab overwrites the other", () => {
+    const storage = memoryStorage();
+    const first = createLibraryStore(() => storage);
+    const second = createLibraryStore(() => storage);
+    first.save(older);
+    second.save(newer);
+    expect(createLibraryStore(() => storage).get()).toEqual([newer, older]);
+    expect(first.save(newer)).toBe(false);
+    first.remove(older);
+    expect(createLibraryStore(() => storage).get()).toEqual([newer]);
+    expect(second.get()).toEqual([newer, older]);
+    second.refresh();
+    expect(second.get()).toEqual([newer]);
   });
 });
 

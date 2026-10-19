@@ -2,8 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { act, render, screen, within } from "@testing-library/react";
 import type { DocumentsOutcome, LibraryDocumentsApi } from "./library-documents";
 import { LibraryApp } from "./library-app";
-import { createLibraryStore } from "./library-store";
-import { memoryStorage, savedItem } from "./testing";
+import { memoryStore, savedItem } from "./testing";
 
 function documentsAnswering(outcome: DocumentsOutcome): LibraryDocumentsApi {
   return { list: async () => outcome };
@@ -20,10 +19,7 @@ const demoDocument = {
   owner: { handle: "demo-mara", displayName: "Mara Demo" },
 };
 
-async function renderLibrary(
-  outcome: DocumentsOutcome,
-  store = createLibraryStore(() => memoryStorage()),
-) {
+async function renderLibrary(outcome: DocumentsOutcome, store = memoryStore()) {
   const documents = documentsAnswering(outcome);
   await act(async () => {
     render(<LibraryApp store={store} documents={documents} />);
@@ -55,7 +51,7 @@ describe("LibraryApp", () => {
   });
 
   test("signed out, documents ask you to sign in and saved items still show", async () => {
-    const store = createLibraryStore(() => memoryStorage());
+    const store = memoryStore();
     store.save(savedItem("demo-call", "opportunity"));
     await renderLibrary({ status: "signed-out" }, store);
     expect(screen.getByText(/Sign in to see your documents/)).toBeTruthy();
@@ -69,10 +65,58 @@ describe("LibraryApp", () => {
     expect(screen.getByText(/No saved opportunities yet/)).toBeTruthy();
   });
 
-  test("an empty library says how to save something", async () => {
+  test("an empty library says so plainly, and how to save an opportunity", async () => {
     await renderLibrary({ status: "ok", documents: [] });
-    expect(screen.getByText(/No saved profiles yet. Save one with “Save to library”/)).toBeTruthy();
+    expect(screen.getByText("No saved profiles yet.")).toBeTruthy();
+    expect(screen.getByText("No saved pages yet.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "No saved opportunities yet. Save one with “Save to library” in Opportunities.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByText("No documents uploaded to your account yet.")).toBeTruthy();
+  });
+
+  test("removing moves focus to the next item, then the previous, then the heading", async () => {
+    const store = memoryStore();
+    for (const ref of ["demo-a", "demo-b", "demo-c"]) store.save(savedItem(ref));
+    await renderLibrary({ status: "signed-out" }, store);
+    const removeButton = (ref: string) =>
+      screen.getByRole("button", { name: `Remove Demo ${ref}` });
+    const section = screen.getByRole("region", { name: "Profiles" });
+
+    act(() => removeButton("demo-b").click());
+    expect(document.activeElement).toBe(removeButton("demo-c"));
+    expect(within(section).getByRole("status").textContent).toBe("Removed Demo demo-b");
+
+    act(() => removeButton("demo-c").click());
+    expect(document.activeElement).toBe(removeButton("demo-a"));
+
+    act(() => removeButton("demo-a").click());
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Profiles" }));
+    expect(within(section).getByRole("status").textContent).toBe("Removed Demo demo-a");
+    expect(store.get()).toEqual([]);
+  });
+
+  test("documents that failed load again on Try again, with focus kept on the status", async () => {
+    const outcomes: DocumentsOutcome[] = [
+      { status: "failed" },
+      { status: "ok", documents: [demoDocument] },
+    ];
+    let calls = 0;
+    const documents = { list: async () => outcomes[calls++] ?? { status: "failed" as const } };
+    await act(async () => {
+      render(<LibraryApp store={memoryStore()} documents={documents} />);
+    });
+    const status = screen.getByText("We could not load your documents.");
+    expect(status.getAttribute("role")).toBe("status");
+    await act(async () => {
+      screen.getByRole("button", { name: "Try again" }).click();
+    });
+    expect(calls).toBe(2);
+    expect(status.textContent).toBe("1 document");
+    expect(document.activeElement).toBe(status);
+    expect(screen.getByRole("list", { name: "Your documents" })).toBeTruthy();
   });
 
   test("a documents API that is not there yet is named as not connected", async () => {
