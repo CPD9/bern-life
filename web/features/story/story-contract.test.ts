@@ -55,7 +55,7 @@ test("each step says what completes it, keyed by the event", () => {
     numbers_seen:
       "Open the Garage on your office computer and see the evaluator's numbers for this snapshot.",
     opportunity_saved: "Save a funding call, a service or a space to your library.",
-    connection_saved: "Add a lab or an expert to your network.",
+    connection_saved: "Connect with another member: accept their request, or have yours accepted.",
     library_item_saved: "Save a person or an opportunity to your library from a result card.",
     message_sent: "Send a message to another member in Messages.",
     garage_visited: "Open the Garage on your office computer.",
