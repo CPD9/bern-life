@@ -111,6 +111,27 @@ describe("Navigator", () => {
     expect(screen.getByRole("status").textContent).toBe("1 result");
   });
 
+  test("the controller decides which input shows, so an agent can open the brief", () => {
+    function Driven() {
+      const controller = useNavigator(answering(resultFixture));
+      return (
+        <>
+          <button type="button" onClick={() => controller.setInputMode("brief")}>
+            Read a brief
+          </button>
+          <Navigator controller={controller} fixtureMode={false} />
+        </>
+      );
+    }
+    render(<Driven />);
+    expect(screen.getByLabelText("Ask in your words")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Read a brief" }));
+    expect(screen.getByLabelText("Or paste the text")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Project brief" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+  });
+
   test("a brief shows each need with its sentence and the aspect matrix", async () => {
     render(<Harness api={answering(briefFixture)} />);
     await submitBrief("We are developing a wearable glucose sensor.");

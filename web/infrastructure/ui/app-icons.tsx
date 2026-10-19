@@ -4,11 +4,17 @@ const paths = {
   agents:
     "M12 3v3m-5 3h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2zm2.5 4.5h.01m5 0h.01M9.5 16.5h5",
   projects: "M4 7h16v12H4zM9 7V5h6v2M4 12h16",
+  reports: "M7 3h7l4 4v14H7zm7 0v4h4M10 12h5m-5 4h5",
+  library: "M5 4h3v16H5zm5 0h3v16h-3zm5.2 1 2.9-.8 3.7 15-2.9.8z",
+  opportunities: "M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z",
+  garage: "M3 10l9-6 9 6v10H3zm4 10v-6h10v6M7 17h10",
   settings:
     "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm8 3-2.1-.7.6-2.1-1.9-1.9-2.1.6L13.8 5h-3.6l-.7 2.1-2.1-.6-1.9 1.9.6 2.1L4 12l2.1.7-.6 2.1 1.9 1.9 2.1-.6.7 2.1h3.6l.7-2.1 2.1.6 1.9-1.9-.6-2.1z",
 } as const;
 
-export function AppIcon({ app }: { app: keyof typeof paths }) {
+export type AppIconName = keyof typeof paths;
+
+export function AppIcon({ app }: { app: AppIconName }) {
   return (
     <svg
       viewBox="0 0 24 24"

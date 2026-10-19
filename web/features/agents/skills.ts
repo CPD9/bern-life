@@ -26,7 +26,7 @@ export const skills: readonly Skill[] = [
     id: "report",
     name: "Make a match report",
     sentence:
-      "Saves an answer as a report that opens in a new tab, with every claim linked to its page.",
+      "Saves an answer as a report you keep in Reports, with every claim linked to its page.",
   },
   {
     id: "opportunities",

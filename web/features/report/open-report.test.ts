@@ -10,9 +10,9 @@ function deps(saved: string | null) {
     opened,
     emitted,
     deps: {
-      store: { save: () => saved, load: () => null },
+      store: { save: () => saved, load: () => null, list: () => [] },
       events: { emit: (name: AppEventName) => void emitted.push(name) },
-      open: (path: string) => void opened.push(path),
+      open: (id: string) => void opened.push(id),
     },
   };
 }
@@ -20,7 +20,7 @@ function deps(saved: string | null) {
 test("a saved report opens and counts as report_made", () => {
   const run = deps("r1");
   expect(openReport(resultFixture, true, run.deps)).toBe(true);
-  expect(run.opened).toEqual(["/report/r1"]);
+  expect(run.opened).toEqual(["r1"]);
   expect(run.emitted).toEqual(["report_made"]);
 });
 

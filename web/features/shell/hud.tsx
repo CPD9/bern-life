@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { formatBernShortDate, formatBernTime } from "@/infrastructure/bern-time";
 import { AccountBadge, type HudAccount } from "./account-badge";
 import { hudCounts } from "./hud-items";
@@ -8,9 +9,12 @@ type HudProps = {
   health: HealthState;
   goal: string;
   account: HudAccount;
+  /** The notification bell; the shell does not know where notifications come from. */
+  bell?: ReactNode;
+  onOpenYou?: () => void;
 };
 
-export function Hud({ now, health, goal, account }: HudProps) {
+export function Hud({ now, health, goal, account, bell, onOpenYou }: HudProps) {
   const counts = hudCounts(health.status === "ok" ? health.health : null);
   const mode = health.status === "ok" ? health.health.mode : null;
   return (
@@ -52,7 +56,8 @@ export function Hud({ now, health, goal, account }: HudProps) {
           Engine offline
         </span>
       )}
-      <AccountBadge account={account} />
+      {bell}
+      <AccountBadge account={account} onOpen={onOpenYou} />
     </div>
   );
 }

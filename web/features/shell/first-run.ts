@@ -22,3 +22,8 @@ export function firstRunCard(input: FirstRunInput): FirstRunCard {
   if (input.account === "signed-out" && input.actedAlready && !input.joinDismissed) return "join";
   return input.greetingDismissed ? null : "greeting";
 }
+
+/** Home is your office: someone who finished onboarding lands there; a newcomer starts on the map. */
+export function landingView(onboarded: boolean): "home" | "map" {
+  return onboarded ? "home" : "map";
+}
