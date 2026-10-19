@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 304" width="360" height="304" role="img" aria-labelledby="title" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+<title id="title">Exposure by unit size</title>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="12.0" y="12.5" width="9" height="9" rx="2" fill="#c8102e"/>
+<text x="25.0" y="21.0" font-size="10.5" fill="#4b5260" text-anchor="start">Share of top-10 slots</text>
+<rect x="140.1" y="12.5" width="9" height="9" rx="2" fill="#3d6fb6"/>
+<text x="153.1" y="21.0" font-size="10.5" fill="#4b5260" text-anchor="start">Share of profiles</text>
+<path d="M181.4,35V216.0" stroke="#c3c1b8"/>
+<text x="181.4" y="228.0" font-size="10" fill="#868b94" text-anchor="middle">0</text>
+<path d="M213.5,35V216.0" stroke="#e6e4de"/>
+<text x="213.5" y="228.0" font-size="10" fill="#868b94" text-anchor="middle">0.25</text>
+<path d="M245.7,35V216.0" stroke="#e6e4de"/>
+<text x="245.7" y="228.0" font-size="10" fill="#868b94" text-anchor="middle">0.5</text>
+<path d="M277.8,35V216.0" stroke="#e6e4de"/>
+<text x="277.8" y="228.0" font-size="10" fill="#868b94" text-anchor="middle">0.75</text>
+<path d="M310.0,35V216.0" stroke="#e6e4de"/>
+<text x="310.0" y="228.0" font-size="10" fill="#868b94" text-anchor="middle">1</text>
+<path d="M12,101.5H348" stroke="#c3c1b8"/>
+<text x="348.0" y="31.0" font-size="10" fill="#868b94" text-anchor="end">never shown</text>
+<text x="173.4" y="53.6" font-size="11" fill="#1f2430" text-anchor="end">Small units, ≤ 125.5 profiles (11)</text>
+<path d="M181.4,40.0h20.8a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-20.8z" fill="#c8102e"><title>Small units, ≤ 125.5 profiles (11), Share of top-10 slots: 0.18</title></path>
+<path d="M181.4,50.5h27.2a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-27.2z" fill="#3d6fb6"><title>Small units, ≤ 125.5 profiles (11), Share of profiles: 0.23</title></path>
+<text x="348.0" y="53.6" font-size="11" fill="#4b5260" text-anchor="end">3</text>
+<text x="173.4" y="82.1" font-size="11" fill="#1f2430" text-anchor="end">Large units, &gt; 125.5 profiles (11)</text>
+<path d="M181.4,68.5h103.8a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-103.8z" fill="#c8102e"><title>Large units, &gt; 125.5 profiles (11), Share of top-10 slots: 0.82</title></path>
+<path d="M181.4,79.0h97.4a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-97.4z" fill="#3d6fb6"><title>Large units, &gt; 125.5 profiles (11), Share of profiles: 0.77</title></path>
+<text x="348.0" y="82.1" font-size="11" fill="#4b5260" text-anchor="end">1</text>
+<text x="173.4" y="119.6" font-size="11" fill="#1f2430" text-anchor="end">UniBE, small (11)</text>
+<path d="M181.4,106.0h37.5a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-37.5z" fill="#c8102e"><title>UniBE, small (11), Share of top-10 slots: 0.31</title></path>
+<path d="M181.4,116.5h34.7a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-34.7z" fill="#3d6fb6"><title>UniBE, small (11), Share of profiles: 0.29</title></path>
+<text x="348.0" y="119.6" font-size="11" fill="#4b5260" text-anchor="end">3</text>
+<text x="173.4" y="148.1" font-size="11" fill="#1f2430" text-anchor="end">UniBE, large (9)</text>
+<path d="M181.4,134.5h87.1a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-87.1z" fill="#c8102e"><title>UniBE, large (9), Share of top-10 slots: 0.69</title></path>
+<path d="M181.4,145.0h89.9a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-89.9z" fill="#3d6fb6"><title>UniBE, large (9), Share of profiles: 0.71</title></path>
+<text x="348.0" y="148.1" font-size="11" fill="#4b5260" text-anchor="end">1</text>
+<text x="173.4" y="176.6" font-size="11" fill="#1f2430" text-anchor="end">ARTORG, large (1)</text>
+<path d="M181.4,163.0h126.6a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-126.6z" fill="#c8102e"><title>ARTORG, large (1), Share of top-10 slots: 1.00</title></path>
+<path d="M181.4,173.5h126.6a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-126.6z" fill="#3d6fb6"><title>ARTORG, large (1), Share of profiles: 1.00</title></path>
+<text x="348.0" y="176.6" font-size="11" fill="#4b5260" text-anchor="end">0</text>
+<text x="173.4" y="205.1" font-size="11" fill="#1f2430" text-anchor="end">DCB, large (1)</text>
+<path d="M181.4,191.5h126.6a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-126.6z" fill="#c8102e"><title>DCB, large (1), Share of top-10 slots: 1.00</title></path>
+<path d="M181.4,202.0h126.6a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-126.6z" fill="#3d6fb6"><title>DCB, large (1), Share of profiles: 1.00</title></path>
+<text x="348.0" y="205.1" font-size="11" fill="#4b5260" text-anchor="end">0</text>
+<text x="12.0" y="247.0" font-size="10" fill="#4b5260" text-anchor="start">The units of the three sources, split at the median unit size of 125.5</text>
+<text x="12.0" y="260.5" font-size="10" fill="#4b5260" text-anchor="start">profiles. Above the rule: shares of all profiles and slots; below: shares</text>
+<text x="12.0" y="274.0" font-size="10" fill="#4b5260" text-anchor="start">within each source. In brackets: units in the group. The right column</text>
+<text x="12.0" y="287.5" font-size="10" fill="#4b5260" text-anchor="start">counts the group's units that never reach a top 10.</text>
+</svg>
