@@ -1,8 +1,7 @@
 "use client";
 
 import { type CSSProperties, type PointerEvent, useEffect, useId, useRef } from "react";
-import { ComingNext } from "@/infrastructure/ui/coming-next";
-import { type DesktopApp, desktopComingNext } from "./desktop-apps";
+import type { DesktopApp } from "./desktop-apps";
 import type { FocusRequest } from "./use-desktop";
 import type { DesktopWindow as WindowPlace } from "./window-manager";
 
@@ -94,9 +93,7 @@ export function DesktopWindow({
           <span aria-hidden="true">✕</span>
         </button>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        {app.content ?? <ComingNext text={desktopComingNext[app.id]} />}
-      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{app.content}</div>
     </section>
   );
 }

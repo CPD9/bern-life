@@ -22,7 +22,7 @@ function controllerAt(done: string[]): StoryController {
 }
 
 describe("criterionRows", () => {
-  test("an unmet criterion says why it waits; a playable or met one says nothing", () => {
+  test("an unmet criterion says why it waits; a finishable or met one says nothing", () => {
     const rows = criterionRows(controllerAt(["honest/invented"]).progress);
     expect(rows.map(({ criterion, met, note }) => [criterion, met, note])).toEqual([
       ["c1-right-people", false, null],
@@ -30,10 +30,11 @@ describe("criterionRows", () => {
       ["c3-traceable", false, null],
       ["c4-structured", false, null],
       ["c5-sources", false, noQuestYet],
+      // The garage's numbers count toward Add a new source, but adding one does not report yet.
       [
         "c6-extend",
         false,
-        "The sources admin and the numbers screen are not in the game yet; a new site is one file in sources/.",
+        "Adding a source does not report to the story yet; a new site is one file in sources/.",
       ],
       ["ethics-abstain", true, null],
     ]);
