@@ -17,3 +17,9 @@ Models used at run time (not distributed in this repository):
 Crawled pages belong to their institutions (University of Bern, ARTORG Center,
 Diabetes Center Berne). This repository stores no copies of them; results link
 back to the source page and quote only short evidence spans.
+
+Map data (web/public/world/bern.geo): ©swisstopo, Federal Office of Topography
+swisstopo. swissBUILDINGS3D 3.0, swissTLM3D and the building address register,
+free geodata used under swisstopo's terms of use for free geodata and
+geoservices; reworked (clipped, simplified, projected to the map frame) by
+infra/geo/build.py.
