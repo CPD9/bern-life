@@ -215,7 +215,20 @@ passage on their own page). Those scores are kept outside the repository and pla
 rule above: each lever is adopted or rejected on dev and dev2 only. The final gold run is therefore
 the third time gold is scored for this work, and the report says so.
 
-Results: pending.
+Results (a fresh database per run, replay; recall@10 / MRR; gold not run):
+- Passage on the result's own page (v3 of three, `docs/search.md`): adopted. Against B0: pooled
+  0.642 / 0.482 → 0.698 / 0.518, dev 0.909 / 0.661 → 0.909 / 0.638, dev2 0.452 / 0.356 → 0.548 /
+  0.433. Merged onto the three fixes below, against them: pooled 0.642 / 0.500 → 0.698 / 0.529,
+  dev 0.909 / 0.685 → 0.864 / 0.673 (q923 leaves the top ten: a passage result takes the fourth
+  place of its unit), dev2 0.452 / 0.368 → 0.581 / 0.427. Every row: traceable 100%, passage
+  spans included; 0 invented; 11/12 invented abstained; 1/53 false abstentions.
+- Unit cap counting groups instead of a source's only unit: rejected, recall does not rise. Pooled
+  0.642 / 0.482 as B0, dev and dev2 unchanged (repeat 0.642 / 0.485; v2, the site unit only
+  exempt, 0.642 / 0.482).
+- Via `has_part`, a unit shown through a part with a matching claim: rejected, MRR falls. Pooled
+  0.642 / 0.482 → 0.642 / 0.476, dev2 MRR 0.356 → 0.345 (v2, adding `operates`, 0.642 / 0.476).
+- German compounds split for full text, on the passage merge: rejected, recall does not move (v1);
+  v2 was not finished before the search freeze and is not adopted.
 
 ### 2026-10-19: three fixes to titles and word forms after review, and gold-informed levers (#226), before the runs
 Not a change to the questions, data, metrics or rules above; `eval/gold.jsonl` and
