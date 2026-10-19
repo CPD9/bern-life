@@ -5,6 +5,7 @@
 // Lumi's own.
 import { useId } from "react";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
+import type { AgentAction } from "./agent-reply";
 import { type SearchState, type Turn, isAnswered, isBusy } from "./conversation";
 import { LumiReply, ResultCards } from "./lumi-reply";
 import { lumiFailureMessage, searchFailureMessage, searchSummary } from "./lumi-text";
@@ -22,7 +23,7 @@ function PlainAnswer({
     <>
       <div className="flex flex-wrap items-center gap-2">
         <p className="font-bold">{searchSummary(response)}</p>
-        <ModeChip mode={response.mode} fixtureMode={fixtureMode} />
+        <ModeChip source="answer" mode={response.mode} fixtureMode={fixtureMode} />
       </div>
       {response.results.length > 0 && (
         <ResultCards cards={response.results} cardId={(index) => `${baseId}-card-${index}`} />
@@ -62,9 +63,11 @@ type TurnViewProps = {
   fixtureMode: boolean;
   latest: boolean;
   onRetry: () => void;
+  onRunHeld: (turnId: number, action: AgentAction) => void;
 };
 
-export function TurnView({ turn, name, fixtureMode, latest, onRetry }: TurnViewProps) {
+export function TurnView(props: TurnViewProps) {
+  const { turn, name, fixtureMode, latest, onRetry, onRunHeld } = props;
   const { lumi, search } = turn;
   return (
     <li className="flex flex-col gap-3">
@@ -74,7 +77,14 @@ export function TurnView({ turn, name, fixtureMode, latest, onRetry }: TurnViewP
       </p>
       {lumi.status === "waiting" && <p className="text-muted">{name} is answering…</p>}
       {lumi.status === "failed" && <p>{lumiFailureMessage(lumi.failure, name)}</p>}
-      {lumi.status === "replied" && <LumiReply reply={lumi.reply} name={name} />}
+      {lumi.status === "replied" && (
+        <LumiReply
+          reply={lumi.reply}
+          name={name}
+          held={lumi.held}
+          onRunHeld={(action) => onRunHeld(turn.id, action)}
+        />
+      )}
       {search && <PlainSearch state={search} name={name} fixtureMode={fixtureMode} />}
       {latest && !isAnswered(turn) && !isBusy(turn) && (
         <button

@@ -6,8 +6,9 @@ import { Fragment, useId } from "react";
 import type { SearchResult } from "@/infrastructure/claims";
 import { ResultCard } from "@/infrastructure/ui/result-card";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
-import type { AgentReply } from "./agent-reply";
+import type { AgentAction, AgentReply } from "./agent-reply";
 import { answerCards, splitMentions } from "./conversation";
+import { heldActionLabels } from "./reply-actions";
 
 export function ResultCards({
   cards,
@@ -32,7 +33,42 @@ export function ResultCards({
   );
 }
 
-export function LumiReply({ reply, name }: { reply: AgentReply; name: string }) {
+function HeldActions({
+  held,
+  onRun,
+}: {
+  held: readonly AgentAction[];
+  onRun: (action: AgentAction) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-muted text-sm">
+        This answer came while the panel was closed, so nothing was done yet.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {held.map((action, index) => (
+          <button
+            key={index}
+            type="button"
+            onClick={() => onRun(action)}
+            className="bg-chip rounded-pill px-4 py-2 text-sm font-bold"
+          >
+            {heldActionLabels[action.type]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type LumiReplyProps = {
+  reply: AgentReply;
+  name: string;
+  held: readonly AgentAction[];
+  onRunHeld: (action: AgentAction) => void;
+};
+
+export function LumiReply({ reply, name, held, onRunHeld }: LumiReplyProps) {
   const baseId = useId();
   const reducedMotion = useReducedMotion();
   const cards = answerCards(reply.results);
@@ -68,6 +104,7 @@ export function LumiReply({ reply, name }: { reply: AgentReply; name: string }) 
           ),
         )}
       </p>
+      {held.length > 0 && <HeldActions held={held} onRun={onRunHeld} />}
       {cards.length > 0 && <ResultCards cards={cards} cardId={cardId} />}
     </div>
   );

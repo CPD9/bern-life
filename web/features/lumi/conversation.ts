@@ -3,7 +3,7 @@
 // mentions to its cards.
 import type { SearchResult } from "@/infrastructure/claims";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
-import type { AgentMention, AgentReply } from "./agent-reply";
+import type { AgentAction, AgentMention, AgentReply } from "./agent-reply";
 import type { ChatMessage, LumiFailure } from "./lumi-api";
 
 /** The agent route takes at most this many messages, newest last. */
@@ -11,7 +11,12 @@ export const maxMessages = 12;
 
 export type LumiState =
   | { readonly status: "waiting" }
-  | { readonly status: "replied"; readonly reply: AgentReply }
+  | {
+      readonly status: "replied";
+      readonly reply: AgentReply;
+      /** Actions that arrived while the panel was closed, left for the player to run. */
+      readonly held: readonly AgentAction[];
+    }
   | { readonly status: "failed"; readonly failure: LumiFailure };
 
 /** The plain search, asked only when Lumi could not answer. */

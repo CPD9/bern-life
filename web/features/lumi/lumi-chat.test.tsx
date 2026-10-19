@@ -25,6 +25,7 @@ describe("LumiChat", () => {
     render(<Harness api={scripted([])} />);
     const opener = openPanel();
     expect(document.querySelector("dialog")!.open).toBe(true);
+    expect(screen.getByText("Your agent")).toBeTruthy();
     expect(document.activeElement).toBe(screen.getByLabelText("Message Lumi"));
     await closePanel();
     expect(screen.getByTestId("state").textContent).toBe("closed");
@@ -65,6 +66,16 @@ describe("LumiChat", () => {
     expect(screen.queryByText("Replay")).toBeNull();
     expect(screen.queryByText("MOCK")).toBeNull();
     expect(screen.getAllByText("Plain search")).toHaveLength(2);
+  });
+
+  test("before a reply the chip says what the HUD says; an answer follows the answer rule", async () => {
+    const api = scripted([{ ok: true, value: reply }]);
+    render(<Harness api={api} engineMode="mock" />);
+    openPanel();
+    expect(screen.getByText("MOCK")).toBeTruthy();
+    await say("glucose sensors");
+    expect(screen.queryByText("MOCK")).toBeNull();
+    expect(screen.getByText("Plain search")).toBeTruthy();
   });
 
   test("one status line says what changed, and the cards are not announced", async () => {

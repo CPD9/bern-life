@@ -13,12 +13,12 @@ import {
   useState,
 } from "react";
 import { maxQueryLength } from "@/infrastructure/search-request";
-import type { AnswerMode } from "./agent-reply";
+import type { AgentAction, AnswerMode } from "./agent-reply";
 import { type LumiApi, httpLumiApi } from "./lumi-api";
 import { LumiIntro } from "./lumi-intro";
 import { statusSentence } from "./lumi-text";
 import { TurnView } from "./lumi-turn";
-import { ModeChip } from "./mode-chip";
+import { ModeChip, type ModeChipProps } from "./mode-chip";
 import { type LumiActions, useLumiChat } from "./use-lumi-chat";
 
 export type LumiChatProps = LumiActions & {
@@ -30,7 +30,7 @@ export type LumiChatProps = LumiActions & {
   agentName?: string;
   /** The agent's bear, drawn small beside its name. */
   bear?: ReactNode;
-  /** How the engine answers, from health, shown until Lumi's first reply says it for itself. */
+  /** How the engine answers, from health, shown as the HUD shows it until Lumi's first reply. */
   engineMode?: AnswerMode | null;
   api?: LumiApi;
 };
@@ -53,8 +53,11 @@ export function LumiChat({
   const inputId = useId();
   const [draft, setDraft] = useState("");
   const chat = useLumiChat(api, actions, open);
-  const replyMode = chat.turns.findLast((turn) => turn.lumi.status === "replied")?.lumi;
-  const mode = replyMode?.status === "replied" ? replyMode.reply.mode : engineMode;
+  const replied = chat.turns.findLast((turn) => turn.lumi.status === "replied")?.lumi;
+  const chip: ModeChipProps | null =
+    replied?.status === "replied"
+      ? { source: "answer", mode: replied.reply.mode, fixtureMode }
+      : engineMode && { source: "health", mode: engineMode };
 
   useEffect(() => {
     const element = dialog.current;
@@ -89,6 +92,10 @@ export function LumiChat({
     if (chat.retry()) input.current?.focus();
   }
 
+  function runHeld(turnId: number, action: AgentAction) {
+    if (chat.runHeld(turnId, action)) input.current?.focus();
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault();
     send(draft);
@@ -118,9 +125,9 @@ export function LumiChat({
             <h2 id={titleId} className="truncate text-lg font-extrabold">
               {agentName}
             </h2>
-            <p className="text-muted text-sm">Your Navigator</p>
+            <p className="text-muted text-sm">Your agent</p>
           </div>
-          {mode && <ModeChip mode={mode} fixtureMode={fixtureMode} />}
+          {chip && <ModeChip {...chip} />}
           <button
             type="button"
             onClick={() => dialog.current?.close()}
@@ -144,6 +151,7 @@ export function LumiChat({
                 fixtureMode={fixtureMode}
                 latest={index === chat.turns.length - 1}
                 onRetry={retry}
+                onRunHeld={runHeld}
               />
             ))}
           </ol>
