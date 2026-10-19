@@ -95,6 +95,15 @@ describe("Phone", () => {
     ).toHaveLength(3);
   });
 
+  test("neither the dialog nor the frame can scroll, so the status bar never drifts away", () => {
+    render(<Harness />);
+    openPhone();
+    const dialog = document.querySelector("dialog")!;
+    expect(dialog.className).toContain("overflow-clip");
+    expect(dialog.firstElementChild!.className).toContain("overflow-clip");
+    expect(dialog.className).not.toContain("overflow-hidden");
+  });
+
   test("the engine chip says what health says, and nothing while unknown", () => {
     const { rerender } = render(<Harness health={health("live")} />);
     openPhone();
