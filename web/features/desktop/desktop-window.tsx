@@ -16,8 +16,11 @@ type DesktopWindowProps = {
   onMove: (dx: number, dy: number) => void;
 };
 
-// On a phone-sized screen only the front window shows, filling the desktop; from `sm` up the
-// windows float where they were placed and can be dragged by the title bar.
+const trafficLight = "size-3 shrink-0 rounded-full";
+
+// A Mac window: a 38 pt title bar with the close light at the left and the title centred, dragged
+// by the title bar. On a phone-sized screen only the front window shows, filling the desktop;
+// from `sm` up the windows float where they were placed.
 export function DesktopWindow({
   app,
   place,
@@ -58,8 +61,8 @@ export function DesktopWindow({
       style={position}
       onPointerDownCapture={onFocus}
       onFocusCapture={onFocus}
-      className={`bg-panel border-panel-border absolute inset-0 flex flex-col overflow-hidden border sm:inset-auto sm:top-(--y) sm:left-(--x) sm:h-[min(42rem,calc(100%-3rem))] sm:w-[min(40rem,calc(100%-3rem))] sm:rounded-3xl ${
-        focused ? "shadow-panel" : "max-sm:hidden sm:opacity-95"
+      className={`bg-panel border-panel-border absolute inset-0 flex flex-col overflow-hidden border sm:inset-auto sm:top-(--y) sm:left-(--x) sm:h-[min(42rem,calc(100%-3rem))] sm:w-[min(40rem,calc(100%-3rem))] sm:rounded-xl ${
+        focused ? "shadow-[0_16px_48px_var(--shadow-color)]" : "shadow-panel max-sm:hidden"
       }`}
     >
       <header
@@ -67,31 +70,43 @@ export function DesktopWindow({
         onPointerMove={dragTo}
         onPointerUp={() => (drag.current = null)}
         onPointerCancel={() => (drag.current = null)}
-        className={`border-panel-border flex touch-none items-center gap-3 border-b px-4 py-2 sm:cursor-grab ${
+        className={`border-panel-border relative flex h-[38px] shrink-0 touch-none items-center border-b px-4 sm:cursor-grab ${
           focused ? "bg-chip" : ""
         }`}
       >
-        <span
-          aria-hidden="true"
-          style={{ backgroundColor: app.tile }}
-          className="size-3 shrink-0 rounded-full"
-        />
+        <div className="group flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={`Close ${app.label}`}
+            className={`${trafficLight} flex items-center justify-center bg-[#ff5f57] ring-1 ring-black/10 ring-inset`}
+          >
+            <span
+              aria-hidden="true"
+              className="text-[9px] leading-none font-bold text-black/60 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+            >
+              ✕
+            </span>
+          </button>
+          <span
+            aria-hidden="true"
+            className={`${trafficLight} bg-chip border-panel-border border`}
+          />
+          <span
+            aria-hidden="true"
+            className={`${trafficLight} bg-chip border-panel-border border`}
+          />
+        </div>
         <h2
           ref={heading}
           id={headingId}
           tabIndex={-1}
-          className="flex-1 text-lg font-extrabold outline-none"
+          className={`absolute inset-x-20 top-1/2 -translate-y-1/2 truncate text-center text-[13px] font-semibold outline-none ${
+            focused ? "text-ink" : "text-muted"
+          }`}
         >
           {app.label}
         </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={`Close ${app.label}`}
-          className="rounded-pill hover:bg-panel px-3 py-1 font-bold"
-        >
-          <span aria-hidden="true">✕</span>
-        </button>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{app.content}</div>
     </section>

@@ -45,6 +45,7 @@ export function DesktopSurface({
   const dock = useRef<HTMLDivElement>(null);
   const { windows, setBounds } = controller;
   const front = topWindow(windows);
+  const frontApp = apps.find((candidate) => candidate.id === front?.appId);
   const [settings] = useSettings();
   const reducedMotion = useReducedMotion();
   const still = settings.lite || reducedMotion;
@@ -101,14 +102,17 @@ export function DesktopSurface({
       className="from-sky-top to-sky-bottom text-ink relative isolate flex h-full flex-col bg-linear-to-b"
     >
       <Wallpaper scene={settings.wallpaper} now={now} still={still} />
-      <header className="bg-panel/80 flex items-center gap-3 px-4 py-2 backdrop-blur">
-        <p className="flex-1 font-extrabold">Office computer</p>
-        {now && <p className="text-muted font-bold tabular-nums">{formatBernTime(now)}</p>}
+      <header
+        aria-label="Menu bar"
+        className="bg-panel/70 border-panel-border flex h-7 shrink-0 items-center gap-4 border-b px-4 text-[13px] backdrop-blur"
+      >
+        <p className="min-w-0 flex-1 truncate font-bold">{frontApp?.label ?? "Bern Life"}</p>
+        {now && <p className="tabular-nums">{formatBernTime(now)}</p>}
         {onLeave && (
           <button
             type="button"
             onClick={onLeave}
-            className="bg-panel rounded-pill shadow-panel px-4 py-1.5 font-bold"
+            className="text-muted hover:text-ink rounded-sm font-medium"
           >
             Leave the desk
           </button>
@@ -116,7 +120,7 @@ export function DesktopSurface({
       </header>
       <div ref={area} className="relative min-h-0 flex-1 overflow-hidden">
         {windows.length === 0 && (
-          <p className="text-muted bg-panel/80 rounded-pill absolute top-1/3 left-1/2 -translate-x-1/2 px-5 py-2 text-center text-lg font-bold whitespace-nowrap backdrop-blur">
+          <p className="text-muted absolute inset-x-4 bottom-2 text-center text-xs font-medium">
             Open an app from the dock.
           </p>
         )}
@@ -150,7 +154,7 @@ type DesktopDialogProps = DesktopSurfaceProps & {
   open: boolean;
   onClose: () => void;
   /** Shown above the desktop, such as the toasts, which would sit unseen in the inert world. It is
-   *  placed below the desktop's header, so a toast never covers "Leave the desk". */
+   *  placed below the menu bar, so a toast never covers "Leave the desk". */
   overlay?: ReactNode;
 };
 
@@ -188,7 +192,7 @@ export function DesktopDialog({ open, onClose, overlay, ...surface }: DesktopDia
         // The transform makes this box the frame for fixed-position overlays, such as the toasts.
         <div
           data-desktop-overlay
-          className="pointer-events-none absolute inset-x-0 top-14 bottom-0 z-50 [transform:translateZ(0)]"
+          className="pointer-events-none absolute inset-x-0 top-7 bottom-0 z-50 [transform:translateZ(0)]"
         >
           {overlay}
         </div>
