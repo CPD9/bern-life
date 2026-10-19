@@ -44,6 +44,55 @@
           "minimum": 0
         }
       }
+    },
+    "status": {
+      "description": "degraded when a model call failed in the last hour, or when the mode is live and today's call budget is used up.",
+      "enum": [
+        "ok",
+        "degraded"
+      ]
+    },
+    "uptime_s": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "failures_last_hour": {
+      "description": "Failed model calls in the last hour, counted per role and failure marker. Roles and markers only, never error text.",
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z_]+$",
+        "maxLength": 32
+      },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {
+          "pattern": "^[a-z0-9_]+$",
+          "maxLength": 32
+        },
+        "additionalProperties": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "budget": {
+      "description": "Live model calls allowed and used today (UTC day). Absent when the mode is not live.",
+      "type": "object",
+      "required": [
+        "limit",
+        "used"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "used": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
     }
   }
 }
