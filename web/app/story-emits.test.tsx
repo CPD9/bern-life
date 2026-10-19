@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { type ReactElement, type ReactNode, cloneElement } from "react";
 import { parseNumbers } from "@/features/garage/numbers";
+import type { NumbersOutcome } from "@/features/garage/numbers-api";
 import { numbersBody, queuedApi } from "@/features/garage/testing";
 import { browserLibrary } from "@/features/library/library-store";
 import { callResult } from "@/features/opportunities/testing";
@@ -50,9 +51,12 @@ describe("saving from Opportunities", () => {
 describe("the garage", () => {
   const measured = parseNumbers(numbersBody())!;
 
-  function openGarage(fixtureMode: boolean) {
+  function openGarage(
+    fixtureMode: boolean,
+    outcome: NumbersOutcome = { status: "ok", numbers: measured },
+  ) {
     const { emitted, events } = recorder();
-    const api = queuedApi([{ status: "ok", numbers: measured }]);
+    const api = queuedApi([outcome]);
     const garage = cloneElement(garageApp(fixtureMode, events) as ReactElement<{ api: unknown }>, {
       api,
     });
@@ -70,6 +74,18 @@ describe("the garage", () => {
   test("fixture numbers are a visit, never numbers seen", async () => {
     const { emitted } = openGarage(true);
     await screen.findByText("demo-model-large");
+    expect(emitted).toEqual(["garage_visited"]);
+  });
+
+  test("before /api/numbers answers (not connected yet) it is a visit, never numbers seen", async () => {
+    const { emitted } = openGarage(false, { status: "not_connected" });
+    await screen.findByText("The numbers are not connected yet.");
+    expect(emitted).toEqual(["garage_visited"]);
+  });
+
+  test("numbers that failed to load are a visit, never numbers seen", async () => {
+    const { emitted } = openGarage(false, { status: "error" });
+    await screen.findByText("The numbers could not be loaded.");
     expect(emitted).toEqual(["garage_visited"]);
   });
 });

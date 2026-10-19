@@ -39,8 +39,9 @@ export const appEvents: AppEvents = createAppEvents();
  *   sitting at the desk)
  * - opportunity_saved, library_item_saved: app/shared-apps.tsx (the Library's save button, through
  *   features/library/library-items.ts savedEventNames)
- * - garage_visited, numbers_seen: app/shared-apps.tsx (features/garage/garage-app.tsx; numbers only
- *   when the engine measured them, never a fixture)
+ * - garage_visited, numbers_seen: app/shared-apps.tsx (features/garage/garage-app.tsx). numbers_seen
+ *   only once GET /api/numbers has answered with the evaluator's numbers, never for a fixture, and
+ *   never while the route is not there yet (the garage then says the numbers are not connected)
  * - settled: app/world-settle.tsx (features/settle/settle.tsx, choosing a plot)
  */
 export const emittedToday: readonly AppEventName[] = [
