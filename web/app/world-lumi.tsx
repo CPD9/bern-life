@@ -12,7 +12,6 @@ import { LumiChat } from "@/features/lumi/lumi-chat";
 import type { NavigatorController } from "@/features/navigator/use-navigator";
 import { openReport } from "@/features/report/open-report";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
-import { rememberingLumiApi } from "./lumi-handoff";
 
 type WorldLumiInput = {
   agentName: string;
@@ -41,7 +40,6 @@ export type WorldLumi = {
 export function useWorldLumi(input: WorldLumiInput): WorldLumi {
   const { agentName, bear, lite, fixtureMode, navigator } = input;
   const [open, setOpen] = useState(false);
-  const [api] = useState(() => rememberingLumiApi(input.api ?? httpLumiApi));
   const name = shownAgentName(agentName);
 
   function showOnMap(response: SearchResponse) {
@@ -49,12 +47,10 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
     input.onShowOnMap(response);
   }
 
-  // Ask shows the answer that lists the profile; with no such answer the chat stays as it is.
-  function openProfile(profileId: string) {
-    const answer = api.answerListing(profileId);
-    if (answer === null) return;
+  // Ask shows the answer that lists the profile, as it came, without asking the engine again.
+  function openProfile(_profileId: string, response: SearchResponse) {
     setOpen(false);
-    navigator.show(answer);
+    navigator.show(response);
     input.onOpenAsk();
   }
 
@@ -83,7 +79,7 @@ export function useWorldLumi(input: WorldLumiInput): WorldLumi {
         fixtureMode={fixtureMode}
         bear={open && <SmallBear config={bear} />}
         engineMode={input.engineMode}
-        api={api}
+        api={input.api ?? httpLumiApi}
         onShowOnMap={showOnMap}
         onOpenProfile={openProfile}
         onStartMatchReport={(response) => void openReport(response, fixtureMode)}

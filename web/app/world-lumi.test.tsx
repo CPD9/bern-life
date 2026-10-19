@@ -77,13 +77,3 @@ test("open profile shows the answer that lists the profile in Ask, without a sec
   expect(calls.askOpened).toHaveBeenCalledTimes(1);
   expect(document.querySelector("dialog")!.open).toBe(false);
 });
-
-test("a profile no answer lists leaves the chat open and Ask alone", async () => {
-  const { result, refresh, shown, calls } = setUp(
-    lumiAnswering([{ type: "open_profile", profile_id: "person-demo-nobody" }]),
-  );
-  await ask(refresh, result.current.open, "glucose sensors");
-  expect(shown).toEqual([]);
-  expect(calls.askOpened).not.toHaveBeenCalled();
-  expect(document.querySelector("dialog")!.open).toBe(true);
-});
