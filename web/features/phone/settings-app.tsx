@@ -5,10 +5,12 @@ import { Toggle } from "@/infrastructure/ui/toggle";
 import { useSettings } from "@/infrastructure/use-settings";
 import { type Choice, ChoiceRow } from "./choice-row";
 import type { PhoneHealth } from "./phone-types";
+import { type InAppApi, InAppSetting, httpInAppApi } from "./in-app-setting";
 import { httpProfileApi, type ProfileApi } from "./profile-api";
 import { AboutDataSources } from "./settings-about";
 import { AccountSettings } from "./settings-account";
 import { SettingsSection } from "./settings-section";
+import { type VisitApi, VisitSetting, httpVisitApi } from "./visit-setting";
 
 const nightChoices: readonly Choice<NightMode>[] = [
   { value: "off", label: "Off" },
@@ -19,6 +21,10 @@ const nightChoices: readonly Choice<NightMode>[] = [
 type SettingsAppProps = {
   /** The account and profile routes; tests pass a fake. */
   profileApi?: ProfileApi | undefined;
+  /** Whether messages and requests reach you in the app; tests pass a fake. */
+  inAppApi?: InAppApi | undefined;
+  /** Who may visit your office; tests pass a fake. */
+  visitApi?: VisitApi | undefined;
   /** Snapshot, counts and mode for "About & data sources"; left out, only the intro shows. */
   health?: PhoneHealth | undefined;
   signInHref?: string | undefined;
@@ -28,6 +34,8 @@ type SettingsAppProps = {
 
 export function SettingsApp({
   profileApi = httpProfileApi,
+  inAppApi = httpInAppApi,
+  visitApi = httpVisitApi,
   health,
   signInHref = "/account",
   fixtureMode = false,
@@ -38,15 +46,10 @@ export function SettingsApp({
     <div className="flex flex-col gap-6">
       <SettingsSection title="Account and privacy">
         <AccountSettings api={profileApi} signInHref={signInHref} />
+        <VisitSetting api={visitApi} />
       </SettingsSection>
       <SettingsSection title="Notifications">
-        <Toggle
-          label="In the app"
-          description="Shown here while you use Bern Life."
-          checked
-          disabled
-          onChange={() => undefined}
-        />
+        <InAppSetting api={inAppApi} />
         <Toggle
           label="Push"
           description="Not available yet."

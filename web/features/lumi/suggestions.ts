@@ -1,18 +1,20 @@
 // The messages a suggestion chip sends, word for word, because Lumi has recorded answers for exact
-// strings only. They are docs/demo.md steps 1 and 2 until the strings recorded for the agent are
-// posted under "Recorded strings" on the Run A status issue; then they are swapped here, and
-// nowhere else.
+// strings only. They are the first turns of the conversations in infra/demo/agent.jsonl, recorded
+// live and shipped in the bundle's cache, so they replay with no model.
 
 export type Suggestion = { readonly label: string; readonly text: string };
 
 export const suggestions: readonly Suggestion[] = [
   {
-    label: "Muster Medtech's project brief",
-    text: "Muster Medtech AG (an invented company) is building a night-time alarm for people with type 1 diabetes who live alone. We need partners in Bern for continuous glucose sensing, for detecting sleep and movement at night, and for testing such a device with older patients.",
+    label: "Who works on glucose sensors at DCB?",
+    text: "Who works on glucose sensors at DCB?",
   },
   {
-    label:
-      "Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?",
-    text: "Is anyone in Bern building an alarm that detects low blood sugar at night in elderly people in care homes?",
+    label: "Wer arbeitet am DCB an Glukosesensoren?",
+    text: "Wer arbeitet am DCB an Glukosesensoren?",
+  },
+  {
+    label: "Qui travaille sur les capteurs de glucose au DCB ?",
+    text: "Qui travaille sur les capteurs de glucose au DCB ?",
   },
 ];

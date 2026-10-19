@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 
 // The kit's buttons, on the shared tokens so they follow light and dark. One green primary action
 // per screen; the rest are quiet.
@@ -16,6 +16,8 @@ const base =
 type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> & {
   variant?: ButtonVariant;
   type?: "button" | "submit";
+  /** For giving focus back to the button, as a form it opened closes. */
+  ref?: Ref<HTMLButtonElement> | undefined;
 };
 
 export function Button({

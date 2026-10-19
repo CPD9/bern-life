@@ -26,16 +26,24 @@ export const LUMI: BearConfig = {
   accessory: "scarf",
 };
 
-export type OfficeRoomProps = {
+type RoomLook = {
   lite: boolean;
   reducedMotion: boolean;
   /** The player's figure, standing on the rug; a plain stand-in when absent. */
   player?: ReactNode;
   /** The player's agent bear; Lumi's default look when absent. */
   agent?: BearConfig;
-  onUseDesk: () => void;
-  onGoOutside: () => void;
 };
+
+/** Your own office: the desk sits you down, the door takes you outside. */
+type OwnRoom = { visiting?: undefined; onUseDesk: () => void; onGoOutside: () => void };
+
+/** Someone else's office, read-only: named for its owner, nothing in it does anything. */
+type VisitedRoom = { visiting: string; onUseDesk?: undefined; onGoOutside?: undefined };
+
+export type OfficeRoomProps = RoomLook & (OwnRoom | VisitedRoom);
+
+const still = () => undefined;
 
 function FitCamera() {
   const size = useThree((state) => state.size);
@@ -88,10 +96,12 @@ export function OfficeRoom({
   reducedMotion,
   player,
   agent = LUMI,
-  onUseDesk,
-  onGoOutside,
+  visiting,
+  onUseDesk = still,
+  onGoOutside = still,
 }: OfficeRoomProps) {
   const [pointed, setPointed] = useState<HotspotId | null>(null);
+  const point = visiting === undefined ? setPointed : still;
   const quality = officeQuality(lite);
   const motion = motionFor("idle", { reducedMotion, lite });
 
@@ -99,7 +109,11 @@ export function OfficeRoom({
     <div className="relative isolate flex size-full flex-col">
       <div
         role="img"
-        aria-label="Your office: a desk with a computer and your agent beside it, a bookshelf, a plant, a window and the door"
+        aria-label={
+          visiting === undefined
+            ? "Your office: a desk with a computer and your agent beside it, a bookshelf, a plant, a window and the door"
+            : `${visiting}'s office, as a visitor sees it: a desk with a computer and their agent beside it, a bookshelf, a plant, a window and the door`
+        }
         className={`min-h-0 flex-1 ${pointed === null ? "" : "cursor-pointer"}`}
       >
         {/* Shadows and pixel ratio are fixed when the renderer is created, so lite mode remounts it. */}
@@ -113,11 +127,8 @@ export function OfficeRoom({
           <FitCamera />
           <Lights shadows={quality.shadows} />
           <OfficeQualityProvider value={quality}>
-            <OfficeShell
-              doorGlow={pointed === "door"}
-              door={hotspot("door", onGoOutside, setPointed)}
-            />
-            <Desk glow={pointed === "desk"} handlers={hotspot("desk", onUseDesk, setPointed)} />
+            <OfficeShell doorGlow={pointed === "door"} door={hotspot("door", onGoOutside, point)} />
+            <Desk glow={pointed === "desk"} handlers={hotspot("desk", onUseDesk, point)} />
             <Chair />
             <Bookshelf />
             <Plant />
@@ -131,22 +142,24 @@ export function OfficeRoom({
           </group>
         </Canvas>
       </div>
-      <div className="flex flex-wrap justify-center gap-2 p-4">
-        <button
-          type="button"
-          onClick={onUseDesk}
-          className="bg-primary text-primary-ink rounded-pill px-5 py-2.5 font-extrabold"
-        >
-          Use the computer
-        </button>
-        <button
-          type="button"
-          onClick={onGoOutside}
-          className="bg-chip rounded-pill px-5 py-2.5 font-bold"
-        >
-          Go outside
-        </button>
-      </div>
+      {visiting === undefined && (
+        <div className="flex flex-wrap justify-center gap-2 p-4">
+          <button
+            type="button"
+            onClick={onUseDesk}
+            className="bg-primary text-primary-ink rounded-pill px-5 py-2.5 font-extrabold"
+          >
+            Use the computer
+          </button>
+          <button
+            type="button"
+            onClick={onGoOutside}
+            className="bg-chip rounded-pill px-5 py-2.5 font-bold"
+          >
+            Go outside
+          </button>
+        </div>
+      )}
     </div>
   );
 }

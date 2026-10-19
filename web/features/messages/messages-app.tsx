@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { ConversationList, conversationName } from "./conversation-list";
 import type { Connect } from "./live-client";
 import { FAILURE_TEXT, type MessagesApi } from "./messages-api";
@@ -64,6 +65,42 @@ export function MessagesApp({ controller }: { controller: MessagesController }) 
   );
 }
 
-export function StandaloneMessages({ api, connect }: { api: MessagesApi; connect: Connect }) {
-  return <MessagesApp controller={useMessages(api, connect)} />;
+/** A request to open the direct thread with a handle; a new `key` asks again for the same one. */
+export type StartWith = { readonly handle: string; readonly key: number };
+
+/** Opens (or starts) the direct thread with `startWith.handle` once the list is ready, once per
+ *  key, as "Message" on a member does; `onStarted` lets the host forget the request. */
+function useStartWith(
+  controller: MessagesController,
+  startWith: StartWith | undefined,
+  onStarted: (() => void) | undefined,
+) {
+  const handled = useRef<number | null>(null);
+  const latest = useRef({ controller, onStarted });
+  useEffect(() => {
+    latest.current = { controller, onStarted };
+  });
+  const ready = controller.status === "ready";
+  useEffect(() => {
+    if (!ready || startWith === undefined || handled.current === startWith.key) return;
+    handled.current = startWith.key;
+    void latest.current.controller.start({ kind: "direct", handle: startWith.handle });
+    latest.current.onStarted?.();
+  }, [ready, startWith]);
+}
+
+export function StandaloneMessages({
+  api,
+  connect,
+  startWith,
+  onStarted,
+}: {
+  api: MessagesApi;
+  connect: Connect;
+  startWith?: StartWith | undefined;
+  onStarted?: (() => void) | undefined;
+}) {
+  const controller = useMessages(api, connect);
+  useStartWith(controller, startWith, onStarted);
+  return <MessagesApp controller={controller} />;
 }

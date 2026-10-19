@@ -1,5 +1,7 @@
 // The SQL behind the member directory and office visits. Who may be seen is part of each query:
-// yourself always, a visit visibility of `members` for any signed-in viewer, `public` for anyone.
+// the directory follows each member's profile visibility (who sees your profile), a visit follows
+// their visit visibility (who may visit your office): `members` for any signed-in viewer, `public`
+// for anyone, and your own office always. Nobody is listed to themselves.
 import type { Visibility } from "@/features/accounts/input";
 import type { Db } from "@/infrastructure/db";
 import type { Json, OfficeInput } from "./office";
@@ -8,7 +10,8 @@ export type DirectoryEntry = {
   handle: string;
   displayName: string;
   role: string | null;
-  visitVisibility: Visibility;
+  /** Whether this viewer may visit the member's office. */
+  canVisit: boolean;
 };
 
 export type Office = {
@@ -21,10 +24,14 @@ export type Office = {
 
 type JsonValue = Parameters<Db["json"]>[0];
 
-function visibleTo(db: Db, viewer: string | null) {
+function visitableBy(db: Db, viewer: string | null) {
   return db`(p.visit_visibility = 'public'
              or (p.visit_visibility = 'members' and ${viewer}::uuid is not null)
-             or p.user_id = ${viewer}::uuid)`;
+             or p.user_id is not distinct from ${viewer}::uuid)`;
+}
+
+function profileSeenBy(db: Db, viewer: string | null) {
+  return db`(p.visibility = 'public' or (p.visibility = 'members' and ${viewer}::uuid is not null))`;
 }
 
 export async function saveOffice(
@@ -44,9 +51,9 @@ export async function saveOffice(
 export async function directory(db: Db, viewer: string | null): Promise<DirectoryEntry[]> {
   return db<DirectoryEntry[]>`
     select u.handle, u.display_name as "displayName", p.role,
-           p.visit_visibility::text as "visitVisibility"
+           ${visitableBy(db, viewer)} as "canVisit"
     from user_profile p join app_user u on u.id = p.user_id
-    where ${visibleTo(db, viewer)}
+    where ${profileSeenBy(db, viewer)} and p.user_id is distinct from ${viewer}::uuid
     order by u.display_name, u.handle`;
 }
 
@@ -60,6 +67,6 @@ export async function visibleOffice(
     select u.handle, u.display_name as "displayName", p.office_plot as plot,
            p.office_layout as layout, p.visit_visibility::text as "visitVisibility"
     from user_profile p join app_user u on u.id = p.user_id
-    where u.handle = ${handle} and ${visibleTo(db, viewer)}`;
+    where u.handle = ${handle} and ${visitableBy(db, viewer)}`;
   return office ?? null;
 }

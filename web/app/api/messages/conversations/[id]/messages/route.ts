@@ -2,8 +2,9 @@ import { crossSite, jsonBody, requestUser } from "@/features/accounts/http";
 import { failure } from "@/features/messages/http";
 import { decodeCursor, parseBody, parseLimit } from "@/features/messages/input";
 import { isId } from "@/features/messages/notice";
-import { messagesIn, post } from "@/features/messages/store";
+import { messagesIn } from "@/features/messages/store";
 import { db } from "@/infrastructure/db";
+import { postAndTell } from "../../../arrivals";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -29,6 +30,6 @@ export async function POST(request: Request, { params }: Context): Promise<Respo
   if (!isId(id)) return failure("not_found");
   const body = parseBody(await jsonBody(request));
   if (body === null) return failure("bad_request");
-  const message = await post(db(), user.id, id, body, new Date());
+  const message = await postAndTell(db(), user.id, id, body, new Date());
   return message === null ? failure("not_found") : Response.json({ message }, { status: 201 });
 }
