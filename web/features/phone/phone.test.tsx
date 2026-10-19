@@ -84,43 +84,6 @@ const health = (mode: "live" | "replay" | "mock"): PhoneHealth => ({
 });
 
 describe("Phone", () => {
-  test("grouped apps sit under their heading, above the other apps", () => {
-    const steps: PhoneApp[] = [
-      {
-        id: "case-1",
-        label: "1 People",
-        icon: "1",
-        tile: "#0e7490",
-        content: null,
-        group: "Steps",
-      },
-      {
-        id: "case-2",
-        label: "2 Wording",
-        icon: "2",
-        tile: "#0e7490",
-        content: null,
-        group: "Steps",
-      },
-    ];
-    render(<Harness phoneApps={[{ ...apps[0]!, dock: true }, ...apps.slice(1), ...steps]} />);
-    openPhone();
-    const group = screen.getByRole("region", { name: "Steps" });
-    expect(within(group).getByRole("heading").textContent).toBe("Steps");
-    expect(
-      within(group)
-        .getAllByRole("button")
-        .map((tile) => tile.textContent),
-    ).toEqual(["11 People", "22 Wording"]);
-    const others = screen.getByRole("list", { name: "Apps" });
-    expect(
-      within(others)
-        .getAllByRole("button")
-        .map((tile) => tile.textContent),
-    ).toEqual(["Messages", "Settings"]);
-    expect(group.compareDocumentPosition(others) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
   test("opens as a modal dialog with Bern time and the app tiles", () => {
     render(<Harness />);
     openPhone();
@@ -141,17 +104,17 @@ describe("Phone", () => {
     expect(dialog.className).not.toContain("overflow-hidden");
   });
 
-  test("the engine chip says what health says, and nothing while unknown", () => {
+  test("the status chip says what health says in plain words, and nothing while unknown", () => {
     const { rerender } = render(<Harness health={health("live")} />);
     openPhone();
-    const chip = () => document.querySelector("[aria-live]")!.textContent;
+    const chip = () => document.querySelector("[aria-live] button")?.textContent ?? "";
     expect(chip()).toBe("Live");
     rerender(<Harness health={health("replay")} />);
-    expect(chip()).toBe("Replay");
+    expect(chip()).toBe("Recorded");
     rerender(<Harness health={health("mock")} />);
-    expect(chip()).toBe("MOCK");
+    expect(chip()).toBe("Your words only");
     rerender(<Harness health={{ status: "offline" }} />);
-    expect(chip()).toBe("Engine offline");
+    expect(chip()).toBe("Offline");
     rerender(<Harness health={{ status: "waiting" }} />);
     expect(chip()).toBe("");
     rerender(<Harness />);

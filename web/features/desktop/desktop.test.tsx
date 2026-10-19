@@ -15,9 +15,15 @@ const apps = desktopApps(
   { messages: 2 },
 );
 
-function Harness({ onLeave = () => undefined }: { onLeave?: () => void }) {
+function Harness({
+  onLeave = () => undefined,
+  now = null,
+}: {
+  onLeave?: () => void;
+  now?: Date | null;
+}) {
   const controller = useDesktop();
-  return <DesktopSurface apps={apps} controller={controller} now={null} onLeave={onLeave} />;
+  return <DesktopSurface apps={apps} controller={controller} now={now} onLeave={onLeave} />;
 }
 
 function dockButton(label: string) {
@@ -34,6 +40,31 @@ function frontWindow() {
 }
 
 describe("DesktopSurface", () => {
+  test("the menu bar names the front app, or Bern Life when nothing is open, with the Bern time", () => {
+    render(<Harness now={new Date("2026-10-19T12:00:00Z")} />);
+    const menuBar = screen.getByRole("banner", { name: "Menu bar" });
+    expect(menuBar.textContent).toBe("Bern Life14:00Leave the desk");
+    fireEvent.click(dockButton("Navigator"));
+    fireEvent.click(dockButton("Reports"));
+    expect(menuBar.textContent).toBe("Reports14:00Leave the desk");
+    fireEvent.keyDown(document.activeElement!, { key: "F6" });
+    expect(menuBar.textContent).toBe("Navigator14:00Leave the desk");
+  });
+
+  test("Leave the desk in the menu bar leaves", () => {
+    const onLeave = mock(() => undefined);
+    render(<Harness onLeave={onLeave} />);
+    fireEvent.click(screen.getByRole("button", { name: "Leave the desk" }));
+    expect(onLeave).toHaveBeenCalledTimes(1);
+  });
+
+  test("the hint to open an app shows only while no window is open", () => {
+    render(<Harness />);
+    expect(screen.getByText("Open an app from the dock.")).toBeTruthy();
+    fireEvent.click(dockButton("Navigator"));
+    expect(screen.queryByText("Open an app from the dock.")).toBeNull();
+  });
+
   test("the dock opens an app in a window whose title takes focus", () => {
     render(<Harness />);
     fireEvent.click(dockButton("Navigator"));
@@ -70,13 +101,29 @@ describe("DesktopSurface", () => {
     expect(onLeave).toHaveBeenCalledTimes(1);
   });
 
-  test("the close button closes only its window", () => {
+  test("the close light at the left of the title bar closes only its window", () => {
     render(<Harness />);
     fireEvent.click(dockButton("Navigator"));
     fireEvent.click(dockButton("Reports"));
-    fireEvent.click(screen.getByRole("button", { name: "Close Navigator" }));
+    const close = screen.getByRole("button", { name: "Close Navigator" });
+    expect(close.compareDocumentPosition(screen.getByRole("heading", { name: "Navigator" }))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    fireEvent.click(close);
     expect(screen.queryByRole("region", { name: "Navigator" })).toBeNull();
     expect(windowOf("Reports")).toBeTruthy();
+  });
+
+  test("only the front window's title is full strength", () => {
+    render(<Harness />);
+    fireEvent.click(dockButton("Navigator"));
+    fireEvent.click(dockButton("Reports"));
+    expect(screen.getByRole("heading", { name: "Reports" }).classList.contains("text-ink")).toBe(
+      true,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Navigator" }).classList.contains("text-muted"),
+    ).toBe(true);
   });
 
   test("F6 brings the other window to the front with focus", () => {
@@ -139,7 +186,7 @@ describe("DesktopSurface", () => {
     rerender(<Dialog open />);
     const toast = screen.getByText("A toast");
     expect(toast.closest("dialog")).toBe(document.querySelector("dialog"));
-    // Below the header, so "Leave the desk" stays reachable.
-    expect(toast.closest("[data-desktop-overlay]")?.className.split(" ")).toContain("top-14");
+    // Below the menu bar, so "Leave the desk" stays reachable.
+    expect(toast.closest("[data-desktop-overlay]")?.className.split(" ")).toContain("top-7");
   });
 });

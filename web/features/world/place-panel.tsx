@@ -160,7 +160,7 @@ export function PlacePanel({
               {light.results.length === 1 ? "1 match here" : `${light.results.length} matches here`}
               {fixture && (
                 <span className="rounded-pill bg-chip ml-2 px-2 py-0.5 align-middle text-xs">
-                  FIXTURE
+                  Sample data
                 </span>
               )}
             </h3>

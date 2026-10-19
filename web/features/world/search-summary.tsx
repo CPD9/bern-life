@@ -42,7 +42,7 @@ export function SearchSummary({
       {text !== null && (
         <p className="rounded-pill bg-panel shadow-panel pointer-events-auto flex items-center gap-3 py-1.5 pr-1.5 pl-4 text-sm font-bold">
           {text}
-          {fixture && <span className="rounded-pill bg-chip px-2 py-0.5 text-xs">FIXTURE</span>}
+          {fixture && <span className="rounded-pill bg-chip px-2 py-0.5 text-xs">Sample data</span>}
           {state.status === "results" && (
             <button type="button" onClick={onClear} className="rounded-pill bg-chip px-3 py-1">
               Clear

@@ -56,8 +56,8 @@ export function LumiChat({
   const replied = chat.turns.findLast((turn) => turn.lumi.status === "replied")?.lumi;
   const chip: ModeChipProps | null =
     replied?.status === "replied"
-      ? { source: "answer", mode: replied.reply.mode, fixtureMode }
-      : engineMode && { source: "health", mode: engineMode };
+      ? { mode: replied.reply.mode, fixtureMode }
+      : engineMode && { mode: engineMode, fixtureMode };
 
   useEffect(() => {
     const element = dialog.current;
