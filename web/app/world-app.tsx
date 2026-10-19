@@ -10,17 +10,13 @@ import { useAgentName, usePerson } from "@/features/avatar/use-person";
 import { DesktopDialog } from "@/features/desktop/desktop";
 import { useDesktop } from "@/features/desktop/use-desktop";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
-import { Navigator } from "@/features/navigator/navigator";
 import { useNavigator } from "@/features/navigator/use-navigator";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import { Toasts } from "@/features/notifications/toasts";
 import { notificationStore } from "@/features/notifications/use-notifications";
 import { OfficeView } from "@/features/office/office-view";
 import { useOnboarding } from "@/features/onboarding/use-onboarding";
-import { comingNextText } from "@/features/phone/coming-next-text";
-import { type PhoneApp, Phone } from "@/features/phone/phone";
-import { SettingsApp } from "@/features/phone/settings-app";
-import { openReport } from "@/features/report/open-report";
+import { Phone } from "@/features/phone/phone";
 import type { HudAccount } from "@/features/shell/account-badge";
 import { firstRunCard, landingView } from "@/features/shell/first-run";
 import { GameShell, type WorldView } from "@/features/shell/game-shell";
@@ -28,6 +24,7 @@ import { GuideGreeting } from "@/features/shell/guide-greeting";
 import { Hud } from "@/features/shell/hud";
 import { JoinPrompt, OnboardingPrompt } from "@/features/shell/journey-prompts";
 import { useHealth } from "@/features/shell/use-health";
+import { useOfficeReady } from "@/features/shell/use-office-ready";
 import { CriteriaChecklist } from "@/features/story/criteria-checklist";
 import { QuestPanel } from "@/features/story/quest-panel";
 import type { ShowMeTarget } from "@/features/story/show-me";
@@ -44,9 +41,9 @@ import { useNow } from "@/infrastructure/bern-time";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useSettings } from "@/infrastructure/use-settings";
 import type { SearchResponse, Story } from "@/infrastructure/contract-types.generated";
-import { AppIcon } from "@/infrastructure/ui/app-icons";
-import { ComingNext } from "@/infrastructure/ui/coming-next";
 import { notifyLoop, useOfficeApps } from "./office-apps";
+import { phoneApps } from "./phone-apps";
+import { useUnreadMessages } from "./use-unread-messages";
 import { applyWorldAction, searchHereDraft, worldActionFor } from "./world-search-bridge";
 
 // Composes the features. One Navigator controller lives here, above the phone, so a search
@@ -82,15 +79,17 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
   const desktop = useDesktop();
   const now = useNow();
   const health = useHealth();
-  const officeApps = useOfficeApps({
-    navigator,
+  const unreadMessages = useUnreadMessages(account.state.status === "signed-in");
+  const agents = {
     navigatorApi: httpNavigatorApi,
-    desktop,
-    fixtureMode,
     agentName,
     snapshot: health.status === "ok" ? health.health.snapshot : null,
     notify: notifyLoop,
-  });
+  };
+  const officeApps = useOfficeApps({ ...agents, navigator, desktop, fixtureMode, unreadMessages });
+  const shownView = view ?? landingView(onboarding.done);
+  // Called after useStory, so the story already listens when the office reports it is ready.
+  const sitAtDesk = useOfficeReady(shownView === "home" && onboarding.done);
 
   useEffect(
     () => applyWorldAction(worldActionFor(navigator.state), worldSearch),
@@ -108,7 +107,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     setView("map");
   }
 
-  /** The Navigator opens Ask; the agents still to come open the Agents app, which says what they will do. */
+  /** The Navigator opens Ask; the other agents on the map open the Agents app. */
   function selectAgent(id: AgentId) {
     openApp(id === "navigator" ? "ask" : "agents");
   }
@@ -118,50 +117,13 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     openApp("ask");
   }
 
-  const apps: PhoneApp[] = [
-    {
-      id: "ask",
-      label: "Ask",
-      icon: <AppIcon app="ask" />,
-      tile: "#13804a",
-      content: (
-        <Navigator
-          controller={navigator}
-          fixtureMode={fixtureMode}
-          onShowOnMap={showOnMap}
-          onMakeReport={(response) => openReport(response, fixtureMode)}
-        />
-      ),
-    },
-    {
-      id: "messages",
-      label: "Messages",
-      icon: <AppIcon app="messages" />,
-      tile: "#1d6fd6",
-      content: <ComingNext text={comingNextText.messages} />,
-    },
-    {
-      id: "agents",
-      label: "Agents",
-      icon: <AppIcon app="agents" />,
-      tile: "#6d4bd8",
-      content: <ComingNext text={comingNextText.agents} />,
-    },
-    {
-      id: "projects",
-      label: "Projects & calls",
-      icon: <AppIcon app="projects" />,
-      tile: "#b45309",
-      content: <ComingNext text={comingNextText.projects} />,
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: <AppIcon app="settings" />,
-      tile: "#475569",
-      content: <SettingsApp />,
-    },
-  ];
+  const apps = phoneApps({
+    ...agents,
+    navigator,
+    fixtureMode,
+    onShowOnMap: showOnMap,
+    onOpenApp: openApp,
+  });
 
   const { choice } = storyController.state;
   const card = firstRunCard({
@@ -188,13 +150,20 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     openApp("ask");
   }
 
-  const shownView = view ?? landingView(onboarding.done);
+  // The desktop is a modal dialog, so toasts move inside it while it is open, or nobody sees them.
+  const toasts = <Toasts store={notificationStore()} reducedMotion={reducedMotion} />;
+
+  function sitDown() {
+    sitAtDesk();
+    setDesktopOpen(true);
+  }
 
   return (
     <GameShell
       view={shownView}
       phoneOpen={phoneOpen}
       onSelectTab={(tab) => (tab === "phone" ? setPhoneOpen(true) : setView(tab))}
+      tabBadges={{ phone: unreadMessages }}
       hud={
         <Hud
           now={now}
@@ -234,7 +203,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
               reducedMotion={reducedMotion}
               player={<PersonFigure config={person} shadows={!settings.lite} />}
               agent={bear}
-              onUseDesk={() => setDesktopOpen(true)}
+              onUseDesk={sitDown}
               onGoOutside={() => setView("map")}
             />
           )}
@@ -256,6 +225,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
             apps={officeApps}
             controller={desktop}
             now={now}
+            overlay={desktopOpen && toasts}
           />
           {youOpen && (
             <YouSheet
@@ -266,7 +236,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
               onClose={() => setYouOpen(false)}
             />
           )}
-          <Toasts store={notificationStore()} reducedMotion={reducedMotion} />
+          {!desktopOpen && toasts}
           <StoryMenu
             controller={storyController}
             open={storyMenuOpen}

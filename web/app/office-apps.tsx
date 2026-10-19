@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { AgentsApp } from "@/features/agents/agents-app";
 import type { AgentNotice } from "@/features/agents/loops";
 import type { Skill } from "@/features/agents/skills";
@@ -21,29 +21,53 @@ export function notifyLoop(notice: AgentNotice): void {
   notificationStore().notify({ kind: "loop", ...notice });
 }
 
-type OfficeAppsInput = {
-  /** The same controller as the phone's Ask, so a search follows you to the desk. */
-  navigator: NavigatorController;
-  /** The engine call behind that Navigator; the agent's loops search through it too. */
+export type AgentsInput = {
+  /** The engine call behind the Navigator; the agent's loops search through it too. */
   navigatorApi: NavigatorApi;
-  desktop: DesktopController;
-  fixtureMode: boolean;
   agentName: string;
   /** The snapshot the engine serves, from health; null while unknown. */
   snapshot: string | null;
   notify: (notice: AgentNotice) => void;
 };
 
-// Composes the office computer from the features; Library, Opportunities and Garage are not wired
-// yet and show their coming-next sheets, which is also where Try on "Find opportunities" lands.
+/** The one Agents app, on the phone and at the desk: the same loops, search and notifications.
+ *  Only where "Try" goes differs, since each place opens its own Navigator. */
+export function agentsApp(
+  { navigatorApi, agentName, snapshot, notify }: AgentsInput,
+  onTrySkill: (skill: Skill) => void,
+): ReactNode {
+  async function search(query: string): Promise<SearchResponse | null> {
+    const outcome = await navigatorApi.search({ query });
+    return outcome.ok ? outcome.response : null;
+  }
+  return (
+    <AgentsApp
+      agent={{ name: agentName }}
+      search={search}
+      onTrySkill={onTrySkill}
+      notify={notify}
+      snapshot={snapshot}
+    />
+  );
+}
+
+type OfficeAppsInput = AgentsInput & {
+  /** The same controller as the phone's Ask, so a search follows you to the desk. */
+  navigator: NavigatorController;
+  desktop: DesktopController;
+  fixtureMode: boolean;
+  /** Unread messages for the dock; null when signed out or unknown. */
+  unreadMessages?: number | null;
+};
+
+// Composes the office computer from the features. Only real apps are passed in, so the dock lists
+// nothing empty; Library, Opportunities and Garage join with one line each when they are built.
 export function useOfficeApps({
   navigator,
-  navigatorApi,
   desktop,
   fixtureMode,
-  agentName,
-  snapshot,
-  notify,
+  unreadMessages = null,
+  ...agents
 }: OfficeAppsInput): DesktopApp[] {
   const [reportId, setReportId] = useState<string | null>(null);
 
@@ -62,38 +86,29 @@ export function useOfficeApps({
     });
   }
 
+  // "Find opportunities" searches in the Navigator until the Opportunities app is on the desk.
   function trySkill(skill: Skill) {
-    if (skill.id === "navigator") openNavigator("search");
-    else if (skill.id === "brief") openNavigator("brief");
-    else desktop.open(skill.id === "report" ? "reports" : "opportunities");
+    if (skill.id === "brief") openNavigator("brief");
+    else if (skill.id === "report") desktop.open("reports");
+    else openNavigator("search");
   }
 
-  async function search(query: string): Promise<SearchResponse | null> {
-    const outcome = await navigatorApi.search({ query });
-    return outcome.ok ? outcome.response : null;
-  }
-
-  return desktopApps({
-    navigator: (
-      <Navigator controller={navigator} fixtureMode={fixtureMode} onMakeReport={makeReport} />
-    ),
-    agents: (
-      <AgentsApp
-        agent={{ name: agentName }}
-        search={search}
-        onTrySkill={trySkill}
-        notify={notify}
-        snapshot={snapshot}
-      />
-    ),
-    reports: (
-      <ReportsApp
-        selectedId={reportId}
-        onSelect={setReportId}
-        onAsk={() => openNavigator("search")}
-      />
-    ),
-    messages: <StandaloneMessagesPage />,
-    settings: <SettingsApp />,
-  });
+  return desktopApps(
+    {
+      navigator: (
+        <Navigator controller={navigator} fixtureMode={fixtureMode} onMakeReport={makeReport} />
+      ),
+      agents: agentsApp(agents, trySkill),
+      reports: (
+        <ReportsApp
+          selectedId={reportId}
+          onSelect={setReportId}
+          onAsk={() => openNavigator("search")}
+        />
+      ),
+      messages: <StandaloneMessagesPage />,
+      settings: <SettingsApp />,
+    },
+    { messages: unreadMessages },
+  );
 }
