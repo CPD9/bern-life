@@ -304,3 +304,44 @@ how to read them are in `docs/metrics.md`.
   field one of them found is never dropped from what the system should have filled. The sheet no
   longer shows the question, so the page is judged on its own. No label exists under either design,
   so there is no original number to show next to an amended one.
+### 2026-10-19: the final gold run of #226 (gold-informed, not held-out)
+Nothing above changes: the questions, data, metrics and rules stay as they are, and
+`eval/gold.jsonl` is unchanged. This is the gold run the dev2 entry announced: once, at the end, on
+the final code, as measurement. As that entry says, it is the third time gold is scored for this
+work, so every number here is gold-informed, not held-out.
+
+Code: `226-search-quality` at add81b7 (titles in the premise check, German and French word forms,
+the three review fixes, and the passage on the result's own page; the unit cap, `has_part` and
+German compounds rejected). Setup: bundle-20261019-3, a fresh database loaded once, predictions in
+replay with no model call, and the wording sets of criterion 2 predicted in the same pass.
+
+| Set | Run | recall@10 | MRR | traceable | invented | invented abstained | false abstentions | en / de / fr recall@10 |
+|---|---|---|---|---|---|---|---|---|
+| gold | bundle-3 (main) | 0.38 [0.22, 0.56] | 0.46 [0.28, 0.63] | 4666/4666 | 0 | 8/10 | 0/38 | 0.55 / 0.18 / 0.12 |
+| gold | final #226 | 0.39 [0.24, 0.56] | 0.45 [0.29, 0.60] | 3931/3931 | 0 | 9/10 | 0/38 | 0.55 / 0.20 / 0.12 |
+
+By source, recall@10: UniBE 0.23 → 0.27, ARTORG 0.44 → 0.44, DCB 0.58 → 0.56. By wording: site
+0.44 → 0.43, synonyms 0.82 → 0.82, lay terms 0.33 → 0.42, translations 0.24 → 0.27, control 0.33 →
+0.33. MRR by source: UniBE 0.31 → 0.38, ARTORG 0.63 → 0.63, DCB 0.53 → 0.43.
+
+Reading:
+- The gain on dev and dev2 (pooled recall@10 0.585 → 0.698, MRR 0.456 → 0.529) does not carry to
+  gold: recall@10 0.38 → 0.39 and MRR 0.46 → 0.45, both inside the intervals. Criterion 1 stays
+  not met.
+- Eleven queries move. Found, or found better: q003b (0 → 0.25), q006c (0 → 0.5), q011b (0.33 →
+  0.67), q014 (0 → 0.25, first hit at rank 1). Lost: q003c (0.5 → 0), q005 (1.0 → 0.5). First hit
+  one rank lower: q001, q001b, q002c, q003.
+- q017 (an invented "Dre", asked in French) now abstains, so 9 of 10 invented questions abstain
+  with 0 false abstentions on the site's own wording: the abstention rule is met for the first
+  time.
+- Traceability stays 100% (3,931 cited claims, the passage spans included) and no invented entity
+  appears.
+- Exploratory (#227): consistency across wordings, mean pairwise Jaccard 0.17 (glucose 0.11,
+  metabolites 0.23, carbohydrates 0.20), 2 of 13 wordings searched plain; variant agreement lay
+  0.17 → 0.24, synonym 0.38 → 0.31, translation 0.28 → 0.24; mean share of the 8 fields filled
+  0.61 → 0.58; top-10 slots UniBE / ARTORG / DCB 0.58 / 0.24 / 0.18 against profile shares
+  0.76 / 0.13 / 0.07.
+
+The code is adopted as the dev and dev2 rule decided, and nothing was changed after this run. The
+predictions of this run are bundle-20261019-4's `predictions.jsonl`; `make eval` on that bundle
+reproduces this row.
