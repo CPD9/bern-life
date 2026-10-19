@@ -7,10 +7,11 @@ Each dev query is written from one stored page. Every line must pass every check
              normalisation of PREREGISTRATION.md "Text matching" and nothing else
   gold_url   no proof page is a gold proof page (host and path, as the evaluator compares them)
   gold_name  no expected person or unit has a gold entity's name (case, accents, titles folded)
+  gold_text  no expected name is written anywhere in gold: in a query, a note, a name or a span
   invented   the surname of every name after a title in an invented query is in no stored page
              and no profile name, so the whole name is in none either
   personal   no e-mail address or phone number in the query, a span or the notes
-  dev        no proof page or expected name is already in the dev set
+  dev        no proof page or expected name is already in an earlier dev set (`--dev`, repeatable)
 `profile` is reported, not required: how many expected entities the snapshot has a profile for,
 by the evaluator's own rule (name, or a profile citing the proof page), and the largest number of
 profiles one proof page matches. Output names the failing line ids and checks, never gold wording.
@@ -28,10 +29,11 @@ from pathlib import Path
 from typing import Any
 
 from .load import TARGET_KINDS, LoadError, load_gold, rows, validator
-from .match import TITLES, claims, name_key, normalise_whitespace, url_key
+from .match import NAME_SEPARATORS, TITLES, claims, name_key, normalise_whitespace, url_key
 
 Record = dict[str, Any]
-CHECKS = ("schema", "span", "gold_url", "gold_name", "invented", "personal", "dev")
+CHECKS = ("schema", "span", "gold_url", "gold_name", "gold_text", "invented", "personal", "dev")
+SILENT_CHECKS = ("gold_url", "gold_name", "gold_text")
 TITLE_WORDS = TITLES | {"professor", "professorin", "professeur", "professeure", "pr", "dre"}
 TITLE_WORDS |= {"dr.in", "drin"}
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
@@ -116,20 +118,41 @@ class Snapshot:
 
 @dataclass(frozen=True)
 class Reference:
-    """Proof pages and expected names of a set the new queries must not reuse."""
+    """Proof pages, expected names and the text of the sets the new queries must not reuse."""
 
     urls: frozenset[str]
     names: frozenset[str]
+    texts: tuple[str, ...] = ()
 
     @classmethod
-    def of(cls, path: Path | None) -> "Reference":
-        if path is None:
-            return cls(frozenset(), frozenset())
-        expected = [target for query in load_gold(path) for target in query.targets]
-        return cls(
-            frozenset(url_key(target.proof_url) for target in expected),
-            frozenset(name_key(target.name) for target in expected),
-        )
+    def of(cls, *paths: Path) -> "Reference":
+        urls: set[str] = set()
+        names: set[str] = set()
+        texts: list[str] = []
+        for path in paths:
+            expected = [target for query in load_gold(path) for target in query.targets]
+            urls |= {url_key(target.proof_url) for target in expected}
+            names |= {name_key(target.name) for target in expected}
+            texts += [name_words(line_text(row)) for _, row in rows(path)]
+        return cls(frozenset(urls), frozenset(names), tuple(texts))
+
+    def mentions(self, name: str) -> bool:
+        """Is the whole name, titles aside, written in any line: a query, a note, a name or a
+        span? A gold question that names a person makes that person a gold entity even when
+        the line expects someone else."""
+        pattern = re.compile(rf"(?<!\w){re.escape(name_key(name))}(?!\w)")
+        return any(pattern.search(text) for text in self.texts)
+
+
+def line_text(row: Record) -> str:
+    parts = [str(row.get("query", "")), str(row.get("notes", ""))]
+    parts += [f"{t.get('name', '')} {t.get('proof_span', '')}" for _, t in targets(row)]
+    return "\n".join(parts)
+
+
+def name_words(text: str) -> str:
+    """Text folded the way `name_key` folds a name, so a name is found however it is written."""
+    return " ".join(word for word in NAME_SEPARATORS.split(fold(text)) if word)
 
 
 @dataclass
@@ -174,6 +197,8 @@ def check_line(
             found["gold_url"].append(kind)
         if name in gold.names:
             found["gold_name"].append(kind)
+        if gold.mentions(target.get("name", "")):
+            found["gold_text"].append(kind)
         if url in dev.urls or name in dev.names:
             found["dev"].append(kind)
     if invented:
@@ -228,9 +253,7 @@ def describe(path: Path, report: Report) -> str:
         lines.append("  titled names in invented queries: " + ", ".join(report.invented))
     for qid, found in report.failures:
         problems = [
-            f"{check} ({'; '.join(found[check])})"
-            if check not in ("gold_url", "gold_name")
-            else check
+            f"{check} ({'; '.join(found[check])})" if check not in SILENT_CHECKS else check
             for check in CHECKS
             if found[check]
         ]
@@ -263,13 +286,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pages", type=Path, required=True, help="snapshot pages.jsonl")
     parser.add_argument("--profiles", type=Path, required=True, help="snapshot profiles.jsonl")
     parser.add_argument("--gold", type=Path, default=Path("eval/gold.jsonl"))
-    parser.add_argument("--dev", type=Path, help="an earlier dev set the new lines must not reuse")
+    parser.add_argument(
+        "--dev",
+        type=Path,
+        action="append",
+        default=[],
+        help="an earlier dev set the new lines must not reuse; may be given more than once",
+    )
     parser.add_argument("--keep", type=Path, help="write the lines that pass every check here")
     args = parser.parse_args(argv)
     try:
         snapshot = Snapshot.load(args.pages, args.profiles)
         ok, report = run(
-            args.files, snapshot, Reference.of(args.gold), Reference.of(args.dev), args.keep
+            args.files, snapshot, Reference.of(args.gold), Reference.of(*args.dev), args.keep
         )
     except LoadError as error:
         print(error, file=sys.stderr)
