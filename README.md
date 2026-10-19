@@ -48,6 +48,8 @@ Open **http://127.0.0.1:3000** and:
    what to look for, shows the number the evaluator measured for it, and **Next** takes you to
    the following one.
 
+<img src="docs/assets/screenshot-phone.png" alt="The phone's home screen: the case, step by step, as seven numbered apps above the other apps" width="800">
+
 Then paste `Results of the ALPENHITZE cohort study led by Prof. Beat Zurbriggen at ISPM`. The
 professor and the study are invented, so the app says that no verifiable source exists instead of
 guessing.
