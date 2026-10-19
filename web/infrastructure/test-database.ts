@@ -1,5 +1,5 @@
-// The throwaway database the database tests run against. Tests empty the account and message
-// tables, so a database whose name is not a throwaway one is refused, the same rule as
+// The throwaway database the database tests run against. Tests empty the account, message,
+// connection and notification tables, so a database whose name is not a throwaway one is refused, the same rule as
 // make db-reset-throwaway.
 import postgres from "postgres";
 import type { Sql } from "./db";
@@ -24,5 +24,6 @@ export const SKIPPED =
   "database tests need DATABASE_URL pointing at a migrated throwaway database (bernlife_l1..l3 or bernlife_ci)";
 
 export async function emptyTables(sql: Sql): Promise<void> {
-  await sql`truncate app_user, invite, rate_limit, conversation cascade`;
+  await sql`truncate app_user, invite, rate_limit, conversation, connection_request, notification,
+    notification_preference cascade`;
 }

@@ -277,21 +277,25 @@ enum ProfileVisibility {
 }
 
 model User {
-  id          String       @id @default(uuid()) @db.Uuid
-  handle      String       @unique
-  displayName String       @map("display_name")
-  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
-  credential  Credential?
-  sessions    Session[]
-  profile     UserProfile?
-  invitesMade Invite[]     @relation("invite_created_by")
-  inviteUsed  Invite?      @relation("invite_used_by")
-  memberships Member[]
-  messages    Message[]
-  documents   Document[]
-  labLed      Lab?
-  labs        LabMember[]
-  labListings LabListing[]
+  id                  String                  @id @default(uuid()) @db.Uuid
+  handle              String                  @unique
+  displayName         String                  @map("display_name")
+  createdAt           DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  credential          Credential?
+  sessions            Session[]
+  profile             UserProfile?
+  invitesMade         Invite[]                @relation("invite_created_by")
+  inviteUsed          Invite?                 @relation("invite_used_by")
+  memberships         Member[]
+  messages            Message[]
+  documents           Document[]
+  labLed              Lab?
+  labs                LabMember[]
+  labListings         LabListing[]
+  connectionsSent     ConnectionRequest[]     @relation("connection_from")
+  connectionsReceived ConnectionRequest[]     @relation("connection_to")
+  notifications       Notification[]
+  notificationPref    NotificationPreference?
 
   // "user" is a reserved word in Postgres; every raw query would have to quote it.
   @@map("app_user")
@@ -493,4 +497,67 @@ model LabListing {
   @@id([labId, profileId])
   @@index([addedBy])
   @@map("lab_listing")
+}
+
+// Connections (B3). A member asks another to connect, with an optional note; the other accepts or
+// declines, and the sender may withdraw while it waits. One row per pair, whichever way it was
+// sent: `pair_key` is the two ids sorted and joined, as a direct conversation's, so two people
+// never hold two requests. The note's 280-character limit, and that nobody asks themselves, are
+// CHECKs in the migration.
+enum ConnectionStatus {
+  pending
+  accepted
+  declined
+  withdrawn
+}
+
+model ConnectionRequest {
+  id          String           @id @default(uuid()) @db.Uuid
+  fromId      String           @map("from_id") @db.Uuid
+  toId        String           @map("to_id") @db.Uuid
+  pairKey     String           @unique @map("pair_key")
+  status      ConnectionStatus @default(pending)
+  note        String?
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  respondedAt DateTime?        @map("responded_at") @db.Timestamptz(3)
+  sender      User             @relation("connection_from", fields: [fromId], references: [id], onDelete: Cascade)
+  recipient   User             @relation("connection_to", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@index([fromId, status])
+  @@index([toId, status])
+  @@map("connection_request")
+}
+
+// In-app notifications (B3): whom, what kind, and the id of what it is about (a conversation, a
+// connection request), never what was said. `ref` is a uuid column, so no text can be kept in it;
+// the app reads the current state of what it points at when it lists them. Nothing here leaves
+// the app: there is no push subscription, no email address and no outbox.
+enum NotificationKind {
+  message
+  connection
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  kind      NotificationKind
+  ref       String           @db.Uuid
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  readAt    DateTime?        @map("read_at") @db.Timestamptz(3)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([kind, ref])
+  @@map("notification")
+}
+
+// Whether a member gets in-app notifications; on unless they turn it off. Push and email are not
+// built, so they have no column until that is decided.
+model NotificationPreference {
+  userId    String   @id @map("user_id") @db.Uuid
+  inApp     Boolean  @default(true) @map("in_app")
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preference")
 }
