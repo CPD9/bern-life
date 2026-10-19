@@ -52,6 +52,28 @@ async function submitBrief(text: string) {
 }
 
 describe("Navigator", () => {
+  test("tapping an example question searches it at once, and the examples leave with the answer", async () => {
+    const asked: SearchRequest[] = [];
+    const api: NavigatorApi = {
+      search: async (request) => {
+        asked.push(request);
+        return { ok: true, response: resultFixture };
+      },
+      brief: async () => ({ ok: true, response: resultFixture }),
+    };
+    render(<Harness api={api} />);
+    const examples = screen.getByRole("list", { name: "Example questions" });
+    expect(examples.querySelectorAll("button").length).toBe(3);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^de Blutzucker messen$/ }));
+    });
+    expect(asked).toEqual([{ query: "Blutzucker messen" }]);
+    expect((screen.getByLabelText("Ask in your words") as HTMLInputElement).value).toBe(
+      "Blutzucker messen",
+    );
+    expect(screen.queryByRole("list", { name: "Example questions" })).toBeNull();
+  });
+
   test("a mock answer in fixture mode shows the MOCK banner and the expanded terms", async () => {
     render(<Harness api={answering(resultFixture)} fixtureMode />);
     await ask("glucose sensors");
