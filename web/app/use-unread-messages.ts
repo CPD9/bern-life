@@ -29,8 +29,9 @@ export function unreadRefresh(
 
 /**
  * Unread messages for the Phone tab and the desk's Messages; null when signed out. Reading a
- * thread sends no live notice, so the count is read again whenever `refresh` changes, such as
- * when the phone or the desk closes: a fresh stream makes the counter fetch once more.
+ * thread sends no live notice, so the count is read again whenever `refresh` changes: when the
+ * phone opens or closes, or the desk's Messages window opens or closes. A fresh stream makes the
+ * counter fetch once more.
  */
 export function useUnreadMessages(
   signedIn: boolean,
