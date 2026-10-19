@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { type MapPoint } from "../geography";
 import { groundHeight, type WalkMap } from "../walk-map";
 
-/** Bärli's gold, which reads on the day and the night ground alike. */
+/** Bärnli's gold, which reads on the day and the night ground alike. */
 const COLOUR = "#e0a526";
 const LIFT = 0.15;
 

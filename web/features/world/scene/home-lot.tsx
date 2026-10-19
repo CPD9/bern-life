@@ -11,7 +11,7 @@ import { gableRoofGeometry } from "./meshes";
 import { type OnWalkClick, walkClick } from "./walk-click";
 
 const ROOF = { height: 0.6, eaves: 0.15 } as const;
-/** Bärli's gold, as on the walk preview: what is yours on the map. */
+/** Bärnli's gold, as on the walk preview: what is yours on the map. */
 const DOOR = { width: 0.6, height: 1.2, depth: 0.04, colour: "#e0a526" } as const;
 
 export function HomeLot({

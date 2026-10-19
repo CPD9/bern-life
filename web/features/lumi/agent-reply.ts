@@ -1,4 +1,4 @@
-// Bärli's answer from POST /api/agent, checked against contracts/agent.schema.json with the
+// Bärnli's answer from POST /api/agent, checked against contracts/agent.schema.json with the
 // precompiled validator infrastructure/contract.ts uses, then narrowed to what the panel renders.
 // The panel's own shape is written out here. A body that fails the check is no answer at all,
 // never a partial render.
@@ -25,7 +25,7 @@ export type AgentReply = {
 
 /**
  * The reply, or null when it breaks the contract or names someone without a card: the panel
- * promises that every person Bärli names comes with one.
+ * promises that every person Bärnli names comes with one.
  */
 export function parseAgentReply(body: unknown): AgentReply | null {
   if (!isAgentReply(body)) return null;

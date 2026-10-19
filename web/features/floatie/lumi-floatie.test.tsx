@@ -13,22 +13,22 @@ function show(name: string, onOpen: () => void) {
 }
 
 describe("LumiFloatie", () => {
-  test("a tap opens Bärli once", () => {
+  test("a tap opens Bärnli once", () => {
     const onOpen = mock(() => undefined);
-    fireEvent.click(show("Bärli", onOpen));
+    fireEvent.click(show("Bärnli", onOpen));
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
   test("it takes keyboard focus as a page button, so Enter and Space open it too", () => {
-    const floatie = show("Bärli", () => undefined);
+    const floatie = show("Bärnli", () => undefined);
     act(() => floatie.focus());
     expect(document.activeElement).toBe(floatie);
     expect([floatie.tagName, floatie.getAttribute("type")]).toEqual(["BUTTON", "button"]);
   });
 
   test("the agent's name under it is hidden from screen readers and lets taps through", () => {
-    show("Bärli", () => undefined);
-    const pill = screen.getByText("Bärli");
+    show("Bärnli", () => undefined);
+    const pill = screen.getByText("Bärnli");
     expect(pill.getAttribute("aria-hidden")).toBe("true");
     expect(pill.className).toContain("pointer-events-none");
   });
@@ -40,10 +40,10 @@ describe("LumiFloatie", () => {
       assumeWebgl(true);
     });
 
-    test("the button stays and still opens Bärli, with the initial where the bear would be", () => {
+    test("the button stays and still opens Bärnli, with the initial where the bear would be", () => {
       assumeWebgl(false);
       const onOpen = mock(() => undefined);
-      const floatie = show("Bärli", onOpen);
+      const floatie = show("Bärnli", onOpen);
       expect(floatie.querySelector("canvas")).toBeNull();
       expect(floatie.textContent).toBe("B");
       fireEvent.click(floatie);

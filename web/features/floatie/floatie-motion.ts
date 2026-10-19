@@ -1,7 +1,7 @@
-// How Bärli floats, as plain numbers for a moment in time, so the motion can be checked exactly
+// How Bärnli floats, as plain numbers for a moment in time, so the motion can be checked exactly
 // without three.js. Idle, it bobs slowly and glows like a breathing ember. Listening, it leans
-// towards you, glows brighter and sends out a soft ripple. The bear Bärli wears breathes and blinks
-// by itself. Under reduced motion Bärli holds a fixed pose, but listening still looks different.
+// towards you, glows brighter and sends out a soft ripple. The bear Bärnli wears breathes and blinks
+// by itself. Under reduced motion Bärnli holds a fixed pose, but listening still looks different.
 
 export type FloatieState = "idle" | "listening";
 
@@ -10,9 +10,9 @@ export type FloatiePose = {
   readonly lift: number;
   /** Tilt towards the viewer, in radians. */
   readonly lean: number;
-  /** Brightness of Bärli's light, 1 at rest. */
+  /** Brightness of Bärnli's light, 1 at rest. */
   readonly glow: number;
-  /** Size of the halo around Bärli, 1 at rest. */
+  /** Size of the halo around Bärnli, 1 at rest. */
   readonly halo: number;
   /** The listening ring: its size and how visible it is (0 hides it). */
   readonly ripple: { readonly scale: number; readonly opacity: number };
@@ -65,7 +65,7 @@ export function poseAt(state: FloatieState, seconds: number, reducedMotion: bool
   return state === "listening" ? listeningPose(seconds) : idlePose(seconds);
 }
 
-/** Bärli listens when told to, or while the player points at it or has it focused. */
+/** Bärnli listens when told to, or while the player points at it or has it focused. */
 export function shownState(
   wanted: FloatieState,
   pointedAt: boolean,

@@ -62,7 +62,7 @@ typed from memory). Their results still count as "not on the map".
 
 `world-canvas.tsx` fills the shell's canvas slot: ground, district plates, roads and the Aare from
 `geography.ts`, a seeded city (`city-plan.ts`, the same layout on every load) and one building of
-the same size per building in `buildings.ts`, each with a marker of the same size, and Bärli, the
+the same size per building in `buildings.ts`, each with a marker of the same size, and Bärnli, the
 player's first agent, as their bear in front of the city hall. People from public pages never appear as figures; they are
 entries with sources in a place's panel. Primitives only; `public/world/manifest.json` pins any asset file added later
 (`assets.test.ts`).

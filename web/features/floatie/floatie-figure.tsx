@@ -1,6 +1,6 @@
-// Bärli's light around whatever figure it wears: the bear the player made for their agent, passed
+// Bärnli's light around whatever figure it wears: the bear the player made for their agent, passed
 // in from app/ because the bear is another feature. The figure is scaled to fit, feet on y = 0 and
-// about 1.4 m tall like the avatar's bear, and centred on Bärli. The halo is one sprite with a
+// about 1.4 m tall like the avatar's bear, and centred on Bärnli. The halo is one sprite with a
 // smooth radial falloff, not stacked see-through spheres, so it shows no rings on a dark page; it
 // sits behind the figure and needs no bloom pass, the same in lite graphics.
 
@@ -12,7 +12,7 @@ import { PART, useFloatieMotion } from "./use-floatie-motion";
 const HALO = "#ffd36b";
 const EMBER = "#ffae3c";
 
-/** The worn figure's height in its own units, and how tall it is drawn inside Bärli's light. */
+/** The worn figure's height in its own units, and how tall it is drawn inside Bärnli's light. */
 const FIGURE_HEIGHT = 1.4;
 const SHOWN_HEIGHT = 0.48;
 const FIGURE_SCALE = SHOWN_HEIGHT / FIGURE_HEIGHT;
@@ -75,7 +75,7 @@ export function FloatieFigure({
   state: FloatieState;
   reducedMotion: boolean;
   lite: boolean;
-  /** The figure Bärli wears, feet on y = 0 and facing +z. */
+  /** The figure Bärnli wears, feet on y = 0 and facing +z. */
   children: ReactNode;
 }) {
   const root = useFloatieMotion(state, reducedMotion);
