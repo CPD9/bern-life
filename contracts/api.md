@@ -30,6 +30,11 @@ evidence: a reply names only profiles in its own `results`, and the web app drop
 mentions (under the profile's name, or the related name a result is shown through) or actions
 point anywhere else.
 
+A reply the model did not write (no model, a failure, or text that holds no step) is a summary of
+a plain search: of the last user message, or of the latest earlier one when the last has nothing
+to search ("Show them on the map", "Zeig sie auf der Karte"). Its `mode` is still the engine's,
+`replay` or `live`; only the mock engine answers `mock`.
+
 `POST /api/agent` is served once the engine's agent lands. Until then the web proxy at
 `/api/agent` checks the body and passes it on; the engine's 404 reaches the browser as
 `{ "error": "not_found" }`, and with `DEMO_FIXTURES=1` the proxy answers with

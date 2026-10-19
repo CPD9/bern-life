@@ -1,14 +1,30 @@
-import copy
 import json
 import tempfile
 import unittest
-from collections.abc import Mapping, Sequence
-from importlib.metadata import version
 from pathlib import Path
-from typing import Any
 
+from agent_fakes import (
+    ADA,
+    ADA_MENTION,
+    BRIEF,
+    CLEO,
+    CLEO_MENTION,
+    DORA,
+    GLUCOSE,
+    GLUCOSE_FOUND,
+    GLUCOSE_SUMMARY,
+    MODEL,
+    QUESTION,
+    AgentCase,
+    FakeTools,
+    ScriptedChat,
+    answers,
+    calls,
+    user,
+    versions,
+)
 from bernlife.agent import MAX_ROUNDS, EngineTools, answer
-from bernlife.agent_prompt import AGENT_PROMPT_VERSION, PROMPT, TOOLS
+from bernlife.agent_prompt import PROMPT, TOOLS
 from bernlife.agent_views import NO_SOURCE_REPLY
 from bernlife.brief_search import brief_search
 from bernlife.cache import CacheMiss, cache_roots
@@ -22,111 +38,17 @@ from bernlife.search import search
 from bernlife.store import PostgresStore
 from contract_schemas import validator
 from fake_llm import FakeTransport, chat_body, tool_body
-from search_fakes import PROFILES, SOURCES, fake_embedder, truncate_all, write_bundle
+from search_fakes import SOURCES, fake_embedder, truncate_all, write_bundle
 from test_grounding import response, shown
 
 from db import database_url
 
-MODEL = "swiss-ai/Apertus-v1.5-70B"
-CLEO, ADA, BEN, DORA, PATCH, EMIL, CARB = PROFILES
-QUESTION = "Who works on glucose sensors?"
-GLUCOSE = response(
-    "glucose sensors", shown(ADA, "/fields/expertise/0"), shown(CLEO, "/fields/expertise/0")
-)
-GLUCOSE_SUMMARY = (
-    "Here is what the sources show:\n"
-    "- Ada Muster: continuous glucose monitoring\n"
-    "- Cleo Beispiel: glucose metabolism in mice"
-)
-ADA_MENTION = {"profile_id": "person-example-ada-muster", "name": "Ada Muster"}
-CLEO_MENTION = {"profile_id": "person-demo-cleo-beispiel", "name": "Cleo Beispiel"}
-BRIEF = "Invented Demo AG builds a skin-worn patch and needs wearable glucose sensors."
 
-
-def user(text: str) -> list[dict[str, str]]:
-    return [{"role": "user", "content": text}]
-
-
-def calls(*steps: tuple[str, dict[str, Any]]) -> dict[str, Any]:
-    tool_calls = [
-        {"id": f"call-{n}", "name": name, "arguments": arguments}
-        for n, (name, arguments) in enumerate(steps, 1)
-    ]
-    return {"content": None, "tool_calls": tool_calls}
-
-
-def says(text: str | None) -> dict[str, Any]:
-    return {"content": text, "tool_calls": []}
-
-
-class ScriptedChat:
-    """The agent model as a script of replies, recording every conversation sent to it."""
-
-    backend = "replay"
-
-    def __init__(self, *script: dict[str, Any] | Exception, model: str = "fake-70b") -> None:
-        self.script, self.model = list(script), model
-        self.seen: list[list[dict[str, Any]]] = []
-
-    def chat(self, messages, *, role, prompt_version, temperature=0.0, seed=None, max_tokens=700):
-        raise AssertionError("the agent asks only through chat_tools")
-
-    def chat_tools(
-        self, messages, *, role, prompt_version, tools, max_tokens=700, temperature=0.0, seed=None
-    ):
-        assert (role, prompt_version, tools) == ("agent", AGENT_PROMPT_VERSION, TOOLS)
-        self.seen.append(copy.deepcopy(list(messages)))
-        step = self.script.pop(0)
-        if isinstance(step, Exception):
-            raise step
-        return step
-
-    def models(self) -> dict[str, str]:
-        return {"agent": self.model}
-
-
-class FakeTools:
-    """Canned searches by query, an abstained one for any other; records every call."""
-
-    def __init__(self, searches: Mapping[str, dict[str, Any]], brief: dict[str, Any] | None = None):
-        self.searches, self.brief_response = searches, brief
-        self.asked: list[tuple[str, object]] = []
-
-    def search(self, query: str, kinds: Sequence[str] | None = None) -> dict[str, Any]:
-        self.asked.append(("search", (query, kinds)))
-        return copy.deepcopy(self.searches.get(query, response(query)))
-
-    def brief(self, text: str) -> dict[str, Any]:
-        self.asked.append(("brief", text))
-        assert self.brief_response is not None
-        return copy.deepcopy(self.brief_response)
-
-    def profile(self, profile_id: str) -> dict[str, Any] | None:
-        self.asked.append(("profile", profile_id))
-        return next((p for p in PROFILES if p["id"] == profile_id), None)
-
-    def snapshot(self) -> str:
-        return "fixture-1"
-
-
-def versions(prompts: str, models: dict[str, str]) -> dict[str, Any]:
-    return {
-        "engine": version("bernlife"),
-        "snapshot": "fixture-1",
-        "prompts": prompts,
-        "models": models,
-    }
-
-
-class AgentTest(unittest.TestCase):
-    def check(self, reply: dict[str, Any]) -> dict[str, Any]:
-        self.assertEqual(list(validator("agent.schema.json").iter_errors(reply)), [])
-        return reply
-
-    def test_a_tool_call_then_a_grounded_reply(self):
+class AgentTest(AgentCase):
+    def test_a_native_tool_call_then_a_grounded_reply(self):
         llm = ScriptedChat(
             calls(("search", {"query": "glucose sensors"})),
-            says("Ada Muster works on continuous glucose monitoring."),
+            answers("Ada Muster works on continuous glucose monitoring."),
         )
         reply = self.check(answer(user(QUESTION), FakeTools({"glucose sensors": GLUCOSE}), llm))
         self.assertEqual(
@@ -142,25 +64,9 @@ class AgentTest(unittest.TestCase):
                 "results": [GLUCOSE],
                 "mentions": [ADA_MENTION],
                 "tool_calls": [{"tool": "search", "query": "glucose sensors"}],
-                "versions": versions("agent-v2", {"agent": "fake-70b"}),
+                "versions": versions("agent-v3", {"agent": "fake-70b"}),
             },
         )
-        found = [
-            {
-                "id": "person-example-ada-muster",
-                "kind": "person",
-                "name": "Ada Muster",
-                "source": "example",
-                "facts": ["continuous glucose monitoring"],
-            },
-            {
-                "id": "person-demo-cleo-beispiel",
-                "kind": "person",
-                "name": "Cleo Beispiel",
-                "source": "demo",
-                "facts": ["glucose metabolism in mice"],
-            },
-        ]
         call = {"name": "search", "arguments": '{"query": "glucose sensors"}'}
         self.assertEqual(
             llm.seen[1],
@@ -172,14 +78,18 @@ class AgentTest(unittest.TestCase):
                     "content": None,
                     "tool_calls": [{"id": "call-1", "type": "function", "function": call}],
                 },
-                {"role": "tool", "tool_call_id": "call-1", "content": json.dumps({"found": found})},
+                {
+                    "role": "tool",
+                    "tool_call_id": "call-1",
+                    "content": json.dumps({"found": GLUCOSE_FOUND}),
+                },
             ],
         )
 
     def test_a_reply_naming_someone_outside_the_results_is_replaced_by_a_summary(self):
         llm = ScriptedChat(
             calls(("search", {"query": "glucose sensors"})),
-            says("Ada Muster and Hugo Brandtner work on glucose sensors."),
+            answers("Ada Muster and Hugo Brandtner work on glucose sensors."),
         )
         reply = self.check(answer(user(QUESTION), FakeTools({"glucose sensors": GLUCOSE}), llm))
         self.assertEqual(reply["reply"], GLUCOSE_SUMMARY)
@@ -203,7 +113,7 @@ class AgentTest(unittest.TestCase):
             "Ada Muster works on continuous glucose monitoring, ada.muster@sensor.lab.",
         ):
             with self.subTest(text=text):
-                llm = ScriptedChat(calls(("search", {"query": "glucose sensors"})), says(text))
+                llm = ScriptedChat(calls(("search", {"query": "glucose sensors"})), answers(text))
                 tools = FakeTools({"glucose sensors": GLUCOSE})
                 reply = self.check(answer(user(question), tools, llm))
                 self.assertEqual(
@@ -216,7 +126,7 @@ class AgentTest(unittest.TestCase):
             "Ada Muster’s role is Group Leader in the Sensor Lab, and she works on wearable "
             "biosensors. Cleo Beispiel studies glucose metabolism in mice."
         )
-        llm = ScriptedChat(calls(("search", {"query": "glucose sensors"})), says(text))
+        llm = ScriptedChat(calls(("search", {"query": "glucose sensors"})), answers(text))
         reply = self.check(answer(user(QUESTION), FakeTools({"glucose sensors": GLUCOSE}), llm))
         self.assertEqual((reply["reply"], reply["mentions"]), (text, [ADA_MENTION, CLEO_MENTION]))
 
@@ -224,7 +134,7 @@ class AgentTest(unittest.TestCase):
         question = "Prof. Hugo Brandtner leads glucose research at the Demo Centre. Who helps him?"
         llm = ScriptedChat(
             calls(("search", {"query": "Prof. Hugo Brandtner glucose research"})),
-            says("Prof. Hugo Brandtner works with a team on glucose research."),
+            answers("Prof. Hugo Brandtner works with a team on glucose research."),
         )
         reply = self.check(answer(user(question), FakeTools({}), llm))
         self.assertEqual(
@@ -242,7 +152,7 @@ class AgentTest(unittest.TestCase):
         demo = response("glucose research", shown(CLEO, "/fields/expertise/0"))
         llm = ScriptedChat(
             calls(("search", {"query": "glucose research"})),
-            says("Yes, Prof. Hugo Brandtner leads it and works with Cleo Beispiel."),
+            answers("Yes, Prof. Hugo Brandtner leads it and works with Cleo Beispiel."),
         )
         reply = self.check(answer(user(question), FakeTools({"glucose research": demo}), llm))
         self.assertEqual(
@@ -258,9 +168,9 @@ class AgentTest(unittest.TestCase):
         reply = answer(
             user("Does Prof. Hugo Brandtner work at the Demo Centre?"),
             tools,
-            ScriptedChat(says("Yes, he leads it.")),
+            ScriptedChat(answers("Yes, he leads it.")),
         )
-        self.assertEqual((reply["reply"], reply["mode"]), (NO_SOURCE_REPLY, "mock"))
+        self.assertEqual((reply["reply"], reply["mode"]), (NO_SOURCE_REPLY, "replay"))
         self.assertEqual(
             tools.asked, [("search", ("Does Prof. Hugo Brandtner work at the Demo Centre?", None))]
         )
@@ -289,7 +199,7 @@ class AgentTest(unittest.TestCase):
             calls(("search", {"query": "glucose sensors", "kinds": ["person", "planet"]})),
             calls(("search", {"query": "glucose sensors", "kinds": ["person"]})),
             calls(("profile", {"id": [ADA["id"]]}), ("profile", {"id": ADA["id"]})),
-            says("Ada Muster is a Group Leader in the Sensor Lab."),
+            answers("Ada Muster is a Group Leader in the Sensor Lab."),
         )
         tools = FakeTools({"glucose sensors": GLUCOSE})
         reply = self.check(answer(user(QUESTION), tools, llm))
@@ -326,7 +236,7 @@ class AgentTest(unittest.TestCase):
         llm = ScriptedChat(
             calls(("search", {"query": "glucose \ud800"}), ("brief", {"text": "patch \ud800"})),
             calls(("search", {"query": "glucose sensors"})),
-            says("Ada Muster works on glucose sensors \ud800."),
+            answers("Ada Muster works on glucose sensors \ud800."),
         )
         tools = FakeTools({"glucose sensors": GLUCOSE})
         reply = self.check(answer(user(QUESTION), tools, llm))
@@ -341,7 +251,7 @@ class AgentTest(unittest.TestCase):
             {"term": "wearable glucose sensors", "span": "wearable glucose sensors"}
         ]
         llm = ScriptedChat(
-            calls(("brief", {"text": BRIEF})), says("Ada Muster works on wearable biosensors.")
+            calls(("brief", {"text": BRIEF})), answers("Ada Muster works on wearable biosensors.")
         )
         reply = self.check(answer(user(BRIEF), FakeTools({}, briefed), llm))
         self.assertEqual(
@@ -363,19 +273,22 @@ class AgentTest(unittest.TestCase):
             {"role": "assistant", "content": "Hello."},
             *user(f"  {QUESTION}\n"),
         ]
-        for llm in (
-            MockLLM(),
-            ScriptedChat(ModelUnavailable("timeout")),
-            ScriptedChat(CacheMiss("agent call not in cache")),
-            ScriptedChat(says("Ada Muster."), model="swiss-ai/Apertus-v1.5-70B-thinking"),
+        for llm, mode in (
+            (MockLLM(), "mock"),
+            (ScriptedChat(ModelUnavailable("timeout")), "replay"),
+            (ScriptedChat(CacheMiss("agent call not in cache")), "replay"),
+            (
+                ScriptedChat(answers("Ada Muster."), model=f"{MODEL}-thinking", backend="live"),
+                "live",
+            ),
         ):
-            with self.subTest(llm=type(llm).__name__):
+            with self.subTest(llm=type(llm).__name__, mode=mode):
                 reply = self.check(answer(messages, tools, llm))
                 self.assertEqual(
                     reply,
                     {
                         "reply": GLUCOSE_SUMMARY,
-                        "mode": "mock",
+                        "mode": mode,
                         "abstained": False,
                         "actions": [{"type": "show_on_map", "result": 0}],
                         "results": [GLUCOSE],
@@ -402,7 +315,7 @@ class AgentReplayTest(unittest.TestCase):
     def test_a_recorded_conversation_replays_offline_and_a_miss_falls_back(self):
         transport = FakeTransport(
             tool_body(None, ("call-1", "search", {"query": "glucose sensors"})),
-            chat_body("Ada Muster works on continuous glucose monitoring."),
+            chat_body('{"answer": "Ada Muster works on continuous glucose monitoring."}'),
         )
         client = OpenAIChat(Endpoint("https://gateway.example/v1", "key", MODEL), transport)
         models = dict.fromkeys(ROLES, MODEL)
@@ -414,19 +327,19 @@ class AgentReplayTest(unittest.TestCase):
         self.assertEqual(len(transport.requests), 2)
         self.assertEqual(transport.bodies[0]["tools"], list(TOOLS))
         other = answer(user("Who builds insulin pumps?"), tools, Router(None, models, self.roots))
-        self.assertEqual((other["reply"], other["mode"]), (NO_SOURCE_REPLY, "mock"))
+        self.assertEqual((other["reply"], other["mode"]), (NO_SOURCE_REPLY, "replay"))
 
     def test_a_bundle_without_the_agent_role_falls_back(self):
         recorded = {role: MODEL for role in ROLES if role != "agent"}
         reply = answer(
             user(QUESTION), FakeTools({QUESTION: GLUCOSE}), Router(None, recorded, self.roots)
         )
-        self.assertEqual((reply["reply"], reply["mode"]), (GLUCOSE_SUMMARY, "mock"))
+        self.assertEqual((reply["reply"], reply["mode"]), (GLUCOSE_SUMMARY, "replay"))
 
     def test_a_live_engine_reports_replay_when_no_call_went_live(self):
         transport = FakeTransport(
             tool_body(None, ("call-1", "search", {"query": "glucose sensors"})),
-            chat_body("Ada Muster works on continuous glucose monitoring."),
+            chat_body('{"answer": "Ada Muster works on continuous glucose monitoring."}'),
         )
         client = OpenAIChat(Endpoint("https://gateway.example/v1", "key", MODEL), transport)
         models = dict.fromkeys(ROLES, MODEL)
@@ -489,7 +402,7 @@ class EngineToolsDbTest(unittest.TestCase):
         llm = ScriptedChat(
             calls(("search", {"query": "glucose monitoring"})),
             calls(("profile", {"id": ADA["id"]})),
-            says("Ada Muster is a Group Leader in the Sensor Lab."),
+            answers("Ada Muster is a Group Leader in the Sensor Lab."),
         )
         reply = answer(user("Who works on glucose monitoring?"), self.tools, llm)
         self.assertEqual(list(validator("agent.schema.json").iter_errors(reply)), [])
