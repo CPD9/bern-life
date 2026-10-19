@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { maxAgentBodyBytes, parseAgentRequest } from "./agent-request";
+import { parseAgentRequest } from "./agent-request";
 
 const ask = { role: "user", content: "Who works on glucose sensors?" } as const;
 const answer = { role: "assistant", content: "Ada Muster leads GlucoPatch." } as const;
 
-function body(messages: unknown): string {
-  return JSON.stringify({ messages });
+function body(messages: unknown): unknown {
+  return { messages };
 }
 
 describe("parseAgentRequest", () => {
@@ -34,19 +34,10 @@ describe("parseAgentRequest", () => {
     expect(parseAgentRequest(body([{ role: "user" }]))).toBeNull();
   });
 
-  test("refuses a body over 16 KB, counted in bytes", () => {
-    const envelope = body([{ role: "user", content: "" }]).length;
-    const fits = "a".repeat(maxAgentBodyBytes - envelope);
-    expect(parseAgentRequest(body([{ role: "user", content: fits }]))).not.toBeNull();
-    expect(parseAgentRequest(body([{ role: "user", content: `${fits}a` }]))).toBeNull();
-    const umlauts = "ü".repeat((maxAgentBodyBytes - envelope) / 2 + 1);
-    expect(parseAgentRequest(body([{ role: "user", content: umlauts }]))).toBeNull();
-  });
-
-  test("refuses a body that is not JSON or not a conversation", () => {
-    expect(parseAgentRequest("{")).toBeNull();
-    expect(parseAgentRequest("null")).toBeNull();
-    expect(parseAgentRequest(JSON.stringify({ messages: "hello" }))).toBeNull();
-    expect(parseAgentRequest(JSON.stringify([ask]))).toBeNull();
+  test("refuses a body that is not a conversation", () => {
+    expect(parseAgentRequest(null)).toBeNull();
+    expect(parseAgentRequest("hello")).toBeNull();
+    expect(parseAgentRequest({ messages: "hello" })).toBeNull();
+    expect(parseAgentRequest([ask])).toBeNull();
   });
 });

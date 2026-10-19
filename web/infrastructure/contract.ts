@@ -42,8 +42,36 @@ export function parseStory(body: unknown): Story | null {
   return isStory(body) ? body : null;
 }
 
+/**
+ * Each profile the results show, by id, with the names it is shown under: a result's own profile
+ * and the related profile a result is shown through.
+ */
+function shownProfiles(results: AgentReply["results"]): Map<string, Set<string>> {
+  const shown = new Map<string, Set<string>>();
+  const show = (id: string, name: string) => shown.set(id, (shown.get(id) ?? new Set()).add(name));
+  for (const { profile, via } of results.flatMap((response) => response.results)) {
+    show(profile.id, profile.name.value);
+    if (via !== undefined) show(via.related_profile_id, via.related_name);
+  }
+  return shown;
+}
+
+// A schema cannot say that mentions and actions point into the reply's own results, so it is
+// checked here: a name the results do not show, under that name, never reaches the screen.
+function pointsIntoResults({ mentions, actions, results }: AgentReply): boolean {
+  const shown = shownProfiles(results);
+  return (
+    mentions.every((mention) => shown.get(mention.profile_id)?.has(mention.name) === true) &&
+    actions.every((action) =>
+      action.type === "open_profile"
+        ? shown.has(action.profile_id)
+        : action.result < results.length,
+    )
+  );
+}
+
 export function parseAgentReply(body: unknown): AgentReply | null {
-  return isAgentReply(body) ? body : null;
+  return isAgentReply(body) && pointsIntoResults(body) ? body : null;
 }
 
 export function parseSourcesList(body: unknown): SourcesList | null {

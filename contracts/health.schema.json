@@ -57,12 +57,17 @@
       "minimum": 0
     },
     "failures_last_hour": {
-      "description": "Failed model calls in the last hour, counted per role and failure marker. Markers only, never error text.",
+      "description": "Failed model calls in the last hour, counted per role and failure marker. Roles and markers only, never error text.",
       "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z_]+$",
+        "maxLength": 32
+      },
       "additionalProperties": {
         "type": "object",
         "propertyNames": {
-          "pattern": "^[a-z0-9_]+$"
+          "pattern": "^[a-z0-9_]+$",
+          "maxLength": 32
         },
         "additionalProperties": {
           "type": "integer",

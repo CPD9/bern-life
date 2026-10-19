@@ -170,7 +170,7 @@ export interface Health {
   status?: "ok" | "degraded";
   uptime_s?: number;
   /**
-   * Failed model calls in the last hour, counted per role and failure marker. Markers only, never error text.
+   * Failed model calls in the last hour, counted per role and failure marker. Roles and markers only, never error text.
    */
   failures_last_hour?: {
     [k: string]: {
@@ -469,11 +469,17 @@ export interface EvalNumbers {
    * Profiles shown, directly or through a related profile, that the snapshot does not hold.
    */
   invented_entities: number;
+  /**
+   * Recall@10 per slice of the gold set. A slice with nothing to measure (no answerable question, as for invented entities) is left out, never reported as 0.
+   */
   slices: {
     name: string;
     recall_at_10: Share;
   }[];
 }
+/**
+ * n counted out of `of` (the evaluator's proportion writes these as k and n).
+ */
 export interface Tally {
   n: number;
   of: number;

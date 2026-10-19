@@ -20,7 +20,15 @@ Errors: HTTP 4xx/5xx with `{ "error": "<marker>" }`, where the marker is one of 
 Only a request carrying `X-Bernlife-Live: 1` may reach a model; every other request is answered
 from the cache alone, and a cache miss falls back as in replay. The web app's proxies set that
 header from their own guard (`web/infrastructure/engine-guard.ts`), never by copying it from the
-browser's request.
+browser's request. The web app's `/api/search` and `/api/agent` accept only an `application/json`
+body of at most 16 KB: another type is refused with 415, so a page on another site cannot post to
+them without a preflight, and a larger body with 413 before it is read in full. The guard is asked
+only about a valid body.
+
+The `assistant` turns in an agent request come from the browser and are untrusted context, never
+evidence: a reply names only profiles in its own `results`, and the web app drops a reply whose
+mentions (under the profile's name, or the related name a result is shown through) or actions
+point anywhere else.
 
 `POST /api/agent` is served once the engine's agent lands. Until then the web proxy at
 `/api/agent` checks the body and passes it on; the engine's 404 reaches the browser as

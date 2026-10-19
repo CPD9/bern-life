@@ -88,12 +88,50 @@ describe("parseHealth", () => {
     expect(parseHealth(failures({ timeout: 0 }))).toBeNull();
     expect(parseHealth({ ...health, status: "fine" })).toBeNull();
   });
+
+  test("rejects error text in place of a role", () => {
+    const failures = { "Connection refused by 10.0.0.1:8000": { timeout: 1 } };
+    expect(parseHealth({ ...health, failures_last_hour: failures })).toBeNull();
+  });
 });
 
 describe("parseAgentReply", () => {
   test("accepts the agent fixture", () => {
     expect(parseAgentReply(agent)?.mentions).toEqual([
       { profile_id: "person-example-ada-muster", name: "Ada Muster" },
+    ]);
+  });
+
+  test("rejects a mention of a profile outside its results, or under another name", () => {
+    const invented = { profile_id: "person-example-invented", name: "Invented Person" };
+    expect(parseAgentReply({ ...agent, mentions: [invented] })).toBeNull();
+    const renamed = { profile_id: "person-example-ada-muster", name: "Invented Person" };
+    expect(parseAgentReply({ ...agent, mentions: [renamed] })).toBeNull();
+    expect(parseAgentReply({ ...agent, actions: [], results: [] })).toBeNull();
+  });
+
+  test("rejects an action that points outside its results", () => {
+    const outside = [
+      { type: "open_profile", profile_id: "person-example-invented" },
+      { type: "show_on_map", result: 1 },
+      { type: "start_match_report", result: 99 },
+    ];
+    for (const action of outside) {
+      expect(parseAgentReply({ ...agent, actions: [action] })).toBeNull();
+    }
+  });
+
+  test("accepts a mention of the profile a result is shown through, under its name", () => {
+    const related = via.results[0]!.via;
+    const mention = { profile_id: related.related_profile_id, name: related.related_name };
+    const throughVia = {
+      ...agent,
+      results: [via],
+      mentions: [mention],
+      actions: [{ type: "open_profile", profile_id: related.related_profile_id }],
+    };
+    expect(parseAgentReply(throughVia)?.mentions).toEqual([
+      { profile_id: "project-example-platescan", name: "PlateScan" },
     ]);
   });
 

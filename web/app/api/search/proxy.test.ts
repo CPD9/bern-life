@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import result from "../../../../contracts/fixtures/result.json";
 import { createEngineClient } from "@/infrastructure/engine-client";
 import type { EngineAccess } from "@/infrastructure/engine-guard";
+import { maxSearchBodyBytes } from "@/infrastructure/search-request";
 import { proxySearch } from "./proxy";
 
 type Sent = { headers: Record<string, string>; body: unknown };
@@ -63,12 +64,47 @@ describe("proxySearch", () => {
     expect(sent[0]?.body).toEqual({ query: "seed grant", kinds: ["call"] });
   });
 
+  test("passes the sources to the engine", async () => {
+    const { engine, sent } = engineAnswering(() => Response.json(result));
+    const guard = guardAnswering({ ok: true, live: false });
+    await proxySearch(searchRequest({ query: "CGM", sources: ["example"] }), { engine, guard });
+    expect(sent[0]?.body).toEqual({ query: "CGM", sources: ["example"] });
+  });
+
+  test("a text/plain post, as a page on another site can send, is refused before the guard", async () => {
+    const { engine, sent } = engineAnswering(() => Response.json(result));
+    let asked = 0;
+    const guard = async () => {
+      asked += 1;
+      return { ok: true, live: true } as const;
+    };
+    const crossSite = new Request("http://127.0.0.1:3000/api/search", {
+      method: "POST",
+      headers: { "content-type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify({ query: "CGM" }),
+    });
+    const response = await proxySearch(crossSite, { engine, guard });
+    expect(response.status).toBe(415);
+    expect(asked).toBe(0);
+    expect(sent).toEqual([]);
+  });
+
   test("a refusal from the guard is the answer and the engine is not asked", async () => {
     const { engine, sent } = engineAnswering(() => Response.json(result));
     const refusal = Response.json({ error: "rate_limited" }, { status: 429 });
     const guard = guardAnswering({ ok: false, response: refusal });
     const response = await proxySearch(searchRequest({ query: "CGM" }), { engine, guard });
     expect(response).toBe(refusal);
+    expect(sent).toEqual([]);
+  });
+
+  test("a body over 16 KB is refused with 413", async () => {
+    const { engine, sent } = engineAnswering(() => Response.json(result));
+    const guard = guardAnswering({ ok: true, live: false });
+    const query = "a".repeat(maxSearchBodyBytes);
+    const response = await proxySearch(searchRequest({ query }), { engine, guard });
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: "bad_request", reason: "too_large" });
     expect(sent).toEqual([]);
   });
 

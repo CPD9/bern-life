@@ -15,6 +15,8 @@ export type ProfileKind = Profile["kind"];
 export type SearchRequest = {
   readonly query: string;
   readonly lang?: SearchLang;
+  /** Source ids from GET /api/sources; the engine refuses an id it does not hold. */
+  readonly sources?: readonly string[];
   readonly kinds?: readonly ProfileKind[];
 };
 

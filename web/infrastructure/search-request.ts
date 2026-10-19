@@ -1,6 +1,9 @@
 import type { ProfileKind, SearchLang, SearchRequest } from "./engine-types";
 
 export const maxQueryLength = 500;
+export const maxSearchBodyBytes = 16 * 1024;
+
+const sourceId = /^[a-z0-9-]+$/;
 
 const langs: readonly SearchLang[] = ["de", "en", "fr"];
 
@@ -27,6 +30,11 @@ function parseKinds(value: unknown): readonly ProfileKind[] | null {
   return value.every(isKind) ? value : null;
 }
 
+function parseSources(value: unknown): readonly string[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  return value.every((id) => typeof id === "string" && sourceId.test(id)) ? value : null;
+}
+
 /** An absent field stays absent (undefined); a present one that does not parse is null. */
 function optional<T>(value: unknown, parse: (value: unknown) => T | null): T | null | undefined {
   return value === undefined ? undefined : parse(value);
@@ -39,11 +47,13 @@ export function parseSearchRequest(body: unknown): SearchRequest | null {
   const query = fields.query.trim();
   if (query === "" || query.length > maxQueryLength) return null;
   const lang = optional(fields.lang, (value) => (isLang(value) ? value : null));
+  const sources = optional(fields.sources, parseSources);
   const searchKinds = optional(fields.kinds, parseKinds);
-  if (lang === null || searchKinds === null) return null;
+  if (lang === null || sources === null || searchKinds === null) return null;
   return {
     query,
     ...(lang === undefined ? {} : { lang }),
+    ...(sources === undefined ? {} : { sources }),
     ...(searchKinds === undefined ? {} : { kinds: searchKinds }),
   };
 }

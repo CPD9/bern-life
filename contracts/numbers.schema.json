@@ -132,6 +132,7 @@
           "minimum": 0
         },
         "slices": {
+          "description": "Recall@10 per slice of the gold set. A slice with nothing to measure (no answerable question, as for invented entities) is left out, never reported as 0.",
           "type": "array",
           "items": {
             "type": "object",
@@ -159,6 +160,7 @@
       "maximum": 1
     },
     "tally": {
+      "description": "n counted out of `of` (the evaluator's proportion writes these as k and n).",
       "type": "object",
       "required": [
         "n",
