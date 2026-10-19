@@ -38,6 +38,10 @@ function stats(numbers: EvalNumbers): Stat[] {
   ];
 }
 
+function queries(count: number): string {
+  return count === 1 ? "1 query" : `${count} queries`;
+}
+
 // One tile per number, each with the sentence that says what it counts.
 export function EvalNumbersView({
   numbers,
@@ -51,8 +55,8 @@ export function EvalNumbersView({
     <div className="flex flex-col gap-4">
       <p className="text-muted text-sm">
         {fixtureMode
-          ? `${numbers.queries} invented queries.`
-          : `Measured by the evaluator on ${numbers.queries} queries.`}
+          ? `${queries(numbers.queries)}, made up for the demo.`
+          : `Measured by the evaluator on ${queries(numbers.queries)}.`}
       </p>
       <dl className="grid gap-3 sm:grid-cols-2">
         {stats(numbers).map((stat) => (
