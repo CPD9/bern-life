@@ -92,7 +92,7 @@ describe.skipIf(testDb === null)("notification routes against a throwaway databa
 
     await readArrivals(sql, bea.id, id, NOW);
     expect((await list(bea)).map((n) => n.read)).toEqual([true]);
-    await postAndTell(sql, ada.id, id, "A third", NOW);
+    await postAndTell(sql, ada.id, id, "A third", new Date(NOW.getTime() + 60_000));
     expect((await list(bea)).map((n) => n.read)).toEqual([false, true]);
   });
 

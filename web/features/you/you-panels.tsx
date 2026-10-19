@@ -114,10 +114,32 @@ export function SkillsPanel({ profile }: { profile: YouProfile }) {
   );
 }
 
-export function PeoplePanel() {
+/** A member you are connected with. */
+export type YouPerson = { readonly handle: string; readonly displayName: string };
+
+/** Your accepted connections; null when signed out, since connections belong to an account. */
+export function PeoplePanel({ people }: { people: readonly YouPerson[] | null }) {
   return (
     <>
-      <Empty>No connections yet. People you connect with in Bern Life will appear here.</Empty>
+      {people === null ? (
+        <Empty>Sign in to connect with members. Your connections will appear here.</Empty>
+      ) : people.length === 0 ? (
+        <Empty>
+          No connections yet. Members who accept your request in Connections appear here.
+        </Empty>
+      ) : (
+        <>
+          <Heading>Your connections</Heading>
+          <ul aria-label="Your connections" className="flex flex-col gap-1.5 text-sm">
+            {people.map((person) => (
+              <li key={person.handle}>
+                <span className="font-bold">{person.displayName}</span>{" "}
+                <span className="text-muted">@{person.handle}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       <p className="text-muted text-sm">
         Researchers found on public pages show up as search results with their source, never as
         characters in the world.

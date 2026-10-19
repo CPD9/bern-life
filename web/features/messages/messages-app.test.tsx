@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { ReactNode } from "react";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import type { AppEventName, AppEventSink } from "@/infrastructure/app-events";
 import type { Start } from "./input";
@@ -335,5 +336,32 @@ describe("the live client and the HTTP client", () => {
       `/api/messages/conversations/${CHAT}/messages?before=abc`,
       "/api/messages/unread",
     ]);
+  });
+});
+
+describe("StandaloneMessages startWith", () => {
+  test("Message on a member opens the direct thread by handle, once per request", async () => {
+    const server = fakeServer();
+    const live = fakeLive();
+    let started = 0;
+    const view = (key: number) => (
+      <StandaloneMessages
+        api={server.api}
+        connect={live.connect}
+        startWith={{ handle: "ada", key }}
+        onStarted={() => (started += 1)}
+      />
+    );
+    let rerender: (ui: ReactNode) => void = () => {};
+    await act(async () => {
+      rerender = render(view(1)).rerender;
+    });
+    expect(server.started).toEqual([{ kind: "direct", handle: "ada" }]);
+    expect(thread().map((t) => t.split(" · ")[0])).toEqual(["You", "Ada Example"]);
+    expect(server.calls).toEqual(["page", "read"]);
+    await act(async () => rerender(view(1)));
+    expect(server.started.length).toBe(1);
+    await act(async () => rerender(view(2)));
+    expect([server.started.length, started]).toEqual([2, 2]);
   });
 });
