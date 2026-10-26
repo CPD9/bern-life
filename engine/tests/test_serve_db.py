@@ -12,6 +12,7 @@ import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
+from bernlife.cache import append_audit
 from bernlife.database import connect
 from bernlife.embed import MODEL_ID
 from bernlife.llm import MOCK_MODEL, ROLES, MockLLM
@@ -26,6 +27,11 @@ from test_numbers import entry, write_pack
 from db import database_url
 
 NOW = datetime(2026, 10, 19, 4, 0, tzinfo=UTC)
+AUDIT_LINES = [
+    {"ts": "2026-10-18T14:00:00+00:00", "role": "extract", "outcome": "live", "ms": 1200},
+    {"ts": "2026-10-19T03:00:00+00:00", "role": "expand", "outcome": "hit", "ms": 0},
+    {"ts": "2026-10-19T03:00:01+00:00", "role": "explain", "outcome": "timeout", "ms": 60000},
+]
 
 
 class ServeDbTest(unittest.TestCase):
@@ -41,6 +47,8 @@ class ServeDbTest(unittest.TestCase):
         folder = Path(tempfile.mkdtemp())
         write_bundle(folder / "bundle")
         write_pack(folder / "llm_cache", [entry("explain", 300), entry("explain", 100)])
+        for line in AUDIT_LINES:
+            append_audit(folder / "audit", {**line, "model": "fake-70b", "key": "ab" * 32})
         transaction = self.conn.transaction(force_rollback=True)
         transaction.__enter__()
         self.addCleanup(transaction.__exit__, None, None, None)
@@ -53,6 +61,7 @@ class ServeDbTest(unittest.TestCase):
             MockLLM(),
             configured=SOURCES,
             recorded=folder / "llm_cache",
+            audit_root=folder / "audit",
             clock=itertools.count(100.0, 5.4).__next__,
             now=lambda: NOW,
         )
@@ -108,6 +117,39 @@ class ServeDbTest(unittest.TestCase):
             },
         )
 
+    def test_admin_activity_summarises_the_audit_with_no_budget_when_nothing_is_live(self):
+        self.assertEqual(
+            self.get("/api/admin/activity"),
+            {
+                "today": "2026-10-19",
+                "live_today": 1,
+                "budget": None,
+                "days": [
+                    {
+                        "day": "2026-10-19",
+                        "calls": 2,
+                        "by_role": {"expand": 1, "explain": 1},
+                        "by_outcome": {"hit": 1, "timeout": 1},
+                        "failures": {"timeout": 1},
+                    },
+                    {
+                        "day": "2026-10-18",
+                        "calls": 1,
+                        "by_role": {"extract": 1},
+                        "by_outcome": {"live": 1},
+                        "failures": {},
+                    },
+                ],
+                "failures": {"timeout": 1},
+            },
+        )
+
+    def test_admin_flagged_checks_every_person_of_the_snapshot(self):
+        self.assertEqual(
+            self.get("/api/admin/flagged"),
+            {"snapshot": self.snapshot, "checked": 5, "people": []},
+        )
+
     def test_an_agent_turn_without_a_model_answers_from_search(self):
         body = json.dumps({"messages": [{"role": "user", "content": "glucose monitoring"}]})
         request = urllib.request.Request(self.base + "/api/agent", data=body.encode())
@@ -148,6 +190,8 @@ class ServeDbTest(unittest.TestCase):
             ("/api/health", "health.schema.json", "status"),
             ("/api/sources", "sources.schema.json", None),
             ("/api/numbers", "numbers.schema.json", None),
+            ("/api/admin/activity", "admin-activity.schema.json", None),
+            ("/api/admin/flagged", "admin-flagged.schema.json", None),
         ):
             with self.subTest(path=path):
                 errors = list(validator(contract, requires).iter_errors(self.get(path)))

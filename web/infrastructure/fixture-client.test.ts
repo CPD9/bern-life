@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import adminActivity from "../../contracts/fixtures/admin-activity.json";
+import adminFlagged from "../../contracts/fixtures/admin-flagged.json";
 import agent from "../../contracts/fixtures/agent.json";
 import numbers from "../../contracts/fixtures/numbers.json";
 import placePeople from "../../contracts/fixtures/place-people.json";
@@ -6,6 +8,8 @@ import opportunities from "../../contracts/fixtures/result-opportunities.json";
 import sources from "../../contracts/fixtures/sources.json";
 import { abstainedFixture, briefFixture, healthFixture, resultFixture } from "@/test/fixtures";
 import {
+  parseAdminActivity,
+  parseAdminFlagged,
   parseAgentReply,
   parseNumbers,
   parsePlacePeople,
@@ -34,6 +38,8 @@ const client = createFixtureClient({
   numbers: numbersFixture,
   placePeople: parsed(parsePlacePeople(placePeople)),
   health: healthFixture,
+  adminActivity: parsed(parseAdminActivity(adminActivity)),
+  adminFlagged: parsed(parseAdminFlagged(adminFlagged)),
 });
 
 describe("createFixtureClient", () => {

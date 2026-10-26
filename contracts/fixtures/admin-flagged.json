@@ -1,0 +1,22 @@
+{
+  "snapshot": "fixture",
+  "checked": 63,
+  "people": [
+    {
+      "id": "person-example-clinic-sample-health",
+      "name": "Sample Health",
+      "source_id": "example-clinic",
+      "source_name": "Example Clinic (fixture, not a real site)",
+      "page_url": "https://www.example-clinic.test/challenge/finalists",
+      "reason": "ends in Health"
+    },
+    {
+      "id": "person-example-example-digital",
+      "name": "Example Digital",
+      "source_id": "example",
+      "source_name": "Example Institute (fixture, not a real site)",
+      "page_url": "https://www.example-institute.test/partners",
+      "reason": "ends in Digital"
+    }
+  ]
+}

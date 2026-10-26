@@ -14,6 +14,8 @@ against a schema in this folder. POST is accepted from loopback only.
 | `GET /api/sources` | — | `sources.schema.json` (each source with its hosts, profile kinds, page and profile counts, newest fetch) |
 | `GET /api/places/{source}/{host}/people` | — | `place-people.schema.json` (the person profiles whose page is on that host of that source, at most 30 by name, and the total) |
 | `GET /api/numbers` | — | `numbers.schema.json` (the snapshot's committed evaluation, `metrics.schema.json`'s `eval`, or null; model calls per role from the cache pack) |
+| `GET /api/admin/activity` | — | `admin-activity.schema.json` (the audit of model calls per UTC day: calls by role and by outcome, failures per marker, today's live calls against the budget `/api/health` reports). Admin only, see below |
+| `GET /api/admin/flagged` | — | `admin-flagged.schema.json` (person profiles whose name has the shape of a company or group, with id, name, source and page URL, and how many were checked). Admin only, see below |
 
 Errors: HTTP 4xx/5xx with `{ "error": "<marker>" }`, where the marker is one of `bad_request`,
 `not_found`, `rate_limited` (HTTP 429), `engine_error`. No exception text, no provider message.
@@ -44,6 +46,15 @@ refuse, it summarises the model's own searches and no plain search runs.
 `/api/agent` checks the body and passes it on; the engine's 404 reaches the browser as
 `{ "error": "not_found" }`, and with `DEMO_FIXTURES=1` the proxy answers with
 `fixtures/agent.json`.
+
+## Admin routes
+
+The two `/api/admin/*` routes feed the Admin app on the office computer. The engine serves them
+like every other route, on loopback only; the web app's proxies at `/api/admin/activity` and
+`/api/admin/flagged` answer only a signed-in account whose role is `admin`: anyone else gets
+`forbidden` (HTTP 403), a signed-out request `unauthenticated` (HTTP 401). The role is a column on
+the account (`member` or `admin`, member by default) that only the operator's seeding script sets.
+Neither route calls a model, and neither body holds a cache key, a question or error text.
 
 ## Snapshot bundle
 

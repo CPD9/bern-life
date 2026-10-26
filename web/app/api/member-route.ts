@@ -55,6 +55,15 @@ export async function signedInFor(request: Request, deps: MemberRouteDeps): Prom
     : { ok: true, user, now };
 }
 
+/** An admin's read: signed in, and the account's role is admin. A member is refused as
+ *  forbidden; nothing says more about what the route holds. */
+export async function adminFor(request: Request, deps: MemberRouteDeps): Promise<Admitted> {
+  const signedIn = await signedInFor(request, deps);
+  if (!signedIn.ok) return signedIn;
+  if (signedIn.user.role !== "admin") return { ok: false, response: failure("forbidden") };
+  return signedIn;
+}
+
 /** A change: from the app's own origin, signed in, and within `limit` per member per window. */
 export async function admittedFor(
   request: Request,

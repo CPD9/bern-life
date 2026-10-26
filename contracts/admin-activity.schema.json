@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "admin-activity.schema.json",
+  "title": "AdminActivity",
+  "description": "GET /api/admin/activity, for admins only. The engine's audit of model calls (one line per call: when, role, model, cache key, outcome, latency) summarised per UTC day. An outcome is hit (answered from the cache), miss (not recorded and no live call allowed), budget (today's live calls used up), live (reached the model) or a failure marker. Counts only, never error text.",
+  "type": "object",
+  "required": [
+    "today",
+    "live_today",
+    "budget",
+    "days",
+    "failures"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "today": {
+      "description": "The UTC day the counts call today.",
+      "type": "string",
+      "format": "date"
+    },
+    "live_today": {
+      "description": "Calls that reached the model today, failed ones included, as the audit shows them.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "budget": {
+      "description": "Live calls allowed and used today, as GET /api/health reports them; null when the engine is not live, so nothing can be spent.",
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "limit",
+        "used"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "used": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "days": {
+      "description": "Days with at least one call, newest first, at most 30. Each day's failures are its failed calls per marker; the top-level failures sum them over the listed days.",
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "required": [
+          "day",
+          "calls",
+          "by_role",
+          "by_outcome",
+          "failures"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "calls": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "by_role": {
+            "$ref": "#/$defs/counts"
+          },
+          "by_outcome": {
+            "$ref": "#/$defs/counts"
+          },
+          "failures": {
+            "$ref": "#/$defs/counts"
+          }
+        }
+      }
+    },
+    "failures": {
+      "$ref": "#/$defs/counts"
+    }
+  },
+  "$defs": {
+    "counts": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9_]+$",
+        "maxLength": 32
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "description": "Calls per role, per outcome or, under failures, per failure marker: names of the shape ^[a-z0-9_]+$ only, so no error text can be a key."
+    }
+  }
+}

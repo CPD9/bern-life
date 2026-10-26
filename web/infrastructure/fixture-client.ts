@@ -3,6 +3,8 @@
 // query sharing a word with the fixture query or its expanded terms gets the result fixture;
 // anything else gets the abstained one, so both states can be shown on purpose.
 import type {
+  AdminActivity,
+  AdminFlagged,
   AgentReply,
   Health,
   Numbers,
@@ -23,6 +25,8 @@ export type Fixtures = {
   readonly placePeople: PlacePeople;
   readonly numbers: Numbers;
   readonly health: Health;
+  readonly adminActivity: AdminActivity;
+  readonly adminFlagged: AdminFlagged;
 };
 
 const opportunityKinds: readonly ProfileKind[] = ["call", "service", "space"];
@@ -54,5 +58,7 @@ export function createFixtureClient(fixtures: Fixtures): EngineClient {
     placePeople: async () => ({ ok: true, value: fixtures.placePeople }),
     numbers: async () => ({ ok: true, value: fixtures.numbers }),
     health: async () => ({ ok: true, value: fixtures.health }),
+    adminActivity: async () => ({ ok: true, value: fixtures.adminActivity }),
+    adminFlagged: async () => ({ ok: true, value: fixtures.adminFlagged }),
   };
 }

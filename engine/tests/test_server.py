@@ -23,6 +23,8 @@ HEALTH = {
 }
 SOURCES = {"snapshot": "local-abc", "sources": []}
 NUMBERS = {"snapshot": "local-abc", "generated_at": "2026-10-19T04:00:00Z", "eval": None}
+ACTIVITY = {"today": "2026-10-19", "live_today": 0, "budget": None, "days": [], "failures": {}}
+FLAGGED = {"snapshot": "local-abc", "checked": 5, "people": []}
 SECRET_QUERY = "glucose sensors for Ada Muster at example-institute.test"
 LOG_KEYS = ["id", "route", "method", "status", "ms", "mode", "live_allowed", "cache"]
 
@@ -90,6 +92,14 @@ class FakeApi:
     def numbers(self):
         self._record("numbers", None)
         return NUMBERS
+
+    def admin_activity(self):
+        self._record("admin_activity", None)
+        return ACTIVITY
+
+    def admin_flagged(self):
+        self._record("admin_flagged", None)
+        return FLAGGED
 
     def source_ids(self):
         return {"demo", "example"}
@@ -301,6 +311,16 @@ class ServerTest(unittest.TestCase):
     def test_sources_and_numbers(self):
         self.assertEqual(self.call("/api/sources"), (200, SOURCES))
         self.assertEqual(self.call("/api/numbers"), (200, NUMBERS))
+
+    def test_admin_routes_are_reads_logged_by_their_own_template(self):
+        self.assertEqual(self.call("/api/admin/activity"), (200, ACTIVITY))
+        self.assertEqual(self.call("/api/admin/flagged"), (200, FLAGGED))
+        self.assertEqual(
+            [route_template(p) for p in ("/api/admin/activity", "/api/admin/flagged")],
+            ["/api/admin/activity", "/api/admin/flagged"],
+        )
+        self.assertEqual(self.call("/api/admin/elsewhere"), (404, {"error": "not_found"}))
+        self.assertEqual([call[0] for call in self.api.calls], ["admin_activity", "admin_flagged"])
 
     def test_only_the_header_value_1_lets_a_request_reach_the_model(self):
         cases = [(None, False), ("1", True), ("true", False), ("yes", False), ("0", False)]

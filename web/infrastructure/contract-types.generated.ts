@@ -507,3 +507,71 @@ export interface PlacePeople {
   people: Profile[];
   total: number;
 }
+
+/**
+ * GET /api/admin/activity, for admins only. The engine's audit of model calls (one line per call: when, role, model, cache key, outcome, latency) summarised per UTC day. An outcome is hit (answered from the cache), miss (not recorded and no live call allowed), budget (today's live calls used up), live (reached the model) or a failure marker. Counts only, never error text.
+ */
+export interface AdminActivity {
+  /**
+   * The UTC day the counts call today.
+   */
+  today: string;
+  /**
+   * Calls that reached the model today, failed ones included, as the audit shows them.
+   */
+  live_today: number;
+  /**
+   * Live calls allowed and used today, as GET /api/health reports them; null when the engine is not live, so nothing can be spent.
+   */
+  budget: {
+    limit: number;
+    used: number;
+  } | null;
+  /**
+   * Days with at least one call, newest first, at most 30. Each day's failures are its failed calls per marker; the top-level failures sum them over the listed days.
+   *
+   * @maxItems 30
+   */
+  days: {
+    day: string;
+    calls: number;
+    by_role: Counts;
+    by_outcome: Counts;
+    failures: Counts;
+  }[];
+  failures: Counts;
+}
+/**
+ * Calls per role, per outcome or, under failures, per failure marker: names of the shape ^[a-z0-9_]+$ only, so no error text can be a key.
+ */
+export interface Counts {
+  [k: string]: number;
+}
+
+/**
+ * GET /api/admin/flagged, for admins only. Person profiles in the loaded snapshot whose name has the shape of a company or group: its last word names a trade or a legal form, as in Digital, Health, Medical, Photonics, AG, GmbH, Ltd, Lab, Group or Center. The rule reads word shapes, never a list of names, and removes nothing: a person checks each one against its page.
+ */
+export interface AdminFlagged {
+  snapshot: string;
+  /**
+   * How many person profiles the rule looked at.
+   */
+  checked: number;
+  /**
+   * By id.
+   */
+  people: {
+    id: string;
+    name: string;
+    source_id: string;
+    source_name: string;
+    /**
+     * The page the profile was read from, where a person checks the name.
+     */
+    page_url: string;
+    /**
+     * The word that gave the shape, as "ends in Digital".
+     */
+    reason: string;
+  }[];
+}

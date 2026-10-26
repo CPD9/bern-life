@@ -26,6 +26,8 @@ const checkedSchemas = [
   "sources.schema.json",
   "numbers.schema.json",
   "place-people.schema.json",
+  "admin-activity.schema.json",
+  "admin-flagged.schema.json",
 ];
 const referencedSchemas = ["profile.schema.json"];
 

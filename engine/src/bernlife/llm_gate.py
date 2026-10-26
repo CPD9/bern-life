@@ -111,11 +111,12 @@ def calls_on(root: Path, day: date) -> int:
         for record in audit_records(root)
         if isinstance(record.get("outcome"), str)
         and record["outcome"] not in NO_CALL
-        and _day_of(record) == day
+        and day_of(record) == day
     )
 
 
-def _day_of(record: Mapping[str, Any]) -> date | None:
+def day_of(record: Mapping[str, Any]) -> date | None:
+    """The UTC day of an audit record, or None when its time cannot be read."""
     try:
         return datetime.fromisoformat(record["ts"]).astimezone(UTC).date()
     except (KeyError, TypeError, ValueError):

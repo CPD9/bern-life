@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "admin-flagged.schema.json",
+  "title": "AdminFlagged",
+  "description": "GET /api/admin/flagged, for admins only. Person profiles in the loaded snapshot whose name has the shape of a company or group: its last word names a trade or a legal form, as in Digital, Health, Medical, Photonics, AG, GmbH, Ltd, Lab, Group or Center. The rule reads word shapes, never a list of names, and removes nothing: a person checks each one against its page.",
+  "type": "object",
+  "required": [
+    "snapshot",
+    "checked",
+    "people"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "snapshot": {
+      "type": "string"
+    },
+    "checked": {
+      "description": "How many person profiles the rule looked at.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "people": {
+      "description": "By id.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "source_id",
+          "source_name",
+          "page_url",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^person-[a-z0-9-]+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "source_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "page_url": {
+            "description": "The page the profile was read from, where a person checks the name.",
+            "type": "string",
+            "format": "uri"
+          },
+          "reason": {
+            "description": "The word that gave the shape, as \"ends in Digital\".",
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

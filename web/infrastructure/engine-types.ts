@@ -1,4 +1,6 @@
 import type {
+  AdminActivity,
+  AdminFlagged,
   AgentReply,
   Health,
   Numbers,
@@ -45,6 +47,10 @@ export type EngineClient = {
   placePeople(sourceId: string, host: string): Promise<EngineResult<PlacePeople>>;
   numbers(): Promise<EngineResult<Numbers>>;
   health(): Promise<EngineResult<Health>>;
+  /** The audit of model calls per day; the web app answers only an admin with it. */
+  adminActivity(): Promise<EngineResult<AdminActivity>>;
+  /** Person profiles whose name reads as a company; the web app answers only an admin with it. */
+  adminFlagged(): Promise<EngineResult<AdminFlagged>>;
 };
 
 /** What a proxy route needs, passed in so a test can supply its own engine and guard. */

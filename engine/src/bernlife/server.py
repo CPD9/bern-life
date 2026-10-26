@@ -36,7 +36,16 @@ PROFILE_PATH = re.compile(r"^/api/profile/([a-z0-9-]+)$")
 PROFILE_ROUTE = "/api/profile/{id}"
 PLACE_PEOPLE_PATH = re.compile(r"^/api/places/([a-z0-9-]+)/([a-z0-9.-]+)/people$")
 PLACE_PEOPLE_ROUTE = "/api/places/{source}/{host}/people"
-ROUTES = ("/api/health", "/api/sources", "/api/numbers", "/api/search", "/api/brief", "/api/agent")
+ROUTES = (
+    "/api/health",
+    "/api/sources",
+    "/api/numbers",
+    "/api/search",
+    "/api/brief",
+    "/api/agent",
+    "/api/admin/activity",
+    "/api/admin/flagged",
+)
 log = logging.getLogger("bernlife.server")
 
 
@@ -64,6 +73,8 @@ class Api(Protocol):
     def place_people(self, source_id: str, host: str) -> dict[str, Any]: ...
     def sources(self) -> dict[str, Any]: ...
     def numbers(self) -> dict[str, Any]: ...
+    def admin_activity(self) -> dict[str, Any]: ...
+    def admin_flagged(self) -> dict[str, Any]: ...
     def source_ids(self) -> set[str]: ...
 
 
@@ -100,6 +111,10 @@ def route_get(api: Api, path: str) -> dict[str, Any]:
         return api.sources()
     if path == "/api/numbers":
         return api.numbers()
+    if path == "/api/admin/activity":
+        return api.admin_activity()
+    if path == "/api/admin/flagged":
+        return api.admin_flagged()
     place = PLACE_PEOPLE_PATH.match(path)
     if place:
         return api.place_people(place.group(1), place.group(2))
