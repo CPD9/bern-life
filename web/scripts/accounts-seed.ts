@@ -23,7 +23,9 @@ for (const [handle, displayName, role] of [...TEAM, ...TESTS]) {
   const seeded = await seedAccount(db(), handle, displayName, role);
   if (seeded === "exists") await setRole(db(), handle, role);
   lines.push(
-    seeded === "exists" ? `${handle}\t(exists, unchanged)` : `${handle}\t${seeded.password}`,
+    seeded === "exists"
+      ? `${handle}\t(exists, password kept, role ${role})`
+      : `${handle}\t${seeded.password}`,
   );
 }
 console.log(`handle\tpassword\n${lines.join("\n")}`);
