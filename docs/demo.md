@@ -76,19 +76,19 @@ Back in any result card, open a claim (a role, an expertise, a project). The evi
 verbatim sentence, the page, and the date it was fetched; **Open the page at this sentence** opens
 the institution's page scrolled to that sentence.
 
-## 7. Lumi, your agent
+## 7. Bärnli, your agent
 
-After onboarding you land in your office (the **Home** tab). Lumi, the bear you made in the last
+After onboarding you land in your office (the **Home** tab). Bärnli, the bear you made in the last
 onboarding step, floats beside you in the office and on the map, and stands in front of the city
-hall; tap either to open Lumi's chat, then ask in your own words or tap a suggestion. Lumi
+hall; tap either to open Bärnli's chat, then ask in your own words or tap a suggestion. Bärnli
 searches with the engine's own tools and answers with the same cards as Ask: a person it names must
 be among those results, and a reply with nothing behind it says that no verifiable source was
 found. The answer goes where you would go by hand: it lights its places on the map and may open a
 card in Ask, and a match report waits for your click on **Make a match report**, then opens in the
-desk's Reports window. In replay Lumi searches your message and summarises the cited claims; its
+desk's Reports window. In replay Bärnli searches your message and summarises the cited claims; its
 own recorded answers ship with the next bundle.
 
-At the desk, **Agents** lists Lumi's skills, such as search, Checks the premise, project brief and
+At the desk, **Agents** lists Bärnli's skills, such as search, Checks the premise, project brief and
 match report, each with its evidence (the evaluator's numbers from `/api/numbers`, marked FIXTURE
 under fixtures) and a **Try** that opens it (Find opportunities opens Opportunities), and loops:
 saved searches you run again by hand, whose new and dropped results reach the bell. The Garage lists

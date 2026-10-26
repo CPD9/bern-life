@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 268" width="360" height="268" role="img" aria-labelledby="title" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+<title id="title">Fields filled per shown result</title>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M134.0,35V180.0" stroke="#c3c1b8"/>
+<text x="134.0" y="192.0" font-size="10" fill="#868b94" text-anchor="middle">0</text>
+<path d="M172.9,35V180.0" stroke="#e6e4de"/>
+<text x="172.9" y="192.0" font-size="10" fill="#868b94" text-anchor="middle">0.25</text>
+<path d="M211.8,35V180.0" stroke="#e6e4de"/>
+<text x="211.8" y="192.0" font-size="10" fill="#868b94" text-anchor="middle">0.5</text>
+<path d="M250.7,35V180.0" stroke="#e6e4de"/>
+<text x="250.7" y="192.0" font-size="10" fill="#868b94" text-anchor="middle">0.75</text>
+<path d="M289.6,35V180.0" stroke="#e6e4de"/>
+<text x="289.6" y="192.0" font-size="10" fill="#868b94" text-anchor="middle">1</text>
+<text x="348.0" y="31.0" font-size="10" fill="#868b94" text-anchor="end">filled</text>
+<text x="126.0" y="48.4" font-size="11" fill="#1f2430" text-anchor="end">person</text>
+<path d="M134.0,40.0h153.7a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-153.7z" fill="#c8102e"><title>person, Share of results with the field: 1.00</title></path>
+<text x="348.0" y="48.4" font-size="11" fill="#4b5260" text-anchor="end">372 of 372</text>
+<text x="126.0" y="66.3" font-size="11" fill="#1f2430" text-anchor="end">role/affiliation</text>
+<path d="M134.0,58.0h52.4a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-52.4z" fill="#c8102e"><title>role/affiliation, Share of results with the field: 0.35</title></path>
+<text x="348.0" y="66.3" font-size="11" fill="#4b5260" text-anchor="end">130 of 372</text>
+<text x="126.0" y="84.3" font-size="11" fill="#1f2430" text-anchor="end">unit</text>
+<path d="M134.0,76.0h65.8a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-65.8z" fill="#c8102e"><title>unit, Share of results with the field: 0.44</title></path>
+<text x="348.0" y="84.3" font-size="11" fill="#4b5260" text-anchor="end">162 of 372</text>
+<text x="126.0" y="102.3" font-size="11" fill="#1f2430" text-anchor="end">expertise</text>
+<path d="M134.0,94.0h95.5a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-95.5z" fill="#c8102e"><title>expertise, Share of results with the field: 0.63</title></path>
+<text x="348.0" y="102.3" font-size="11" fill="#4b5260" text-anchor="end">233 of 372</text>
+<text x="126.0" y="120.3" font-size="11" fill="#1f2430" text-anchor="end">projects</text>
+<path d="M134.0,112.0h15.2a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-15.2z" fill="#c8102e"><title>projects, Share of results with the field: 0.11</title></path>
+<text x="348.0" y="120.3" font-size="11" fill="#4b5260" text-anchor="end">41 of 372</text>
+<text x="126.0" y="138.3" font-size="11" fill="#1f2430" text-anchor="end">infrastructure/services</text>
+<path d="M134.0,130.0h18.5a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-18.5z" fill="#c8102e"><title>infrastructure/services, Share of results with the field: 0.13</title></path>
+<text x="348.0" y="138.3" font-size="11" fill="#4b5260" text-anchor="end">49 of 372</text>
+<text x="126.0" y="156.3" font-size="11" fill="#1f2430" text-anchor="end">reason</text>
+<path d="M134.0,148.0h153.7a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-153.7z" fill="#c8102e"><title>reason, Share of results with the field: 1.00</title></path>
+<text x="348.0" y="156.3" font-size="11" fill="#4b5260" text-anchor="end">372 of 372</text>
+<text x="126.0" y="174.3" font-size="11" fill="#1f2430" text-anchor="end">source link</text>
+<path d="M134.0,166.0h153.7a2.0,2.0 0 0 1 2.0,2.0v5.0a2.0,2.0 0 0 1 -2.0,2.0h-153.7z" fill="#c8102e"><title>source link, Share of results with the field: 1.00</title></path>
+<text x="348.0" y="174.3" font-size="11" fill="#4b5260" text-anchor="end">372 of 372</text>
+<text x="12.0" y="211.0" font-size="10" fill="#4b5260" text-anchor="start">The 372 results shown for the answerable gold questions, and how many</text>
+<text x="12.0" y="224.5" font-size="10" fill="#4b5260" text-anchor="start">fill each of the case's eight fields; mean share of fields filled 0.58. Status:</text>
+<text x="12.0" y="238.0" font-size="10" fill="#4b5260" text-anchor="start">human check pending. A field a page does not state cannot be filled, so</text>
+<text x="12.0" y="251.5" font-size="10" fill="#4b5260" text-anchor="start">this is a ceiling-free count, not a score.</text>
+</svg>

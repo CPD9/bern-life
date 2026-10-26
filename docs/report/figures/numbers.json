@@ -1,0 +1,772 @@
+{
+  "metrics": "eval/out/metrics.json",
+  "metrics_sha256": "908a965258069bbd6ad53316bb1c44c47840851f085eabb50b90dd4a07380089",
+  "input_sha256": {
+    "consistency": "e4cac03817d88ae38b06356045366bb36f01628f1edf8561f0f08c746eeb8720",
+    "consistency_predictions": "4aa46a38f207b99f2f4f428a31285e39c2b245368dcb389e39710dcf96183296",
+    "gold": "13972fb3019ffff07dbf862770242ea81b02ab2f3d2660818a58ec4cd4f1c9db",
+    "pages": "ec9161f996944b79a0abca9ab8fbcb53677c179f6fd8cdf37317d0336252a37d",
+    "predictions": "549bb8fdfbf12542fee79d8be3845406ba4ed5673fd73523494b956a0bbb1424",
+    "profiles": "666780280d773e2157c668edba9aa3821b759c53716305077f4e167452ebdb39"
+  },
+  "read_from_docs": {
+    "pages": {
+      "value": 3351,
+      "read_from": "bundle-20261019-4 manifest.json, pages.jsonl lines",
+      "about": false
+    },
+    "model_proposals": {
+      "value": 16700,
+      "read_from": "docs/conductor/STATE.md, E2 extraction, final: about 16,700",
+      "about": true
+    },
+    "proposals_not_on_page": {
+      "value": 1151,
+      "read_from": "docs/conductor/STATE.md, E2 extraction, final",
+      "about": false
+    },
+    "people": {
+      "value": 2922,
+      "read_from": "docs/conductor/STATE.md, E2 extraction, final; the listing headings removed none",
+      "about": false
+    },
+    "units": {
+      "value": 187,
+      "read_from": "docs/conductor/STATE.md, E2 extraction, final 188, minus 1 in docs/extraction.md, Listing headings",
+      "about": false
+    },
+    "projects": {
+      "value": 85,
+      "read_from": "docs/conductor/STATE.md, E2 extraction, final 103, minus 18 in docs/extraction.md, Listing headings",
+      "about": false
+    },
+    "infrastructure": {
+      "value": 142,
+      "read_from": "docs/conductor/STATE.md, E2 extraction, final 158, minus 16 in docs/extraction.md, Listing headings",
+      "about": false
+    },
+    "relations": {
+      "value": 1843,
+      "read_from": "docs/conductor/STATE.md, E2 extraction, final 1,897, minus 54 in docs/extraction.md, Listing headings",
+      "about": false
+    },
+    "bare_name_people": {
+      "value": 1241,
+      "read_from": "docs/conductor/STATE.md, E2 extraction, final: a bare name from a news or partner page",
+      "about": false
+    },
+    "claims_with_evidence": {
+      "value": 4877,
+      "read_from": "bundle-20261019-4 profiles.jsonl, field claims of the person, unit, project and infrastructure profiles",
+      "about": false
+    },
+    "calls_extract": {
+      "value": 3329,
+      "read_from": "bundle-20261019-4 llm_cache/pack.jsonl.xz, entries per role",
+      "about": false
+    },
+    "calls_explain": {
+      "value": 674,
+      "read_from": "bundle-20261019-4 llm_cache/pack.jsonl.xz, entries per role",
+      "about": false
+    },
+    "calls_expand": {
+      "value": 119,
+      "read_from": "bundle-20261019-4 llm_cache/pack.jsonl.xz, entries per role",
+      "about": false
+    },
+    "calls_enrich": {
+      "value": 57,
+      "read_from": "bundle-20261019-4 llm_cache/pack.jsonl.xz, entries per role",
+      "about": false
+    },
+    "calls_agent": {
+      "value": 17,
+      "read_from": "bundle-20261019-4 llm_cache/pack.jsonl.xz, entries per role",
+      "about": false
+    },
+    "calls_brief": {
+      "value": 7,
+      "read_from": "bundle-20261019-4 llm_cache/pack.jsonl.xz, entries per role",
+      "about": false
+    },
+    "explain_v1_passed_share": {
+      "value": 0.33,
+      "read_from": "docs/search.md, Why it matches",
+      "about": false
+    },
+    "apertus_8b_confirmed_invented_details": {
+      "value": 15,
+      "read_from": "docs/decisions.md, 2026-10-18 afternoon: 15 of 18 answers",
+      "about": false
+    },
+    "apertus_8b_answers": {
+      "value": 18,
+      "read_from": "docs/decisions.md, 2026-10-18 afternoon: 15 of 18 answers",
+      "about": false
+    },
+    "gold_base_needs": {
+      "value": 20,
+      "read_from": "eval/gold.jsonl, answerable questions counted by variant_of, the bootstrap's cluster",
+      "about": false
+    },
+    "gold_base_needs_reworded": {
+      "value": 14,
+      "read_from": "eval/gold.jsonl, answerable questions counted by variant_of, the bootstrap's cluster",
+      "about": false
+    },
+    "dev_queries": {
+      "value": 27,
+      "read_from": "eval/PREREGISTRATION.md, 2026-10-19: dev2, and the rule for search levers",
+      "about": false
+    },
+    "dev2_candidates": {
+      "value": 56,
+      "read_from": "eval/PREREGISTRATION.md, 2026-10-19: dev2, and the rule for search levers",
+      "about": false
+    },
+    "dev2_dropped_on_gold_check": {
+      "value": 8,
+      "read_from": "eval/PREREGISTRATION.md, 2026-10-19: dev2, and the rule for search levers",
+      "about": false
+    },
+    "dev2_queries": {
+      "value": 38,
+      "read_from": "eval/PREREGISTRATION.md, 2026-10-19: dev2, and the rule for search levers",
+      "about": false
+    },
+    "dev_pooled_recall_before": {
+      "value": 0.585,
+      "read_from": "eval/PREREGISTRATION.md, 2026-10-19: the final gold run of #226",
+      "about": false
+    },
+    "dev_pooled_recall_after": {
+      "value": 0.698,
+      "read_from": "eval/PREREGISTRATION.md, 2026-10-19: the final gold run of #226",
+      "about": false
+    },
+    "dev_pooled_mrr_before": {
+      "value": 0.456,
+      "read_from": "eval/PREREGISTRATION.md, 2026-10-19: the final gold run of #226",
+      "about": false
+    },
+    "dev_pooled_mrr_after": {
+      "value": 0.529,
+      "read_from": "eval/PREREGISTRATION.md, 2026-10-19: the final gold run of #226",
+      "about": false
+    },
+    "latency_replay_p50_ms": {
+      "value": 165,
+      "read_from": "docs/search.md, Plain, enrichment, expansion: latency",
+      "about": false
+    },
+    "latency_live_p50_s": {
+      "value": 4.1,
+      "read_from": "docs/search.md, Plain, enrichment, expansion: latency",
+      "about": false
+    },
+    "latency_live_p95_s": {
+      "value": 7.6,
+      "read_from": "docs/search.md, Plain, enrichment, expansion: latency",
+      "about": false
+    }
+  },
+  "recall_by_language": {
+    "bar": 0.8,
+    "rows": [
+      {
+        "label": "English",
+        "queries": 22,
+        "recall_at_10": 0.55,
+        "ci95": [
+          0.3804,
+          0.7254
+        ],
+        "mrr": 0.5871
+      },
+      {
+        "label": "German",
+        "queries": 11,
+        "recall_at_10": 0.2045,
+        "ci95": [
+          0.0455,
+          0.4091
+        ],
+        "mrr": 0.2727
+      },
+      {
+        "label": "French",
+        "queries": 5,
+        "recall_at_10": 0.1167,
+        "ci95": [
+          0.0,
+          0.25
+        ],
+        "mrr": 0.24
+      },
+      {
+        "label": "All questions",
+        "queries": 38,
+        "recall_at_10": 0.393,
+        "ci95": [
+          0.2365,
+          0.563
+        ],
+        "mrr": 0.4504
+      }
+    ]
+  },
+  "recall_by_source": {
+    "bar": 0.8,
+    "rows": [
+      {
+        "label": "UniBE",
+        "queries": 16,
+        "recall_at_10": 0.2667,
+        "ci95": [
+          0.0962,
+          0.4519
+        ],
+        "mrr": 0.375
+      },
+      {
+        "label": "ARTORG",
+        "queries": 13,
+        "recall_at_10": 0.4359,
+        "ci95": [
+          0.2111,
+          0.697
+        ],
+        "mrr": 0.6308
+      },
+      {
+        "label": "DCB",
+        "queries": 12,
+        "recall_at_10": 0.5556,
+        "ci95": [
+          0.2639,
+          0.8788
+        ],
+        "mrr": 0.4264
+      },
+      {
+        "label": "All questions",
+        "queries": 38,
+        "recall_at_10": 0.393,
+        "ci95": [
+          0.2365,
+          0.563
+        ],
+        "mrr": 0.4504
+      }
+    ]
+  },
+  "slots_by_source": {
+    "slots": 372,
+    "rows": [
+      {
+        "label": "UniBE",
+        "slots": 215,
+        "slot_share": 0.578,
+        "profile_share": 0.7615
+      },
+      {
+        "label": "ARTORG",
+        "slots": 90,
+        "slot_share": 0.2419,
+        "profile_share": 0.1272
+      },
+      {
+        "label": "DCB",
+        "slots": 67,
+        "slot_share": 0.1801,
+        "profile_share": 0.0689
+      }
+    ]
+  },
+  "recall_by_wording": {
+    "bar": 0.8,
+    "rows": [
+      {
+        "label": "Site's own wording",
+        "queries": 14,
+        "recall_at_10": 0.4262,
+        "ci95": [
+          0.2714,
+          0.5833
+        ],
+        "mrr": 0.6071,
+        "jaccard_with_site": null
+      },
+      {
+        "label": "Synonyms",
+        "queries": 3,
+        "recall_at_10": 0.8222,
+        "ci95": [
+          0.6667,
+          1.0
+        ],
+        "mrr": 1.0,
+        "jaccard_with_site": 0.3095
+      },
+      {
+        "label": "Lay terms",
+        "queries": 3,
+        "recall_at_10": 0.4167,
+        "ci95": [
+          0.0,
+          1.0
+        ],
+        "mrr": 0.1944,
+        "jaccard_with_site": 0.2422
+      },
+      {
+        "label": "Translations",
+        "queries": 12,
+        "recall_at_10": 0.2708,
+        "ci95": [
+          0.0972,
+          0.4583
+        ],
+        "mrr": 0.3083,
+        "jaccard_with_site": 0.2437
+      },
+      {
+        "label": "Control",
+        "queries": 6,
+        "recall_at_10": 0.3333,
+        "ci95": [
+          0.0,
+          0.6667
+        ],
+        "mrr": 0.2222,
+        "jaccard_with_site": null
+      }
+    ]
+  },
+  "consistency_sets": {
+    "jaccard_mean": 0.1658,
+    "wordings": 13,
+    "plain_search": [
+      "Is anyone in Bern developing sensors that measure ketones and lactate in the body?",
+      "An app that counts the carbs in my meal from a photo taken with my phone"
+    ],
+    "sets": [
+      {
+        "set": "glucose-sensors",
+        "wordings": 5,
+        "pairs": 10,
+        "jaccard_mean": 0.1057,
+        "found_by_first_mean": 0.225,
+        "expansion_recorded": 5,
+        "found_by_first": [
+          {
+            "query": "glucose sensors",
+            "shown": 10,
+            "share": null
+          },
+          {
+            "query": "CGM",
+            "shown": 10,
+            "share": 0.2
+          },
+          {
+            "query": "biosensing",
+            "shown": 10,
+            "share": 0.4
+          },
+          {
+            "query": "Blutzucker messen",
+            "shown": 10,
+            "share": 0.1
+          },
+          {
+            "query": "continuous glucose monitoring",
+            "shown": 10,
+            "share": 0.2
+          }
+        ]
+      },
+      {
+        "set": "metabolite-sensors",
+        "wordings": 4,
+        "pairs": 6,
+        "jaccard_mean": 0.2285,
+        "found_by_first_mean": 0.4333,
+        "expansion_recorded": 3,
+        "found_by_first": [
+          {
+            "query": "Sensor technology for continuous monitoring of multiple metabolites such as glucose, lactate and ketones",
+            "shown": 10,
+            "share": null
+          },
+          {
+            "query": "Minimally invasive optical biosensor with aggregation-induced emission molecules for multi-analyte sensing in interstitial fluid",
+            "shown": 10,
+            "share": 0.4
+          },
+          {
+            "query": "Capteur optique pour la surveillance continue de plusieurs métabolites (glucose, lactate, cétones)",
+            "shown": 10,
+            "share": 0.4
+          },
+          {
+            "query": "Is anyone in Bern developing sensors that measure ketones and lactate in the body?",
+            "shown": 10,
+            "share": 0.5
+          }
+        ]
+      },
+      {
+        "set": "carbs-from-meal-photos",
+        "wordings": 4,
+        "pairs": 6,
+        "jaccard_mean": 0.2032,
+        "found_by_first_mean": 0.5667,
+        "expansion_recorded": 3,
+        "found_by_first": [
+          {
+            "query": "A system for calculating the carbohydrate content of meals for individuals with type 1 diabetes",
+            "shown": 10,
+            "share": null
+          },
+          {
+            "query": "An app that counts the carbs in my meal from a photo taken with my phone",
+            "shown": 3,
+            "share": 1.0
+          },
+          {
+            "query": "KI-gestützte Kohlenhydratschätzung von Mahlzeiten bei Typ-1-Diabetes",
+            "shown": 10,
+            "share": 0.5
+          },
+          {
+            "query": "Wer entwickelt eine App, die Kohlenhydrate auf Fotos von Mahlzeiten schätzt?",
+            "shown": 10,
+            "share": 0.2
+          }
+        ]
+      }
+    ]
+  },
+  "exposure_by_size": {
+    "median_profiles": 125.5,
+    "slots_outside": 0,
+    "rows": [
+      {
+        "label": "Small units, ≤ 125.5 profiles",
+        "units": 11,
+        "profiles": 757,
+        "profile_share": 0.2269,
+        "slots": 66,
+        "slot_share": 0.1774,
+        "units_never_shown": 3
+      },
+      {
+        "label": "Large units, > 125.5 profiles",
+        "units": 11,
+        "profiles": 2579,
+        "profile_share": 0.7731,
+        "slots": 306,
+        "slot_share": 0.8226,
+        "units_never_shown": 1
+      },
+      {
+        "label": "UniBE, small",
+        "units": 11,
+        "profiles": 757,
+        "profile_share": 0.2853,
+        "slots": 66,
+        "slot_share": 0.307,
+        "units_never_shown": 3
+      },
+      {
+        "label": "UniBE, large",
+        "units": 9,
+        "profiles": 1896,
+        "profile_share": 0.7147,
+        "slots": 149,
+        "slot_share": 0.693,
+        "units_never_shown": 1
+      },
+      {
+        "label": "ARTORG, large",
+        "units": 1,
+        "profiles": 443,
+        "profile_share": 1.0,
+        "slots": 90,
+        "slot_share": 1.0,
+        "units_never_shown": 0
+      },
+      {
+        "label": "DCB, large",
+        "units": 1,
+        "profiles": 240,
+        "profile_share": 1.0,
+        "slots": 67,
+        "slot_share": 1.0,
+        "units_never_shown": 0
+      }
+    ]
+  },
+  "abstention": {
+    "bar": 0.9,
+    "rows": [
+      {
+        "label": "Invented, all languages",
+        "k": 9,
+        "n": 10,
+        "share": 0.9,
+        "ci95": [
+          0.5958,
+          0.9821
+        ]
+      },
+      {
+        "label": "Invented, English",
+        "k": 4,
+        "n": 4,
+        "share": 1.0,
+        "ci95": [
+          0.5101,
+          1.0
+        ]
+      },
+      {
+        "label": "Invented, German",
+        "k": 3,
+        "n": 3,
+        "share": 1.0,
+        "ci95": [
+          0.4385,
+          1.0
+        ]
+      },
+      {
+        "label": "Invented, French",
+        "k": 2,
+        "n": 3,
+        "share": 0.6667,
+        "ci95": [
+          0.2077,
+          0.9385
+        ]
+      },
+      {
+        "label": "Answerable, all languages",
+        "k": 0,
+        "n": 38,
+        "share": 0.0,
+        "ci95": [
+          0.0,
+          0.0918
+        ]
+      },
+      {
+        "label": "Answerable, English",
+        "k": 0,
+        "n": 22,
+        "share": 0.0,
+        "ci95": [
+          0.0,
+          0.1487
+        ]
+      },
+      {
+        "label": "Answerable, German",
+        "k": 0,
+        "n": 11,
+        "share": 0.0,
+        "ci95": [
+          0.0,
+          0.2588
+        ]
+      },
+      {
+        "label": "Answerable, French",
+        "k": 0,
+        "n": 5,
+        "share": 0.0,
+        "ci95": [
+          0.0,
+          0.4345
+        ]
+      }
+    ]
+  },
+  "completeness": {
+    "results": 372,
+    "mean_share": 0.5817,
+    "status": "human check pending",
+    "rows": [
+      {
+        "field": "person",
+        "filled": 372,
+        "share": 1.0
+      },
+      {
+        "field": "role/affiliation",
+        "filled": 130,
+        "share": 0.3495
+      },
+      {
+        "field": "unit",
+        "filled": 162,
+        "share": 0.4355
+      },
+      {
+        "field": "expertise",
+        "filled": 233,
+        "share": 0.6263
+      },
+      {
+        "field": "projects",
+        "filled": 41,
+        "share": 0.1102
+      },
+      {
+        "field": "infrastructure/services",
+        "filled": 49,
+        "share": 0.1317
+      },
+      {
+        "field": "reason",
+        "filled": 372,
+        "share": 1.0
+      },
+      {
+        "field": "source link",
+        "filled": 372,
+        "share": 1.0
+      }
+    ]
+  },
+  "gold_runs": {
+    "bar": 0.8,
+    "rows": [
+      {
+        "change": "Hybrid search, no claim rule",
+        "date": "2026-10-18",
+        "recall_at_10": 0.31,
+        "ci95": [
+          0.18,
+          0.48
+        ],
+        "mrr": 0.29,
+        "read_from": "docs/search.md, Baseline"
+      },
+      {
+        "change": "Claim rule: a result cites a matching claim",
+        "date": "2026-10-18",
+        "recall_at_10": 0.22,
+        "ci95": [
+          0.1,
+          0.35
+        ],
+        "mrr": 0.27,
+        "read_from": "docs/search.md, Baseline"
+      },
+      {
+        "change": "Enrichment terms on expertise values",
+        "date": "2026-10-18",
+        "recall_at_10": 0.24,
+        "ci95": [
+          0.12,
+          0.38
+        ],
+        "mrr": 0.32,
+        "read_from": "docs/search.md, Plain, enrichment, expansion"
+      },
+      {
+        "change": "Query expansion",
+        "date": "2026-10-18",
+        "recall_at_10": 0.27,
+        "ci95": [
+          0.13,
+          0.42
+        ],
+        "mrr": 0.32,
+        "read_from": "docs/search.md, Plain, enrichment, expansion"
+      },
+      {
+        "change": "Reasons through a project",
+        "date": "2026-10-18",
+        "recall_at_10": 0.36,
+        "ci95": [
+          0.2,
+          0.53
+        ],
+        "mrr": 0.43,
+        "read_from": "docs/search.md, Reasons through a project"
+      },
+      {
+        "change": "Listing headings dropped, bundle-3 (#162)",
+        "date": "2026-10-19",
+        "recall_at_10": 0.38,
+        "ci95": [
+          0.22,
+          0.56
+        ],
+        "mrr": 0.46,
+        "read_from": "eval/PREREGISTRATION.md, 2026-10-19: listing heading (#162)"
+      },
+      {
+        "change": "Titles and word forms, before the review fixes (#226)",
+        "date": "2026-10-19",
+        "recall_at_10": 0.4,
+        "ci95": [
+          0.23,
+          0.57
+        ],
+        "mrr": 0.44,
+        "read_from": "eval/PREREGISTRATION.md, 2026-10-19: titles and word forms (#226)"
+      },
+      {
+        "change": "Passages on the own page, review fixes: bundle-4 (#226)",
+        "date": "2026-10-19",
+        "recall_at_10": 0.393,
+        "ci95": [
+          0.2365,
+          0.563
+        ],
+        "mrr": 0.4504,
+        "read_from": "metrics.json, slices.pooled"
+      }
+    ]
+  },
+  "extraction_funnel": {
+    "dropped_share": 0.0689,
+    "stages": [
+      {
+        "stage": "Public pages stored",
+        "count": 3351,
+        "about": false,
+        "read_from": "bundle-20261019-4 manifest.json, pages.jsonl lines"
+      },
+      {
+        "stage": "Model proposals",
+        "count": 16700,
+        "about": true,
+        "read_from": "docs/conductor/STATE.md, E2 extraction, final: about 16,700"
+      },
+      {
+        "stage": "Not on the page: dropped",
+        "count": 1151,
+        "about": false,
+        "read_from": "docs/conductor/STATE.md, E2 extraction, final"
+      },
+      {
+        "stage": "Profiles of the three sources",
+        "count": 3336,
+        "about": false,
+        "read_from": "metrics.json, exposure_by_size"
+      },
+      {
+        "stage": "Claims with evidence",
+        "count": 4877,
+        "about": false,
+        "read_from": "bundle-20261019-4 profiles.jsonl, field claims of the person, unit, project and infrastructure profiles"
+      }
+    ]
+  }
+}
