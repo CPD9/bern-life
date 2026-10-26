@@ -73,8 +73,11 @@ def brief_search(
         )
         for need, expansion in zip(needs, expansions, strict=True)
     ]
+    enrichment: dict[str, list[str]] = {}
+    for assessment in assessments:
+        enrichment.update(assessment.enrichment)
     page_by_url = store.pages(sorted(cited_pages(results))).get
-    return with_metrics(response, topics, page_by_url)
+    return with_metrics(response, topics, page_by_url, enrichment)
 
 
 def _candidate(assessment: Assessment, profile_id: str) -> Candidate:

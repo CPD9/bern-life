@@ -91,23 +91,26 @@ def assess(
 
 
 def result(rank: int, candidate: Candidate, assessment: Assessment) -> dict[str, Any]:
-    """A result shown through a project keeps its plain reason (its own claims are what it can
-    cite) and carries `via`, the relation and the project's matching claims. One shown through a
-    passage on its own page keeps its plain reason too and carries `passage`."""
+    """A result shown through a project carries `via`, the relation and the project's matching
+    claims, and its reason is the relation sentence written from them. One shown through a
+    passage on its own page keeps its plain reason and carries `passage`."""
     profile = assessment.profiles[candidate.profile_id]
+    via = None
+    if candidate.profile_id in assessment.vias:
+        relation, matched = assessment.vias[candidate.profile_id]
+        via = via_record(relation, assessment.profiles[relation.to_profile_id], matched)
     item = {
         "rank": rank,
         "profile": profile,
-        "reason": reason(assessment.question, profile, assessment.enrichment),
+        "reason": reason(assessment.question, profile, assessment.enrichment, via),
         "score": {
             "fused": candidate.fused,
             "lexical_rank": candidate.lexical_rank,
             "vector_rank": candidate.vector_rank,
         },
     }
-    if candidate.profile_id in assessment.vias:
-        relation, matched = assessment.vias[candidate.profile_id]
-        item["via"] = via_record(relation, assessment.profiles[relation.to_profile_id], matched)
+    if via is not None:
+        item["via"] = via
     if candidate.profile_id in assessment.passages:
         item["passage"] = passage_record(assessment.passages[candidate.profile_id])
     return item
@@ -149,7 +152,7 @@ def search(
     }
     topics = query_topics(query, expansion.by_topic() if expansion else None)
     page_by_url = store.pages(sorted(cited_pages(results))).get
-    return with_metrics(response, topics, page_by_url)
+    return with_metrics(response, topics, page_by_url, assessment.enrichment)
 
 
 PROMPT_VERSIONS = {
@@ -177,10 +180,15 @@ def model_use(llm: Chat | None, used: dict[str, bool], snapshot: str) -> dict[st
 
 
 def cited_pages(results: Sequence[dict[str, Any]]) -> set[str]:
-    """The pages metrics read: each shown profile's source page and every evidence page."""
+    """The pages metrics read: each shown profile's source page, every evidence page, the pages
+    of the project claims it is shown through and of the passage on its own page."""
     urls = set()
     for item in results:
         profile = item["profile"]
         urls.add(profile["source_url"])
         urls.update(claim["evidence"]["page_url"] for claim in claims_of(profile))
+        if "via" in item:
+            urls.update(claim["evidence"]["page_url"] for claim in item["via"]["related_claims"])
+        if "passage" in item:
+            urls.add(item["passage"]["page_url"])
     return urls

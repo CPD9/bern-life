@@ -33,9 +33,9 @@
         }
       },
       "reason": {
-        "text": "Name: Noah Exempel",
+        "text": "Leads PlateScan: carbohydrates from meal photos",
         "cites": [
-          "/name"
+          "/via/related_claims/0"
         ]
       },
       "score": {
@@ -107,9 +107,9 @@
         }
       },
       "reason": {
-        "text": "Role: Project team",
+        "text": "Works on PlateScan: carbohydrates from meal photos",
         "cites": [
-          "/fields/role/0"
+          "/via/related_claims/0"
         ]
       },
       "score": {

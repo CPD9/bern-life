@@ -201,11 +201,12 @@ describe("ResultCard through a related project", () => {
     expect(headings()).toEqual(["Why it matches"]);
   });
 
-  test("the 'through' block comes before 'why it matches' and shows the relation sentence", () => {
+  test("the 'through' block shows the relation sentence; the reason, which repeats it, is not shown twice", () => {
     render(<ResultCard result={teamResult()} />);
-    expect(headings()).toEqual(["Through the project PlateScan", "Why it matches"]);
+    expect(headings()).toEqual(["Through the project PlateScan"]);
     expect(screen.getByText("“Project team: Lena Beispiel”")).toBeTruthy();
     expect(screen.getByText(/Works on PlateScan according to this sentence\./)).toBeTruthy();
+    expect(screen.queryByText("Works on PlateScan: carbohydrates from meal photos")).toBeNull();
     expect(screen.getByText(/fetched 18 Oct 2026/)).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Open the page at this sentence" }).getAttribute("href"),
@@ -232,14 +233,25 @@ describe("ResultCard through a related project", () => {
   });
 
   test("a reason that cites only the name is hidden; the relation still explains the result", () => {
-    render(<ResultCard result={leadResult()} />);
+    const result = leadResult();
+    result.reason = { text: "Name: Noah Exempel", cites: ["/name"] };
+    render(<ResultCard result={result} />);
     expect(headings()).toEqual(["Through the project PlateScan"]);
     expect(screen.queryByText("Name: Noah Exempel")).toBeNull();
     expect(screen.getByText(/Leads PlateScan according to this sentence\./)).toBeTruthy();
   });
 
+  test("a reason citing a claim of the profile's own is shown beside the relation", () => {
+    const result = teamResult();
+    result.reason = { text: "Role: Project team", cites: ["/fields/role/0"] };
+    render(<ResultCard result={result} />);
+    expect(headings()).toEqual(["Through the project PlateScan", "Why it matches"]);
+    expect(screen.getByText("Role: Project team")).toBeTruthy();
+  });
+
   test("without a relation, a reason that cites only the name is still shown", () => {
     const result = leadResult();
+    result.reason = { text: "Name: Noah Exempel", cites: ["/name"] };
     delete result.via;
     render(<ResultCard result={result} />);
     expect(headings()).toEqual(["Why it matches"]);

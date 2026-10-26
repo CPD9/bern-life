@@ -36,6 +36,16 @@ PAGES = {
         "unit": "Invented Engineering Unit",
         "text": "A new study on paediatric diabetes care was announced.",
     },
+    "https://dcb.test/projects/counter": {
+        "unit": "Invented Diabetes Unit",
+        "text": "Carb Counter estimates carbohydrates from meal photos."
+        + FILLER
+        + "Project team: Emil Example",
+    },
+    "https://artorg.test/team/ben": {
+        "unit": "Invented Engineering Unit",
+        "text": "Ben Example\nPhD student, sweat patches for glucose\nCara Example\nPostdoc",
+    },
 }
 
 
@@ -67,6 +77,15 @@ def profile(pid: str, kind: str, name: claim, url: str, **fields: list) -> dict:
 def result(rank: int, prof: dict) -> dict:
     reason = {"text": "Invented reason.", "cites": ["/name"]}
     return {"rank": rank, "profile": prof, "reason": reason, "score": {"fused": 0.5}}
+
+
+def result_validator() -> Draft202012Validator:
+    resources = [
+        (p.name, Resource.from_contents(json.loads(p.read_text())))
+        for p in CONTRACTS.glob("*.schema.json")
+    ]
+    registry = Registry().with_resources(resources)
+    return Draft202012Validator(registry.contents("result.schema.json"), registry=registry)
 
 
 ADA, BEA = "https://dcb.test/team/ada", "https://dcb.test/team/bea"
@@ -227,15 +246,130 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual((no_pages["relevance"], no_pages["evidence"]), (0.6667, None))
 
     def test_output_validates_against_the_result_contract(self) -> None:
-        resources = [
-            (p.name, Resource.from_contents(json.loads(p.read_text())))
-            for p in CONTRACTS.glob("*.schema.json")
-        ]
-        registry = Registry().with_resources(resources)
-        validator = Draft202012Validator(registry.contents("result.schema.json"), registry=registry)
         errors = [
             e.message
-            for e in validator.iter_errors(with_metrics(worked_example(), TOPICS, PAGES.get))
+            for e in result_validator().iter_errors(
+                with_metrics(worked_example(), TOPICS, PAGES.get)
+            )
+        ]
+        self.assertEqual(errors, [])
+
+
+COUNTER, BEN = "https://dcb.test/projects/counter", "https://artorg.test/team/ben"
+FETCHED = "2026-10-18T12:00:00Z"
+CARBS = Topic("carbohydrates", ("carbohydrates",))
+PHOTOS = Topic("meal photos", ("meal photos",))
+PATCHES = Topic("sweat patches", ("sweat patches",))
+
+
+def through_project() -> dict:
+    """Emil has only a name claim. The project's claim says both topics; his name is 400
+    characters below it on the project page, so the evidence is 0.5."""
+    emil = profile("person-emil", "person", claim(COUNTER, "Emil Example"), COUNTER)
+    via = {
+        "kind": "works_on",
+        "span": "Project team: Emil Example",
+        "page_url": COUNTER,
+        "page_sha256": SHA,
+        "start": PAGES[COUNTER]["text"].index("Project team"),
+        "fetched_at": FETCHED,
+        "related_profile_id": "project-counter",
+        "related_name": "Carb Counter",
+        "related_claims": [
+            claim(
+                COUNTER,
+                "estimates carbohydrates from meal photos",
+                "carbohydrates from meal photos",
+            )
+        ],
+    }
+    return result(1, emil) | {"via": via}
+
+
+def through_passage() -> dict:
+    """Ben has only a name claim; the passage next to his name says the topic."""
+    ben = profile("person-ben", "person", claim(BEN, "Ben Example"), BEN)
+    passage = {
+        "kind": "own_page",
+        "span": "Ben Example\nPhD student, sweat patches",
+        "page_url": BEN,
+        "page_sha256": SHA,
+        "start": 0,
+        "fetched_at": FETCHED,
+    }
+    return result(1, ben) | {"passage": passage}
+
+
+class CoverageTest(unittest.TestCase):
+    """A topic is covered by the words of one of its wordings in any form, found in a claim, in
+    the claim's enrichment terms, in a claim of the result's project or in the passage on its
+    page; the evidence comes from where that sentence sits on its page."""
+
+    def metrics_of(self, item: dict, topics: list[Topic], enrichment: dict | None = None) -> dict:
+        response = worked_example() | {"results": [item]}
+        return with_metrics(response, topics, PAGES.get, enrichment)["results"][0]["metrics"]
+
+    def test_a_word_form_covers_the_topic_across_languages(self) -> None:
+        lab = worked_example()["results"][2]
+        asked_in_german = Topic("Glukosesensoren", ("Glukosesensoren",))
+        metrics = self.metrics_of(lab, [asked_in_german, PATCHES])
+        self.assertEqual(
+            (metrics["relevance"], metrics["covers"], metrics["missing"], metrics["evidence"]),
+            (0.5, ["Glukosesensoren"], ["sweat patches"], 1.0),
+        )
+
+    def test_a_wording_counts_only_with_all_its_words(self) -> None:
+        ada = worked_example()["results"][0]
+        pressure = Topic("pressure sensors", ("pressure sensors",))
+        self.assertEqual(self.metrics_of(ada, [pressure])["covers"], [])
+
+    def test_an_enrichment_term_of_a_claim_covers_the_topic(self) -> None:
+        bea = worked_example()["results"][1]
+        glucose = Topic("glucose", ("glucose",))
+        without = self.metrics_of(bea, [glucose])
+        with_term = self.metrics_of(bea, [glucose], {"CGM data quality": ["glucose monitoring"]})
+        self.assertEqual((without["covers"], without["evidence"]), ([], None))
+        self.assertEqual((with_term["covers"], with_term["evidence"]), (["glucose"], 0.5))
+
+    def test_a_result_shown_through_a_project_is_covered_by_the_project_claim(self) -> None:
+        metrics = self.metrics_of(through_project(), [CARBS, PHOTOS, GLUCOSE])
+        self.assertEqual(
+            metrics,
+            {
+                "relevance": 0.6667,
+                "covers": ["carbohydrates", "meal photos"],
+                "missing": ["glucose sensors"],
+                "evidence": 0.5,
+                "completeness": {"filled": 0, "of": 5},
+                "novelty": {"new_unit": True, "adds": ["carbohydrates", "meal photos"]},
+                "confidence": None,
+            },
+        )
+
+    def test_a_result_shown_through_a_passage_is_covered_by_the_passage(self) -> None:
+        metrics = self.metrics_of(through_passage(), [PATCHES, GLUCOSE])
+        self.assertEqual(
+            (metrics["relevance"], metrics["covers"], metrics["missing"], metrics["evidence"]),
+            (0.5, ["sweat patches"], ["glucose sensors"], 1.0),
+        )
+
+    def test_a_question_word_no_claim_could_match_is_not_a_topic(self) -> None:
+        ada = worked_example()["results"][0]
+        topics = query_topics("University of Bern glucose sensors")
+        metrics = self.metrics_of(ada, topics)
+        self.assertEqual([t.label for t in topics], ["glucose", "sensors"])
+        self.assertEqual(
+            (metrics["relevance"], metrics["covers"], metrics["missing"], metrics["evidence"]),
+            (1.0, ["glucose", "sensors"], [], 1.0),
+        )
+
+    def test_results_shown_through_a_project_or_passage_validate_against_the_contract(self) -> None:
+        response = worked_example() | {
+            "results": [through_project(), through_passage() | {"rank": 2}]
+        }
+        errors = [
+            e.message
+            for e in result_validator().iter_errors(with_metrics(response, TOPICS, PAGES.get))
         ]
         self.assertEqual(errors, [])
 
@@ -250,6 +384,14 @@ class TopicsTest(unittest.TestCase):
             "glucose sensors for kids", {"glucose sensors": ["CGM"], "dragons": ["fire"]}
         )
         self.assertEqual(topics, [Topic("glucose sensors", ("glucose sensors", "CGM"))])
+
+    def test_a_topic_with_no_wording_a_claim_could_match_is_dropped(self) -> None:
+        topics = query_topics(
+            "University AI expertise", {"University": ["UniBE"], "AI": ["KI", "ML"]}
+        )
+        self.assertEqual(topics, [])
+        longer = query_topics("AI expertise", {"AI": ["artificial intelligence"]})
+        self.assertEqual(longer, [Topic("AI", ("AI", "artificial intelligence"))])
 
 
 if __name__ == "__main__":
