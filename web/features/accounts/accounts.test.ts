@@ -15,7 +15,7 @@ import {
 } from "./accounts";
 import { failure, signedIn } from "./http";
 import type { SignUp } from "./input";
-import { profileOf } from "./store";
+import { profileOf, setRole } from "./store";
 import { SKIPPED, emptyTables, openTestDb } from "@/infrastructure/test-database";
 
 const NOW = new Date("2026-10-18T20:00:00Z");
@@ -97,6 +97,7 @@ describe.skipIf(testDb === null)("accounts against a throwaway database", () => 
       id: expect.any(String),
       handle: "test01",
       displayName: "Test 01",
+      role: "member",
     });
     expect(await seedAccount(sql, "test01", "Someone else")).toBe("exists");
     expect(
@@ -105,6 +106,22 @@ describe.skipIf(testDb === null)("accounts against a throwaway database", () => 
     const [counts] = await sql<{ invites: number; users: number }[]>`
       select (select count(*)::int from invite) as invites, (select count(*)::int from app_user) as users`;
     expect(counts).toEqual({ invites: 0, users: 1 });
+  });
+
+  test("a seeded admin carries its role into the session; setRole changes an existing account", async () => {
+    const seeded = await seedAccount(sql, "admin", "Admin", "admin");
+    if (seeded === "exists") throw new Error("expected a new account");
+    const admin = signedInOrThrow(
+      await signIn(sql, { handle: "admin", password: seeded.password }, IP, NOW, null),
+    );
+    expect(admin.user.role).toBe("admin");
+    expect((await currentUser(sql, admin.token, NOW))?.role).toBe("admin");
+
+    const member = signedInOrThrow(await signUp(sql, joining(await invite()), IP, NOW));
+    expect(member.user.role).toBe("member");
+    expect(await setRole(sql, "ada_example", "admin")).toBe(true);
+    expect((await currentUser(sql, member.token, NOW))?.role).toBe("admin");
+    expect(await setRole(sql, "nobody_here", "admin")).toBe(false);
   });
 
   test("a wrong password is refused and the eleventh attempt for a handle is rate limited", async () => {

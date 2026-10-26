@@ -49,7 +49,12 @@ describe("the session cookie", () => {
   });
 
   test("a sign-in response carries the user and the cookie, nothing else", async () => {
-    const user = { id: "u1", handle: "ada_example", displayName: "Ada Example" };
+    const user = {
+      id: "u1",
+      handle: "ada_example",
+      displayName: "Ada Example",
+      role: "member",
+    } as const;
     const response = signedIn({ user, token: TOKEN }, ORIGIN);
     expect(await response.json()).toEqual({ user });
     expect(response.headers.get("set-cookie")).toBe(sessionCookie(TOKEN, ORIGIN));

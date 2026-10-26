@@ -1,6 +1,8 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
+import type { AccountState } from "@/features/accounts/use-account";
+import { AdminApp } from "@/features/admin/admin-app";
 import { AgentsApp } from "@/features/agents/agents-app";
 import type { AgentNotice } from "@/features/agents/loops";
 import type { Skill } from "@/features/agents/skills";
@@ -77,7 +79,15 @@ type OfficeAppsInput = AgentsInput & {
   /** A thread to open in Messages, as "Message" on a member asks, and when it was opened. */
   messageWith?: StartWith | undefined;
   onMessageStarted?: () => void;
+  /** The Admin app, from adminApp(); left out, it is not on the dock. */
+  admin?: ReactNode;
 };
+
+/** The Admin app for an account with the admin role; anyone else gets no dock button for it. */
+export function adminApp(account: AccountState, fixtureMode: boolean): ReactNode | undefined {
+  if (account.status !== "signed-in" || account.user.role !== "admin") return undefined;
+  return <AdminApp fixtureMode={fixtureMode} />;
+}
 
 export type OfficeApps = {
   apps: DesktopApp[];
@@ -98,6 +108,7 @@ export function useOfficeApps({
   connections,
   messageWith,
   onMessageStarted,
+  admin,
   ...agents
 }: OfficeAppsInput): OfficeApps {
   const save = { fixtureMode, events, library };
@@ -150,6 +161,7 @@ export function useOfficeApps({
       opportunities: opportunitiesApp(save),
       garage: garageApp(fixtureMode, events, agents.numbersApi),
       sources: <SourcesApp fixtureMode={fixtureMode} />,
+      admin,
       settings: <SettingsApp health={health} />,
     },
     { messages: unreadMessages },

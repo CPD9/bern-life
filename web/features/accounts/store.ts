@@ -3,7 +3,8 @@
 import type { Db, Sql } from "@/infrastructure/db";
 import type { ProfileInput } from "./input";
 
-export type User = { id: string; handle: string; displayName: string };
+export type UserRole = "member" | "admin";
+export type User = { id: string; handle: string; displayName: string; role: UserRole };
 export type Profile = ProfileInput & { updatedAt: Date };
 type NewUser = { inviteHash: string; handle: string; displayName: string; passwordHash: string };
 type JsonValue = Parameters<Db["json"]>[0];
@@ -37,7 +38,7 @@ export async function createUser(
       if (invite === undefined) return "invite_invalid" as const;
       const [created] = await tx<User[]>`insert into app_user (id, handle, display_name)
         values (gen_random_uuid(), ${user.handle}, ${user.displayName})
-        returning id, handle, display_name as "displayName"`;
+        returning id, handle, display_name as "displayName", role::text as role`;
       if (created === undefined) throw new Error("insert returned no row");
       await tx`update invite set used_by = ${created.id}, used_at = ${now}
                where code_hash = ${user.inviteHash}`;
@@ -64,7 +65,7 @@ export async function credentialFor(
   handle: string,
 ): Promise<{ user: User; hash: string } | null> {
   const [row] = await db<(User & { hash: string })[]>`
-    select u.id, u.handle, u.display_name as "displayName", c.hash
+    select u.id, u.handle, u.display_name as "displayName", u.role::text as role, c.hash
     from app_user u join credential c on c.user_id = u.id
     where u.handle = ${handle}`;
   if (row === undefined) return null;
@@ -91,7 +92,7 @@ export async function deleteExpiredSessions(db: Db, now: Date): Promise<void> {
 
 export async function sessionUser(db: Db, idHash: string, now: Date): Promise<User | null> {
   const [user] = await db<User[]>`
-    select u.id, u.handle, u.display_name as "displayName"
+    select u.id, u.handle, u.display_name as "displayName", u.role::text as role
     from session s join app_user u on u.id = s.user_id
     where s.id_hash = ${idHash} and s.expires_at > ${now}`;
   return user ?? null;
@@ -101,17 +102,24 @@ export async function sessionUser(db: Db, idHash: string, now: Date): Promise<Us
  *  when the handle exists, so seeding twice changes nothing. */
 export async function insertSeededUser(
   sql: Sql,
-  user: { handle: string; displayName: string; passwordHash: string },
+  user: { handle: string; displayName: string; passwordHash: string; role: UserRole },
 ): Promise<User | "handle_taken"> {
   return sql.begin(async (tx) => {
-    const [created] = await tx<User[]>`insert into app_user (id, handle, display_name)
-      values (gen_random_uuid(), ${user.handle}, ${user.displayName})
+    const [created] = await tx<User[]>`insert into app_user (id, handle, display_name, role)
+      values (gen_random_uuid(), ${user.handle}, ${user.displayName}, ${user.role}::"UserRole")
       on conflict (handle) do nothing
-      returning id, handle, display_name as "displayName"`;
+      returning id, handle, display_name as "displayName", role::text as role`;
     if (created === undefined) return "handle_taken" as const;
     await tx`insert into credential (user_id, hash) values (${created.id}, ${user.passwordHash})`;
     return created;
   });
+}
+
+/** Sets the role of an existing account; false when no account has the handle. Only the
+ *  operator's seeding script calls this: the app itself grants no role. */
+export async function setRole(db: Db, handle: string, role: UserRole): Promise<boolean> {
+  const updated = await db`update app_user set role = ${role}::"UserRole" where handle = ${handle}`;
+  return updated.count === 1;
 }
 
 /** Everything of the user goes with the row: credential, sessions, profile, the invites they

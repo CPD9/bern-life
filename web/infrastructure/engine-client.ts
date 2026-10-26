@@ -1,6 +1,8 @@
 // HTTP client for the engine (contracts/api.md). Every failure collapses to one of the API's
 // markers; the underlying error goes to the server log and never into a response.
 import {
+  parseAdminActivity,
+  parseAdminFlagged,
   parseAgentReply,
   parseHealth,
   parseNumbers,
@@ -97,5 +99,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       ),
     numbers: () => call("/api/numbers", parseNumbers),
     health: () => call("/api/health", parseHealth),
+    adminActivity: () => call("/api/admin/activity", parseAdminActivity),
+    adminFlagged: () => call("/api/admin/flagged", parseAdminFlagged),
   };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { DesktopController } from "@/features/desktop/use-desktop";
 import type { StartWith } from "@/features/messages/messages-app";
 import { httpNavigatorApi } from "@/features/navigator/navigator-api";
@@ -25,6 +26,8 @@ type WorldAppsInput = {
   onMessageStarted: () => void;
   /** "Message" on a member, from the phone or the desk: opens Messages there with that handle. */
   onMessageFrom: (place: "phone" | "desk") => (handle: string) => void;
+  /** The Admin app for the desk, from adminApp(); undefined for anyone but an admin. */
+  admin: ReactNode | undefined;
 };
 
 /** The desk's apps and the phone's, sharing one Navigator, one agent, one unread count and one
@@ -42,6 +45,7 @@ export function useWorldApps({
   messageWith,
   onMessageStarted,
   onMessageFrom,
+  admin,
 }: WorldAppsInput) {
   const shared = {
     navigatorApi: httpNavigatorApi,
@@ -59,6 +63,7 @@ export function useWorldApps({
     ...shared,
     desktop,
     connections: connectionsApp(connections, onMessageFrom("desk")),
+    admin,
   });
   return {
     office: office.apps,

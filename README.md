@@ -109,16 +109,18 @@ a day (unset: none). Everyone else is answered from the recordings.
   Bern, your look (players are people), what brings you here, who sees what, and your agent:
   Bärnli is a bear you can rename and restyle. A card then offers to choose where your office
   stands; each plot lists the nearest places with their sourced addresses.
-- **Your office** is the **Home** tab. Sit at the desk to use the computer, nine apps:
-  **Navigator** (the same search as Ask, and a project brief), **Agents** (Bärnli's skills, each
-  with its evidence, and loops: saved searches you run again, whose new and dropped results reach
-  the bell), **Reports** (match reports with their sources), **Messages** (to members who joined),
-  **Library** (what you saved, and your documents with their trace), **Opportunities** (funding
-  calls, services and spaces; an amount or deadline appears only inside the sentence it was read
-  from), **Garage** (the Apertus models and the evaluator's numbers for this snapshot, as the
+- **Your office** is the **Home** tab. Sit at the desk to use the computer, nine apps (ten for the
+  admin account): **Navigator** (the same search as Ask, and a project brief), **Agents** (Bärnli's
+  skills, each with its evidence, and loops: saved searches you run again, whose new and dropped
+  results reach the bell), **Reports** (match reports with their sources), **Messages** (to members
+  who joined), **Library** (what you saved, and your documents with their trace), **Opportunities**
+  (funding calls, services and spaces; an amount or deadline appears only inside the sentence it was
+  read from), **Garage** (the Apertus models and the evaluator's numbers for this snapshot, as the
   engine serves them, and the skills with their evidence), **Sources** (the institutions crawled,
-  and how to add one) and **Settings**. The door leads back to the map; the phone carries Ask,
-  Messages, Agents, Opportunities, Library, Sources, Settings and the seven case steps.
+  and how to add one) and **Settings**; the admin account also has **Admin** (the engine's model
+  calls per day against its budget, and the person profiles whose name reads like a company, each
+  with its page to check). The door leads back to the map; the phone carries Ask, Messages, Agents,
+  Opportunities, Library, Sources, Settings and the seven case steps.
 - **Bärnli** floats beside you as the bear you made, and walks beside you on the map; either opens
   its chat. Bärnli searches with the engine's own tools and answers with the same source cards as
   Ask. An answer stays in the chat, with buttons to light its places on the map, open its card in

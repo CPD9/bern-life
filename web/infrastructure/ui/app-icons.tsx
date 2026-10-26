@@ -15,6 +15,8 @@ const paths = {
     "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z",
   settings:
     "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm8 3-2.1-.7.6-2.1-1.9-1.9-2.1.6L13.8 5h-3.6l-.7 2.1-2.1-.6-1.9 1.9.6 2.1L4 12l2.1.7-.6 2.1 1.9 1.9 2.1-.6.7 2.1h3.6l.7-2.1 2.1.6 1.9-1.9-.6-2.1z",
+  // A shield with a tick: the operator's view of the engine and its data.
+  admin: "M12 3l7 3v5c0 4.7-3 8.6-7 10-4-1.4-7-5.3-7-10V6zm-3 9 2 2 4-4",
 } as const;
 
 export type AppIconName = keyof typeof paths;

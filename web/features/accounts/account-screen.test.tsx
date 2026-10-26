@@ -10,7 +10,12 @@ import {
 } from "./account-api";
 import { StandaloneAccount } from "./account-screen";
 
-const PETER: AccountUser = { id: "u-1", handle: "peter", displayName: "Peter Example" };
+const PETER: AccountUser = {
+  id: "u-1",
+  handle: "peter",
+  displayName: "Peter Example",
+  role: "member",
+};
 
 function fakeApi(
   overrides: Partial<AccountApi> = {},

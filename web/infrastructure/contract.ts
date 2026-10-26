@@ -3,6 +3,8 @@
 // (scripts/contract-validators.ts), so neither the browser nor the server compiles a schema with
 // Function(). A body that fails the check is treated as no answer.
 import type {
+  AdminActivity,
+  AdminFlagged,
   AgentReply,
   Health,
   Numbers,
@@ -12,6 +14,8 @@ import type {
   Story,
 } from "./contract-types.generated";
 import {
+  isAdminActivity,
+  isAdminFlagged,
   isAgentReply,
   isHealth,
   isNumbers,
@@ -75,4 +79,12 @@ export function parseNumbers(body: unknown): Numbers | null {
 
 export function parsePlacePeople(body: unknown): PlacePeople | null {
   return isPlacePeople(body) ? body : null;
+}
+
+export function parseAdminActivity(body: unknown): AdminActivity | null {
+  return isAdminActivity(body) ? body : null;
+}
+
+export function parseAdminFlagged(body: unknown): AdminFlagged | null {
+  return isAdminFlagged(body) ? body : null;
 }

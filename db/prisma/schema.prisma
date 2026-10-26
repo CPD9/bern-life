@@ -277,10 +277,18 @@ enum ProfileVisibility {
   public
 }
 
+// An admin sees the Admin app on the office computer (operations and data); everyone else is a
+// member. The seed gives the handle `admin` this role; nothing in the app can grant it.
+enum UserRole {
+  member
+  admin
+}
+
 model User {
   id                  String                  @id @default(uuid()) @db.Uuid
   handle              String                  @unique
   displayName         String                  @map("display_name")
+  role                UserRole                @default(member)
   createdAt           DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
   credential          Credential?
   sessions            Session[]
@@ -354,7 +362,7 @@ model UserProfile {
   @@map("user_profile")
 }
 
-// Failed sign-ins per handle and per IP, and sign-up attempts per IP, in fixed 15-minute windows.
+// Failed sign-ins per handle and per IP, and sign-up attempts per IP, in fixed 5-minute windows.
 model RateLimit {
   key         String   @id
   windowStart DateTime @map("window_start") @db.Timestamptz(3)

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { act, fireEvent, render, renderHook, screen, within } from "@testing-library/react";
-import { type ReactElement, isValidElement } from "react";
+import { type ReactElement, type ReactNode, isValidElement } from "react";
 import { AgentsApp } from "@/features/agents/agents-app";
 import { CaseStepApp } from "@/features/case/case-step-app";
 import { alarmQuestion } from "@/features/case/case-steps";
@@ -13,6 +13,7 @@ import { StandaloneMessagesPage } from "@/features/messages/standalone-messages-
 import type { NavigatorApi } from "@/features/navigator/navigator-api";
 import { useNavigator } from "@/features/navigator/use-navigator";
 import { OpportunitiesApp } from "@/features/opportunities/opportunities-app";
+import { AdminApp } from "@/features/admin/admin-app";
 import { SettingsApp } from "@/features/phone/settings-app";
 import { SourcesApp } from "@/features/sources/sources-app";
 import type { AppEventName } from "@/infrastructure/app-events";
@@ -21,7 +22,7 @@ import { parseNumbers } from "@/infrastructure/numbers";
 import type { NumbersApi } from "@/infrastructure/numbers-api";
 import { healthFixture, resultFixture } from "@/test/fixtures";
 import { numbersBody, queuedApi } from "@/test/numbers";
-import { useOfficeApps } from "./office-apps";
+import { adminApp, useOfficeApps } from "./office-apps";
 import { caseFolder, caseFolderHint, phoneApps, workFolder } from "./phone-apps";
 
 const offline: NavigatorApi = {
@@ -262,7 +263,7 @@ describe("phone apps", () => {
 });
 
 describe("office apps", () => {
-  function setUp(fixtureMode = false, numbersApi: NumbersApi = pending) {
+  function setUp(fixtureMode = false, numbersApi: NumbersApi = pending, admin?: ReactNode) {
     return renderHook(() => {
       const desktop = useDesktop();
       const navigator = useNavigator(offline);
@@ -276,10 +277,26 @@ describe("office apps", () => {
         health,
         events,
         library,
+        admin,
       });
       return { desktop, navigator, apps };
     }).result;
   }
+
+  test("the Admin app is on the dock between Sources and Settings only for an admin", () => {
+    const peter = { id: "u-1", handle: "peter", displayName: "Peter Example" } as const;
+    expect(adminApp({ status: "checking" }, false)).toBeUndefined();
+    expect(adminApp({ status: "signed-out" }, false)).toBeUndefined();
+    expect(
+      adminApp({ status: "signed-in", user: { ...peter, role: "member" } }, false),
+    ).toBeUndefined();
+    const admin = adminApp({ status: "signed-in", user: { ...peter, role: "admin" } }, true);
+    expect(typeOf(admin)).toBe(AdminApp);
+    expect((admin as ReactElement<{ fixtureMode: boolean }>).props.fixtureMode).toBe(true);
+    const { apps } = setUp(false, pending, admin).current;
+    expect(apps.map((app) => app.id).slice(-3)).toEqual(["sources", "admin", "settings"]);
+    expect(setUp().current.apps.some((app) => app.id === "admin")).toBe(false);
+  });
 
   test("the desk lists every app, each real, with the unread count on Messages", () => {
     const { apps } = setUp().current;

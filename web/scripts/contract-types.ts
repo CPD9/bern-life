@@ -12,8 +12,8 @@ const generatedPath = path.join(
 
 // Schemas refer to each other (agent → result → profile), so a pass declares the definitions it
 // refers to only when no other pass does: profile declares Claim and Evidence, numbers declares
-// EvalNumbers. A short bounded array would become a union of one tuple per length, so the agent's
-// lists (at most 4 or 6 items) stay arrays.
+// EvalNumbers, admin-activity declares Counts. A short bounded array would become a union of one
+// tuple per length, so the agent's lists (at most 4 or 6 items) stay arrays.
 const schemaFiles = [
   { file: "result.schema.json", declaresShared: false, plainArrays: false },
   { file: "profile.schema.json", declaresShared: true, plainArrays: false },
@@ -23,6 +23,8 @@ const schemaFiles = [
   { file: "sources.schema.json", declaresShared: false, plainArrays: false },
   { file: "numbers.schema.json", declaresShared: true, plainArrays: false },
   { file: "place-people.schema.json", declaresShared: false, plainArrays: true },
+  { file: "admin-activity.schema.json", declaresShared: true, plainArrays: true },
+  { file: "admin-flagged.schema.json", declaresShared: false, plainArrays: false },
 ];
 
 async function generateContractTypes(): Promise<string> {

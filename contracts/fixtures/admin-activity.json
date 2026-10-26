@@ -1,0 +1,43 @@
+{
+  "today": "2026-10-19",
+  "live_today": 3,
+  "budget": {
+    "limit": 50,
+    "used": 3
+  },
+  "days": [
+    {
+      "day": "2026-10-19",
+      "calls": 12,
+      "by_role": {
+        "expand": 7,
+        "explain": 5
+      },
+      "by_outcome": {
+        "hit": 8,
+        "live": 3,
+        "timeout": 1
+      },
+      "failures": {
+        "timeout": 1
+      }
+    },
+    {
+      "day": "2026-10-18",
+      "calls": 40,
+      "by_role": {
+        "brief": 4,
+        "expand": 20,
+        "explain": 16
+      },
+      "by_outcome": {
+        "hit": 31,
+        "live": 9
+      },
+      "failures": {}
+    }
+  ],
+  "failures": {
+    "timeout": 1
+  }
+}

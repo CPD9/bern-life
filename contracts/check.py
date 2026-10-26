@@ -25,6 +25,8 @@ CHECKS = [
     ("sources.schema.json", ["contracts/fixtures/sources.json"]),
     ("place-people.schema.json", ["contracts/fixtures/place-people.json"]),
     ("numbers.schema.json", ["contracts/fixtures/numbers.json"]),
+    ("admin-activity.schema.json", ["contracts/fixtures/admin-activity.json"]),
+    ("admin-flagged.schema.json", ["contracts/fixtures/admin-flagged.json"]),
     ("metrics.schema.json", ["eval/results/*/metrics.json"]),
     ("quest.schema.json", ["contracts/fixtures/story.json"]),
     ("gold.schema.json", ["contracts/fixtures/gold.jsonl", "eval/gold.jsonl", "eval/dev2.jsonl"]),

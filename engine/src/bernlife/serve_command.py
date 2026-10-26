@@ -19,10 +19,11 @@ from typing import Any
 import psycopg
 
 from bernlife import config, paths
+from bernlife.admin import activity_summary, flagged_people
 from bernlife.agent import EngineTools, answer
 from bernlife.api_requests import SearchRequest
 from bernlife.brief_search import brief_search
-from bernlife.cache import Message, cache_roots
+from bernlife.cache import Message, audit_records, cache_roots
 from bernlife.catalog import read_loaded, source_list
 from bernlife.database import connect_when_ready
 from bernlife.embed import MODEL_ID, Embedder, e5_embedder
@@ -55,6 +56,7 @@ class EngineApi:
         *,
         configured: Sequence[Source] = (),
         recorded: Path | None = None,
+        audit_root: Path | None = None,
         clock: Callable[[], float] = time.monotonic,
         now: Callable[[], datetime] = utc_now,
     ):
@@ -63,7 +65,9 @@ class EngineApi:
         self._conn = conn
         self._embedder = embedder
         self._configured = tuple(configured)
-        self._recorded = recorded or cache_roots(paths.data_dir())[1]
+        live_root, recorded_root = cache_roots(paths.data_dir())
+        self._recorded = recorded or recorded_root
+        self._audit = audit_root or live_root
         self._clock, self._now = clock, now
         self._started = clock()
         self._lock = threading.Lock()
@@ -134,6 +138,18 @@ class EngineApi:
             snapshot = self._store.snapshot()
         return numbers_report(snapshot, self._now(), self._recorded, results_dir())
 
+    def admin_activity(self) -> dict[str, Any]:
+        """The audit is a file the router appends to, so it is read without the database lock;
+        the budget comes from the router, as /api/health shows it."""
+        budget = self._llm.budget_status()
+        return activity_summary(audit_records(self._audit), self._now().date(), budget)
+
+    def admin_flagged(self) -> dict[str, Any]:
+        with self._lock:
+            snapshot = self._store.snapshot()
+            people, checked = flagged_people(self._conn)
+        return {"snapshot": snapshot, "checked": checked, "people": people}
+
     def source_ids(self) -> set[str]:
         with self._lock:
             return {row[0] for row in self._conn.execute("SELECT id FROM source").fetchall()}
@@ -152,12 +168,14 @@ def main(argv: Sequence[str], env: Mapping[str, str] = os.environ) -> int:
         print("serve: no bundle loaded; run python -m bernlife load first", file=sys.stderr)
         return 1
     data = paths.data_dir(env)
+    live_root, recorded_root = cache_roots(data)
     api = EngineApi(
         conn,
         e5_embedder(data),
         connect_model(env, serving=True),
         configured=load_sources(),
-        recorded=cache_roots(data)[1],
+        recorded=recorded_root,
+        audit_root=live_root,
     )
     server = make_server(api, config.engine_port(env))
     log.info("serving on http://127.0.0.1:%d", server.server_address[1])

@@ -1,5 +1,7 @@
 // Chooses the engine or the fixtures once per server process. Imported only by route handlers
 // and server components, so the engine URL never reaches the browser.
+import adminActivityFixture from "../../contracts/fixtures/admin-activity.json";
+import adminFlaggedFixture from "../../contracts/fixtures/admin-flagged.json";
 import agentFixture from "../../contracts/fixtures/agent.json";
 import healthFixture from "../../contracts/fixtures/health.json";
 import numbersFixture from "../../contracts/fixtures/numbers.json";
@@ -10,6 +12,8 @@ import opportunitiesFixture from "../../contracts/fixtures/result-opportunities.
 import resultFixture from "../../contracts/fixtures/result.json";
 import sourcesFixture from "../../contracts/fixtures/sources.json";
 import {
+  parseAdminActivity,
+  parseAdminFlagged,
   parseAgentReply,
   parseHealth,
   parseNumbers,
@@ -40,6 +44,8 @@ function fixtureClient(): EngineClient {
     numbers: required(parseNumbers(numbersFixture), "numbers.json"),
     placePeople: required(parsePlacePeople(placePeopleFixture), "place-people.json"),
     health: required(parseHealth(healthFixture), "health.json"),
+    adminActivity: required(parseAdminActivity(adminActivityFixture), "admin-activity.json"),
+    adminFlagged: required(parseAdminFlagged(adminFlaggedFixture), "admin-flagged.json"),
   });
 }
 

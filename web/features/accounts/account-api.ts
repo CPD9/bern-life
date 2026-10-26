@@ -1,6 +1,7 @@
 // The browser's side of /api/auth/*. Components take an AccountApi, so tests pass a fake and the
 // app passes httpAccountApi. The session cookie is HttpOnly: this code never sees the token.
-export type AccountUser = { id: string; handle: string; displayName: string };
+export type AccountRole = "member" | "admin";
+export type AccountUser = { id: string; handle: string; displayName: string; role: AccountRole };
 export type AccountFailure =
   | "bad_request"
   | "invalid_credentials"
