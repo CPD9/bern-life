@@ -109,7 +109,8 @@ The mock backend runs the selectors only: a mock reply is not evidence. `live` n
 in `.env` and refuses unless the served `extract` model id contains `70B`; every call is cached
 under `data/llm_cache/`. `replay` answers from the cache alone. `--source ID` replaces that source's
 lines and keeps the others. `--limit N` reads only N model pages, chosen in sha256 order so the
-sample spreads across hosts.
+sample spreads across hosts. `--list-kinds` prints the pages whose kind the source files would
+change now and calls nothing (see "Page kinds by URL").
 
 `python -m bernlife check-places --places web/features/world/places.json` confirms that each map
 address span occurs on its page and that the recorded page hash is the stored one. It changes
@@ -122,6 +123,79 @@ project, 1 unit: 6 "Services", 4 "Dienstleistungen", 5 "Thesis Projects", ...) a
 these profiles took 26 top-10 slots in 20 gold queries. Gold on a fresh database, same bundle
 otherwise: recall@10 0.36 → 0.38, MRR 0.43 → 0.46, invented abstained 8/10 and false abstentions
 0/38 unchanged, 0 invented. Dev (checked first): recall@10 0.86 and MRR 0.66 unchanged.
+
+## Page kinds by URL (2026-10-19)
+Only the URL decides a page's kind: the crawl writes it into `pages.jsonl` from the source file's
+`page_types` (`classify.py`), so a kind can be predicted and corrected without reading the page.
+`python -m bernlife extract --list-kinds` prints every stored page whose kind the source files
+would change now (`url  old -> new`) and the model windows a re-extraction would send for them,
+pages with the same text counted once; it calls nothing. `python -m bernlife crawl --offline
+--source <id>` applies the change: it rebuilds that source's lines from the kept HTML, and with
+unchanged sources it reproduces `pages.jsonl` byte for byte, so only `kind` moves.
+
+For bundle-5 (#283) `sources/unibe.json` gained three unit patterns and `sources/artorg.json` one:
+- A UniBE page one level under `/forschung/` or `/research/`, with or without
+  `index_(eng|ger|fre).html`, is a unit page. The person, project and listing patterns stay in
+  front of it. A page whose slug holds a word that names a list, an event, a service or an index
+  rather than a group keeps its kind; the words stand in the pattern as whole `_`-delimited words
+  (de/en/fr): publications, dissertations, seminars, colloquia, meetings, events, conferences,
+  workshops, awards, prizes, funding, grants, networks, partners, news, archives, media,
+  factsheets, registries, internal, emeriti, former, adjunct, alumni, "the day of", research
+  support, and the index pages `research_groups`, `research_programs`, `research_fields`,
+  `research_clusters`, `research_group_leaders`, `forschungsgruppen`, `(forschungs)einblicke`.
+  The path words of the other kinds (projects, services, facilities, instruments, team,
+  members, ...) are in the list too, so a project, infrastructure or listing page keeps the kind
+  the path words give it.
+- The neuroscience host's lab pages `/research/research_groups/<lab>` and `<lab>/`: 17 labs are
+  stored under both URLs with the same text, so the second is a cache hit.
+- IAP's sub-group pages `/research/<group>/<subgroup>/index_eng.html`, with the same word list
+  (`members` is a listing by the earlier pattern, `research_projects` a project, `publications`
+  stays `other`).
+- ARTORG's research index `/research/index_eng.html`, the centre's research areas. Its page name
+  is "Research": the title gives no other line.
+
+On the bundle-4 pages `--list-kinds` named 144 pages, every one `other -> unit`: 56 one level
+under research (IFIK 19, IRM 12, IMG 11, ITP 9, IAP 5), 9 IAP sub-groups, 78 neuroscience lab
+URLs (61 labs) and the ARTORG index; 131 model windows over 127 distinct texts. The model pass
+sends pages with the same text in a second round (`extract_command.map_twins_last`), after the
+first of them has been answered, so a twin URL never costs a second live call.
+
+The live run (`make live ARGS="extract --source unibe --source artorg"`, apertus-v1-5-70b): 2,838
+model windows over 2,675 pages, 2,707 answered from the cache, 131 live calls (median 6.8 s, p90
+13.6 s), no miss and no failure marker; every call is in `llm_cache/audit.jsonl`. Pages: `other`
+1,554 → 1,410, `unit` 183 → 327. Profiles 3,484 → 3,537:
+- units 187 → 314. The 127 new units carry 412 expertise, 60 project, 59 infrastructure and 5
+  service claims, each a verified span of its page; 119 have at least one claim, 112 an
+  expertise claim, 8 none (their pages hold a name and contact lines: the IRM anthropology page
+  in English, applied biosafety, the ZEN, the Königsfelden drug trials, non-linear optics,
+  predatory bacteria, the neurosurgery research laboratory, stroke).
+- people 2,922 → 2,848. The re-read pages were asked for their subject and their people, and the
+  reply names fewer people than the `other` prompt did: 98 bare-name profiles from the
+  neuroscience and IMG pages are gone (one of them had a claim, a role; none an expertise claim)
+  and 24 appear. People with an expertise claim: 222 before and after.
+- relations 1,843 → 2,236: `member_of` 1,340 → 1,606 and `part_of` 157 → 284 (each new unit to
+  its institute); `leads`, `works_on` and `operates` unchanged.
+- The verifier over the whole run, cached replies included: 943 model proposals not found on
+  their page, 1,282 values not in their span, 1,123 claims about another page's subject, 280
+  names that are not a name, 35 too long, 185 unreadable replies, all dropped.
+
+What happened to the profiles that cited a re-classed page. 240 had one as their own page: 239
+people named on a lab or group page (220 without a claim) and the ITP institute profile, whose
+name span lies on the TFT page and which stays as it was. The people that the new reply still
+names keep their profile and gain a `member_of` relation to the new unit. Profiles that share a
+name with a new unit stay beside it, because units merge on their page URL: the IRM divisions
+from `/ueber_uns/abteilungen/` (one of them, Anthropologie, without a claim), the IFIK and IRM
+service pages under `/dienstleistungen/`, the IFIK `/forschung/` and `/research/` pairs whose
+paths differ beyond the language suffix, and ARTORG's AIMI group, which the neuroscience host
+lists too. Where two slugs collide the second id in key order ends in `-2`: the `/forschung/`
+unit now holds `unit-unibe-anthropologie` and the older one `unit-unibe-anthropologie-2`, while
+for traffic sciences the older `/about_us/departments/` unit keeps the bare id. The four IAP
+pages `/about_us/people/<group>/` are person pages by URL, so their profiles named after a group
+(Biomedical Photonics, Laser Physics, Microwave Physics, Precision Engineering) stay, with the
+new units beside them. The four person profiles named like a company (Effra Digital, Kilele
+Health, Visage Medical, Biomedical Photonics) stay too: this change reads URLs, not names, the
+DCB pages that name the first three are untouched, and the verifier's `not_a_name` check stops
+digits and AG, GmbH, Lab or Institute, which these two-word names do not carry.
 
 ## Limits
 - Navigation pages under /services/ ("FAQ", "Links", "Kontakt", "About us", "Pricing") still
@@ -136,3 +210,8 @@ otherwise: recall@10 0.36 → 0.38, MRR 0.43 → 0.46, invented abstained 8/10 a
 - Pages longer than 32,000 characters are read in part by the model (selectors read all).
 - Some team pages are classified as person pages (and some person pages as listings) by E1's URL
   rules; such a page yields no subject of its own, and its people come from the model pass.
+- IMG's eleven `/forschung/<name>/` pages describe research projects of the institute (the drug
+  trials at the PUK Basel, the Lambarene hospital, ...) and are unit pages by the URL rule.
+- Index pages stay `other`: ISPM's research groups and themes, the research-groups lists of the
+  neuroscience, TKI, PKI and IFIK hosts, and the ITA research index `/forschung/index_ger.html`,
+  which is zero levels under. IAP's one three-level page stays `other` too.
