@@ -55,6 +55,10 @@
     {
       "kind": "infrastructure",
       "url_pattern": "/(?:services|dienstleistungen|einrichtungen__instrumente|plattformen|platforms|core_facilities|facilities|geraete)/"
+    },
+    {
+      "kind": "unit",
+      "url_pattern": "^https://www\\.artorg\\.unibe\\.ch/research/index_(?:eng|ger|fre)\\.html$"
     }
   ]
 }
