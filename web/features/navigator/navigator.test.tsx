@@ -212,7 +212,7 @@ describe("Navigator", () => {
     render(<Harness api={answering(unreadBrief("not_recorded"))} />);
     await submitBrief("We are developing a wearable glucose sensor.");
     expect(screen.getByRole("status").textContent).toBe(
-      "This brief has not been read before, and Apertus was not connected live for it. Sign in for a live run, or ask a question instead.",
+      "This brief has not been read before. A new brief is read only on a live run by a signed-in account; ask a question instead.",
     );
     expect(screen.queryByText(/your words alone/)).toBeNull();
     expect(screen.queryByText(/No public page/)).toBeNull();

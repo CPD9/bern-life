@@ -6,7 +6,7 @@ const unreadMessages: Record<BriefUnread, string> = {
   no_model:
     "No model is connected, so a new brief cannot be read. Ask a question instead; the search itself needs no model.",
   not_recorded:
-    "This brief has not been read before, and Apertus was not connected live for it. Sign in for a live run, or ask a question instead.",
+    "This brief has not been read before. A new brief is read only on a live run by a signed-in account; ask a question instead.",
   budget_used:
     "Today's Apertus calls are used up, so this brief could not be read. Try again tomorrow, or ask a question instead.",
   model_failed: "Apertus did not answer while reading your brief. Try again in a moment.",
