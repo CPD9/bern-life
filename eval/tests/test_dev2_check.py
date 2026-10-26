@@ -14,6 +14,7 @@ LAB = "https://www.example.test/lab/ada"
 TEAM = "https://www.example.test/team/"
 GOLD_PAGE = "https://www.example.test/gold/zoe"
 DEV_PAGE = "https://www.example.test/dev/ida"
+DEV2_PAGE = "https://www.example.test/dev2/uli"
 
 
 def line(qid: str, name: str = "Ada Muster", url: str = LAB, span: str = "works on tides", **kw):
@@ -62,12 +63,17 @@ class Dev2CheckTest(unittest.TestCase):
             profile("person-a", "person", "Ada Muster", LAB),
             profile("person-l", "person", "Lena Quast", TEAM),
         ]
-        gold = [line("q001", "Zoë Müller", "http://www.example.test/gold/zoe/")]
+        gold = [
+            line("q001", "Zoë Müller", "http://www.example.test/gold/zoe/"),
+            line("q002", "Zoë Müller", GOLD_PAGE, query="Does Noa Berg work with Zoë Müller?"),
+        ]
         dev = [line("q901", "Ida Brun", DEV_PAGE)]
+        dev2 = [line("q930", "Uli Fenn", DEV2_PAGE)]
         self.args = ["--pages", str(write(self.dir / "pages.jsonl", pages))]
         self.args += ["--profiles", str(write(self.dir / "profiles.jsonl", profiles))]
         self.args += ["--gold", str(write(self.dir / "gold.jsonl", gold))]
         self.args += ["--dev", str(write(self.dir / "dev.jsonl", dev))]
+        self.args += ["--dev", str(write(self.dir / "dev2.jsonl", dev2))]
 
     def check(self, rows: list[Record]) -> tuple[int, str, list[str]]:
         out, keep = io.StringIO(), self.dir / "kept.jsonl"
@@ -104,6 +110,9 @@ class Dev2CheckTest(unittest.TestCase):
             line("q944", name="Prof. Dr. Zoe Muller"),
             line("q945", name="Ida Brun"),
             line("q946", url=TEAM, span="Team:", lang="xx"),
+            line("q947", name="Noa Berg"),
+            line("q948", name="Uli Fenn"),
+            line("q949", name="Dr. Noa Berg"),
             invented("q950", "Que publie la Dre Lena Quast ?"),
             invented("q951", "Que publie le Dr Hugo Brun ?"),
             invented("q952", "Que publie-t-on sur les marées ?"),
@@ -118,14 +127,18 @@ class Dev2CheckTest(unittest.TestCase):
         self.assertEqual(failed["q941"], "span (person: proof page not in the snapshot)")
         self.assertEqual(failed["q942"], "span (person: no proof_span)")
         self.assertEqual(failed["q943"], "gold_url")
-        self.assertEqual(failed["q944"], "gold_name")
+        self.assertEqual(failed["q944"], "gold_name, gold_text")
         self.assertEqual(failed["q945"], "dev (person)")
         self.assertEqual(failed["q946"], "schema ($.lang)")
+        self.assertEqual(failed["q947"], "gold_text")
+        self.assertEqual(failed["q948"], "dev (person)")
+        self.assertEqual(failed["q949"], "gold_text")
         self.assertEqual(failed["q950"], "invented (Lena Quast is in the snapshot)")
         self.assertEqual(failed["q951"], "invented (Hugo Brun is in the snapshot)")
         self.assertEqual(failed["q952"], "invented (no titled name)")
         self.assertEqual(failed["q960"], "personal (e-mail or phone number)")
         self.assertNotIn("Zoë", report)
+        self.assertNotIn("Noa Berg", report)
 
     def test_shape_must_fit_the_variant(self) -> None:
         wrong = invented("q930", "Que publie la Dre Zoé Nouvelle ?")

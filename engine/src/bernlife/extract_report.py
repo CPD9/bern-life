@@ -18,6 +18,10 @@ def summary(result: Extraction, pages: Mapping[str, Page], model_label: str) -> 
         f"model: {model_label}; {result.model_pages} pages, {result.model_calls} calls, "
         f"{result.model_cached} answered from the cache"
     )
+    lines.append(
+        f"topics: {result.topic_pages} person pages, {result.topic_calls} calls, "
+        f"{result.topic_cached} answered from the cache"
+    )
     lines += _table(
         "profiles by kind and source", Counter((p["kind"], p["source_id"]) for p in profiles)
     )

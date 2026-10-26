@@ -180,6 +180,18 @@
     {
       "kind": "infrastructure",
       "url_pattern": "/(?:services|dienstleistungen|einrichtungen__instrumente|plattformen|platforms|core_facilities|facilities|geraete)/"
+    },
+    {
+      "kind": "unit",
+      "url_pattern": "^https://[a-z0-9.-]+\\.unibe\\.ch/(?:forschung|research)/(?!(?:[^/]*_)?(?:publications?|publikationen|publikation|dissertations?|dissertationen|theses|thesis|seminars?|seminare|colloqui(?:a|um)|kolloqui(?:a|um|en)|meetings?|events?|veranstaltungen|conferences?|konferenzen|workshops?|day|awards?|prizes?|preise?|auszeichnungen|ehrungen|funding|foerderung|grants?|(?:forschungs)?networks?|(?:forschungs)?netzwerke|partners?|partnerships?|news|aktuell(?:es)?|archives?|archiv|media|factsheets?|registries|intern|internal|emeriti|emeritus|ehemalige|former|adjunct|alumni|research_(?:groups?|programs?|programmes?|fields|clusters|group_leaders|support)|forschungsgruppen|forschungsprogramme|(?:forschungs)?einblicke|projects?|projekte?|projets?|services?|platforms?|plattform(?:en)?|facility|facilities|equipment|infrastructure|infrastruktur|geraete|instruments?|instrumente|einrichtungen|resources|ressourcen|teams?|people|staff|members|mitarbeitende|personen|personal|persons)(?:_[^/]*)?/)[a-z0-9_]+/(?:index_(?:eng|ger|fre)\\.html)?$"
+    },
+    {
+      "kind": "unit",
+      "url_pattern": "^https://www\\.neuroscience\\.unibe\\.ch/research/research_groups/[a-z0-9_]+/?$"
+    },
+    {
+      "kind": "unit",
+      "url_pattern": "^https://www\\.iap\\.unibe\\.ch/research/[a-z0-9_]+/(?!(?:[^/]*_)?(?:publications?|publikationen|publikation|dissertations?|dissertationen|theses|thesis|seminars?|seminare|colloqui(?:a|um)|kolloqui(?:a|um|en)|meetings?|events?|veranstaltungen|conferences?|konferenzen|workshops?|day|awards?|prizes?|preise?|auszeichnungen|ehrungen|funding|foerderung|grants?|(?:forschungs)?networks?|(?:forschungs)?netzwerke|partners?|partnerships?|news|aktuell(?:es)?|archives?|archiv|media|factsheets?|registries|intern|internal|emeriti|emeritus|ehemalige|former|adjunct|alumni|research_(?:groups?|programs?|programmes?|fields|clusters|group_leaders|support)|forschungsgruppen|forschungsprogramme|(?:forschungs)?einblicke|projects?|projekte?|projets?|services?|platforms?|plattform(?:en)?|facility|facilities|equipment|infrastructure|infrastruktur|geraete|instruments?|instrumente|einrichtungen|resources|ressourcen|teams?|people|staff|members|mitarbeitende|personen|personal|persons)(?:_[^/]*)?/)[a-z0-9_]+/index_(?:eng|ger|fre)\\.html$"
     }
   ]
 }
