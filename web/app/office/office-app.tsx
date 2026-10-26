@@ -13,7 +13,7 @@ import { useHealth } from "@/features/shell/use-health";
 import { useNow } from "@/infrastructure/bern-time";
 import { useReducedMotion } from "@/infrastructure/use-reduced-motion";
 import { useSettings } from "@/infrastructure/use-settings";
-import { notifyLoop, useOfficeApps } from "../office-apps";
+import { adminApp, notifyLoop, useOfficeApps } from "../office-apps";
 import { unreadRefresh, useUnreadMessages } from "../use-unread-messages";
 import { visitedOffice } from "../visited-office";
 import { connectionsApp, useMessageWith, useWorldConnections } from "../world-connections";
@@ -51,6 +51,7 @@ export function OfficeApp({ fixtureMode }: { fixtureMode: boolean }) {
     }),
     messageWith: message.messageWith,
     onMessageStarted: message.started,
+    admin: adminApp(account.state, fixtureMode),
   });
   const now = useNow();
   // A loop's news, a message or a request shows as a toast here too, since this page has no bell.

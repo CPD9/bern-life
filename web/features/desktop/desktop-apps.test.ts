@@ -11,6 +11,7 @@ const everyApp = {
   opportunities: "calls",
   garage: "models",
   sources: "sites",
+  admin: "figures",
   settings: "toggles",
 };
 
@@ -25,6 +26,7 @@ test("the dock order and labels are fixed", () => {
     "Opportunities",
     "Garage",
     "Sources",
+    "Admin",
     "Settings",
   ]);
 });

@@ -27,6 +27,7 @@ import type { SearchResponse, Story } from "@/infrastructure/contract-types.gene
 import { useWorldPhone } from "./world-phone";
 import { unreadRefresh, useUnreadMessages } from "./use-unread-messages";
 import { showMeRoute } from "./show-me-route";
+import { adminApp } from "./office-apps";
 import { useWorldApps } from "./use-world-apps";
 import { WorldHud, WorldSide, focusBeside } from "./world-hud";
 import { useWorldLumi } from "./world-lumi";
@@ -131,6 +132,7 @@ export function WorldApp({ fixtureMode, demoSearch, story, storyDemo }: WorldApp
     messageWith: message.messageWith,
     onMessageStarted: message.started,
     onMessageFrom: messageFrom,
+    admin: adminApp(account.state, fixtureMode),
   });
   const lumi = useWorldLumi({
     agentName,
