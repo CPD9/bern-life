@@ -31,7 +31,9 @@ Terms help search find pages and are never shown as a fact. Code keeps a term on
 
 - **Enrichment** (role `enrich`, prompt `enrich-v1`): the distinct expertise values, sorted, go to
   the model 25 per call, and each gets up to 4 terms. A reply item counts only if it repeats a
-  value of its batch exactly. The terms go to `terms.jsonl` and the `term` table. They are
+  value of its batch exactly. Only values with no stored terms are asked, so a re-extraction asks
+  for its new values alone and the stored terms keep their bytes; terms of values no profile
+  carries any more are dropped. The terms go to `terms.jsonl` and the `term` table. They are
   appended to the profile chunk, so full text and vectors see them. A claim also matches a
   question through its own terms (rule 5), and the claim value is what gets cited.
 - **Query expansion** (role `expand`, prompt `expand-v1`): the question, as data, gives up to 12

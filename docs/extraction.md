@@ -110,7 +110,9 @@ in `.env` and refuses unless the served `extract` model id contains `70B`; every
 under `data/llm_cache/`. `replay` answers from the cache alone. `--source ID` replaces that source's
 lines and keeps the others. `--limit N` reads only N model pages, chosen in sha256 order so the
 sample spreads across hosts. `--list-kinds` prints the pages whose kind the source files would
-change now and calls nothing (see "Page kinds by URL").
+change now and calls nothing (see "Page kinds by URL"). `--only-missing-topics` reads person
+pages once more for what the person works on, and `--list-topics` prints which ones it would read
+(see "Topics for people").
 
 `python -m bernlife check-places --places web/features/world/places.json` confirms that each map
 address span occurs on its page and that the recorded page hash is the stored one. It changes
@@ -196,6 +198,35 @@ new units beside them. The four person profiles named like a company (Effra Digi
 Health, Visage Medical, Biomedical Photonics) stay too: this change reads URLs, not names, the
 DCB pages that name the first three are untouched, and the verifier's `not_a_name` check stops
 digits and AG, GmbH, Lab or Institute, which these two-word names do not carry.
+
+## Topics for people (2026-10-26)
+After the profile pass, 222 of bundle-5's 2,848 person profiles carry an expertise claim; the
+rest hold a role, a unit or only a name, so the claim rule of the search never shows them for a
+topic. A second prompt version,
+`extract-topics-v1` (`extract_prompt.topics_instruction`), asks a person page only for
+expertise, projects, infrastructure and services, each with its verbatim span, and for no
+people; the page stays delimited data and the rules are those of the profile prompt. The
+version is part of the cache key, so the two passes over one page never answer each other.
+
+`python -m bernlife extract --only-missing-topics` runs it on the person pages that pass three
+checks (`extract_topics.py`): the page has a readable subject (a name in the title that is a
+whole line of the text, so the claims have a profile to join); its text has at least 300
+characters (a shorter page is a name, a role and contact lines); and no profile whose name claim
+cites the page has an expertise claim. A page whose bare-name profile has no claims but whose
+titled twin ("..., MD") has them is not read again. The pages are chosen from the profile pass's
+own result, never from the stored `profiles.jsonl`: a rerun from the cache then reads the same
+pages and writes the same bytes, where a choice from the file would skip the pages the last run
+enriched and lose their claims. The verifier and merge are unchanged; the topic claims carry
+method `model` like every other model claim. `--list-topics` prints the pages and their window
+count with the profile pass answered from the cache alone, and calls nothing.
+
+On bundle-5's pages (after the page kinds above), 135 person pages have at least 300 characters
+and a profile without an expertise claim; 13 of them have no readable subject (IML staff pages
+whose title names nobody, ISPM team lists classed as person pages by URL), so 122 are read:
+77 ARTORG, 45 UniBE (DCBP 14, ISPM 12, IKIM 8, IAP 3, IMG 3, IRM 2, IBMM, IFIK, INF), one window
+each, 122 calls. DCB's person pages without an expertise claim hold no topical text, and every
+listing page of the opportunity sources is outside the cache, so the run is `--source unibe
+--source artorg`, where the profile pass is 2,838 cache hits.
 
 ## Limits
 - Navigation pages under /services/ ("FAQ", "Links", "Kontakt", "About us", "Pricing") still
