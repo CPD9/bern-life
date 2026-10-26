@@ -207,7 +207,7 @@ explains the top results from their cited sentences.
 | Task | Command (on the VM, in `/opt/bernlife/infra/exoscale`) |
 |---|---|
 | Invite someone | `./invite.sh 1` prints a one-time code, valid 7 days |
-| Team and demo accounts | `(umask 077; ./seed.sh > ~/accounts.txt)`: peter, yaseen, nik, admin (role admin: it sees the Admin app on the desk) and test01–test10, each with a new random password printed once; existing handles are skipped. Hand the passwords over privately, then `rm ~/accounts.txt` |
+| Team and demo accounts | `(umask 077; ./seed.sh > ~/accounts.txt)`: peter, yaseen, nik, admin (role admin: it sees the Admin app on the desk) and test01–test10, each with a new random password printed once; existing handles keep their password and take the role this list gives them, so run it once more after the role migration lands and `admin` becomes an admin. Hand the passwords over privately, then `rm ~/accounts.txt` |
 | Deploy a new `main` | back up (step 1 above), copy the files again, then `docker compose up -d --build --wait` |
 | New bundle in `bundle.lock` | steps 1 to 4 and 7 above, with `docker compose up -d --build --wait --force-recreate load serve web` as step 6 |
 | Status and logs | `docker compose ps`, `docker compose logs -f web serve` |
