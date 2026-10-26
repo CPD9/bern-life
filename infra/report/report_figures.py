@@ -149,6 +149,7 @@ FINAL_RUN = ("Passages on the own page, review fixes: bundle-4 (#226)", "2026-10
 CLAIMS = "bundle-20261019-4 profiles.jsonl, field claims of the person, unit, project and infrastructure profiles"  # noqa: E501
 EIGHT_B = "docs/decisions.md, 2026-10-18 afternoon: 15 of 18 answers"
 DEV2 = f"{PREREG}: dev2, and the rule for search levers"
+GOLD = "eval/gold.jsonl, answerable questions counted by variant_of, the bootstrap's cluster"
 FINAL = f"{PREREG}: the final gold run of #226"
 LATENCY = f"{SEARCH}, Plain, enrichment, expansion: latency"
 READ_FROM_DOCS = {
@@ -171,6 +172,8 @@ READ_FROM_DOCS = {
     "explain_v1_passed_share": Literal(0.33, f"{SEARCH}, Why it matches"),
     "apertus_8b_confirmed_invented_details": Literal(15, EIGHT_B),
     "apertus_8b_answers": Literal(18, EIGHT_B),
+    "gold_base_needs": Literal(20, GOLD),
+    "gold_base_needs_reworded": Literal(14, GOLD),
     "dev_queries": Literal(27, DEV2),
     "dev2_candidates": Literal(56, DEV2),
     "dev2_dropped_on_gold_check": Literal(8, DEV2),

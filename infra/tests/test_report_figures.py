@@ -5,6 +5,7 @@ import json
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
+from collections import Counter
 from pathlib import Path
 
 from infra.report import report_figures
@@ -350,6 +351,26 @@ class FiguresTest(unittest.TestCase):
         self.assertIn(
             "sum to 3,336, but metrics.json counts 2,346 profiles", str(refused.exception)
         )
+
+
+class GoldLiteralsTest(unittest.TestCase):
+    def test_base_needs_match_the_frozen_gold_set(self):
+        rows = [
+            json.loads(line)
+            for line in (report_figures.ROOT / "eval/gold.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()
+            if line.strip()
+        ]
+        wordings = Counter(
+            row.get("variant_of", row["id"]) for row in rows if not row["expect"]["abstain"]
+        )
+        literal = report_figures.READ_FROM_DOCS
+        self.assertEqual(literal["gold_base_needs"].value, len(wordings))
+        self.assertEqual(literal["gold_base_needs"].value, 20)
+        reworded = sum(1 for count in wordings.values() if count > 1)
+        self.assertEqual(literal["gold_base_needs_reworded"].value, reworded)
+        self.assertEqual(literal["gold_base_needs_reworded"].value, 14)
 
 
 class StillTest(unittest.TestCase):

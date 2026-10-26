@@ -173,9 +173,9 @@ the number the evaluator measured for it.
 
 Every number below is measured by the evaluator on `bundle-20261019-4`, with 95% intervals: a
 bootstrap over base needs (2,000 draws, a base question resampled together with its rewordings) for
-recall@10 and MRR, Wilson intervals for proportions. With about 13 base needs, differences smaller
-than about 25 points between languages or sources cannot be told apart, so they are shown, not
-ranked.
+recall@10 and MRR, Wilson intervals for proportions. The 38 answerable questions come from 20 base
+needs (14 of them asked in two or three wordings), so differences smaller than about 25 points
+between languages or sources cannot be told apart, and they are shown, not ranked.
 
 | Criterion | Measured | Pre-registered rule | Decision |
 |---|---|---|---|
@@ -340,11 +340,11 @@ digit.
   prompt version; a judge needs no GPU, and a rerun gives the same bytes.
 
 > **Limitations.** Recall@10 is 0.39 against the case's 0.80, and the interval's upper bound stays
-> below it. The gold set has 48 questions from about 13 base needs, so language and source
-> differences under about 25 points cannot be told apart, and the synonym number rests on 3
-> questions. The last two gold rows are gold-informed, not held-out. Field completeness has counts
-> but no human labels, and no confidence per result is calibrated. Explanations are written in
-> English only. Invented names without a title, and invented projects, are caught only by the
+> below it. The gold set has 48 questions, 38 of them answerable, from 20 base needs, so language
+> and source differences under about 25 points cannot be told apart, and the synonym number rests
+> on 3 questions. The last two gold rows are gold-informed, not held-out. Field completeness has
+> counts but no human labels, and no confidence per result is calibrated. Explanations are written
+> in English only. Invented names without a title, and invented projects, are caught only by the
 > weak-support check. The consistency sets pair gold and dev questions whose labels name different
 > answers, so their overlap measures finding the same results, not the same experts. Apertus on
 > GPUs of one's own is documented, not rehearsed. Removal of a sentence works per page, not per

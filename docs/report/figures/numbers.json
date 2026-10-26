@@ -105,6 +105,16 @@
       "read_from": "docs/decisions.md, 2026-10-18 afternoon: 15 of 18 answers",
       "about": false
     },
+    "gold_base_needs": {
+      "value": 20,
+      "read_from": "eval/gold.jsonl, answerable questions counted by variant_of, the bootstrap's cluster",
+      "about": false
+    },
+    "gold_base_needs_reworded": {
+      "value": 14,
+      "read_from": "eval/gold.jsonl, answerable questions counted by variant_of, the bootstrap's cluster",
+      "about": false
+    },
     "dev_queries": {
       "value": 27,
       "read_from": "eval/PREREGISTRATION.md, 2026-10-19: dev2, and the rule for search levers",
