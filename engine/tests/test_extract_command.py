@@ -181,7 +181,7 @@ class ExtractCommandTest(unittest.TestCase):
         }
         env = self.env(BERNLIFE_BACKEND="live", LLM_BASE_URL="http://127.0.0.1:9/v1")
         live = FakeTransport(models_body(MODEL_70B), chat_body(json.dumps(reply)))
-        argv = ["--only-missing-topics", "--limit", "0"]
+        argv = ["--only-missing-topics", "--kinds", "space"]
         code, out, _ = self.run_main(argv, env, live)
         self.assertEqual(code, 0)
         self.assertIn(f"model: live {MODEL_70B}; 0 pages, 0 calls, 0 answered from the cache", out)
@@ -218,6 +218,26 @@ class ExtractCommandTest(unittest.TestCase):
         code, out, _ = self.run_main(argv, self.env(BERNLIFE_BACKEND="replay"))
         self.assertIn("topics: 1 person pages, 1 calls, 1 answered from the cache", out)
         self.assertEqual((code, self.outputs()), (0, written))
+
+    def test_limit_bounds_the_topics_pass_too(self):
+        self.write_pages(*PAGES, FRITZ_PAGE)
+        self.run_main([], self.env(BERNLIFE_BACKEND="mock"))
+        before = self.outputs()
+        env = self.env(BERNLIFE_BACKEND="live", LLM_BASE_URL="http://127.0.0.1:9/v1")
+        transport = FakeTransport(models_body(MODEL_70B))
+        argv = ["--only-missing-topics", "--limit", "0"]
+        code, out, err = self.run_main(argv, env, transport)
+        self.assertEqual((code, err), (0, ""))
+        self.assertIn(f"model: live {MODEL_70B}; 0 pages, 0 calls, 0 answered from the cache", out)
+        self.assertIn("topics: 0 person pages, 0 calls, 0 answered from the cache", out)
+        self.assertEqual([url for url, _ in transport.requests], ["http://127.0.0.1:9/v1/models"])
+        self.assertEqual(self.outputs(), before)
+        listing = FakeTransport(models_body(MODEL_70B))
+        code, out, _ = self.run_main(["--list-topics", "--limit", "0"], env, listing)
+        self.assertEqual(
+            (code, out),
+            (0, "0 person pages without an expertise claim; model windows for them: 0\n"),
+        )
 
     def test_a_page_with_the_text_of_an_earlier_one_is_mapped_in_a_second_round(self):
         rounds: list[list[str]] = []

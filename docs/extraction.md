@@ -109,10 +109,11 @@ The mock backend runs the selectors only: a mock reply is not evidence. `live` n
 in `.env` and refuses unless the served `extract` model id contains `70B`; every call is cached
 under `data/llm_cache/`. `replay` answers from the cache alone. `--source ID` replaces that source's
 lines and keeps the others. `--limit N` reads only N model pages, chosen in sha256 order so the
-sample spreads across hosts. `--list-kinds` prints the pages whose kind the source files would
-change now and calls nothing (see "Page kinds by URL"). `--only-missing-topics` reads person
-pages once more for what the person works on, and `--list-topics` prints which ones it would read
-(see "Topics for people").
+sample spreads across hosts, and with `--only-missing-topics` only the first N topics pages too,
+so a trial run stays as small as the flag says. `--list-kinds` prints the pages whose kind the
+source files would change now and calls nothing (see "Page kinds by URL"). `--only-missing-topics`
+reads person pages once more for what the person works on, and `--list-topics` prints which ones
+it would read (see "Topics for people").
 
 `python -m bernlife check-places --places web/features/world/places.json` confirms that each map
 address span occurs on its page and that the recorded page hash is the stored one. It changes

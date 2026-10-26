@@ -87,7 +87,10 @@ def main(
         return 2
     eligible = sorted((p for p in chosen if p.kind in args.kinds), key=lambda p: (p.sha256, p.url))
     model_pages = eligible[: args.limit] if args.limit is not None else eligible
-    select = partial(extract_topics.missing_topics, chosen, opportunity_sources=opportunities)
+    select = _bounded(
+        partial(extract_topics.missing_topics, chosen, opportunity_sources=opportunities),
+        args.limit,
+    )
     if args.list_topics:
         print(extract_topics.report(_from_cache(llm, chosen, model_pages, opportunities, select)))
         return 0
@@ -145,6 +148,14 @@ def _from_cache(
     return select(extract(pages, model_pages, model, opportunity_sources=opportunities).profiles)
 
 
+def _bounded(select: SelectPages, limit: int | None) -> SelectPages:
+    """`--limit` holds for the topics pass as it does for the profile pass, so a trial run before
+    a paid one stays as small as the flag says."""
+    if limit is None:
+        return select
+    return lambda profiles: select(profiles)[:limit]
+
+
 def opportunity_sources(sources: Sequence[Source] | None = None) -> frozenset[str]:
     """Sources whose page types name only opportunities and listings, such as a funder or a
     coworking site: their pages yield calls, services and spaces, never people or units."""
@@ -159,7 +170,9 @@ def opportunity_sources(sources: Sequence[Source] | None = None) -> frozenset[st
 def _arguments(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="python -m bernlife extract")
     parser.add_argument("--source", action="append", default=[], metavar="ID")
-    parser.add_argument("--limit", type=int, metavar="N", help="model pass on N pages only")
+    parser.add_argument(
+        "--limit", type=int, metavar="N", help="each model pass (profile, topics) on N pages only"
+    )
     parser.add_argument(
         "--kinds",
         type=lambda text: tuple(text.split(",")),
