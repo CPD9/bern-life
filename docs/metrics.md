@@ -1,9 +1,10 @@
 # Result metrics
 
-Each result shows a few numbers that describe it. They are computed from your question, the
-result's verified claims and the stored public pages: never from the AI's opinion of its own
-answer, and never from page counts, popularity or the size of a unit. They describe a result and
-never change the order of the results.
+Each result shows a few numbers that describe it. They are computed from your question, what the
+result shows (its verified claims, the claims of the project it is shown through, the passage on
+its page) and the stored public pages: never from the AI's opinion of its own answer, and never
+from page counts, popularity or the size of a unit. They describe a result and never change the
+order of the results.
 
 **A dash (—) means the number could not be computed for this result.** It is not a zero and not a
 bad score. When the Navigator answers "no reliable source found", it shows no results and no
@@ -11,7 +12,7 @@ numbers.
 
 | Metric | What it tells you | How it is computed |
 |---|---|---|
-| Relevance | How much of your question this result covers | Topics of your question the result mentions ÷ all topics. A topic counts when one of its wordings (your word, or an added synonym, lay term, translation or acronym) is in one of the result's verified claims, in that claim's retrieval terms, in a claim of the project the result is shown through, or in the passage next to its name on its own page. Words count in any form: "Glukosesensoren" counts for "Glukosesensor", "sensors" for "sensor". "Covers" and "Not found" list the topics. |
+| Relevance | How much of your question this result covers | Topics of your question the result mentions ÷ all topics. A topic counts when one of its wordings (your word, or an added synonym, lay term, translation or acronym) is in one of the result's verified claims, in the other wordings added to that claim (a synonym, a lay term, a translation, an acronym, as for your question), in a claim of the project the result is shown through, or in the passage next to its name on its own page. Words count in any form: "Glukosesensoren" counts for "Glukosesensor", "sensors" for "sensor". "Covers" and "Not found" list the topics. |
 | Evidence | How directly the public pages tie this person or unit to what you asked | Per covered topic, from the sentence that mentions it (a claim of the result, a claim of its project, or the passage on its page): 100% when that sentence and the result's name are in one passage (within 300 characters), 50% on the same page further apart, 25% only on a page that does not name them. The average over covered topics. |
 | Completeness | How much of the profile the public pages fill in | Filled fields out of 5: role, unit, expertise, projects, infrastructure/services. A low value means the pages say little, not that the expert is weak. |
 | Novelty | What this result adds to the results above it | "New unit" when it is the first result from its unit; "Adds" lists the topics no higher result covered. The first result is new by definition. |
@@ -19,11 +20,12 @@ numbers.
 
 ## Topics
 Topics are the words of your question that say what you are looking for. Question words such as
-"who", "works", "in" or "Bern" are not topics. Query expansion adds other wordings of a topic
-(a synonym, a lay term, a translation, an acronym), so "CGM" counts for "glucose sensors"; it never
-adds a topic you did not ask about. A wording counts only with all its words, so "pressure sensors"
-does not count for "glucose sensors"; a wording with no word of three letters or more, such as
-"AI", cannot count on its own.
+"who", "works", "in", "Bern" or "University" are not topics: no claim is matched on them, so they
+would be "not found" on every result. Query expansion adds other wordings of a topic (a synonym, a
+lay term, a translation, an acronym), so "CGM" counts for "glucose sensors"; it never adds a topic
+you did not ask about. A wording counts only with all its words, so "pressure sensors" does not
+count for "glucose sensors"; a wording with no word of three letters or more, such as "AI", cannot
+count on its own, and "AI" is a topic only with a longer wording such as "artificial intelligence".
 
 ## Confidence, once calibrated
 People mark the top results of the practice questions (`eval/dev.jsonl`, never the frozen gold set)

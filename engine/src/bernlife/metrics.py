@@ -71,18 +71,22 @@ Support = list[tuple[Statement, frozenset[str]]]
 
 def query_topics(query: str, expansions: Mapping[str, Sequence[str]] | None = None) -> list[Topic]:
     """The user's own words as topics, each with its expansion terms once E3b provides them. A
-    label that is not words of the query is dropped: a model may add wordings, never topics."""
+    label that is not words of the query is dropped: a model may add wordings, never topics. So
+    is a topic no claim could match ("University", "AI" without a longer wording): the claim rule
+    leaves those words out, and a topic that can never be covered would be "not found" on every
+    result."""
     if expansions is not None:
         asked = f" {fold(query)} "
-        return [
+        found = (
             Topic(label, (label, *terms))
             for label, terms in expansions.items()
             if fold(label) and f" {fold(label)} " in asked
-        ]
+        )
+        return [topic for topic in found if wording_forms(topic)]
     seen: dict[str, str] = {}
     for word in re.findall(r"\w+", query):
         key = fold(word)
-        if len(key) >= 3 and key not in FRAMING and not key.isdigit():
+        if key not in FRAMING and forms(word):
             seen.setdefault(key, word)
     return [Topic(word, (word,)) for word in seen.values()]
 

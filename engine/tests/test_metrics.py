@@ -353,6 +353,16 @@ class CoverageTest(unittest.TestCase):
             (0.5, ["sweat patches"], ["glucose sensors"], 1.0),
         )
 
+    def test_a_question_word_no_claim_could_match_is_not_a_topic(self) -> None:
+        ada = worked_example()["results"][0]
+        topics = query_topics("University of Bern glucose sensors")
+        metrics = self.metrics_of(ada, topics)
+        self.assertEqual([t.label for t in topics], ["glucose", "sensors"])
+        self.assertEqual(
+            (metrics["relevance"], metrics["covers"], metrics["missing"], metrics["evidence"]),
+            (1.0, ["glucose", "sensors"], [], 1.0),
+        )
+
     def test_results_shown_through_a_project_or_passage_validate_against_the_contract(self) -> None:
         response = worked_example() | {
             "results": [through_project(), through_passage() | {"rank": 2}]
@@ -374,6 +384,14 @@ class TopicsTest(unittest.TestCase):
             "glucose sensors for kids", {"glucose sensors": ["CGM"], "dragons": ["fire"]}
         )
         self.assertEqual(topics, [Topic("glucose sensors", ("glucose sensors", "CGM"))])
+
+    def test_a_topic_with_no_wording_a_claim_could_match_is_dropped(self) -> None:
+        topics = query_topics(
+            "University AI expertise", {"University": ["UniBE"], "AI": ["KI", "ML"]}
+        )
+        self.assertEqual(topics, [])
+        longer = query_topics("AI expertise", {"AI": ["artificial intelligence"]})
+        self.assertEqual(longer, [Topic("AI", ("AI", "artificial intelligence"))])
 
 
 if __name__ == "__main__":
