@@ -4,7 +4,7 @@ import unittest
 from functools import partial
 
 from bernlife.extract import extract
-from bernlife.extract_model import model_pass
+from bernlife.extract_model import TOPICS_PROMPT, model_pass
 from bernlife.verify import recheck
 from extract_fakes import ADA_ENG, INSTITUTE, LAB, LAB_PAGE, PAGES, TEAM, FakeModel
 
@@ -57,6 +57,68 @@ class MergeTest(unittest.TestCase):
 
     def test_same_input_gives_the_same_output(self):
         self.assertEqual(run(), run())
+
+
+class TopicsTest(unittest.TestCase):
+    def test_topic_claims_join_the_profile_the_selectors_built(self):
+        reply = {
+            "subject": {
+                "expertise": [
+                    {"value": "wearable biosensors", "span": "develops wearable biosensors"},
+                    {"value": "insulin pumps", "span": "insulin pumps for children"},
+                ],
+                "projects": [{"value": "GlucoPatch", "span": "GlucoPatch"}],
+            },
+            "people": [{"name": {"value": "Erika Erfunden", "span": "Ada Muster"}}],
+        }
+        topics = partial(model_pass, ask=FakeModel({"Ada Muster": reply}), is_cached=lambda m: True)
+        topics = partial(topics, prompt=TOPICS_PROMPT)
+        seen: list[list[str]] = []
+
+        def select(profiles):
+            seen.append([p["id"] for p in profiles])
+            return [p for p in PAGES if p.url == ADA_ENG]
+
+        result = extract(PAGES, topics=(select, topics))
+        self.assertEqual(seen, [[p["id"] for p in extract(PAGES).profiles]])
+        self.assertEqual(
+            [p["id"] for p in result.profiles], [p["id"] for p in extract(PAGES).profiles]
+        )
+        ada = result.profiles[0]
+        self.assertEqual(
+            {field: [c["value"] for c in claims] for field, claims in ada["fields"].items()},
+            {
+                "role": ["Group Leader", "Gruppenleiterin"],
+                "unit": [
+                    "Example Institute for Engineering",
+                    "Sensor Lab",
+                    "Beispielinstitut für Technik",
+                ],
+                "expertise": ["wearable biosensors"],
+                "projects": [],
+                "infrastructure": [],
+                "services": [],
+            },
+        )
+        self.assertEqual(
+            ada["fields"]["expertise"][0],
+            {
+                "value": "wearable biosensors",
+                "method": "model",
+                "evidence": {
+                    "page_url": ADA_ENG,
+                    "page_sha256": PAGES[0].sha256,
+                    "span": "develops wearable biosensors",
+                    "start": PAGES[0].text.index("develops wearable"),
+                    "fetched_at": "2026-10-18T12:00:00Z",
+                },
+            },
+        )
+        self.assertEqual(dict(result.dropped), {"span_not_in_page": 2})
+        self.assertEqual(
+            (result.model_pages, result.topic_pages, result.topic_calls, result.topic_cached),
+            (0, 1, 1, 1),
+        )
 
 
 class RelationsTest(unittest.TestCase):

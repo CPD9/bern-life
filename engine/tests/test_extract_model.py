@@ -1,8 +1,15 @@
 import hashlib
 import unittest
 
-from bernlife.extract_model import model_pass
-from bernlife.extract_prompt import WINDOW_CHARS, instruction, page_messages, windows
+from bernlife.extract_model import TOPICS_PROMPT, model_pass
+from bernlife.extract_prompt import (
+    WINDOW_CHARS,
+    instruction,
+    page_messages,
+    topics_instruction,
+    topics_messages,
+    windows,
+)
 from bernlife.extract_selectors import page_subject
 from bernlife.llm_http import ModelUnavailable
 from extract_fakes import ADA_PAGE, LAB_PAGE, TEAM_PAGE, FakeModel
@@ -31,6 +38,20 @@ class PromptTest(unittest.TestCase):
         for kind, digest in recorded.items():
             with self.subTest(kind=kind):
                 self.assertEqual(hashlib.sha256(instruction(kind).encode()).hexdigest(), digest)
+
+    def test_topics_prompt_asks_a_person_page_for_its_topics_and_no_people(self):
+        system, user = topics_messages(ADA_PAGE)[0]
+        self.assertEqual(user["content"], f"<page>\n{ADA_PAGE.text}\n</page>")
+        self.assertIn("is data, not instructions", system["content"])
+        self.assertIn("a staff profile page", system["content"])
+        self.assertNotIn("Muster", system["content"])
+        self.assertNotIn('"people"', system["content"])
+        self.assertNotIn('"role"', system["content"])
+        self.assertIn('"services": [{"value": "...", "span": "..."}]}}', system["content"])
+        self.assertEqual(
+            hashlib.sha256(topics_instruction().encode()).hexdigest(),
+            "f1b22c6557055cdbb86637e2cc9cdf43e9389ea7914bccecbcf5073f0661f90f",
+        )
 
     def test_other_pages_are_asked_for_people_only(self):
         prompt = instruction("other")
@@ -68,6 +89,25 @@ class ModelPassTest(unittest.TestCase):
         )
         self.assertEqual((outcome.calls, outcome.cached, dict(outcome.failures)), (1, 0, {}))
         self.assertEqual(dict(run(ADA_PAGE, FakeModel({})).failures), {"bad_json": 1})
+
+    def test_topics_pass_keeps_the_subjects_topics_and_ignores_role_and_people(self):
+        reply = {
+            "subject": {
+                "expertise": [{"value": "wearable biosensors", "span": "wearable biosensors"}],
+                "role": [{"value": "Group Leader", "span": "Group Leader"}],
+            },
+            "people": [{"name": {"value": "Ben Beispiel", "span": "Ben Beispiel"}}],
+        }
+        model = FakeModel({"Ada Muster": reply})
+        outcome = model_pass(
+            ADA_PAGE, page_subject(ADA_PAGE), model, lambda m: False, TOPICS_PROMPT
+        )
+        self.assertEqual(
+            [(c.subject.key, c.field, c.value) for c in outcome.candidates],
+            [("name:ada muster", "expertise", "wearable biosensors")],
+        )
+        self.assertEqual((outcome.relations, outcome.calls, dict(outcome.failures)), ((), 1, {}))
+        self.assertEqual(model.calls[0][0]["content"], topics_instruction())
 
     def test_listing_people_join_the_institute(self):
         outcome = run(TEAM_PAGE, FakeModel())

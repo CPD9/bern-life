@@ -5,6 +5,9 @@ labelled MOCK. MOCK runs selectors only, because a mock reply is not page eviden
 needs the 70B (the served id says so), since extraction is about people. Before anything is
 written, every span is checked against its page again and every profile against the contract.
 `--list-kinds` prints the pages whose kind the source files would change now and calls nothing.
+`--only-missing-topics` reads person pages whose profile has no expertise claim once more, with
+the topics prompt (`extract_topics.py`); `--list-topics` prints those pages, answering the
+profile pass from the cache alone, and calls nothing.
 """
 
 import argparse
@@ -18,15 +21,20 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from bernlife import config, page_kinds, paths
+from bernlife import config, extract_topics, page_kinds, paths
 from bernlife.cache import CacheMiss, Message, cache_key, lookup
-from bernlife.extract import Extraction, extract
-from bernlife.extract_model import ModelOutcome, model_pass
-from bernlife.extract_prompt import ASKED, EXTRACT_PROMPT_VERSION, MAX_TOKENS
+from bernlife.extract import Extraction, ModelPass, SelectPages, TopicsPass, extract
+from bernlife.extract_model import PROFILE_PROMPT, TOPICS_PROMPT, ModelOutcome, Prompt, model_pass
+from bernlife.extract_prompt import (
+    ASKED,
+    EXTRACT_PROMPT_VERSION,
+    MAX_TOKENS,
+    TOPICS_PROMPT_VERSION,
+)
 from bernlife.extract_records import OPPORTUNITY_KINDS, PEOPLE_KINDS, Page
 from bernlife.extract_report import summary
 from bernlife.jsonl import read_jsonl, write_jsonl
-from bernlife.llm import Router, connect
+from bernlife.llm import MockLLM, Router, connect
 from bernlife.llm_http import ModelUnavailable, Transport, urlopen_transport
 from bernlife.sources import Source, load_sources
 from bernlife.verify import recheck
@@ -64,6 +72,7 @@ def main(
         return 2
     chosen = [page for page in pages if not args.source or page.source_id in args.source]
     sources = load_sources()
+    opportunities = opportunity_sources(sources)
     if args.list_kinds:
         sites = {site.host: site for source in sources for site in source.sites}
         print(page_kinds.report(page_kinds.kind_changes(chosen, sites)))
@@ -78,14 +87,21 @@ def main(
         return 2
     eligible = sorted((p for p in chosen if p.kind in args.kinds), key=lambda p: (p.sha256, p.url))
     model_pages = eligible[: args.limit] if args.limit is not None else eligible
+    select = partial(extract_topics.missing_topics, chosen, opportunity_sources=opportunities)
+    if args.list_topics:
+        print(extract_topics.report(_from_cache(llm, chosen, model_pages, opportunities, select)))
+        return 0
     with ThreadPoolExecutor(config.max_concurrency(env)) as pool:
         if isinstance(llm, Router):
-            model = partial(model_pass, ask=partial(_ask, llm), is_cached=partial(_cached, llm))
+            model = _pass(llm, EXTRACT_PROMPT_VERSION)
+            topics: TopicsPass | None = None
+            if args.only_missing_topics:
+                topics = (select, _pass(llm, TOPICS_PROMPT_VERSION, TOPICS_PROMPT))
             map_pages = partial(map_twins_last, pool.map)
-            result = extract(chosen, model_pages, model, map_pages, opportunity_sources(sources))
+            result = extract(chosen, model_pages, model, map_pages, opportunities, topics)
             label = f"{llm.backend} {_model(llm)}"
         else:
-            result = extract(chosen, opportunity_sources=opportunity_sources(sources))
+            result = extract(chosen, opportunity_sources=opportunities)
             label = "MOCK, selectors only"
     by_url = {page.url: page for page in pages}
     problems = _problems(result, by_url)
@@ -111,6 +127,22 @@ def map_twins_last(
         seen.add(page.sha256)
     yield from map_round(call, first)
     yield from map_round(call, later)
+
+
+def _from_cache(
+    llm: Router | MockLLM,
+    pages: Sequence[Page],
+    model_pages: Sequence[Page],
+    opportunities: frozenset[str],
+    select: SelectPages,
+) -> Sequence[Page]:
+    """The pages the topics pass would read, with the profile pass answered from the cache alone
+    (a page not in it counts as unread); with no cache, from the selectors alone."""
+    if not isinstance(llm, Router):
+        return select(extract(pages, opportunity_sources=opportunities).profiles)
+    replay = Router(None, llm.models(), llm.roots)
+    model = _pass(replay, EXTRACT_PROMPT_VERSION)
+    return select(extract(pages, model_pages, model, opportunity_sources=opportunities).profiles)
 
 
 def opportunity_sources(sources: Sequence[Source] | None = None) -> frozenset[str]:
@@ -139,6 +171,16 @@ def _arguments(argv: Sequence[str]) -> argparse.Namespace:
         action="store_true",
         help="print the pages whose kind the source files would change now; calls nothing",
     )
+    parser.add_argument(
+        "--only-missing-topics",
+        action="store_true",
+        help="read person pages whose profile has no expertise claim once more, for topics",
+    )
+    parser.add_argument(
+        "--list-topics",
+        action="store_true",
+        help="print the pages --only-missing-topics would read; calls nothing",
+    )
     args = parser.parse_args(argv)
     unknown = sorted(set(args.kinds) - set(ASKED))
     if unknown:
@@ -150,18 +192,29 @@ def _model(llm: Router) -> str:
     return llm.models()["extract"]
 
 
-def _ask(llm: Router, messages: list[Message]) -> str:
+def _pass(llm: Router, version: str, prompt: Prompt = PROFILE_PROMPT) -> ModelPass:
+    """The prompt version is part of every cache key, so the two passes over one page never
+    answer each other."""
+    return partial(
+        model_pass,
+        ask=partial(_ask, llm, version),
+        is_cached=partial(_cached, llm, version),
+        prompt=prompt,
+    )
+
+
+def _ask(llm: Router, version: str, messages: list[Message]) -> str:
     return llm.chat(
         messages,
         role="extract",
-        prompt_version=EXTRACT_PROMPT_VERSION,
+        prompt_version=version,
         temperature=0.0,
         max_tokens=MAX_TOKENS,
     )
 
 
-def _cached(llm: Router, messages: list[Message]) -> bool:
-    key = cache_key(_model(llm), messages, 0.0, None, MAX_TOKENS, EXTRACT_PROMPT_VERSION)
+def _cached(llm: Router, version: str, messages: list[Message]) -> bool:
+    key = cache_key(_model(llm), messages, 0.0, None, MAX_TOKENS, version)
     return lookup(llm.roots, key) is not None
 
 

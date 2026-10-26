@@ -6,9 +6,19 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import asdict, replace
 from pathlib import Path
 
+from bernlife.cache import cache_key, entry_path
 from bernlife.extract_command import main, map_twins_last
+from bernlife.extract_prompt import (
+    EXTRACT_PROMPT_VERSION,
+    MAX_TOKENS,
+    TOPICS_PROMPT_VERSION,
+    page_messages,
+    topics_instruction,
+    topics_messages,
+)
 from extract_fakes import ADA_PAGE, LAB_PAGE, PAGES, REPLIES, TEAM_PAGE, page
 from fake_llm import FakeTransport, chat_body, models_body
+from test_extract_topics import FRITZ, FRITZ_PAGE
 
 MODEL_70B = "swiss-ai/Apertus-70B-Instruct-2509"
 IFIK = "https://www.ifik.unibe.ch/forschung"
@@ -133,6 +143,81 @@ class ExtractCommandTest(unittest.TestCase):
         )
         self.assertEqual(transport.requests, [])
         self.assertFalse((self.bundle / "profiles.jsonl").exists())
+
+    def write_pages(self, *pages) -> None:
+        lines = "".join(json.dumps(asdict(p) | {"status": 200}) + "\n" for p in pages)
+        (self.bundle / "pages.jsonl").write_text(lines)
+
+    def test_list_topics_prints_the_pages_the_topics_pass_would_read_and_calls_nothing(self):
+        self.write_pages(*PAGES, FRITZ_PAGE)
+        self.run_main([], self.env(BERNLIFE_BACKEND="mock"))
+        before = self.outputs()
+        env = self.env(BERNLIFE_BACKEND="live", LLM_BASE_URL="http://127.0.0.1:9/v1")
+        transport = FakeTransport(models_body(MODEL_70B))
+        code, out, err = self.run_main(["--list-topics"], env, transport)
+        self.assertEqual((code, err), (0, ""))
+        self.assertEqual(
+            out, f"{FRITZ}\n1 person pages without an expertise claim; model windows for them: 1\n"
+        )
+        self.assertEqual([url for url, _ in transport.requests], ["http://127.0.0.1:9/v1/models"])
+        self.assertEqual(self.outputs(), before)
+        code, out, _ = self.run_main(["--list-topics"], self.env(BERNLIFE_BACKEND="mock"))
+        self.assertEqual((code, out.startswith(f"{FRITZ}\n1 person pages")), (0, True))
+
+    def test_only_missing_topics_reads_the_page_again_under_its_own_cache_key(self):
+        self.write_pages(*PAGES, FRITZ_PAGE)
+        self.run_main([], self.env(BERNLIFE_BACKEND="mock"))
+        reply = {
+            "subject": {
+                "expertise": [
+                    {"value": "mechanics of heart valves", "span": "the mechanics of heart valves"}
+                ],
+                "projects": [{"value": "ValveSim", "span": "builds the ValveSim model"}],
+                "infrastructure": [{"value": "pulse duplicator", "span": "a pulse duplicator"}],
+                "services": [
+                    {"value": "flow measurements", "span": "flow measurements to clinics"}
+                ],
+            }
+        }
+        env = self.env(BERNLIFE_BACKEND="live", LLM_BASE_URL="http://127.0.0.1:9/v1")
+        live = FakeTransport(models_body(MODEL_70B), chat_body(json.dumps(reply)))
+        argv = ["--only-missing-topics", "--limit", "0"]
+        code, out, _ = self.run_main(argv, env, live)
+        self.assertEqual(code, 0)
+        self.assertIn(f"model: live {MODEL_70B}; 0 pages, 0 calls, 0 answered from the cache", out)
+        self.assertIn("topics: 1 person pages, 1 calls, 0 answered from the cache", out)
+        self.assertEqual(live.bodies[1]["messages"][0]["content"], topics_instruction())
+        profiles = [json.loads(line) for line in self.outputs()[0].decode().splitlines()]
+        fritz = next(p for p in profiles if p["id"] == "person-example-fritz-fiktiv")
+        self.assertEqual(
+            {
+                f: [(c["value"], c["method"]) for c in claims]
+                for f, claims in fritz["fields"].items()
+            },
+            {
+                "role": [("Postdoc", "selector")],
+                "unit": [("Example Institute for Engineering", "selector")],
+                "expertise": [("mechanics of heart valves", "model")],
+                "projects": [("ValveSim", "model")],
+                "infrastructure": [("pulse duplicator", "model")],
+                "services": [("flow measurements", "model")],
+            },
+        )
+        root = self.data / "llm_cache"
+        topics_key = cache_key(
+            MODEL_70B, topics_messages(FRITZ_PAGE)[0], 0.0, None, MAX_TOKENS, TOPICS_PROMPT_VERSION
+        )
+        profile_key = cache_key(
+            MODEL_70B, page_messages(FRITZ_PAGE)[0], 0.0, None, MAX_TOKENS, EXTRACT_PROMPT_VERSION
+        )
+        entry = json.loads(entry_path(root, topics_key).read_text())
+        self.assertEqual((entry["prompt_version"], entry["role"]), ("extract-topics-v1", "extract"))
+        self.assertFalse(entry_path(root, profile_key).exists())
+        written = self.outputs()
+        # A rerun chooses its pages from the profile pass, not from the file just written.
+        code, out, _ = self.run_main(argv, self.env(BERNLIFE_BACKEND="replay"))
+        self.assertIn("topics: 1 person pages, 1 calls, 1 answered from the cache", out)
+        self.assertEqual((code, self.outputs()), (0, written))
 
     def test_a_page_with_the_text_of_an_earlier_one_is_mapped_in_a_second_round(self):
         rounds: list[list[str]] = []
