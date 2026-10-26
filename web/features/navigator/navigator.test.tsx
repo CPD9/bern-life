@@ -6,9 +6,20 @@ import type { SearchResult } from "@/infrastructure/claims";
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
 import type { SearchRequest } from "@/infrastructure/engine-types";
 import { abstainedFixture, briefFixture, copyOf, resultFixture } from "@/test/fixtures";
-import type { NavigatorApi, NavigatorOutcome } from "./navigator-api";
+import type { BriefUnread, NavigatorApi, NavigatorOutcome } from "./navigator-api";
 import { Navigator } from "./navigator";
 import { useNavigator } from "./use-navigator";
+
+/** The engine's answer to a brief it read no need from: nothing searched, and the reason. */
+function unreadBrief(reason: BriefUnread): SearchResponse {
+  return {
+    ...copyOf(abstainedFixture),
+    query: "",
+    mode: "replay",
+    brief_terms: [],
+    brief_unread: reason,
+  };
+}
 
 type HarnessProps = {
   api: NavigatorApi;
@@ -197,19 +208,43 @@ describe("Navigator", () => {
     expect(cells).toEqual(["Covered", "Not covered", "Not covered", "Partly"]);
   });
 
-  test("a brief the replay could not read says it needs the model, not that no page supports it", async () => {
-    const unread: SearchResponse = {
-      ...copyOf(abstainedFixture),
-      query: "",
-      mode: "mock",
-      brief_terms: [],
-    };
-    render(<Harness api={answering(unread)} />);
+  test("a brief the engine read no need from says why, not that no page supports it", async () => {
+    render(<Harness api={answering(unreadBrief("not_recorded"))} />);
     await submitBrief("We are developing a wearable glucose sensor.");
     expect(screen.getByRole("status").textContent).toBe(
-      "Reading a new brief needs Apertus connected live; only briefs recorded earlier can be read here.",
+      "This brief has not been read before. A new brief is read only on a live run by a signed-in account; ask a question instead.",
     );
     expect(screen.queryByText(/your words alone/)).toBeNull();
+    expect(screen.queryByText(/No public page/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  test("a brief the model did not answer offers Try again, which sends the same brief once more", async () => {
+    const outcomes: NavigatorOutcome[] = [
+      { ok: true, response: unreadBrief("model_failed") },
+      { ok: true, response: briefFixture },
+    ];
+    const sent: string[] = [];
+    const api: NavigatorApi = {
+      search: async () => ({ ok: true, response: resultFixture }),
+      brief: async (input) => {
+        sent.push(input.kind === "text" ? input.text : input.file.name);
+        return outcomes.shift()!;
+      },
+    };
+    render(<Harness api={api} />);
+    await submitBrief("We build glucose sensors for children.");
+    expect(screen.getByRole("status").textContent).toBe(
+      "Apertus did not answer while reading your brief. Try again in a moment.",
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    });
+    expect(sent).toEqual([
+      "We build glucose sensors for children.",
+      "We build glucose sensors for children.",
+    ]);
+    expect(screen.getByRole("status").textContent).toBe("2 results");
   });
 
   test("the Sample data label shows only in fixture mode", () => {
@@ -285,6 +320,21 @@ describe("Navigator", () => {
     render(<Harness api={answering(abstainedFixture)} events={sink} />);
     await ask("Prof. Nobody");
     expect(heard).toEqual(["search_answered", "search_answered_other_language", "abstained_seen"]);
+  });
+
+  test("a brief the engine read no need from tells the story nothing", async () => {
+    const heard: AppEventName[] = [];
+    render(
+      <Harness
+        api={answering(unreadBrief("budget_used"))}
+        events={{ emit: (name) => void heard.push(name) }}
+      />,
+    );
+    await submitBrief("We build glucose sensors for children.");
+    expect(screen.getByRole("status").textContent).toBe(
+      "Today's Apertus calls are used up, so this brief could not be read. Try again tomorrow, or ask a question instead.",
+    );
+    expect(heard).toEqual([]);
   });
 
   test("show() puts an answer on screen without asking the engine or telling the story", () => {

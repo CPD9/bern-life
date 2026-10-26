@@ -30,7 +30,7 @@ from .cache import (
     read_models,
     write_json,
 )
-from .llm_gate import DailyBudget, FailureLog, count_call, is_failure, may_go_live
+from .llm_gate import BudgetUsed, DailyBudget, FailureLog, count_call, is_failure, may_go_live
 from .llm_http import ModelUnavailable, OpenAIChat, Sleep, Transport, urlopen_transport
 from .redact import redact_strings
 
@@ -238,7 +238,7 @@ class Router:
             raise CacheMiss(f"{role} call not in cache ({key[:12]})")
         if self._budget is not None and not self._budget.reserve():
             self._audit(role, model, key, "budget", 0)
-            raise CacheMiss(f"{role} call not in cache and today's budget is used ({key[:12]})")
+            raise BudgetUsed(f"{role} call not in cache and today's budget is used ({key[:12]})")
         with self._slots:
             started = self.clock()
             try:

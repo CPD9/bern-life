@@ -59,6 +59,29 @@ describe("createEngineClient", () => {
     expect(calls[0]?.body).toEqual({ text: "We need a partner." });
   });
 
+  test("a brief waits for its own, longer timeout while a search keeps the common one", async () => {
+    // Answers after 30 ms unless the call's signal gives up first, as a real fetch would.
+    const slowEngine = (_url: URL, init?: RequestInit) =>
+      new Promise<Response>((resolve, reject) => {
+        const timer = setTimeout(() => resolve(Response.json(result)), 30);
+        init?.signal?.addEventListener("abort", () => {
+          clearTimeout(timer);
+          reject(init.signal?.reason);
+        });
+      });
+    const logged: string[] = [];
+    const client = createEngineClient({
+      baseUrl: new URL("http://127.0.0.1:8100"),
+      fetch: slowEngine,
+      logError: (message) => logged.push(message),
+      timeoutMs: 5,
+      briefTimeoutMs: 500,
+    });
+    expect(await client.search({ query: "CGM" })).toEqual({ ok: false, error: "engine_error" });
+    expect((await client.brief("We need a partner.")).ok).toBe(true);
+    expect(logged).toEqual(["engine /api/search: request failed"]);
+  });
+
   test("posts the conversation to the agent and returns the parsed reply", async () => {
     const { client, calls } = clientReturning(() => Response.json(agent));
     const messages = [{ role: "user", content: "Who works on glucose sensors?" }] as const;

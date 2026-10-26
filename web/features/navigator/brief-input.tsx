@@ -17,8 +17,8 @@ export function BriefInput({ controller }: { controller: NavigatorController }) 
   return (
     <form onSubmit={submit} className="flex flex-col gap-3">
       <p className="text-muted text-sm">
-        Upload a project brief as a PDF (up to 5 MB and 20 pages) or paste its text. The file is
-        read once to take out the text and is not kept.
+        Upload a project brief as a PDF (up to 5 MB and 20 pages) or paste its text (up to 20,000
+        characters). The file is read once to take out the text and is not kept.
       </p>
       <label htmlFor={`${id}-file`} className="font-extrabold">
         Project brief PDF

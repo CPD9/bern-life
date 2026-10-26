@@ -1,5 +1,18 @@
+// Every sentence here is read in two seconds: what happened, then what to do next.
 import type { SearchResponse } from "@/infrastructure/contract-types.generated";
-import type { NavigatorFailure } from "./navigator-api";
+import type { BriefUnread, NavigatorFailure } from "./navigator-api";
+
+const unreadMessages: Record<BriefUnread, string> = {
+  no_model:
+    "No model is connected, so a new brief cannot be read. Ask a question instead; the search itself needs no model.",
+  not_recorded:
+    "This brief has not been read before. A new brief is read only on a live run by a signed-in account; ask a question instead.",
+  budget_used:
+    "Today's Apertus calls are used up, so this brief could not be read. Try again tomorrow, or ask a question instead.",
+  model_failed: "Apertus did not answer while reading your brief. Try again in a moment.",
+  no_need_found:
+    "Apertus found no need in this brief that it could quote word for word. Paste the sentences that say what your project needs.",
+};
 
 export function failureMessage(failure: NavigatorFailure): string {
   switch (failure.kind) {
@@ -28,33 +41,33 @@ export function failureMessage(failure: NavigatorFailure): string {
           return "We could not read that PDF. Try another file or paste the text.";
         case "no_text":
           return "We found no text in that PDF; it may be a scan. Paste the text instead.";
+        case "too_long":
+          return "This brief is longer than 20,000 characters. Paste the key paragraphs instead.";
       }
+    case "unread":
+      return unreadMessages[failure.reason];
   }
-}
-
-/** A brief the app refused needs a new file, and a request over the limit would be refused again. */
-export function canRetry(failure: NavigatorFailure): boolean {
-  return (
-    failure.kind === "network" || (failure.kind === "engine" && failure.error !== "rate_limited")
-  );
 }
 
 /**
- * A brief the engine returned without reading it: no model answered and the replay holds no call
- * for this text, so there were no needs to search for. That says nothing about the pages we hold.
+ * Trying again helps when the server or the model did not answer. A brief the app refused needs a
+ * new file, a request over the limit would be refused again, and a brief nobody recorded, a spent
+ * budget or a reply with no quotable need would come back the same.
  */
-export function briefUnread(response: SearchResponse): boolean {
-  return (
-    response.abstain_reason === "no_verifiable_source" &&
-    response.mode === "mock" &&
-    (response.brief_terms ?? []).length === 0
-  );
+export function canRetry(failure: NavigatorFailure): boolean {
+  switch (failure.kind) {
+    case "network":
+      return true;
+    case "engine":
+      return failure.error !== "rate_limited";
+    case "unread":
+      return failure.reason === "model_failed";
+    case "brief":
+      return false;
+  }
 }
 
-export function abstainMessage(response: SearchResponse, asked: "search" | "brief"): string {
-  if (asked === "brief" && briefUnread(response)) {
-    return "Reading a new brief needs Apertus connected live; only briefs recorded earlier can be read here.";
-  }
+export function abstainMessage(response: SearchResponse): string {
   switch (response.abstain_reason) {
     case "no_verifiable_source":
       return "No public page we hold supports an answer to this. We would rather say so than guess.";

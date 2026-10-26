@@ -20,10 +20,14 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-from .cache import audit_records
+from .cache import CacheMiss, audit_records
 
 NO_CALL = frozenset({"hit", "miss", "budget"})
 KEPT_FAILURES = 1000
+
+
+class BudgetUsed(CacheMiss):
+    """A miss that could have gone live, refused because today's budget is spent."""
 
 
 @dataclass
