@@ -60,12 +60,14 @@ export async function seedAccount(
   sql: Sql,
   handle: string,
   displayName: string,
+  role: store.UserRole = "member",
 ): Promise<{ handle: string; password: string } | "exists"> {
   const password = newPassword();
   const created = await store.insertSeededUser(sql, {
     handle,
     displayName,
     passwordHash: await hashPassword(password),
+    role,
   });
   return created === "handle_taken" ? "exists" : { handle, password };
 }

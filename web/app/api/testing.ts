@@ -2,7 +2,7 @@
 // carrying that session's cookie, from the app's own origin or another one. Sessions are read by
 // the same code the app uses, so a test signs in exactly as a browser does.
 import { currentUser } from "@/features/accounts/accounts";
-import type { User } from "@/features/accounts/store";
+import type { User, UserRole } from "@/features/accounts/store";
 import type { Sql } from "@/infrastructure/db";
 import { SESSION_COOKIE, newToken, sessionToken, tokenHash } from "@/infrastructure/session";
 import type { MemberRouteDeps } from "./member-route";
@@ -27,11 +27,12 @@ export async function member(
   sql: Sql,
   handle: string,
   visibility: Visibility = "members",
+  role: UserRole = "member",
 ): Promise<TestMember> {
   const name = `${handle.charAt(0).toUpperCase()}${handle.slice(1)}`;
-  const [user] = await sql<User[]>`insert into app_user (id, handle, display_name)
-    values (gen_random_uuid(), ${handle}, ${name})
-    returning id, handle, display_name as "displayName"`;
+  const [user] = await sql<User[]>`insert into app_user (id, handle, display_name, role)
+    values (gen_random_uuid(), ${handle}, ${name}, ${role}::"UserRole")
+    returning id, handle, display_name as "displayName", role::text as role`;
   const created = user as User;
   await sql`insert into user_profile (user_id, visibility) values (${created.id}, ${visibility})`;
   const token = newToken();
